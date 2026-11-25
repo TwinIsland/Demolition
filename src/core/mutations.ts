@@ -1,14 +1,18 @@
 import { mutations } from "#game-catalog";
 import { indexPacks } from "./pack-api";
-import type { Player } from "./types";
+import { assertValid, MutationDefinitionSchema } from "./schema";
+import type { MutationId, Player } from "./types";
 
-export const MUTATIONS = indexPacks(mutations,"mutation");
+for (const mutation of mutations) assertValid("mutation", MutationDefinitionSchema, mutation);
+export const MUTATIONS = indexPacks(mutations, "mutation");
 const pool = Object.values(MUTATIONS);
 
-export function grantMutation(p:Player, random:()=>number) {
-  const mutation = pool[Math.floor(random()*pool.length)];
+export function grantMutation(p: Player, random: () => number) {
+  const useful = pool.filter((m) => !m.eligible || m.eligible(p));
+  const choices = useful.length ? useful : pool;
+  const mutation = choices[Math.floor(random() * choices.length)];
   mutation.apply(p);
-  const owned: Record<string, number> = p.mutations ??= {};
+  const owned: Record<MutationId, number> = (p.mutations ??= {});
   owned[mutation.id] = (owned[mutation.id] ?? 0) + 1;
   return mutation;
 }

@@ -1,0 +1,394 @@
+/* Anchored combat panel: skill buttons, health, stamina and experience. */
+.bottom-hud {
+  position: absolute;
+  justify-content: space-between;
+}
+.player-stats {
+  border-radius: var(--radius-xl);
+}
+.health-row {
+  display: flex;
+  align-items: center;
+}
+.health-icon {
+  color: #eeaed0;
+}
+.health-row > b {
+  font-size: 27px;
+  font-weight: 500;
+}
+.shield-count {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  font-size: var(--text-md);
+  color: #f4d58d;
+}
+.shield-count .icon {
+  width: 16px;
+  height: 16px;
+}
+.xp-label {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-faint);
+}
+.xp-label b {
+  color: var(--gold-200);
+  font-size: var(--text-md);
+  font-weight: 500;
+}
+.xp-label em {
+  font-style: normal;
+  color: #c6cdc8;
+  margin-left: 9px;
+}
+.xp-track {
+  background: #69776e55;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.xp-track i {
+  height: 100%;
+  display: block;
+  background: var(--gold-400);
+  border-radius: var(--radius-sm);
+  transition: width var(--duration-slow);
+}
+.stat-values {
+  display: flex;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+.stat-values > span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.stat-values .icon {
+  width: 14px;
+  height: 14px;
+}
+.loadout {
+  left: 50%;
+  bottom: 0;
+  pointer-events: auto;
+}
+.skill-buttons {
+  display: flex;
+}
+.skill-buttons button {
+  background: #26302ee6;
+  backdrop-filter: var(--blur-panel);
+  border: 1px solid var(--line-subtle);
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  background-color: var(--panel-bg);
+}
+.skill-buttons button:hover {
+  background: #3a4a46;
+}
+.skill-buttons b {
+  font-size: var(--text-md);
+  font-weight: 500;
+  display: block;
+  white-space: nowrap;
+}
+.skill-buttons small {
+  font-size: var(--text-xs);
+  color: var(--text-dim);
+  margin-top: 7px;
+  display: block;
+}
+.skill-buttons kbd {
+  align-self: flex-start;
+  font-size: var(--text-2xs);
+  margin-left: 9px;
+  z-index: 2;
+}
+.skill-button > .icon {
+  color: var(--gold-400);
+  width: 25px;
+  height: 25px;
+}
+.skill-button > span {
+  z-index: 1;
+}
+.skill-button > i {
+  position: absolute;
+  inset: 0;
+  background: var(--fill-faint);
+  transform-origin: left;
+  pointer-events: none;
+}
+.skill-button.cooling > .icon {
+  color: var(--text-faint);
+}
+.hp-gauge {
+  overflow: hidden;
+}
+.hp-gauge > i {
+  display: block;
+  transition: width var(--duration-base);
+}
+.skill-button {
+  --skill-color: #8ed6ba;
+}
+.skill-button[data-skill="surge"] {
+  --skill-color: #efbc79;
+}
+.skill-button[data-skill="shift"] {
+  --skill-color: #aebcf4;
+}
+.skill-visual {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-round);
+  background: var(--olive-900);
+  border: 1px solid var(--skill-color);
+  flex-shrink: 0;
+  color: var(--skill-color);
+  overflow: hidden;
+}
+.skill-visual > .icon {
+  width: 24px;
+  height: 24px;
+  filter: none;
+  opacity: 1;
+}
+.skill-visual .clock-shade {
+  position: absolute;
+  inset: 0;
+  background: conic-gradient(from 0deg, transparent calc(360deg - var(--remaining, 0deg)), #080c0cda 0deg);
+  z-index: 1;
+}
+.clock-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+.clock-ring circle {
+  fill: none;
+  stroke: var(--skill-color);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 0 100;
+}
+.skill-button.cooling .skill-visual {
+  border-color: var(--line-bright);
+  color: #89908c;
+}
+.skill-button.cooling .skill-visual > .icon {
+  filter: grayscale(1);
+  opacity: 0.45;
+}
+.skill-button.cooling b {
+  color: var(--text-faint);
+}
+.skill-button:not(.cooling) .skill-visual {
+  box-shadow: 0 0 10px color-mix(in srgb, var(--skill-color) 12%, transparent);
+}
+.skill-button:disabled {
+  cursor: default;
+}
+.skill-button:disabled:hover {
+  background: var(--surface-3);
+}
+.skill-buttons button:disabled .icon {
+  transform: none;
+}
+.skill-button.cooling .clock-ring circle {
+  stroke: #929c96;
+}
+.skill-button[hidden] {
+  display: none !important;
+}
+#hud .bottom-hud {
+  left: 50%;
+  right: auto;
+  bottom: max(10px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: min(500px, 94vw);
+  box-sizing: border-box;
+  display: flex;
+  flex-flow: column nowrap;
+  align-items: stretch;
+  gap: 5px;
+  padding: var(--space-3) var(--space-4);
+  background: linear-gradient(180deg, #121b19f5, #101716ed);
+  border: 1px solid #726849;
+  border-radius: var(--radius-md);
+  box-shadow: 0 3px 18px #0008;
+}
+#hud .loadout {
+  order: 0;
+  position: static;
+  width: auto;
+  transform: none;
+}
+#hud .skill-buttons {
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+#hud .skill-buttons button {
+  min-width: 0;
+  height: 46px;
+  padding: var(--space-2) var(--space-5);
+}
+#hud .player-stats {
+  order: 1;
+  position: relative;
+  inset: auto;
+  width: 100%;
+  min-width: 0;
+  background: none;
+  padding: 0;
+  border: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 8px;
+  align-items: center;
+}
+#hud .hp-gauge,
+#hud .health-row {
+  grid-area: 1/1/2/3;
+  margin: 0;
+}
+#hud .hp-gauge {
+  height: 19px;
+  border: 1px solid var(--line-bright);
+  background: var(--surface-2);
+}
+#hud .hp-gauge > i {
+  height: 100%;
+  background: #438267 url("/assets/hud/vital-strip.webp") left center / 210px 100% repeat-x;
+  box-shadow: inset 0 -2px 2px #0b403b8c;
+}
+#hud .health-row {
+  z-index: 1;
+  justify-content: center;
+  gap: var(--space-2);
+}
+#hud .health-row b,
+#hud .health-row b small {
+  font: 700 12px/16px var(--font-hud);
+  color: white;
+  text-shadow: var(--shadow-text);
+}
+#hud .health-icon .icon {
+  width: 11px;
+  height: 11px;
+}
+#hud .xp-track {
+  grid-column: 1/-1;
+  height: 3px;
+  margin: 0;
+  grid-row: 3;
+}
+#hud .xp-label,
+#hud .stat-values {
+  margin: 0;
+  gap: 5px;
+  font-size: var(--text-xs);
+}
+#hud .stat-values {
+  justify-content: flex-end;
+}
+#hud #stamina {
+  grid-column: 1/-1;
+  grid-row: 2;
+  height: 11px;
+  position: relative;
+  overflow: hidden;
+  line-height: 11px;
+  background: #172c31;
+  border: 1px solid #4a6869;
+}
+#stamina i {
+  display: block;
+  height: 100%;
+  width: var(--energy, 100%);
+  transition: width var(--duration-instant) linear;
+  background: linear-gradient(90deg, #397884, #66a5a9);
+}
+#stamina span {
+  position: absolute;
+  inset: 0;
+  text-align: center;
+  font-size: var(--text-2xs);
+  font-variant-numeric: tabular-nums;
+  color: #f1fffd;
+  text-shadow: 0 1px 2px var(--color-bg);
+}
+@media (max-width: 1100px) {
+  .skill-buttons button {
+    gap: 7px;
+  }
+  .skill-buttons kbd {
+    margin-left: 2px;
+  }
+}
+@media (max-width: 760px) {
+  .loadout {
+    bottom: 0;
+  }
+  .skill-buttons button {
+    flex: 1;
+    gap: 5px;
+  }
+  .skill-buttons small {
+    font-size: var(--text-3xs);
+  }
+  .skill-buttons kbd {
+    margin-left: 0;
+    padding: var(--space-1);
+    font-size: var(--text-3xs);
+  }
+  .skill-button > .icon {
+    width: 18px;
+    height: 18px;
+  }
+  .skill-buttons button > .icon {
+    display: none;
+  }
+  .skill-buttons b {
+    font-size: var(--text-2xs);
+  }
+  .skill-visual {
+    width: 27px;
+    height: 27px;
+  }
+  .skill-visual > .icon {
+    width: 18px;
+    height: 18px;
+  }
+  .health-row > b {
+    font-size: 22px;
+  }
+  .stat-values .icon {
+    width: 12px;
+    height: 12px;
+  }
+}
+@media (max-width: 700px) {
+  #hud .skill-buttons button {
+    padding: 3px 6px;
+    height: 42px;
+  }
+  #hud .skill-buttons .skill-button > span:nth-child(2) {
+    display: none;
+  }
+}

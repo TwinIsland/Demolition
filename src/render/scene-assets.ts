@@ -15,20 +15,26 @@ export class SceneAssets {
     const progress = (_url: string, done: number, total: number) => {
       this.done = done;
       this.total = total;
-      this.report?.(done,total);
+      this.report?.(done, total);
     };
-    this.manager.onStart = (url,done,total) => {
-      this.idle = new Promise(resolve => { this.finish = resolve; });
-      progress(url,done,total);
+    this.manager.onStart = (url, done, total) => {
+      this.idle = new Promise((resolve) => {
+        this.finish = resolve;
+      });
+      progress(url, done, total);
     };
     this.manager.onProgress = progress;
     this.manager.onLoad = () => this.finish?.();
   }
   watch(report: LoadProgress) {
     const baseline = this.done;
-    this.report = (done,total) => report(done - baseline, total - baseline);
-    this.report(this.done,this.total);
-    return () => { this.report = undefined; };
+    this.report = (done, total) => report(done - baseline, total - baseline);
+    this.report(this.done, this.total);
+    return () => {
+      this.report = undefined;
+    };
   }
-  ready() { return this.idle; }
+  ready() {
+    return this.idle;
+  }
 }

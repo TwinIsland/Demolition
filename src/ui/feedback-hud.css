@@ -1,0 +1,228 @@
+/* Combat feedback overlay. Sits above the damage flash and below menus. */
+#feel-hud {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  overflow: hidden;
+  font-family: "Barlow Semi Condensed", "Noto Sans SC", sans-serif;
+}
+body:not(.in-game) #feel-hud {
+  display: none;
+}
+
+/* Heal and shield-block edge light */
+.feel-edge {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+.feel-edge[data-state="heal"] {
+  box-shadow:
+    inset 0 0 150px #6fe39a80,
+    inset 0 0 40px #b8ffd04d;
+  animation: feel-edge 1.25s ease-out;
+}
+.feel-edge[data-state="blocked"] {
+  box-shadow:
+    inset 0 0 130px #6fc4ff8c,
+    inset 0 0 30px #d5efff59;
+  animation: feel-edge 0.45s ease-out;
+}
+@keyframes feel-edge {
+  0% {
+    opacity: 0;
+  }
+  14% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Damage direction arcs: each marker is a ring segment rotated towards the attacker */
+.feel-directions {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(52vh, 70vw);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+}
+[data-top-down] .feel-directions {
+  display: none;
+}
+.feel-directions > i {
+  --feel-arc: #ff4d5e;
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from -26deg,
+    transparent 0deg,
+    var(--feel-arc) 26deg,
+    transparent 52deg,
+    transparent 360deg
+  );
+  -webkit-mask: radial-gradient(closest-side, transparent 88%, #000 90.5%, #000 97.5%, transparent 100%);
+  mask: radial-gradient(closest-side, transparent 88%, #000 90.5%, #000 97.5%, transparent 100%);
+  filter: drop-shadow(0 0 10px var(--feel-arc));
+  animation: feel-direction 1.3s ease-out forwards;
+}
+.feel-directions > i[data-kind="blocked"] {
+  --feel-arc: #7fd0ff;
+}
+@keyframes feel-direction {
+  0% {
+    opacity: 0;
+    scale: 0.9;
+  }
+  8% {
+    opacity: 1;
+    scale: 1.04;
+  }
+  22% {
+    scale: 1;
+  }
+  60% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    scale: 1;
+  }
+}
+
+/* Kill marker around the crosshair */
+.feel-kill {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46px;
+  height: 46px;
+  translate: -50% -50%;
+  opacity: 0;
+  background:
+    linear-gradient(45deg, transparent 46%, #ff5b5b 46%, #ff5b5b 54%, transparent 54%),
+    linear-gradient(-45deg, transparent 46%, #ff5b5b 46%, #ff5b5b 54%, transparent 54%);
+  -webkit-mask: radial-gradient(closest-side, transparent 38%, #000 40%);
+  mask: radial-gradient(closest-side, transparent 38%, #000 40%);
+  filter: drop-shadow(0 0 6px #ff3d3dcc);
+}
+.feel-kill[data-state="show"] {
+  animation: feel-kill 0.6s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+@keyframes feel-kill {
+  0% {
+    opacity: 1;
+    scale: 1.7;
+  }
+  25% {
+    opacity: 1;
+    scale: 0.92;
+  }
+  70% {
+    opacity: 1;
+    scale: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.08;
+  }
+}
+
+/* Pickup note under the crosshair */
+.feel-pickup {
+  --feel-accent: #fff;
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 74px);
+  translate: -50% 0;
+  padding: 3px 12px 4px;
+  border-left: 3px solid var(--feel-accent);
+  background: linear-gradient(90deg, #10151ad9, #10151a59);
+  color: #f3f6f4;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  opacity: 0;
+}
+.feel-pickup[data-state="show"] {
+  animation: feel-pickup 1.5s ease-out;
+}
+@keyframes feel-pickup {
+  0% {
+    opacity: 0;
+    translate: -50% 10px;
+  }
+  10% {
+    opacity: 1;
+    translate: -50% 0;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    translate: -50% -6px;
+  }
+}
+
+/* Health change numbers */
+.feel-numbers {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 34px);
+  width: 0;
+  height: 0;
+}
+.feel-numbers > b {
+  --feel-drift: 0px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  translate: -50% 0;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  text-shadow:
+    0 1px 0 #000a,
+    0 0 12px #000c;
+  animation: feel-number 0.95s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+.feel-numbers > b[data-kind="damage"] {
+  color: #ff6f6f;
+}
+.feel-numbers > b[data-kind="heal"] {
+  color: #84f0a8;
+}
+@keyframes feel-number {
+  0% {
+    opacity: 0;
+    translate: -50% 6px;
+    scale: 1.5;
+  }
+  15% {
+    opacity: 1;
+    scale: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    translate: calc(-50% + var(--feel-drift)) -46px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feel-numbers > b,
+  .feel-pickup[data-state="show"],
+  .feel-kill[data-state="show"] {
+    animation-timing-function: linear;
+    scale: 1 !important;
+  }
+}

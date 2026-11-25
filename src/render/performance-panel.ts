@@ -22,8 +22,14 @@ export class PerformancePanel {
     window.addEventListener(
       "keydown",
       (e) => {
-        if (bindings.action(e.code) === "performance" && !e.repeat && !e.altKey && !e.ctrlKey && !e.metaKey &&
-            !(e.target instanceof Element && e.target.closest('input,textarea,select,[contenteditable=true]'))) {
+        if (
+          bindings.action(e.code) === "performance" &&
+          !e.repeat &&
+          !e.altKey &&
+          !e.ctrlKey &&
+          !e.metaKey &&
+          !(e.target instanceof Element && e.target.closest("input,textarea,select,[contenteditable=true]"))
+        ) {
           e.preventDefault();
           this.panel.hidden = !this.panel.hidden;
           this.lastFrame = this.nextUpdate = 0;
@@ -35,21 +41,17 @@ export class PerformancePanel {
   }
   sample(now: number, cpuMs: number, renderer = this.renderer) {
     if (this.panel.hidden) return;
-    if (this.lastFrame && now - this.lastFrame < 1000)
-      this.frames.push(now - this.lastFrame);
+    if (this.lastFrame && now - this.lastFrame < 1000) this.frames.push(now - this.lastFrame);
     this.lastFrame = now;
     this.cpu.push(cpuMs);
     if (this.frames.length > 120) this.frames.shift();
     if (this.cpu.length > 120) this.cpu.shift();
     if (now < this.nextUpdate) return;
     this.nextUpdate = now + 500;
-    const avg = (v: number[]) =>
-      v.reduce((a, b) => a + b, 0) / Math.max(1, v.length);
+    const avg = (v: number[]) => v.reduce((a, b) => a + b, 0) / Math.max(1, v.length);
     const gl = renderer.getContext(),
       extension = gl.getExtension("WEBGL_debug_renderer_info");
-    const gpu = extension
-      ? String(gl.getParameter(extension.UNMASKED_RENDERER_WEBGL))
-      : t("驱动未公开");
+    const gpu = extension ? String(gl.getParameter(extension.UNMASKED_RENDERER_WEBGL)) : t("驱动未公开");
     const frame = avg(this.frames),
       info = renderer.info;
     this.panel.textContent = `${bindings.label("performance")} ${t("性能诊断")}\nFPS ${frame ? Math.round(1000 / frame) : 0} · ${t("帧间隔")} ${frame.toFixed(1)} ms · ${t("渲染提交")} ${avg(this.cpu).toFixed(1)} ms\n${t("绘制调用")} ${info.render.calls} · ${t("三角形")} ${info.render.triangles} · ${t("着色程序")} ${info.programs?.length ?? 0}\n${t("分辨率")} ${gl.drawingBufferWidth} × ${gl.drawingBufferHeight}\nGPU ${gpu}`;

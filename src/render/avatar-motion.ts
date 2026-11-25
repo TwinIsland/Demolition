@@ -17,21 +17,15 @@ export class AvatarMotion {
     const dt = time - previous.time;
     if (dt <= 0 || dt > 0.3) return;
     const distance = Math.hypot(x - previous.x, z - previous.z);
-    const joints = [
-      rig.skin.leftArm,
-      rig.skin.rightArm,
-      rig.skin.leftLeg,
-      rig.skin.rightLeg,
-      rig.skin.head,
-    ];
+    const joints = [rig.skin.leftArm, rig.skin.rightArm, rig.skin.leftLeg, rig.skin.rightLeg, rig.skin.head];
     const old = joints.map((j) => j.rotation.clone());
     rig.resetJoints();
     if (verticalSpeed !== 0) {
-      const rising = MathUtils.clamp(verticalSpeed/RULES.jumpSpeed, 0, 1);
-      rig.skin.leftLeg.rotation.x = -.32 - .30 * rising;
-      rig.skin.rightLeg.rotation.x = .23;
-      rig.skin.leftArm.rotation.z = -.24;
-      rig.skin.rightArm.rotation.z = .20;
+      const rising = MathUtils.clamp(verticalSpeed / RULES.jumpSpeed, 0, 1);
+      rig.skin.leftLeg.rotation.x = -0.32 - 0.3 * rising;
+      rig.skin.rightLeg.rotation.x = 0.23;
+      rig.skin.leftArm.rotation.z = -0.24;
+      rig.skin.rightArm.rotation.z = 0.2;
     } else if (distance > 0.0001) this.walk.update(rig, distance / 2.3);
     else this.idle.update(rig, dt);
     joints.forEach((joint, i) => {

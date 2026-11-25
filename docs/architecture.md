@@ -17,6 +17,76 @@ GameSnapshot → GameRenderer / GameUI / Sound
 
 `core/types.ts` 是共同协议。命令和快照只包含可序列化数据，没有 Three.js 对象、DOM 元素或方法。`PlayerAgent` 决定行为，`Simulation` 决定行为是否有效。真人、AI 都不能直接改生命、速度或地图。
 
+## 命名约定
+
+代码中每个概念只用一个标识符：放置的爆炸物一律叫 `bomb`（快照类型 `Bomb`、`systems/bombs.ts`、`BombLights`、`BombFinishes`），参战者一律叫 `player`（快照类型 `Player`）。`seat` 只表示匹配房间里的席位，席位可以为空。界面文案不受此约束，中文显示“炸药”“选手”。
+
+文件名用 kebab-case，类型和类用 PascalCase，函数用 camelCase，模块级常量表用 UPPER_SNAKE。内容 ID 是字符串别名：`ItemId`、`SkillId`、`PerkId`、`MutationId`；`Consumable` 是可进入库存的 `ItemId`，`Equipment` 是 `"bomb" | Consumable`。签名中凡是表示 ID 的参数都使用这些别名。
+
+## 输入协议
+
+```ts
+interface PlayerInput {
+  moveX: number;
+  moveZ: number;
+  yaw: number;
+  sprint?: boolean;
+  jump?: boolean;
+  equip?: Equipment; // 切换手持装备
+  useEquipment?: boolean; // 主动作：部署炸药、挥刀、自用或投掷
+  aimTarget?: Vec2; // 炸药部署格或投掷落点
+  throwMode?: ThrowMode;
+  meleeYaw?: number;
+  plantAtFeet?: boolean; // 俯视期间在脚下放置炸药
+  activateSkill?: SkillId;
+  choosePerk?: PerkId; // 从当前候选中领取一张强化
+  usePerk?: PerkId; // 发动已持有的主动强化
+  resetTerrain?: boolean;
+  buySkill?: SkillId; // 开局商店
+  refundSkill?: SkillId;
+}
+```
+
+字段名与模块钩子保持同一组动词：技能 `activate`，强化 `use`，装备 `onUse`。
+
+## 事件
+
+`GameSnapshot.events` 是按 `type` 区分的联合类型。所有事件都带 `id`、`at`（模拟秒）、`playerId`、`x`、`z`、`text`、`textEn`，其余字段随类型而定：
+
+| `type` | 附加字段 |
+| --- | --- |
+| `bomb`、`blast`、`blast-contact`、`kill`、`level` | 无 |
+| `equip` | `item: Equipment` |
+| `equipment`、`melee`、`pickup` | `item: ItemId` |
+| `cover-hit` | `item: ItemId`、`coverSurface` |
+| `cover` | `item?: ItemId`（近战拆除时给出，爆破时省略） |
+| `hit` | `item?: ItemId`、`zombie?: { id, level, outcome: "hurt" \| "killed" }` |
+| `hurt` | `blocked: boolean` |
+| `shield-end` | `item: ItemId`、`reason: "broken" \| "expired"` |
+| `mutation` | `mutation: MutationId` |
+| `perk`、`perk-use` | `perk: PerkId` |
+| `skill` | `skill: SkillId` |
+
+事件由 `systems/events.ts` 的 `emit(ctx, player, text, event, at?)` 写入，公共字段在此统一填充。界面、音频和渲染先用 `type` 收窄再读取附加字段。事件仍是普通可序列化对象。
+
+## 模拟系统
+
+`core/simulation.ts` 只负责建局和每个 tick 的阶段顺序；规则位于 `core/systems/`，均为接收 `SimContext`（快照、地图、种子随机数、ID 分配器、僵尸导演和服务端私有计数）的普通函数。
+
+| 文件 | 职责 |
+| --- | --- |
+| `match.ts` | 倒计时、全场视角、地形重置、模块效果上下文、终局排名 |
+| `progression.ts` | 积分与经验、强化候选、商店购买、强化与技能施放 |
+| `movement.ts` | 移动、冲刺、跳跃、碰撞、踢炸药 |
+| `equipment.ts` | 切换装备、投掷与自用道具、近战挥击 |
+| `bombs.ts` | 放置、滑行、引爆与连锁、投掷物落地 |
+| `combat.ts` | 爆炸伤害结算、护盾、受伤与淘汰、僵尸奖励与僵尸攻击 |
+| `loot.ts` | 拆箱掉落与保底计数、僵尸掉落、拾取、场地补给 |
+| `events.ts` | 事件写入与日志裁剪 |
+| `context.ts` | `SimContext` 定义 |
+
+阶段顺序、随机数抽取顺序和 ID 分配顺序共同构成确定性约定，集中写在 `Simulation.step` 中。
+
 ## 行为策略
 
 所有控制器实现 `PlayerAgent`：
@@ -30,7 +100,7 @@ interface PlayerAgent {
 }
 ```
 
-`KeyboardAgent` 只负责把设备输入转成世界方向与动作；`BotAgent` 只负责策略。AI 当前采用“躲避危险 → 捡道具 → 靠近目标 → 炸开障碍”的优先级，放水泡前搜索退路。雷达干扰期间 AI 不使用对手坐标选目标，但仍保留近处危险预测，避免完全失去行动能力。
+`KeyboardAgent` 只负责把设备输入转成世界方向与动作；`BotAgent` 只负责策略。AI 当前采用“躲避危险 → 捡道具 → 靠近目标 → 炸开障碍”的优先级，放炸药前搜索退路。雷达干扰期间 AI 不使用对手坐标选目标，但仍保留近处危险预测，避免完全失去行动能力。
 
 将来增加智能 AI 时，实现新策略并在 `session/create-session.ts` 替换对应的 `BotAgent` 即可。若模型推理是异步的，应在策略内部缓存最近有效决策，`decide` 返回缓存值；不要阻塞模拟循环。
 
@@ -43,6 +113,7 @@ interface MatchSession {
   submit(playerId: string, input: PlayerInput): void;
   advance(dt: number): void;
   getSnapshot(): Readonly<GameSnapshot>;
+  getRenderSnapshot?(): Readonly<GameSnapshot>;
   restart(options: MatchOptions): void;
   dispose(): void;
 }
@@ -57,9 +128,9 @@ interface MatchSession {
 5. 渲染层增加位置插值；需要更灵敏的移动时，再增加客户端预测和服务端纠偏。
 6. `restart` 发送重新准备/开局请求，不能直接重建服务端对局；UI 等待服务端确认。
 
-当前本地 `advance(0)` 用于暂停期间处理升级选择；远程实现应在 `submit` 中发送升级命令，收到服务端确认后再清除选择界面。多人局不应因为一名玩家打开菜单或升级而暂停：应提供限时选卡或移动中选卡，替换 `main.ts` 的本地暂停策略。当前 UI 使用的是本地即时确认流程，需要为网络延迟增加等待状态。
+本地的 `advance(0)` 不推进时间，只结算商店买卖和强化选择（`buySkill`、`refundSkill`、`choosePerk`），界面随即读取结果。远程实现应在 `submit` 中发送这些命令，收到服务端确认后再更新界面，并为网络延迟增加等待状态。选择强化不暂停对局；本地按 Esc 的暂停会停止整个模拟，多人局不应提供。
 
-客户端 `getSnapshot()` 返回的是只读视图，调用方必须把它当作不可变数据。当前实现为避免每帧复制而返回内部引用；服务端和测试可直接操作 `Simulation.state` 来构建场景，产品 UI 不应这样做。
+客户端 `getSnapshot()` 返回的是只读视图，调用方必须把它当作不可变数据。当前实现为避免每帧复制而返回内部引用；服务端和调试脚本可直接操作 `Simulation.state` 来构建场景，产品 UI 不应这样做。
 
 ## 内容模块
 
@@ -86,18 +157,24 @@ interface MatchSession {
 
 模拟使用固定步长和独立的种子随机数；不在规则中读取 `Date.now`、`Math.random` 或浏览器时间。局外用当前时间产生新地图种子。UI 动画使用真实时间，伤害、技能、倒计时使用模拟时间。本地暂停会停止整个权威模拟。
 
-输入动作是边沿事件：`LocalMatchSession` 会在高刷新率帧之间保留动作，在固定模拟 tick 消费一次，避免丢键或在追帧时重复放水泡。
+输入动作是边沿事件：`LocalMatchSession` 会在高刷新率帧之间保留动作，在固定模拟 tick 消费一次，避免丢键或在追帧时重复放炸药。
 
 ## 渲染参考
 
 场景使用标准物理材质、albedo / roughness / bump 纹理、显式色彩空间、PMREM 环境反射、软阴影与 ACES 色调映射。材质加载位于 `src/render/materials.ts`，天空和环境光位于 `src/render/outdoor-lighting.ts`。
 
-MVP 使用共享材质和几何，地图格子仍为独立 mesh。更大地图可把地板、石墙等静态重复结构改为 `InstancedMesh`，再按性能分析决定是否加入后处理或更复杂的材质。
+静态地图由 `StaticBatches` 合并为实例化批次，可破坏掩体保留实例槽位，销毁时只隐藏对应槽位；共享材质和几何由 `Models` 管理。`BombLights` 使用固定四灯池，避免点光源数量改变导致 PBR 程序反复编译。`DangerOverlays` 为每颗炸药提交一个实例化预警网格，图案表达攻击等级，颜色表达所属玩家。`LocalMatchSession.getRenderSnapshot` 只插值渲染副本，权威模拟保持 60Hz。后处理管线和测量记录见[性能说明](performance.md)。
 
-## 0.2 战斗反馈更新
+## 数值与反馈
 
-升级提示已改为非阻塞卡片托盘，数字键 1/2/3 快选，Tab 展开或收起强化卡，模拟持续运行。命中敌人奖励 2 经验，自伤和护盾吸收不奖励；击杀另奖励 4 经验。音频已替换为下载文件，材质和角色采用下载资源；来源详见 public/assets/CREDITS.md。上文关于升级暂停的描述仅适用于初版。
+伤害、积分和阈值集中在 `core/combat.ts` 的 `COMBAT`，对局规则常量在 `core/content.ts` 的 `RULES`。玩家血量、攻击值和炸药放置时锁定的威力都是可序列化的权威状态。升级提示是非阻塞卡片托盘，数字键 1/2/3 快选，Tab 展开或收起，模拟持续运行。素材来源见 `public/assets/CREDITS.md`。
 
-## 性能与血量版本
+## 验证
 
-静态地图使用 StaticBatches，木箱格保留实例槽位，销毁时只隐藏对应槽位；共享材质和几何仍由 Models 管理。炸药光源使用固定四灯池，避免点光源数量改变导致 PBR 程序反复编译。DangerOverlays 每颗炸药只提交一个实例化预警网格，图案表达攻击等级，颜色表达玩家。LocalMatchSession.getRenderSnapshot 只插值渲染副本，权威模拟仍保持 60Hz。伤害、积分和阈值见 core/combat.ts，玩家血量与攻击值、炸药放置时的威力均为可序列化权威状态。上文的三点生命/经验数值属于旧版本。
+仓库不附带测试套件。提交前运行 `npm run check`（类型检查、ESLint、Prettier）和 `npm run build`，玩法由试玩确认。
+
+## 障碍物预设与共享材质
+
+可摧毁障碍物集中定义在 `core/obstacles.ts`：每个预设一条 `defineObstacle`，包含模型、材质类别、高度和占格比例。地图通过 `obstacles: [{ use, weight }]` 引用预设或 `set:<标签>` 分组，`core/cover-layout.ts` 把它解析成每格稳定的外观，模拟和渲染读取同一份结果。
+
+内置障碍物和装备模型由 `tools/model-forge` 生成为 GLB，只带几何、UV 和形如 `df:<名称>` 的材质名。`MaterialLibrary.applyPalette` 在加载时把这些名称换成 `assets/surfaces` 下的共享 PBR 材质，所以所有道具共用同一套贴图、同一贴图密度和同一批 GPU 纹理。玩家自建木箱使用 `built-crate` 预设，由 `Arena` 按快照里的 `builtCrates` 作为动态物体渲染，并贴上建造者角色的 `emblem`。

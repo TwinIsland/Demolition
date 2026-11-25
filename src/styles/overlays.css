@@ -1,0 +1,144 @@
+/* Modal overlay shell, shared dialog buttons and the match result summary. */
+#overlay {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-overlay);
+  background: #1419189e;
+  backdrop-filter: var(--blur-panel);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-9);
+  overflow-y: auto;
+}
+.modal {
+  background: linear-gradient(140deg, #2c3734e8, #1f2725e8);
+  border: 1px solid #ffe2a429;
+  box-shadow: var(--shadow-lg);
+  padding: 42px 45px;
+  text-align: center;
+  max-width: 520px;
+  width: 100%;
+  animation: arrive var(--duration-moderate) var(--ease-out);
+  border-radius: var(--radius-sm);
+  background-color: var(--panel-bg);
+}
+.modal h2 {
+  font-size: 31px;
+  letter-spacing: 1px;
+  margin: 17px 0 14px;
+  font-weight: 600;
+}
+.modal > p {
+  font-size: var(--text-xl);
+  line-height: 1.8;
+  color: var(--text-dim);
+  margin: 0 0 26px;
+}
+.primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+  border: 1px solid #ecece255;
+  font-size: var(--text-xl);
+  font-weight: 600;
+  padding: 15px 20px;
+  width: 100%;
+  background: var(--gold-700);
+  color: var(--text-on-accent);
+  border-radius: var(--radius-sm);
+}
+.primary:hover {
+  background: var(--gold-200);
+}
+.primary .icon {
+  width: 19px;
+  height: 19px;
+}
+.modal-actions {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 21px;
+}
+.modal-actions button,
+.text-btn {
+  background: none;
+  color: var(--text-dim);
+  font-size: var(--text-md);
+  padding: 8px 13px;
+}
+.modal-actions button:hover,
+.text-btn:hover {
+  color: var(--text);
+}
+.text-btn {
+  display: block;
+  margin: 16px auto -8px;
+}
+.result-icon {
+  color: var(--gold-200);
+  display: grid;
+  place-items: center;
+  margin: -4px auto 24px;
+  background: #e9d3a112;
+  width: 70px;
+  height: 70px;
+  border-radius: 23px;
+  border: 1px solid #e7bc7022;
+}
+.result-icon .icon {
+  width: 34px;
+  height: 34px;
+}
+.result-stats {
+  display: flex;
+  justify-content: space-around;
+  border-top: 1px solid var(--line-faint);
+  border-bottom: 1px solid var(--line-faint);
+  padding: 22px 0;
+  margin-bottom: 28px;
+}
+.result-stats b {
+  font-size: 30px;
+  font-weight: 500;
+  color: var(--gold-200);
+  display: block;
+  margin-bottom: 8px;
+}
+.result-stats b small {
+  font-size: 15px;
+  margin-left: 3px;
+}
+.result-stats span {
+  font-size: var(--text-sm);
+  color: var(--text-dim);
+}
+@keyframes arrive {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 760px) {
+  .modal {
+    padding: 30px 22px;
+  }
+  .modal h2 {
+    font-size: 26px;
+  }
+  .modal > p {
+    font-size: var(--text-md);
+  }
+}
+@media (max-height: 650px) and (max-width: 760px) {
+  .modal {
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+}

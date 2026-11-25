@@ -40,7 +40,9 @@ const fragmentShader = `
     float beam = exp(-abs(uv.x - beamX) / (.025 + .10 * (1. - uv.y)));
     vec3 light = mix(vec3(.045,.030,.012) * sun * sun,
                      vec3(.030,.070,.10) * beam, industrial);
-    float dust = motes(p, 14., mix(vec2(-.34,.07),vec2(.04,-.12),industrial))
+    // One wind for every map: a theme-dependent wind is multiplied by time, so
+    // blending it during a map switch would sweep every mote across the screen.
+    float dust = motes(p, 14., vec2(-.34,.07))
                + .50 * motes(p + 2.71, 27., vec2(-.13,-.08));
     image += light * (.22 + .78 * uv.y) * (1. + .75 * beat);
     image += dust * mix(vec3(.50,.33,.12),vec3(.22,.42,.52),industrial);
@@ -60,18 +62,28 @@ export class MapBackdrop {
   private first?: Backdrop;
   private next?: Backdrop;
   private started = 0;
-  private geometry = new THREE.PlaneGeometry(2,2);
+  private geometry = new THREE.PlaneGeometry(2, 2);
   private uniforms = {
-    firstArt: {value: null as THREE.Texture | null}, nextArt: {value: null as THREE.Texture | null},
-    firstCrop: {value: new THREE.Vector2()}, nextCrop: {value: new THREE.Vector2()},
-    mixAmount: {value:0}, industrial: {value:0}, time: {value:0}, aspect: {value:1}, beat: {value:0},
+    firstArt: { value: null as THREE.Texture | null },
+    nextArt: { value: null as THREE.Texture | null },
+    firstCrop: { value: new THREE.Vector2() },
+    nextCrop: { value: new THREE.Vector2() },
+    mixAmount: { value: 0 },
+    industrial: { value: 0 },
+    time: { value: 0 },
+    aspect: { value: 1 },
+    beat: { value: 0 },
   };
   private material = new THREE.ShaderMaterial({
-    vertexShader, fragmentShader, uniforms:this.uniforms, depthWrite:false, depthTest:false,
+    vertexShader,
+    fragmentShader,
+    uniforms: this.uniforms,
+    depthWrite: false,
+    depthTest: false,
   });
   constructor(manager: THREE.LoadingManager) {
     this.loader = new THREE.TextureLoader(manager);
-    const screen = new THREE.Mesh(this.geometry,this.material);
+    const screen = new THREE.Mesh(this.geometry, this.material);
     screen.frustumCulled = false;
     this.scene.add(screen);
   }
@@ -81,6 +93,14 @@ export class MapBackdrop {
       this.wanted = this.first = this.next = undefined;
       return;
     }
+    this.wanted = { texture: this.texture(url), industrial: Number(map.theme === "midnight") };
+  }
+  /** Fetches a map's backdrop ahead of selection so switching maps never waits on the network. */
+  preload(map: MapDefinition) {
+    const url = map.backdrop || map.artwork;
+    if (url) this.texture(url);
+  }
+  private texture(url: string) {
     let texture = this.textures.get(url);
     if (!texture) {
       texture = this.loader.load(url, undefined, undefined, () => {
@@ -89,45 +109,49 @@ export class MapBackdrop {
         texture?.dispose();
       });
       texture.colorSpace = THREE.SRGBColorSpace;
-      this.textures.set(url,texture);
+      this.textures.set(url, texture);
     }
-    this.wanted = {texture,industrial:Number(map.theme === "midnight")};
+    return texture;
   }
   draw(renderer: THREE.WebGLRenderer, time: number, beat: number) {
     if (!this.wanted) return false;
-    const duration = .55;
+    const duration = 0.55;
     if (this.wanted !== this.next && this.wanted.texture.image?.width) {
       const progress = THREE.MathUtils.clamp((time - this.started) / duration, 0, 1);
       // Reversing a selection mid-fade keeps the current image brightness continuous.
       const reverse = this.first?.texture === this.wanted.texture && this.next;
-      this.first = reverse || (progress < .5 ? this.first : this.next) || this.wanted;
+      this.first = reverse || (progress < 0.5 ? this.first : this.next) || this.wanted;
       this.next = this.wanted;
       this.started = reverse ? time - (1 - progress) * duration : time;
     }
     if (!this.first || !this.next) return false;
-    const t = this.reducedMotion.matches ? 1 : THREE.MathUtils.smoothstep(time-this.started,0,duration);
-    const canvas = renderer.domElement, aspect = canvas.width / canvas.height;
+    const t = this.reducedMotion.matches ? 1 : THREE.MathUtils.smoothstep(time - this.started, 0, duration);
+    const canvas = renderer.domElement,
+      aspect = canvas.width / canvas.height;
     const u = this.uniforms;
-    for (const [layer,crop] of [[this.first,u.firstCrop],[this.next,u.nextCrop]] as const) {
+    for (const [layer, crop] of [
+      [this.first, u.firstCrop],
+      [this.next, u.nextCrop],
+    ] as const) {
       const image = layer.texture.image;
-      const ratio = aspect * image.height / image.width;
-      crop.value.set(Math.min(1,ratio), Math.min(1,1/ratio));
+      const ratio = (aspect * image.height) / image.width;
+      crop.value.set(Math.min(1, ratio), Math.min(1, 1 / ratio));
     }
     u.firstArt.value = this.first.texture;
     u.nextArt.value = this.next.texture;
     u.mixAmount.value = t;
-    u.industrial.value = THREE.MathUtils.lerp(this.first.industrial,this.next.industrial,t);
+    u.industrial.value = THREE.MathUtils.lerp(this.first.industrial, this.next.industrial, t);
     u.time.value = this.reducedMotion.matches ? 0 : time;
     u.aspect.value = aspect;
     u.beat.value = beat;
-    renderer.render(this.scene,this.camera);
+    renderer.render(this.scene, this.camera);
     if (t === 1) this.first = this.next;
     return true;
   }
   dispose() {
     this.geometry.dispose();
     this.material.dispose();
-    this.textures.forEach(t => t.dispose());
+    this.textures.forEach((t) => t.dispose());
     this.textures.clear();
   }
 }

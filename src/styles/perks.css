@@ -1,0 +1,295 @@
+/* Perk offer tray, perk cards and tier auras. */
+.perk-grid {
+  display: grid;
+}
+.perk-card {
+  text-align: left;
+  flex-direction: column;
+}
+.perk-card:hover {
+  background: var(--fill-faint);
+  border-color: var(--perk-color);
+  transform: translateY(-5px);
+}
+.perk-key {
+  font-size: var(--text-xs);
+  border: 1px solid var(--line-bright);
+  border-radius: var(--radius-md);
+  padding: 2px 5px;
+}
+.perk-icon {
+  border: 1px solid color-mix(in srgb, var(--perk-color) 25%, transparent);
+  background: color-mix(in srgb, var(--perk-color) 8%, transparent);
+  color: var(--perk-color);
+  place-items: center;
+}
+.perk-icon .icon {
+  width: 31px;
+  height: 31px;
+}
+.perk-card > small {
+  font-size: var(--text-xs);
+  letter-spacing: 1px;
+  color: var(--perk-color);
+}
+.perk-card h3 {
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+.perk-card p {
+  font-size: var(--text-md);
+  line-height: 1.8;
+  color: var(--text-dim);
+  margin: 0 0 22px;
+}
+.perk-select {
+  margin-top: auto;
+  font-size: var(--text-sm);
+  color: #afb9b3;
+  border-top: 1px solid var(--line-faint);
+  padding-top: 16px;
+  width: 100%;
+}
+#perk-tray {
+  position: absolute;
+  z-index: var(--z-perk-tray);
+  left: 50%;
+  bottom: 135px;
+  transform: translateX(-50%);
+  width: min(610px, 90vw);
+  padding: var(--space-6);
+  border: 1px solid #b7a16c80;
+  pointer-events: none;
+  isolation: isolate;
+  border-color: var(--gold-500);
+  background: linear-gradient(120deg, #283027f5, #121c1bf5 55%, #302c20f5);
+  animation:
+    offer-arrival 0.32s ease-out,
+    offer-beacon 2.3s ease-in-out infinite alternate;
+}
+#perk-tray > h2 {
+  display: none;
+}
+#perk-tray > p {
+  font-size: var(--text-md);
+  color: var(--gold-300);
+  margin: 0 0 var(--space-5);
+  text-align: center;
+}
+#perk-tray .perk-grid {
+  margin: 0;
+  gap: var(--space-4);
+  grid-template-columns: repeat(3, 1fr);
+}
+#perk-tray .perk-card {
+  pointer-events: auto;
+  border-radius: var(--radius-sm);
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  column-gap: 9px;
+  padding: 12px 9px;
+  min-height: 78px;
+  border: 1px solid var(--perk-color);
+  overflow: hidden;
+  position: relative;
+}
+#perk-tray .perk-select,
+#perk-tray .perk-card p {
+  display: none;
+}
+#perk-tray .perk-card h3 {
+  margin: 7px 0 0;
+  font-size: var(--text-md);
+}
+#perk-tray .perk-key {
+  color: var(--gold-200);
+}
+#perk-tray.expanded {
+  bottom: 145px;
+  width: min(900px, 94vw);
+}
+#perk-tray.expanded .perk-icon {
+  display: grid;
+  position: static;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 16px;
+}
+#perk-tray.expanded .perk-card p {
+  display: block;
+}
+.perk-card-tools {
+  grid-column: 1/-1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  align-self: stretch;
+  gap: 3px;
+  margin-bottom: 4px;
+}
+.active-perk-badge {
+  display: inline-flex;
+  flex: none;
+  margin-inline-start: auto;
+  padding: 2px 5px;
+  border: 1px solid #73ab91;
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  color: #c0f2d5;
+  font: 700 10px/1.2 var(--font-hud);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+#perk-tray .perk-icon {
+  display: grid;
+  position: static;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  border-radius: var(--radius-md);
+  grid-row: 2 / span 2;
+  grid-column: 1;
+}
+#perk-tray .perk-icon > .icon {
+  width: 20px;
+  height: 20px;
+}
+#perk-tray .perk-card > small,
+#perk-tray .perk-card > h3 {
+  grid-column: 2;
+}
+#perk-tray.expanded .perk-card {
+  display: flex;
+  min-height: 230px;
+  padding: 22px;
+}
+#perk-tray.expanded .perk-icon > .icon {
+  width: 30px;
+  height: 30px;
+}
+.tier-gold {
+  --aura: #e5ad46;
+  animation: perk-aura 2.6s ease-in-out infinite alternate;
+}
+.tier-diamond,
+.tier-mythic {
+  animation: perk-aura 2.6s ease-in-out infinite alternate;
+}
+.tier-diamond {
+  --aura: #84deff;
+  animation-duration: 1.7s;
+}
+.tier-mythic {
+  --aura: var(--perk-color, var(--buff-color));
+  animation-duration: 2s;
+}
+.perk-notice {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #f6d99a;
+  padding: 0 var(--space-1) var(--space-4);
+}
+.perk-notice strong {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: var(--text-lg);
+}
+.perk-notice i {
+  width: 7px;
+  height: 7px;
+  transform: rotate(45deg);
+  background: #ffdc87;
+  box-shadow: 0 0 8px #ffc358;
+}
+.perk-notice span {
+  font: 600 10px var(--font-hud);
+}
+.perk-notice small {
+  margin-left: auto;
+  color: #d0cbb8;
+  font-size: var(--text-xs);
+}
+#perk-tray .perk-card::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  top: 0;
+  left: 0;
+  width: 45%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--perk-color), white, transparent);
+  animation: offer-sweep 3.2s ease-in-out infinite;
+}
+#perk-tray .perk-card:nth-child(2)::after {
+  animation-delay: 0.16s;
+}
+#perk-tray .perk-card:nth-child(3)::after {
+  animation-delay: 0.32s;
+}
+#perk-tray:not(.expanded) {
+  bottom: max(153px, 20vh);
+}
+#app #perk-tray .perk-card {
+  background:
+    linear-gradient(115deg, color-mix(in srgb, var(--perk-color, #b7a574) 15%, transparent), #0b111433),
+    var(--surface-1) url("/assets/hud/perk-inlay.webp") center / 100% 100%;
+}
+#perk-tray .perk-open,
+#perk-tray.expanded .perk-quick {
+  display: none;
+}
+#perk-tray.expanded .perk-open {
+  display: inline;
+}
+@keyframes perk-aura {
+  from {
+    box-shadow: inset 0 0 4px color-mix(in srgb, var(--aura) 18%, transparent);
+  }
+  to {
+    box-shadow:
+      0 0 9px color-mix(in srgb, var(--aura) 55%, transparent),
+      inset 0 0 12px color-mix(in srgb, var(--aura) 16%, transparent);
+  }
+}
+@keyframes offer-arrival {
+  from {
+    opacity: 0;
+    translate: 0 7px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@keyframes offer-beacon {
+  from {
+    box-shadow: 0 2px 8px #0008;
+  }
+  to {
+    box-shadow:
+      0 0 15px #e1b76168,
+      inset 0 0 8px #c9aa651c;
+  }
+}
+@keyframes offer-sweep {
+  0% {
+    transform: translateX(-102%);
+  }
+  65%,
+  100% {
+    transform: translateX(225%);
+  }
+}
+@media (max-width: 760px) {
+  .perk-icon {
+    left: 16px;
+    top: 22px;
+  }
+  .perk-card p {
+    font-size: var(--text-sm);
+    margin: 0;
+  }
+}

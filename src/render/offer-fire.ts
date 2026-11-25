@@ -1,14 +1,22 @@
 import * as THREE from "three";
 
-const panels = [".round-status", ".players", ".radar", ".combat-feed", ".skill-buttons", "#equipment-wheel", ".top-actions"];
-const emitterCount = 4 + panels.length;
+const PANELS = [
+  ".round-status",
+  ".players",
+  ".radar",
+  ".combat-feed",
+  ".skill-buttons",
+  "#equipment-wheel",
+  ".top-actions",
+];
+const EMITTER_COUNT = 4 + PANELS.length;
 
 // Each segment is an origin and a tangent in CSS pixels. All emitters share one draw.
 const vertexShader = `
   uniform float seconds;
   uniform float intensity;
   uniform vec2 viewport;
-  uniform vec4 lines[${emitterCount}];
+  uniform vec4 lines[${EMITTER_COUNT}];
   attribute vec4 particle;
   attribute float emitter;
   varying vec2 sprite;
@@ -88,72 +96,104 @@ const fragmentShader = `
 
 function particleGeometry() {
   const geometry = new THREE.InstancedBufferGeometry();
-  geometry.setAttribute("position",new THREE.Float32BufferAttribute([-.5,-.5,0, .5,-.5,0, .5,.5,0, -.5,.5,0],3));
-  geometry.setIndex([0,1,2,0,2,3]);
-  const seeds:number[] = [], emitters:number[] = [];
+  geometry.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute([-0.5, -0.5, 0, 0.5, -0.5, 0, 0.5, 0.5, 0, -0.5, 0.5, 0], 3),
+  );
+  geometry.setIndex([0, 1, 2, 0, 2, 3]);
+  const seeds: number[] = [],
+    emitters: number[] = [];
   // Interleave origins so reduced graphics settings retain particles on every edge.
-  for (let n=0; n<84; n++) for (let i=0; i<emitterCount; i++) {
-    if (i>=4 && n%4 !== 0) continue;
-    seeds.push((n*.618034+Math.random()*.05)%1,Math.random(),Math.random(),Math.random());
-    emitters.push(i);
-  }
-  geometry.setAttribute("particle",new THREE.InstancedBufferAttribute(new Float32Array(seeds),4));
-  geometry.setAttribute("emitter",new THREE.InstancedBufferAttribute(new Float32Array(emitters),1));
+  for (let n = 0; n < 84; n++)
+    for (let i = 0; i < EMITTER_COUNT; i++) {
+      if (i >= 4 && n % 4 !== 0) continue;
+      seeds.push((n * 0.618034 + Math.random() * 0.05) % 1, Math.random(), Math.random(), Math.random());
+      emitters.push(i);
+    }
+  geometry.setAttribute("particle", new THREE.InstancedBufferAttribute(new Float32Array(seeds), 4));
+  geometry.setAttribute("emitter", new THREE.InstancedBufferAttribute(new Float32Array(emitters), 1));
   return geometry;
 }
 
 export class OfferFire {
   private geometry = particleGeometry();
   private uniforms = {
-    seconds:{value:0}, intensity:{value:1}, rewardGold:{value:0}, viewport:{value:new THREE.Vector2()},
-    vapor:{value:null as THREE.Texture|null},
-    lines:{value:Array.from({length:emitterCount},()=>new THREE.Vector4())},
-    exclusions:{value:[new THREE.Vector4(),new THREE.Vector4()]},
+    seconds: { value: 0 },
+    intensity: { value: 1 },
+    rewardGold: { value: 0 },
+    viewport: { value: new THREE.Vector2() },
+    vapor: { value: null as THREE.Texture | null },
+    lines: { value: Array.from({ length: EMITTER_COUNT }, () => new THREE.Vector4()) },
+    exclusions: { value: [new THREE.Vector4(), new THREE.Vector4()] },
   };
-  private material = new THREE.ShaderMaterial({uniforms:this.uniforms,vertexShader,fragmentShader,
-    transparent:true,depthTest:false,depthWrite:false,toneMapped:false});
+  private material = new THREE.ShaderMaterial({
+    uniforms: this.uniforms,
+    vertexShader,
+    fragmentShader,
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+    toneMapped: false,
+  });
   private scene = new THREE.Scene();
   private camera = new THREE.Camera();
-  private anchors?: (Element|null)[];
+  private anchors?: (Element | null)[];
   private nextLayout = 0;
-  constructor(smokeTexture:THREE.Texture) {
-    this.uniforms.vapor.value=smokeTexture;
-    const mesh = new THREE.Mesh(this.geometry,this.material);
-    mesh.frustumCulled=false;
+  constructor(smokeTexture: THREE.Texture) {
+    this.uniforms.vapor.value = smokeTexture;
+    const mesh = new THREE.Mesh(this.geometry, this.material);
+    mesh.frustumCulled = false;
     this.scene.add(mesh);
   }
-  private layout(canvas:HTMLCanvasElement) {
+  private layout(canvas: HTMLCanvasElement) {
     const root = canvas.parentElement!;
-    this.anchors ??= panels.map(selector=>root.querySelector(selector));
-    const rect = canvas.getBoundingClientRect(), {width:w,height:h}=rect;
-    const lines=this.uniforms.lines.value;
-    this.uniforms.viewport.value.set(w,h);
-    lines[0].set(0,0,w,0); lines[1].set(w,0,0,h);
-    lines[2].set(w,h,-w,0); lines[3].set(0,h,0,-h);
-    this.anchors.forEach((node,i)=>{
-      const box=node?.getBoundingClientRect();
-      if (box && box.width && box.height) lines[i+4].set(box.left-rect.left,rect.bottom-box.top,box.width,0);
-      else lines[i+4].set(0,0,0,0);
+    this.anchors ??= PANELS.map((selector) => root.querySelector(selector));
+    const rect = canvas.getBoundingClientRect(),
+      { width: w, height: h } = rect;
+    const lines = this.uniforms.lines.value;
+    this.uniforms.viewport.value.set(w, h);
+    lines[0].set(0, 0, w, 0);
+    lines[1].set(w, 0, 0, h);
+    lines[2].set(w, h, -w, 0);
+    lines[3].set(0, h, 0, -h);
+    this.anchors.forEach((node, i) => {
+      const box = node?.getBoundingClientRect();
+      if (box && box.width && box.height)
+        lines[i + 4].set(box.left - rect.left, rect.bottom - box.top, box.width, 0);
+      else lines[i + 4].set(0, 0, 0, 0);
     });
-    ["#player-stats","#perk-tray"].forEach((selector,i)=>{
-      const box=root.querySelector(selector)?.getBoundingClientRect();
-      const bounds=this.uniforms.exclusions.value[i];
-      if (box) bounds.set(box.left-rect.left-3,rect.bottom-box.bottom-3,box.right-rect.left+3,rect.bottom-box.top+3);
-      else bounds.set(1,1,-1,-1);
+    ["#player-stats", "#perk-tray"].forEach((selector, i) => {
+      const box = root.querySelector(selector)?.getBoundingClientRect();
+      const bounds = this.uniforms.exclusions.value[i];
+      if (box)
+        bounds.set(
+          box.left - rect.left - 3,
+          rect.bottom - box.bottom - 3,
+          box.right - rect.left + 3,
+          rect.bottom - box.top + 3,
+        );
+      else bounds.set(1, 1, -1, -1);
     });
   }
-  draw(renderer:THREE.WebGLRenderer, time:number, quality:number, intensity:number, rewardGold:boolean) {
-    if (time>=this.nextLayout) {
+  draw(renderer: THREE.WebGLRenderer, time: number, quality: number, intensity: number, rewardGold: boolean) {
+    if (time >= this.nextLayout) {
       this.layout(renderer.domElement);
-      this.nextLayout=time+.12;
+      this.nextLayout = time + 0.12;
     }
-    this.uniforms.seconds.value=time;
-    this.uniforms.intensity.value=intensity;
-    this.uniforms.rewardGold.value=Number(rewardGold);
-    this.geometry.instanceCount=Math.floor(this.geometry.getAttribute("emitter").count*quality);
-    const clear=renderer.autoClear;
-    renderer.autoClear=false;
-    try { renderer.render(this.scene,this.camera); } finally { renderer.autoClear=clear; }
+    this.uniforms.seconds.value = time;
+    this.uniforms.intensity.value = intensity;
+    this.uniforms.rewardGold.value = Number(rewardGold);
+    this.geometry.instanceCount = Math.floor(this.geometry.getAttribute("emitter").count * quality);
+    const clear = renderer.autoClear;
+    renderer.autoClear = false;
+    try {
+      renderer.render(this.scene, this.camera);
+    } finally {
+      renderer.autoClear = clear;
+    }
   }
-  dispose() { this.geometry.dispose(); this.material.dispose(); }
+  dispose() {
+    this.geometry.dispose();
+    this.material.dispose();
+  }
 }

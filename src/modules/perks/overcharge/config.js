@@ -1,10 +1,12 @@
 /** @satisfies {import("../../../core/module-api").PerkConfig} */
 const config = {
-  translations: { en: {
-    name: "Overcharge",
-    description: "Add one more tile to Blast Surge and immediately refresh its cooldown.",
-    tag: "Skill upgrade",
-  } },
+  translations: {
+    en: {
+      name: "Overcharge",
+      description: "Add one more tile to Blast Surge and immediately refresh its cooldown.",
+      tag: "Skill upgrade",
+    },
+  },
   id: "overcharge",
   name: "过载回路",
   description: "范围爆发多强化 1 格；本次技能立即就绪。",

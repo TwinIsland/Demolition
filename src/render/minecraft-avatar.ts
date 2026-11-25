@@ -22,22 +22,35 @@ export class MinecraftAvatar extends THREE.Group {
         o.receiveShadow = true;
       }
     });
-    this.grip.rotation.set(.77, .22, .24);
+    this.grip.rotation.set(0.77, 0.22, 0.24);
     this.grip.scale.setScalar(8);
     this.rig.skin.rightArm.add(this.grip);
     this.add(this.rig);
   }
   hold(model: THREE.Object3D, kind: "bomb" | "item" | "melee") {
     this.grip.clear();
-    // The charge mesh starts at its base. Seat that end inside the palm.
+    // The bomb mesh starts at its base. Seat that end inside the palm.
     if (kind === "bomb") this.grip.position.set(-0.65, -9.25, 1.15);
     else if (kind === "melee") {
-      this.grip.position.set(-.75,-9.3,1.3);
-      model.position.y -= .45;
-      model.rotation.y = .7;
-      model.rotation.x = -.28;
+      this.grip.position.set(-0.75, -9.3, 1.3);
+      model.position.y -= 0.45;
+      model.rotation.y = 0.7;
+      model.rotation.x = -0.28;
     } else this.grip.position.set(-1.9, -9.1, 3.65);
     this.grip.add(model);
+  }
+  /** Light the texels marked in `glow`, such as eyes, independently of scene lighting. */
+  setGlow(glow: MinecraftSkin, intensity: number) {
+    this.rig.skin.traverse((part) => {
+      if (!(part instanceof THREE.Mesh)) return;
+      for (const material of Array.isArray(part.material) ? part.material : [part.material]) {
+        if (!(material instanceof THREE.MeshStandardMaterial)) continue;
+        material.emissive.set("#ffffff");
+        material.emissiveMap = glow.texture;
+        material.emissiveIntensity = intensity;
+        material.needsUpdate = true;
+      }
+    });
   }
   setSkin(skin: MinecraftSkin) {
     this.rig.skin.modelType = skin.model;
@@ -48,11 +61,10 @@ export class MinecraftAvatar extends THREE.Group {
     const geometries = new Set<THREE.BufferGeometry>(),
       materials = new Set<THREE.Material>();
     this.rig.traverse((o) => {
-      if (o instanceof THREE.Mesh) {
+      // Attachments marked as shared belong to the model library.
+      if (o instanceof THREE.Mesh && !o.userData.shared) {
         geometries.add(o.geometry);
-        (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) =>
-          materials.add(m),
-        );
+        (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => materials.add(m));
       }
     });
     geometries.forEach((g) => g.dispose());

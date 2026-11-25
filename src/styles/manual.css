@@ -1,0 +1,210 @@
+/* Field manual and key-binding settings. */
+.help-modal {
+  max-width: 730px;
+  padding: 32px 36px;
+}
+.help-modal h2 {
+  font-size: 28px;
+}
+#overlay .help-modal {
+  max-height: min(88dvh, 800px);
+  overflow-y: auto;
+  border: 0;
+  background: var(--surface-1) url("/assets/manual/backdrop.webp") center / 100% 100% no-repeat;
+  --manual-frame: url("/assets/manual/equipment.webp");
+}
+.guide-section[data-category="skills"] {
+  --manual-frame: url("/assets/manual/skills.webp");
+}
+.guide-section[data-category="perks"] {
+  --manual-frame: url("/assets/manual/perks.webp");
+}
+.guide-section[data-category="genes"] {
+  --manual-frame: url("/assets/manual/genes.webp");
+}
+.manual-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-bottom: 14px;
+}
+.manual-toolbar h2 {
+  margin: 0;
+}
+.manual-toolbar [data-reset-controls] {
+  padding: 5px 10px;
+  color: #dfc58e;
+  border: 1px solid #81765e;
+  background: var(--surface-2);
+}
+.control-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(148px, 100%), 1fr));
+  gap: var(--space-2);
+  margin-bottom: 12px;
+}
+.binding-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 5px;
+  min-height: 34px;
+  padding: 5px 8px;
+  background: var(--surface-1);
+  color: var(--text-soft);
+  border: 1px solid var(--line-strong);
+  text-align: left;
+  font-size: var(--text-md);
+}
+.control-grid .binding-button {
+  width: 100%;
+  border: 3px solid transparent;
+  border-image: var(--manual-frame) 66 fill / 9px stretch;
+}
+.control-grid .binding-button:is(:hover, :focus-visible, .listening) {
+  outline: 1px solid var(--gold-500);
+  outline-offset: -2px;
+}
+.guide-section li .binding-button {
+  margin-top: 8px;
+  gap: 14px;
+}
+.guide-card-body {
+  flex: 1;
+  min-width: 0;
+}
+.guide-card-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+.guide-card-heading > :first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.guide-section[data-category="skills"] ul {
+  grid-auto-rows: 1fr;
+}
+.guide-section[data-category="skills"] .guide-card-body {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+}
+.guide-section[data-category="skills"] .guide-description {
+  flex: 1;
+}
+.guide-section[data-category="skills"] .binding-button {
+  order: 1;
+}
+.equip-binding {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+.guide-section .equip-binding .binding-button {
+  margin: 0;
+}
+.clear-binding {
+  min-height: 34px;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--line-strong);
+  background: var(--surface-1);
+  color: #c7cec7;
+  font-size: var(--text-md);
+}
+.clear-binding:enabled:is(:hover, :focus-visible) {
+  border-color: var(--gold-500);
+}
+.clear-binding:disabled {
+  opacity: 0.4;
+}
+.binding-button kbd {
+  color: #e5c588;
+  font: 600 11px/1.4 var(--font-hud);
+  white-space: nowrap;
+}
+.binding-button:is(:focus-visible, :hover),
+.binding-button.listening {
+  border-color: var(--gold-500);
+}
+.binding-button.listening {
+  background: var(--gold-900);
+  box-shadow: inset 2px 0 #e6c786;
+}
+.help-modal .binding-status {
+  margin: 5px 0;
+  color: #d9c698;
+  font-size: var(--text-md);
+  text-align: left;
+}
+.binding-status:empty {
+  display: none;
+}
+.guide-section {
+  border-top: 1px solid #53615b;
+  text-align: left;
+}
+.guide-section summary {
+  cursor: pointer;
+  padding: var(--space-6) var(--space-2);
+  font-weight: 700;
+}
+.guide-section summary small {
+  float: right;
+  opacity: 0.65;
+  font-variant-numeric: tabular-nums;
+}
+.guide-section ul {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
+  gap: var(--space-4);
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-6);
+}
+.guide-section li {
+  display: flex;
+  gap: 9px;
+  padding: 9px;
+  border: 6px solid transparent;
+  border-image: var(--manual-frame) 66 fill / 16px stretch;
+}
+.guide-section li .icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--entry-color);
+}
+.guide-section li b {
+  font-size: var(--text-xl);
+}
+.guide-section li small {
+  font-size: var(--text-sm);
+  color: var(--entry-color);
+}
+.guide-section li p {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-md);
+  line-height: 1.5;
+  color: #c6d1cb;
+}
+@media (max-width: 760px) {
+  .help-modal {
+    padding: 30px 22px;
+  }
+  .help-modal h2 {
+    font-size: 26px;
+  }
+}
+@media (max-height: 650px) and (max-width: 760px) {
+  .help-modal {
+    padding: var(--space-8);
+  }
+  .help-modal > p {
+    margin-bottom: 17px;
+  }
+}

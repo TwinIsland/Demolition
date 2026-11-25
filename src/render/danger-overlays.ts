@@ -1,9 +1,11 @@
 import * as THREE from "three";
 import { blastCells } from "../core/geometry";
-import { bombGuideColor, bombWarning } from "../core/bomb-warning";
+import { bombGuideColor, bombWarning, finalCountdown } from "../core/bomb-warning";
 import { powerTier } from "../core/combat";
 import type { GameSnapshot } from "../core/types";
 import { world } from "./arena";
+
+const FLASH = new THREE.Color("#ffffff");
 
 /** One instanced warning mesh per bomb, with gentle independent pulse and team tint. */
 export class DangerOverlays {
@@ -14,9 +16,12 @@ export class DangerOverlays {
   private geometry = new THREE.PlaneGeometry(2.32, 2.32);
   private textures: THREE.Texture[];
   private signature = "";
-  constructor(private parent: THREE.Group, manager = THREE.DefaultLoadingManager) {
+  constructor(
+    private parent: THREE.Group,
+    manager = THREE.DefaultLoadingManager,
+  ) {
     const loader = new THREE.TextureLoader(manager);
-    this.textures = ["base","boost","heavy"].map(name => loader.load(`./assets/danger-${name}.svg`));
+    this.textures = ["base", "boost", "heavy"].map((name) => loader.load(`./assets/danger-${name}.svg`));
   }
   clear() {
     for (const entry of this.entries.values()) {
@@ -28,9 +33,9 @@ export class DangerOverlays {
     this.signature = "";
   }
   sync(state: Readonly<GameSnapshot>, mapChanged: boolean, viewerId: string) {
-    const signature = state.bombs.map(b => `${b.id}:${b.x}:${b.z}`).join(",");
+    const signature = state.bombs.map((b) => `${b.id}:${b.x}:${b.z}`).join(",");
     if (mapChanged || signature !== this.signature) {
-      const live = new Map(state.bombs.map(b => [b.id, `${b.x},${b.z}`]));
+      const live = new Map(state.bombs.map((b) => [b.id, `${b.x},${b.z}`]));
       for (const [id, entry] of this.entries)
         if (live.get(id) !== entry.cell || mapChanged) {
           entry.mesh.removeFromParent();
@@ -50,16 +55,9 @@ export class DangerOverlays {
             polygonOffset: true,
             polygonOffsetFactor: -2,
           });
-          const mesh = new THREE.InstancedMesh(
-              this.geometry,
-              material,
-              cells.length,
-            ),
+          const mesh = new THREE.InstancedMesh(this.geometry, material, cells.length),
             matrix = new THREE.Matrix4(),
-            rotation = new THREE.Quaternion().setFromAxisAngle(
-              new THREE.Vector3(1, 0, 0),
-              -Math.PI / 2,
-            );
+            rotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2);
           cells.forEach((c, index) => {
             matrix.compose(
               new THREE.Vector3(
@@ -81,10 +79,18 @@ export class DangerOverlays {
     }
     for (const bomb of state.bombs) {
       const entry = this.entries.get(bomb.id)!;
-      entry.material.color.set(bombGuideColor(state.players,bomb.ownerId,viewerId));
+      const final = finalCountdown(bomb.detonateAt, state.time, !!bomb.slide);
       entry.mesh.renderOrder = bomb.ownerId === viewerId ? 2 : 3;
-      const w = bombWarning(bomb.detonateAt, state.time,!!bomb.slide);
-      entry.material.opacity = 0.42 + (0.14 + 0.05 * w.progress) * Math.sin(w.phase * Math.PI * 2);
+      const w = bombWarning(bomb.detonateAt, state.time, !!bomb.slide);
+      const wave = Math.sin(w.phase * Math.PI * 2);
+      // In the final countdown the path flashes harder and its peaks bleach towards white.
+      entry.material.color
+        .set(bombGuideColor(state.players, bomb.ownerId, viewerId))
+        .lerp(FLASH, 0.5 * final * Math.max(0, wave));
+      entry.material.opacity = Math.min(
+        1,
+        0.42 + 0.2 * final + (0.14 + 0.05 * w.progress + 0.22 * final) * wave,
+      );
     }
   }
   dispose() {

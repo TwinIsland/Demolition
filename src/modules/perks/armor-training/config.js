@@ -1,10 +1,12 @@
 /** @satisfies {import("../../../core/module-api").PerkConfig} */
 const config = {
-  translations: { en: {
-    name: "Conditioning",
-    description: "Gain 25 max HP and recover 25 HP.",
-    tag: "Health",
-  } },
+  translations: {
+    en: {
+      name: "Conditioning",
+      description: "Gain 25 max HP and recover 25 HP.",
+      tag: "Health",
+    },
+  },
   id: "armor-training",
   name: "强化体能",
   description: "最大血量增加 25，并恢复 25 点血量。",

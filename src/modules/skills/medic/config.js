@@ -1,17 +1,19 @@
 /** @satisfies {import("../../../core/module-api").SkillConfig} */
 const config = {
-  translations: { en: {
-    name: "Med Injector",
-    description: "Immediately recover 30 HP.",
-  } },
+  translations: {
+    en: {
+      name: "Med Injector",
+      description: "Recover 30 HP over 3 seconds. Taking damage stops the treatment.",
+    },
+  },
   id: "medic",
   name: "急救针",
-  description: "立即恢复 30 点血量",
+  description: "3 秒内恢复 30 点血量，受到伤害会中断治疗",
   icon: "heart",
   key: "F",
   price: 30,
-  cooldown: 20,
-  duration: 0,
+  cooldown: 24,
+  duration: 3,
   order: 4,
   code: "KeyF",
   stats: { heal: 30 },

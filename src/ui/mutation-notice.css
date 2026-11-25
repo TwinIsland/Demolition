@@ -1,20 +1,84 @@
 .mutation-notice {
-  position:absolute; z-index:5; pointer-events:none; left:50%; top:48%; transform:translate(-50%,-50%);
-  width:max-content; max-width:min(400px,85vw); display:flex; align-items:center; gap:16px; padding:14px 24px;
-  color:#eafff2; border-block:1px solid #83f5c8; border-inline:3px solid #abffdf;
-  clip-path:polygon(0 9px,9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%);
-  background:linear-gradient(110deg,#15362ff7,#0b1b1bf5 65%,#204530ee);
-  box-shadow:inset 0 0 25px #5affe322; overflow:hidden;
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  left: 50%;
+  top: 48%;
+  transform: translate(-50%, -50%);
+  width: max-content;
+  max-width: min(400px, 85vw);
+  display: flex;
+  align-items: center;
+  gap: var(--space-7);
+  padding: 14px 24px;
+  color: #eafff2;
+  border-block: 1px solid var(--positive-bright);
+  border-inline: 3px solid #abffdf;
+  clip-path: polygon(0 9px, 9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%);
+  background: linear-gradient(110deg, #15362ff7, #0b1b1bf5 65%, #204530ee);
+  box-shadow: inset 0 0 25px #5affe322;
+  overflow: hidden;
 }
-.mutation-notice[hidden] { display:none; }
-.gene-emblem { width:46px; height:46px; flex:none; display:grid; place-items:center; border:1px solid #6ecfab; transform:rotate(45deg); }
-.gene-emblem .icon { transform:rotate(-45deg); width:27px; height:27px; color:#afffe1; }
-.gene-result { position:relative; display:grid; gap:2px; min-width:0; }
-.gene-result small { display:flex; align-items:center; gap:5px; color:#a2e4bd; text-transform:uppercase; letter-spacing:.13em; }
-.gene-result small .icon { width:14px; height:14px; }
-.gene-result strong { font-size:clamp(19px,2vw,28px); line-height:1.15; }
-.gene-result span { font-size:12px; color:#cfecda; }
-.gene-scan { position:absolute; inset:0; background:linear-gradient(105deg,transparent 30%,#adffe647 48%,transparent 65%);
-  animation:gene-sweep .85s ease-out both; }
-@keyframes gene-sweep { from {transform:translateX(-90%)} to {transform:translateX(95%)} }
-@media(prefers-reduced-motion:reduce) { .gene-scan { display:none; } }
+.mutation-notice[hidden] {
+  display: none;
+}
+.gene-emblem {
+  width: 46px;
+  height: 46px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid #6ecfab;
+  transform: rotate(45deg);
+}
+.gene-emblem .icon {
+  transform: rotate(-45deg);
+  width: 27px;
+  height: 27px;
+  color: #afffe1;
+}
+.gene-result {
+  position: relative;
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.gene-result small {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #a2e4bd;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+}
+.gene-result small .icon {
+  width: 14px;
+  height: 14px;
+}
+.gene-result strong {
+  font-size: clamp(19px, 2vw, 28px);
+  line-height: 1.15;
+}
+.gene-result span {
+  font-size: var(--text-md);
+  color: #cfecda;
+}
+.gene-scan {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 30%, #adffe647 48%, transparent 65%);
+  animation: gene-sweep 0.85s ease-out both;
+}
+@keyframes gene-sweep {
+  from {
+    transform: translateX(-90%);
+  }
+  to {
+    transform: translateX(95%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gene-scan {
+    display: none;
+  }
+}

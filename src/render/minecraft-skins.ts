@@ -20,22 +20,36 @@ export class MinecraftSkins {
   private request = 0;
   constructor(private manager = THREE.DefaultLoadingManager) {
     try {
-      const model=localStorage.getItem("demolition-skin-model");
-      if (model==="slim" || model==="default") this.currentModel=model;
+      const model = localStorage.getItem("demolition-skin-model");
+      if (model === "slim" || model === "default") this.currentModel = model;
       const saved = localStorage.getItem("demolition-skin") ?? undefined;
       const legacy = saved?.match(/^\/assets\/skin-([a-z0-9-]+)\.png$/);
       this.currentSource = legacy ? (SKINS[legacy[1]] ?? DEFAULT_SKIN).texture : saved;
     } catch {}
   }
   get(playerId: string, preset?: Appearance["skin"]): Promise<MinecraftSkin> {
-    if ((!preset || preset === "custom") && playerId === "you" && this.custom) return Promise.resolve(this.custom);
-    const profile = SKINS[preset ?? ""] ?? ((playerId === "sunny" || playerId === "mint") ? SKINS.haka : undefined) ?? DEFAULT_SKIN;
+    if ((!preset || preset === "custom") && playerId === "you" && this.custom)
+      return Promise.resolve(this.custom);
+    const profile =
+      SKINS[preset ?? ""] ??
+      (playerId === "sunny" || playerId === "mint" ? SKINS.scout : undefined) ??
+      DEFAULT_SKIN;
     const custom = (!preset || preset === "custom") && playerId === "you" && this.currentSource;
     const source = custom || profile.texture;
     const model = custom ? this.currentModel : profile.model;
-    const key=model+source;
-    if (!this.cache.has(key)) this.cache.set(key,this.decode(source,model));
+    const key = model + source;
+    if (!this.cache.has(key)) this.cache.set(key, this.decode(source, model));
     return this.cache.get(key)!;
+  }
+  /** Skin and glow map for a zombie tier (1 to 3). The glow map lights the eyes and any embers. */
+  zombie(tier: number) {
+    const load = (source: string) => {
+      const key = "default" + source;
+      if (!this.cache.has(key)) this.cache.set(key, this.decode(source, "default"));
+      return this.cache.get(key)!;
+    };
+    const base = `./assets/zombies/zombie-${Math.min(3, Math.max(1, Math.round(tier)))}`;
+    return Promise.all([load(`${base}.png`), load(`${base}-glow.png`)]);
   }
   async import(file: File | undefined, model: SkinModel) {
     const ticket = ++this.request;
@@ -54,20 +68,17 @@ export class MinecraftSkins {
     if (ticket !== this.request) return false;
     this.custom = skin;
     this.currentSource = source;
-    this.currentModel=model;
+    this.currentModel = model;
     try {
-      if (file) localStorage.setItem("demolition-skin",source);
-      localStorage.setItem("demolition-skin-model",model);
+      if (file) localStorage.setItem("demolition-skin", source);
+      localStorage.setItem("demolition-skin-model", model);
     } catch {}
     return true;
   }
-  private async decode(
-    source: string,
-    model: SkinModel,
-  ): Promise<MinecraftSkin> {
+  private async decode(source: string, model: SkinModel): Promise<MinecraftSkin> {
     this.manager.itemStart(source);
     try {
-      return await this.decodeImage(source,model);
+      return await this.decodeImage(source, model);
     } catch (error) {
       this.manager.itemError(source);
       throw error;

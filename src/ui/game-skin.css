@@ -1,0 +1,1264 @@
+/*
+ * Game skin: military-industrial surface layer for menus, dialogs and the HUD.
+ * Pure overrides. Load this file after every other stylesheet. It changes no
+ * layout contracts (ids, classes, DOM) and adds no transform/animation to
+ * gameplay indicators.
+ */
+#app {
+  --skin-steel: url("/assets/ui/painted-steel.webp");
+  --skin-plate: url("/assets/ui/plate.webp");
+  --skin-gold: #e7bc70;
+  --skin-gold-hot: #ffe2a4;
+  --skin-ink: #e9ebe1;
+  --skin-dim: #a9b4ac;
+  --skin-edge: #6d7972;
+  --skin-edge-soft: #6d797259;
+  --skin-bg: #0e1516;
+  --skin-cut: 14px;
+  --skin-hazard: repeating-linear-gradient(-45deg, #e2b24d 0 9px, #161a17 9px 18px);
+  --skin-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23e7bc70' stroke-width='1.8' stroke-linecap='square'/%3E%3C/svg%3E");
+  --skin-ease: cubic-bezier(0.2, 0.75, 0.25, 1);
+}
+
+/* ---------- Backdrop behind dialogs ---------- */
+#app #overlay {
+  background:
+    repeating-linear-gradient(0deg, #0000 0 2px, #00000021 2px 3px),
+    radial-gradient(ellipse at center, #0c131480 0%, #070b0ce6 100%);
+  backdrop-filter: blur(9px) saturate(0.72) brightness(0.82);
+  animation: skin-veil 0.22s ease-out;
+}
+#app #overlay:has(.room-modal) {
+  background:
+    linear-gradient(180deg, #0a1012f2 0%, #0b1214b8 30%, #0b1214c9 68%, #080d0ef5 100%),
+    repeating-linear-gradient(0deg, #0000 0 2px, #0000001c 2px 3px),
+    url("/assets/menu/hangar.webp") center / cover;
+  backdrop-filter: none;
+}
+@keyframes skin-veil {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ---------- Dialog chassis ---------- */
+#app #overlay .modal:not(.room-modal, .help-modal) {
+  position: relative;
+  isolation: isolate;
+  text-align: left;
+  color: var(--skin-ink);
+  padding: clamp(40px, 5.5vh, 54px) clamp(22px, 3.4vw, 40px) clamp(24px, 3.6vh, 34px);
+  border: 1px solid var(--skin-edge);
+  border-radius: 0;
+  box-shadow: none;
+  background:
+    radial-gradient(circle at 12px calc(100% - 12px), #8b958d 0 1.5px, #0b0f0f 2px 3.5px, #0000 4px),
+    radial-gradient(circle at calc(100% - 12px) 12px, #8b958d 0 1.5px, #0b0f0f 2px 3.5px, #0000 4px),
+    linear-gradient(180deg, #ffffff12 0 1px, #0000 1px),
+    linear-gradient(135deg, #1c2628d9, #0f1617f0),
+    var(--skin-steel) center / 420px;
+  clip-path: polygon(
+    var(--skin-cut) 0,
+    100% 0,
+    100% calc(100% - var(--skin-cut)),
+    calc(100% - var(--skin-cut)) 100%,
+    0 100%,
+    0 var(--skin-cut)
+  );
+  animation: skin-arrive 0.26s var(--skin-ease);
+}
+/* Hazard strip along the top edge, like a stencilled equipment case. */
+#app #overlay .modal:not(.room-modal, .help-modal)::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 auto 0;
+  height: 7px;
+  background: var(--skin-hazard);
+  border-bottom: 1px solid #0a0e0e;
+  opacity: 0.9;
+}
+/* Corner brackets. */
+#app #overlay .modal:not(.room-modal, .help-modal)::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 16px 9px 9px;
+  pointer-events: none;
+  --b: #e7bc7066;
+  background:
+    linear-gradient(var(--b), var(--b)) 100% 0 / 18px 1px no-repeat,
+    linear-gradient(var(--b), var(--b)) 100% 0 / 1px 18px no-repeat,
+    linear-gradient(var(--b), var(--b)) 0 100% / 18px 1px no-repeat,
+    linear-gradient(var(--b), var(--b)) 0 100% / 1px 18px no-repeat;
+}
+@keyframes skin-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+    filter: brightness(1.6);
+  }
+}
+
+#app #overlay .modal h2 {
+  font-family: var(--font-hud, inherit);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #f6efdc;
+  text-shadow: 0 1px 0 #000a;
+}
+#app #overlay .modal:not(.room-modal, .help-modal) h2 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 18px;
+  padding-bottom: 12px;
+  font-size: clamp(22px, 2.3vw, 30px);
+  border-bottom: 1px solid var(--skin-edge-soft);
+}
+#app #overlay .modal:not(.room-modal, .help-modal) h2::before {
+  content: "";
+  flex: none;
+  width: 5px;
+  height: 1em;
+  background: var(--skin-gold);
+  box-shadow: 8px 0 0 -1px #e7bc7055;
+}
+#app #overlay .modal > p {
+  color: var(--skin-dim);
+}
+#app #overlay .modal-kicker {
+  color: var(--skin-gold);
+  letter-spacing: 0.22em;
+}
+
+/* ---------- Buttons ---------- */
+#app .primary,
+#app #lobby .start-btn {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  border: 1px solid #edc582;
+  border-left: 3px solid var(--skin-gold-hot);
+  border-radius: 0;
+  background: #bf9d5c url("/assets/menu/confirm.webp") center / 100% 100%;
+  color: #191c17;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 1px #ffffff37;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  transition:
+    filter 0.16s,
+    transform 0.09s;
+}
+#app .primary::after,
+#app #lobby .start-btn::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0 auto 0 -40%;
+  width: 34%;
+  background: linear-gradient(100deg, #0000, #fff6d680, #0000);
+  transform: skewX(-18deg) translateX(-120%);
+}
+#app .primary:not(:disabled):hover,
+#app #lobby .start-btn:not(:disabled):hover {
+  background-color: #bf9d5c;
+  filter: brightness(1.13);
+}
+#app .primary:not(:disabled):hover::after,
+#app #lobby .start-btn:not(:disabled):hover::after {
+  transform: skewX(-18deg) translateX(560%);
+  transition: transform 0.55s ease-out;
+}
+#app .primary:not(:disabled):active,
+#app #lobby .start-btn:not(:disabled):active {
+  transform: translateY(2px);
+  filter: brightness(0.92);
+}
+#app .primary:disabled {
+  filter: grayscale(0.75) brightness(0.7);
+}
+#app .room-actions .primary {
+  background: #bf9d5c url("/assets/menu/confirm.webp") center / 100% 100%;
+  color: #191c17;
+}
+
+#app #overlay .modal-actions {
+  gap: 10px;
+  margin-top: 14px;
+}
+#app #overlay .modal-actions button,
+#app #overlay .text-btn,
+#app .room-actions #home,
+#app #overlay .help-modal header button {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1px solid var(--skin-edge);
+  border-radius: 0;
+  background: #1a2325 var(--skin-plate) center / 260px;
+  color: #d6dcd3;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  transition:
+    color 0.15s,
+    border-color 0.15s,
+    filter 0.15s,
+    transform 0.09s;
+}
+#app .room-actions #home,
+#app #overlay .help-modal header button {
+  flex: none;
+}
+#app #overlay .modal-actions button:hover,
+#app #overlay .text-btn:hover,
+#app .room-actions #home:hover {
+  color: var(--skin-gold-hot);
+  border-color: var(--skin-gold);
+  filter: brightness(1.25);
+}
+#app #overlay .modal-actions button:active,
+#app .room-actions #home:active {
+  transform: translateY(1px);
+}
+#app button:focus-visible,
+#app select:focus-visible,
+#app input:focus-visible {
+  outline: 2px solid var(--skin-gold);
+  outline-offset: 2px;
+}
+
+/* ---------- Form controls: no browser chrome ---------- */
+#app select {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  min-height: 32px;
+  padding: 4px 30px 4px 10px;
+  border: 1px solid var(--skin-edge);
+  border-radius: 0;
+  background:
+    var(--skin-chevron) right 10px center / 11px 7px no-repeat,
+    linear-gradient(90deg, #0000 calc(100% - 27px), #00000059 calc(100% - 27px)),
+    linear-gradient(180deg, #ffffff0f, #0000 45%, #0000002e),
+    #1a2426 var(--skin-plate) center / 240px;
+  color: var(--skin-ink);
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  box-shadow: inset 0 0 0 1px #0000004d;
+  transition:
+    border-color 0.15s,
+    filter 0.15s;
+}
+#app select:not(:disabled):hover {
+  border-color: var(--skin-gold);
+  filter: brightness(1.18);
+}
+#app select:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+#app select option {
+  background: #141c1e;
+  color: var(--skin-ink);
+}
+#app #lobby .outfit-controls :is(select, button) {
+  height: 34px;
+}
+#app #lobby .outfit-controls select {
+  padding: 4px 30px 4px 10px;
+  background:
+    var(--skin-chevron) right 10px center / 11px 7px no-repeat,
+    linear-gradient(90deg, #0000 calc(100% - 27px), #00000059 calc(100% - 27px)),
+    linear-gradient(180deg, #ffffff0f, #0000 45%, #0000002e),
+    #1a2426 var(--skin-plate) center / 240px;
+}
+#app .room-modal select {
+  max-width: 72%;
+  padding: 3px 28px 3px 8px;
+  min-height: 28px;
+  font-size: 12px;
+}
+
+/* Checkboxes become mechanical toggle switches. */
+#app #overlay input[type="checkbox"]:not(.seat-switch input) {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex: none;
+  cursor: pointer;
+  margin: 0;
+  width: 46px;
+  height: 22px;
+  border: 1px solid var(--skin-edge);
+  border-radius: 0;
+  background: linear-gradient(180deg, #0a0f10, #182123);
+  box-shadow: inset 0 2px 5px #000b;
+  transition: border-color 0.15s;
+}
+#app #overlay input[type="checkbox"]:not(.seat-switch input)::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 19px;
+  height: 16px;
+  background:
+    linear-gradient(
+      90deg,
+      #0000 5px,
+      #0006 5px 6px,
+      #0000 6px 9px,
+      #0006 9px 10px,
+      #0000 10px 13px,
+      #0006 13px 14px,
+      #0000 14px
+    ),
+    linear-gradient(180deg, #8d9891, #525c57);
+  box-shadow: 0 1px 2px #000;
+  transition:
+    translate 0.16s var(--skin-ease),
+    background-color 0.16s;
+}
+#app #overlay input[type="checkbox"]:not(.seat-switch input)::after {
+  content: "";
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3a4541;
+  transition:
+    background 0.16s,
+    box-shadow 0.16s,
+    right 0.16s;
+}
+#app #overlay input[type="checkbox"]:not(.seat-switch input):checked {
+  border-color: var(--skin-gold);
+}
+#app #overlay input[type="checkbox"]:not(.seat-switch input):checked::before {
+  translate: 21px;
+  background:
+    linear-gradient(
+      90deg,
+      #0000 5px,
+      #0005 5px 6px,
+      #0000 6px 9px,
+      #0005 9px 10px,
+      #0000 10px 13px,
+      #0005 13px 14px,
+      #0000 14px
+    ),
+    linear-gradient(180deg, #f3cf8c, #b98f45);
+}
+#app #overlay input[type="checkbox"]:not(.seat-switch input):checked::after {
+  right: 33px;
+  background: #9ff0b0;
+  box-shadow: 0 0 6px #7be896;
+}
+
+/* ---------- Settings ---------- */
+#app #overlay .graphics-modal {
+  width: min(470px, 100%);
+}
+#app #graphics-form label,
+#app #overlay .modal > .language-setting {
+  min-height: 46px;
+  margin: 0;
+  padding: 0 2px;
+  border-top: 0;
+  border-bottom: 1px solid var(--skin-edge-soft);
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  color: #d3d9d0;
+}
+#app #graphics-form label:hover {
+  color: #fff3d6;
+  background: linear-gradient(90deg, #e7bc7014, #0000 70%);
+}
+#app #graphics-form select,
+#app #overlay .modal > .language-setting select {
+  min-width: 132px;
+}
+#app #overlay .modal > .language-setting {
+  margin-bottom: 18px;
+}
+#app .graphics-footer {
+  margin-top: 20px;
+}
+#app .graphics-footer .primary {
+  min-width: 120px;
+  padding: 11px 18px;
+}
+
+/* ---------- Pause / eliminated / result ---------- */
+#app #overlay .modal .primary {
+  padding: 15px 20px;
+}
+#app #overlay .result-icon {
+  color: var(--skin-gold);
+}
+#app #overlay .result-stats > div {
+  border: 1px solid var(--skin-edge-soft);
+  background: #0c121380;
+}
+#app #overlay .result-stats b {
+  color: #f6efdc;
+}
+#app #overlay .result-stats span {
+  color: var(--skin-dim);
+}
+
+/* ---------- Skill shop ---------- */
+#app #overlay .shop-modal {
+  width: min(660px, 94vw);
+}
+#app #overlay .shop-modal header {
+  align-items: center;
+  padding-bottom: 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--skin-edge-soft);
+}
+#app #overlay .modal.shop-modal:not(.room-modal, .help-modal) header h2 {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+#app #overlay .shop-modal header > :not(h2) {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--skin-dim);
+}
+#app #overlay .shop-grid .shop-card {
+  transition:
+    transform 0.14s var(--skin-ease),
+    filter 0.14s,
+    border-color 0.14s,
+    box-shadow 0.14s;
+}
+#app #overlay .shop-grid .shop-card:not(:disabled):hover {
+  transform: translateY(-2px);
+  filter: brightness(1.22);
+  border-color: var(--skin-gold);
+  box-shadow:
+    0 6px 18px #000a,
+    inset 0 0 0 1px #e7bc7040;
+}
+#app #overlay .shop-grid .shop-card:not(:disabled):active {
+  transform: translateY(1px);
+}
+#app #overlay .shop-grid .shop-card.purchased {
+  box-shadow:
+    inset 3px 0 #9ff0b0,
+    inset 0 0 22px #5fae7230;
+}
+
+/* ---------- Match room ---------- */
+#app .room-heading h2 {
+  text-shadow: 0 3px 18px #000c;
+}
+#app .operator-card {
+  border-color: var(--skin-edge-soft);
+  background:
+    linear-gradient(180deg, #121c20e6 0%, #263135b8 56%, #111b1eeb 82%),
+    var(--skin-steel) center / 380px;
+  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  box-shadow: inset 0 0 0 1px #00000059;
+  transition:
+    filter 0.18s,
+    translate 0.18s var(--skin-ease);
+  animation: skin-card-in 0.34s var(--skin-ease) backwards;
+}
+#app .operator-card:nth-child(2) {
+  animation-delay: 0.05s;
+}
+#app .operator-card:nth-child(3) {
+  animation-delay: 0.1s;
+}
+#app .operator-card:nth-child(4) {
+  animation-delay: 0.15s;
+}
+#app .operator-card:not(.empty):hover {
+  filter: brightness(1.1);
+  translate: 0 -3px;
+}
+#app .operator-info {
+  background: #0d1517e0 var(--skin-plate) center / 300px;
+  background-blend-mode: multiply;
+}
+@keyframes skin-card-in {
+  from {
+    opacity: 0;
+    translate: 0 18px;
+  }
+}
+
+/* ---------- Lobby touches ---------- */
+#app #lobby .map-option {
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  transition:
+    filter 0.16s,
+    translate 0.16s var(--skin-ease);
+}
+#app #lobby .map-option:hover {
+  filter: brightness(1.12);
+  translate: -3px 0;
+}
+#app .mode-list {
+  background: #101819e6 var(--skin-plate) center / 260px;
+}
+#app .top-actions .icon-btn:active {
+  transform: translateY(1px);
+}
+
+/* ---------- HUD ---------- */
+#app #hud .round-status {
+  gap: 16px;
+  padding: 7px 26px 8px;
+  border: 0;
+  border-radius: 0;
+  background:
+    linear-gradient(90deg, #e7bc70, #e7bc70) 50% 100% / 46% 2px no-repeat,
+    linear-gradient(180deg, #141d1ff2, #0d1415e6);
+  clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 100%, 14px 100%);
+  backdrop-filter: blur(6px);
+}
+#app #hud .round-status > span {
+  color: #c3ccc3;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+#app #hud .round-status b {
+  color: #fbf3df;
+  font-weight: 700;
+  font-family: var(--font-hud, inherit);
+  text-shadow: 0 0 12px #e7bc7055;
+}
+
+#app #hud .player-row {
+  border: 0;
+  border-left: 3px solid var(--row-color, #6d7972);
+  border-radius: 0;
+  background: linear-gradient(90deg, #0f1718eb, #0f171899 70%, #0f171800);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+}
+#app #hud .player-row.self {
+  border-left-color: var(--skin-gold);
+  background: linear-gradient(90deg, #231d0feb, #15191699 70%, #0f171800);
+}
+#app #hud .player-row .avatar {
+  border-radius: 2px;
+}
+#app #hud .player-name {
+  letter-spacing: 0.06em;
+  font-weight: 650;
+}
+#app #hud .player-name small {
+  color: #8f9a93;
+  letter-spacing: 0.1em;
+}
+
+#app #hud .radar {
+  border: 1px solid var(--skin-edge);
+  border-radius: 0;
+  background:
+    linear-gradient(#e7bc70, #e7bc70) 0 0 / 14px 2px no-repeat,
+    linear-gradient(#e7bc70, #e7bc70) 0 0 / 2px 14px no-repeat,
+    linear-gradient(#e7bc70, #e7bc70) 100% 100% / 14px 2px no-repeat,
+    linear-gradient(#e7bc70, #e7bc70) 100% 100% / 2px 14px no-repeat,
+    linear-gradient(180deg, #141d1ff0, #0c1213f0);
+  box-shadow:
+    0 8px 26px #0009,
+    inset 0 0 0 1px #0008;
+  backdrop-filter: blur(6px);
+}
+#app #hud .radar-title {
+  color: #d7ddd3;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+#app #hud .radar-title .icon {
+  color: var(--skin-gold);
+}
+#app #hud #minimap {
+  border-radius: 0;
+  outline: 1px solid #00000080;
+}
+#app #hud .radar-footer {
+  color: #96a199;
+  letter-spacing: 0.06em;
+}
+
+#app #hud .bottom-hud {
+  border: 1px solid #726849;
+  border-radius: 0;
+  background:
+    linear-gradient(180deg, #ffffff14 0 1px, #0000 1px),
+    linear-gradient(180deg, #121b19ee, #0c1211f5),
+    var(--skin-plate) center / 260px;
+  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%, 0 10px);
+}
+#app #hud #countdown span {
+  color: #e8e3d2;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+}
+#app #hud #countdown b {
+  color: #fbf1d6;
+  font-weight: 800;
+  font-family: var(--font-hud, inherit);
+  text-shadow:
+    0 0 34px #e7a94a99,
+    0 4px 0 #0009;
+}
+#app .top-actions .icon-btn {
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #app #overlay,
+  #app #overlay .modal,
+  #app .operator-card {
+    animation: none;
+  }
+  #app .primary::after,
+  #app #lobby .start-btn::after {
+    display: none;
+  }
+}
+
+/* ---------- Second pass: result, feed, wheel, pickups ---------- */
+#app #overlay .result-icon {
+  margin: 0 0 16px;
+  width: 58px;
+  height: 58px;
+  border-radius: 0;
+  border: 1px solid #e7bc7066;
+  background: #e7bc7014 var(--skin-plate) center / 200px;
+  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
+}
+#app #overlay .result-stats {
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  margin-bottom: 20px;
+}
+#app #overlay .result-stats > div {
+  flex: 1;
+  padding: 12px 10px;
+  text-align: center;
+}
+#app #overlay .result-stats b {
+  font-family: var(--font-hud, inherit);
+  font-weight: 700;
+  font-size: 26px;
+  margin-bottom: 4px;
+}
+#app #overlay .result-stats span {
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+
+#app #hud .combat-feed {
+  border-left: 3px solid var(--skin-gold);
+  background: linear-gradient(90deg, #0d1516eb, #0d151699 78%, #0d151600);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+}
+#app #hud .combat-feed header {
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #efe6cc;
+}
+#app #hud .combat-feed.editing {
+  background: #0d1516f5 var(--skin-plate) center / 260px;
+}
+#app #hud .combat-feed input {
+  border: 1px solid var(--skin-edge);
+  border-radius: 0;
+  background: #0a0f10;
+  color: var(--skin-ink);
+}
+#app #hud .combat-feed input:focus {
+  border-color: var(--skin-gold);
+  outline: 0;
+}
+
+#app #hud .gear-caption,
+#app .board-charge-hint {
+  border: 1px solid #726849;
+  background: #0d1516e6;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+}
+#app #hud .gear-ring {
+  box-shadow:
+    0 4px 18px #0009,
+    0 0 0 1px #726849,
+    0 0 0 4px #0d1516cc;
+}
+
+#app #perk-tray .perk-card {
+  border-radius: 0;
+}
+#app #perk-tray .perk-card h3 {
+  letter-spacing: 0.05em;
+}
+
+/* Colours only; motion on .feel-* belongs to feedback-hud.css. */
+#app .feel-pickup {
+  border-radius: 0;
+  border: 1px solid #726849;
+  border-left: 3px solid var(--feel-accent, var(--skin-gold));
+  background: #0d1516e6;
+  letter-spacing: 0.06em;
+}
+
+/* ---------- Skin head portraits (painted by skin-heads.ts) ---------- */
+#app #hud .player-row {
+  border-left-color: var(--row-color, #6d7972);
+}
+#app #hud .player-row:has(.avatar) {
+  --row-color: #6d7972;
+}
+#app #hud .avatar.skin-head {
+  border-radius: 0;
+  background-color: #0b1011;
+  background-size: cover;
+  image-rendering: pixelated;
+  box-shadow:
+    0 0 0 1px #000,
+    0 0 0 2px var(--player-color),
+    0 2px 6px #000a;
+}
+#app #hud .avatar.skin-head i {
+  display: none;
+}
+#app #hud .player-row.eliminated .avatar.skin-head {
+  filter: grayscale(1) brightness(0.7);
+}
+
+/* ---------- Player card second line (markup from player-card.ts) ---------- */
+#app #hud .player-row {
+  flex-wrap: wrap;
+  row-gap: 5px;
+  width: 226px;
+  padding: 7px 10px 7px 7px;
+}
+#app #hud .card-stats {
+  flex: 0 0 100%;
+  display: flex;
+  gap: 10px;
+  padding-top: 5px;
+  border-top: 1px solid #6d797240;
+  font: 600 10px/1 var(--font-hud, inherit);
+  color: #cfd6cc;
+  font-variant-numeric: tabular-nums;
+}
+#app #hud .card-stats > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+#app #hud .card-stats .icon {
+  width: 11px;
+  height: 11px;
+  color: var(--skin-gold);
+}
+#app #hud .card-buffs {
+  flex: 0 0 100%;
+  display: grid;
+  grid-template-columns: repeat(8, 22px);
+  gap: 3px;
+  max-height: 47px;
+  overflow: hidden;
+  pointer-events: auto;
+}
+#app #hud .card-buff {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  font-style: normal;
+  color: var(--buff-color, #cfd6cc);
+  background: #0b1112d9;
+  border: 1px solid color-mix(in srgb, var(--buff-color, #6d7972) 55%, transparent);
+}
+#app #hud .card-buff .icon {
+  width: 14px;
+  height: 14px;
+}
+#app #hud .card-buff b {
+  position: absolute;
+  right: -1px;
+  bottom: -2px;
+  padding: 0 2px;
+  background: #0b1112;
+  color: #fff;
+  font: 700 8px/1.1 var(--font-hud, inherit);
+}
+#app #hud .card-buff-more {
+  color: #e9ebe1;
+  font: 700 13px/1 var(--font-hud, inherit);
+  letter-spacing: 0.05em;
+  cursor: help;
+}
+#app #hud .player-row.eliminated :is(.card-stats, .card-buffs) {
+  display: none;
+}
+#app #lobby .design-credit .credit-line {
+  color: inherit;
+}
+
+/* ---------- Raster panel art: player cards and radar housing ---------- */
+#app #hud .player-row,
+#app #hud .player-row.self {
+  border: 0;
+  clip-path: none;
+  background: none;
+  width: 232px;
+  padding: 9px 14px 10px 16px;
+  border-image: url("/assets/ui/player-card.webp") 40 fill / 20px stretch;
+  filter: drop-shadow(0 3px 5px #0009);
+}
+#app #hud .player-row.self {
+  border-image-source: url("/assets/ui/player-card-self.webp");
+}
+#app #hud .player-row.eliminated {
+  filter: grayscale(1) drop-shadow(0 3px 5px #0009);
+}
+#app #hud .card-stats {
+  border-top-color: #ffffff1f;
+}
+
+#app #hud .radar {
+  border: 0;
+  background: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  padding: 16px 15px 20px;
+  border-image: url("/assets/ui/radar-frame.webp") 96 fill / 24px stretch;
+  filter: drop-shadow(0 6px 12px #000a);
+}
+#app #hud .radar-title {
+  margin-bottom: 7px;
+}
+#app #hud #minimap {
+  outline: 0;
+  opacity: 0.96;
+}
+
+/* ---------- English typography ----------
+ * The lobby title was tracked at -.045em for Chinese display type. On the
+ * semi-condensed Latin face at weight 900 that makes glyphs collide, so Latin
+ * copy gets its own weight, tracking and case. */
+#app:lang(en) #lobby .hero h1,
+:lang(en) #app #lobby .hero h1 {
+  font-family: var(--font-hud);
+  font-weight: 800;
+  letter-spacing: 0.035em;
+  word-spacing: 0.04em;
+  line-height: 1.08;
+  text-transform: uppercase;
+  font-size: clamp(30px, 3.5vw, 58px);
+}
+:lang(en) #app .brand span {
+  letter-spacing: 0.12em;
+}
+:lang(en) #app .mode-list button {
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+:lang(en) #app #lobby .outfit-controls label,
+:lang(en) #app #lobby .section-caption > span {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+:lang(en) #app #lobby .map-option b {
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+:lang(en) #app .room-heading h2 {
+  letter-spacing: 0.05em;
+}
+:lang(en) #app .operator-info h3 {
+  letter-spacing: 0.06em;
+}
+:lang(en) #app #overlay .modal > p,
+:lang(en) #app #overlay .shop-card small {
+  letter-spacing: 0.015em;
+  line-height: 1.45;
+}
+
+/* Wiki link in the top bar shares the labelled icon-button look. */
+#app .top-actions a.icon-btn {
+  text-decoration: none;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+/* ---------- Match outcome dialogs: victory, defeat, draw, eliminated ---------- */
+#app #overlay .modal.outcome-modal {
+  --outcome: #e7bc70;
+  --outcome-art: url("/assets/ui/outcome-defeat.webp");
+  width: min(560px, 100%);
+  max-width: 560px;
+  padding-top: 0;
+  border-color: color-mix(in srgb, var(--outcome) 55%, #3a4340);
+}
+#app #overlay .modal.outcome-victory {
+  --outcome: #f3c873;
+  --outcome-art: url("/assets/ui/outcome-victory.webp");
+}
+#app #overlay .modal.outcome-defeat,
+#app #overlay .modal.outcome-eliminated {
+  --outcome: #ff6a3d;
+}
+#app #overlay .modal.outcome-draw {
+  --outcome: #a9b4ac;
+}
+#app #overlay .modal.outcome-draw .outcome-banner {
+  filter: grayscale(1) brightness(1.15);
+}
+/* The hazard strip takes the outcome colour instead of the default amber. */
+#app #overlay .modal.outcome-modal::before {
+  background: repeating-linear-gradient(-45deg, var(--outcome) 0 9px, #161a17 9px 18px);
+}
+#app #overlay .outcome-banner {
+  margin: 0 calc(-1 * clamp(22px, 3.4vw, 40px)) 6px;
+  padding: 54px 24px 30px;
+  text-align: center;
+  background: var(--outcome-art) center top / cover no-repeat;
+  animation: skin-outcome-in 0.7s var(--skin-ease) backwards;
+}
+#app #overlay .outcome-banner .modal-kicker {
+  display: block;
+  color: var(--outcome);
+  font-weight: 700;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 6px #000;
+}
+#app #overlay .modal.outcome-modal .outcome-banner h2 {
+  display: block;
+  margin: 10px 0 0;
+  padding: 0;
+  border: 0;
+  font-size: clamp(34px, 4.6vw, 56px);
+  line-height: 1.05;
+  letter-spacing: 0.08em;
+  color: #fff6e0;
+  text-shadow:
+    0 2px 0 #000c,
+    0 0 34px color-mix(in srgb, var(--outcome) 70%, transparent);
+}
+#app #overlay .modal.outcome-modal .outcome-banner h2::before {
+  content: none;
+}
+#app #overlay .modal.outcome-defeat h2,
+#app #overlay .modal.outcome-eliminated h2 {
+  color: #ffe1d6;
+}
+#app #overlay .outcome-banner p {
+  margin: 8px 0 0;
+  color: #d9ddd2;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-shadow: 0 1px 5px #000;
+}
+@keyframes skin-outcome-in {
+  from {
+    opacity: 0;
+    filter: brightness(2.4);
+    transform: scale(1.04);
+  }
+}
+
+#app #overlay .debrief {
+  position: relative;
+  margin: 0 0 18px;
+  padding: 12px 14px 10px;
+  text-align: left;
+  border: 1px solid var(--skin-edge-soft);
+  border-left: 3px solid var(--outcome);
+  background: #080d0ed9 linear-gradient(180deg, #ffffff08, #0000 40%);
+  font-family: var(--font-hud, inherit);
+  font-variant-numeric: tabular-nums;
+}
+#app #overlay .debrief h3 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--outcome);
+}
+#app #overlay .debrief dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 22px;
+  margin: 0;
+}
+#app #overlay .debrief dl > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  min-height: 26px;
+  border-bottom: 1px dashed #6d797238;
+  font-size: 13px;
+}
+#app #overlay .debrief dt {
+  color: var(--skin-dim);
+  letter-spacing: 0.06em;
+}
+#app #overlay .debrief dd {
+  margin: 0;
+  color: #f6efdc;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+#app #overlay .debrief dl > div[data-pending] {
+  border-bottom-color: #0000;
+}
+/* Block cursor on the cell being typed. */
+#app #overlay .debrief[data-typing] :is(dt, dd):not(:empty):not(:has(~ :not(:empty)))::after {
+  content: "";
+  display: inline-block;
+  width: 0.5em;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -0.12em;
+  background: var(--outcome);
+  animation: skin-caret 0.5s steps(2) infinite;
+}
+#app #overlay .debrief-skip {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: #7f8a84;
+  text-transform: uppercase;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+#app #overlay .debrief[data-typing] .debrief-skip {
+  opacity: 1;
+}
+@keyframes skin-caret {
+  50% {
+    opacity: 0;
+  }
+}
+@media (max-width: 520px) {
+  #app #overlay .debrief dl {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #app #overlay .outcome-banner {
+    animation: none;
+  }
+}
+
+/* ---------- In-match supply wheel: hold the key, slide, release to buy ---------- */
+#app #hud .wallet-supply {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #cfd6cc;
+  border: 1px solid #72684999;
+  background: #0b1112b3;
+}
+#app #hud .wallet-supply kbd {
+  padding: 0 4px;
+  border: 1px solid #aab19a80;
+  color: #e9ebe1;
+  font: 600 10px/1.4 var(--font-hud, inherit);
+}
+#app #hud .wallet-crate {
+  margin-left: 0;
+}
+#app #hud .supply-shop {
+  --wheel: clamp(250px, 44vmin, 400px);
+  position: absolute;
+  z-index: 8;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  pointer-events: none;
+  user-select: none;
+  color: #eaeee7;
+  font-family: var(--font-hud, inherit);
+  font-variant-numeric: tabular-nums;
+  filter: drop-shadow(0 6px 26px #000d);
+  animation: skin-supply-in 0.16s var(--skin-ease);
+}
+@keyframes skin-supply-in {
+  from {
+    opacity: 0;
+    scale: 0.9;
+  }
+}
+#app #hud .supply-ring {
+  position: relative;
+  width: var(--wheel);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #0c1213f2 0 26.5%, #0000 27%),
+    radial-gradient(circle, #0000 0 69%, #e7bc70 69.2% 69.9%, #141c1dcc 70.1%),
+    url("/assets/ui/plate.webp") center / 240px;
+  box-shadow:
+    0 0 0 2px #a5a797,
+    0 0 0 7px #0d1516d9;
+}
+#app #hud .supply-sector {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, #192327ee 40%, #32403ee6 90%);
+}
+#app #hud .supply-sector.hovered {
+  background: radial-gradient(circle, #856632, #f4c668);
+  color: #151b19;
+}
+#app #hud .supply-sector[data-refusal]:not([data-refusal=""]) {
+  background: #1c2224e6;
+  color: #8f9a96;
+}
+#app #hud .supply-sector.hovered[data-refusal]:not([data-refusal=""]) {
+  background: radial-gradient(circle, #4a2019, #8a3a2a);
+  color: #ffd9cf;
+}
+#app #hud .supply-slot {
+  position: absolute;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  translate: -50% -50%;
+}
+#app #hud .supply-slot .icon {
+  width: calc(var(--wheel) * 0.12);
+  height: calc(var(--wheel) * 0.12);
+}
+#app #hud .supply-slot b {
+  font-size: clamp(13px, 1.5vw, 18px);
+  font-weight: 800;
+  line-height: 1;
+  color: #ffe2a4;
+}
+#app #hud .supply-sector.hovered .supply-slot b {
+  color: inherit;
+}
+#app #hud .supply-sector[data-refusal="coins"] .supply-slot b {
+  color: #ff7a5c;
+}
+#app #hud .supply-slot small {
+  font-size: 10px;
+  line-height: 1;
+  opacity: 0.8;
+}
+#app #hud .supply-hub {
+  position: absolute;
+  inset: 24%;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 3px;
+  text-align: center;
+  border-radius: 50%;
+  border: 1px solid #b2ac8d71;
+  padding: 8px;
+}
+#app #hud .supply-hub strong {
+  font-size: clamp(13px, 1.5vw, 17px);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #f6efdc;
+}
+#app #hud .supply-hub small {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: #a9b4ac;
+}
+#app #hud .supply-hub small[data-refused="true"] {
+  color: #ff9b82;
+}
+#app #hud .supply-hub small[data-refused="false"] {
+  color: #9ff0b0;
+}
+#app #hud .supply-price,
+#app #hud .supply-balance {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #ffe2a4;
+  font-weight: 800;
+}
+#app #hud .supply-shop .supply-price .icon,
+#app #hud .supply-shop .supply-balance .icon {
+  width: 15px;
+  height: 15px;
+}
+#app #hud .supply-pointer {
+  position: absolute;
+  z-index: 2;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #fff5d9;
+  border: 2px solid #26221b;
+  box-shadow: 0 0 0 1px #ffd781;
+  translate: -50% -50%;
+}
+#app #hud .supply-caption {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 5px 14px;
+  border: 1px solid #726849;
+  background: #0d1516e6;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+#app #hud .supply-hint {
+  color: #a9b4ac;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+#app #hud .supply-shop.refused {
+  animation: skin-coin-refuse 0.36s linear;
+}
+@media (prefers-reduced-motion: reduce) {
+  #app #hud .supply-shop {
+    animation: none;
+  }
+}
+
+/* Cancel sector of the supply wheel. */
+#app #hud .supply-sector[data-supply=cancel] { background:radial-gradient(circle,#231a1aee 40%,#3a2826e6 90%); color:#d9b4aa; }
+#app #hud .supply-sector[data-supply=cancel].hovered { background:radial-gradient(circle,#5a2019,#b04a36); color:#fff0ea; }
+#app #hud .supply-sector[data-supply=cancel] .supply-slot small { font-size:11px; letter-spacing:.14em; text-transform:uppercase; opacity:1; }
+#app #hud .supply-sector[data-supply=cancel] .supply-slot b { display:none; }

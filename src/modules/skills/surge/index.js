@@ -2,7 +2,7 @@ import { defineSkill } from "../../sdk.js";
 import config from "./config.js";
 
 export default defineSkill(config, {
-  activeUntil: p => p.surgeUntil,
+  activeUntil: (p) => p.surgeUntil,
   activate(player, state, duration) {
     player.surgeUntil = state.time + duration;
   },

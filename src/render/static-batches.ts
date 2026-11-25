@@ -16,23 +16,18 @@ export class StaticBatches {
     const groups = new Map<string, THREE.Mesh[]>();
     root.traverse((object) => {
       if (!(object instanceof THREE.Mesh)) return;
-      const materials = Array.isArray(object.material) ? object.material.map(m=>m.uuid).join(",") : object.material.uuid;
+      const materials = Array.isArray(object.material)
+        ? object.material.map((m) => m.uuid).join(",")
+        : object.material.uuid;
       const key = `${object.geometry.uuid}:${materials}:${object.castShadow}:${object.receiveShadow}`;
       const list = groups.get(key) ?? [];
       list.push(object);
       groups.set(key, list);
     });
-    this.sourceMeshes = [...groups.values()].reduce(
-      (sum, list) => sum + list.length,
-      0,
-    );
+    this.sourceMeshes = [...groups.values()].reduce((sum, list) => sum + list.length, 0);
     for (const sources of groups.values()) {
       const first = sources[0],
-        batch = new THREE.InstancedMesh(
-          first.geometry,
-          first.material,
-          sources.length,
-        );
+        batch = new THREE.InstancedMesh(first.geometry, first.material, sources.length);
       batch.castShadow = first.castShadow;
       batch.receiveShadow = first.receiveShadow;
       batch.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -53,8 +48,7 @@ export class StaticBatches {
       this.batches.push(batch);
     }
     for (const child of [...root.children])
-      if (child instanceof THREE.Group && child.children.length === 0)
-        root.remove(child);
+      if (child instanceof THREE.Group && child.children.length === 0) root.remove(child);
   }
   removeCell(key: string) {
     const slots = this.cells.get(key);
@@ -67,12 +61,13 @@ export class StaticBatches {
     this.cells.delete(key);
     return true;
   }
-  translateCell(key:string, dx:number, dz:number) {
-    for (const {batch,index} of this.cells.get(key) ?? []) {
-      batch.getMatrixAt(index,this.matrix);
+  translateCell(key: string, dx: number, dz: number, dy = 0) {
+    for (const { batch, index } of this.cells.get(key) ?? []) {
+      batch.getMatrixAt(index, this.matrix);
       this.matrix.elements[12] += dx;
+      this.matrix.elements[13] += dy;
       this.matrix.elements[14] += dz;
-      batch.setMatrixAt(index,this.matrix);
+      batch.setMatrixAt(index, this.matrix);
       this.moved.add(batch);
     }
   }

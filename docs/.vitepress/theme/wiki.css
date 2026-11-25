@@ -1,0 +1,122 @@
+/* An encyclopedia look on top of the default VitePress theme. */
+:root {
+  --vp-c-brand-1: #3366cc;
+  --vp-c-brand-2: #447ff5;
+  --vp-c-brand-3: #3366cc;
+  --vp-c-bg: #ffffff;
+  --vp-c-bg-alt: #f8f9fa;
+  --vp-sidebar-bg-color: #f8f9fa;
+  --vp-c-text-1: #202122;
+  --vp-c-text-2: #54595d;
+  --vp-c-divider: #c8ccd1;
+  --vp-font-family-base: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans SC", sans-serif;
+  --wiki-serif: "Linux Libertine", Georgia, "Times New Roman", "Noto Serif SC", serif;
+  --wiki-border: #a2a9b1;
+}
+
+.vp-doc h1,
+.vp-doc h2 {
+  font-family: var(--wiki-serif);
+  font-weight: 400;
+  letter-spacing: 0;
+  border-bottom: 1px solid var(--wiki-border);
+  padding-bottom: 0.2em;
+}
+.vp-doc h1 {
+  font-size: 2rem;
+  margin-bottom: 0.6em;
+}
+.vp-doc h2 {
+  font-size: 1.5rem;
+  margin-top: 1.6em;
+  border-top: 0;
+  padding-top: 0;
+  /* Keep the rule from running under a floated infobox. */
+  overflow: hidden;
+}
+.vp-doc h3 {
+  font-size: 1.15rem;
+}
+.vp-doc p,
+.vp-doc li {
+  line-height: 1.6;
+}
+.vp-doc a {
+  font-weight: 400;
+  text-decoration: none;
+}
+.vp-doc a:hover {
+  text-decoration: underline;
+}
+
+/* Tables in the style of a "wikitable". */
+.vp-doc table {
+  display: table;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  margin: 1em 0;
+}
+.vp-doc th,
+.vp-doc td {
+  border: 1px solid var(--wiki-border);
+  padding: 0.35em 0.6em;
+}
+.vp-doc th {
+  background: #eaecf0;
+  text-align: left;
+}
+.vp-doc tr,
+.vp-doc tr:nth-child(2n) {
+  background: #f8f9fa;
+}
+.vp-doc .table-scroll {
+  overflow-x: auto;
+}
+
+/* Infobox on content pages. */
+.vp-doc table.infobox {
+  float: right;
+  clear: right;
+  width: 280px;
+  margin: 0 0 1em 1.5em;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+.vp-doc table.infobox caption {
+  caption-side: top;
+  font-weight: 700;
+  font-size: 1.05rem;
+  padding: 0.4em;
+  background: #cedff2;
+  border: 1px solid var(--wiki-border);
+  border-bottom: 0;
+}
+.vp-doc table.infobox th {
+  width: 45%;
+  background: #f8f9fa;
+  vertical-align: top;
+}
+.vp-doc table.infobox td {
+  background: #ffffff;
+}
+@media (max-width: 720px) {
+  .vp-doc table.infobox {
+    float: none;
+    width: 100%;
+    margin: 0 0 1em;
+  }
+}
+
+.vp-doc blockquote {
+  border-left: 3px solid var(--wiki-border);
+  color: var(--vp-c-text-1);
+  font-style: italic;
+}
+.vp-doc img {
+  border: 1px solid var(--wiki-border);
+}
+.VPNavBarTitle .title {
+  font-family: var(--wiki-serif);
+  font-weight: 400;
+  font-size: 1.15rem;
+}

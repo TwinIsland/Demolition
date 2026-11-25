@@ -2,7 +2,12 @@ import { modifiedStat } from "./content";
 import type { Player } from "./types";
 
 export const STAMINA = {
-  capacity: 100, drain: 25, regen: 18, delay: .85, restart: 20, speedFactor: 1.55,
+  capacity: 100,
+  drain: 25,
+  regen: 18,
+  delay: 0.85,
+  restart: 20,
+  speedFactor: 1.55,
 } as const;
 
 export function sprintSeconds(p: Player, requested: boolean, dt: number) {
@@ -17,6 +22,6 @@ export function recoverOrSpend(p: Player, seconds: number, dt: number, time: num
     p.staminaRegenAt = time + STAMINA.delay;
   } else if (p.stamina < p.maxStamina && time > p.staminaRegenAt) {
     const regen = modifiedStat(p, "staminaRegen", STAMINA.regen, time);
-    p.stamina = Math.min(p.maxStamina, p.stamina + regen * Math.min(dt,time - p.staminaRegenAt));
+    p.stamina = Math.min(p.maxStamina, p.stamina + regen * Math.min(dt, time - p.staminaRegenAt));
   }
 }

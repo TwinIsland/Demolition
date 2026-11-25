@@ -5,7 +5,12 @@ import type { Tile, Vec2 } from "./types";
 export type { MapDefinition } from "./pack-api";
 export const MAPS = Object.values(indexPacks(maps, "map"));
 for (const map of MAPS) {
-  if (!Number.isInteger(map.size) || map.size < 7 || map.size % 2 !== 1 || !(map.density >= 0 && map.density <= 1))
+  if (
+    !Number.isInteger(map.size) ||
+    map.size < 7 ||
+    map.size % 2 !== 1 ||
+    !(map.density >= 0 && map.density <= 1)
+  )
     throw new Error(`Invalid map dimensions or density: ${map.id}`);
 }
 
@@ -27,38 +32,31 @@ export function spawnPoints(size: number): Vec2[] {
     { x: 1, z: size - 2 },
   ];
 }
-export function generateMap(
-  def: MapDefinition,
-  random: () => number,
-): Tile[][] {
+export function generateMap(def: MapDefinition, random: () => number): Tile[][] {
   const spawns = spawnPoints(def.size);
   if (def.wallDensity !== undefined) {
     const size = def.size;
     const candidates: Vec2[] = [];
-    const tiles = Array.from({length:size}, (_, z) =>
-      Array.from({length:size}, (_, x): Tile => {
+    const tiles = Array.from({ length: size }, (_, z) =>
+      Array.from({ length: size }, (_, x): Tile => {
         if (!x || !z || x === size - 1 || z === size - 1) return 1;
-        if (spawns.some(s => Math.abs(s.x - x) + Math.abs(s.z - z) <= 2)) return 0;
+        if (spawns.some((s) => Math.abs(s.x - x) + Math.abs(s.z - z) <= 2)) return 0;
         const fixed = def.tileAt?.(x, z, size, random);
         if (fixed !== undefined) return fixed;
-        candidates.push({x,z});
+        candidates.push({ x, z });
         return 0;
-      }));
+      }),
+    );
     for (let i = candidates.length - 1; i > 0; i--) {
       const j = Math.floor(random() * (i + 1));
       [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
     }
     let remaining = Math.round(candidates.length * def.wallDensity);
-    for (const {x,z} of candidates) {
+    for (const { x, z } of candidates) {
       if (remaining <= 0) break;
-      const exits = DIRECTIONS.filter(d => tiles[z + d.z][x + d.x] !== 1);
-      if (exits.length < 3) continue;
-      tiles[z][x] = 1;
-      if (exits.some(d => DIRECTIONS.filter(n => tiles[z + d.z + n.z][x + d.x + n.x] !== 1).length < 2)
-          || !connectedAround(tiles, x, z, exits)) tiles[z][x] = 0;
-      else remaining--;
+      if (placeWall(tiles, x, z)) remaining--;
     }
-    for (const {x,z} of candidates) if (tiles[z][x] === 0 && random() < def.density) tiles[z][x] = 2;
+    for (const { x, z } of candidates) if (tiles[z][x] === 0 && random() < def.density) tiles[z][x] = 2;
     return tiles;
   }
   return Array.from({ length: def.size }, (_, z) =>
@@ -73,11 +71,43 @@ export function generateMap(
     }),
   );
 }
+/**
+ * Turn an open interior cell into a permanent wall, unless that would box in a neighbour or split
+ * the walkable area. Returns whether the wall was placed.
+ */
+export function placeWall(tiles: Tile[][], x: number, z: number) {
+  const exits = DIRECTIONS.filter((d) => tiles[z + d.z][x + d.x] !== 1);
+  if (exits.length < 3) return false;
+  const previous = tiles[z][x];
+  tiles[z][x] = 1;
+  if (
+    exits.some((d) => DIRECTIONS.filter((n) => tiles[z + d.z + n.z][x + d.x + n.x] !== 1).length < 2) ||
+    !connectedAround(tiles, x, z, exits)
+  ) {
+    tiles[z][x] = previous;
+    return false;
+  }
+  return true;
+}
+/**
+ * Permanent walls that can change during a match (terrain reset, closing zone): the irregular ones
+ * scattered by `wallDensity`. Tracked whether or not the map sets `wallShuffle`.
+ * Borders and walls a map fixes through `tileAt` never move. Keys are cells, values stable ids.
+ */
+export function movableWalls(def: MapDefinition, tiles: readonly (readonly Tile[])[]) {
+  if (def.wallDensity === undefined) return undefined;
+  const walls: Record<number, number> = {};
+  for (let z = 1; z < def.size - 1; z++)
+    for (let x = 1; x < def.size - 1; x++)
+      if (tiles[z][x] === 1 && def.tileAt?.(x, z, def.size, () => 0) !== 1)
+        walls[z * def.size + x] = z * def.size + x;
+  return walls;
+}
 // A new wall can only disconnect cells that previously met at this tile.
 function connectedAround(tiles: Tile[][], x: number, z: number, exits: Vec2[]) {
   const size = tiles.length;
   const first = (z + exits[0].z) * size + x + exits[0].x;
-  const targets = new Set(exits.slice(1).map(d => (z + d.z) * size + x + d.x));
+  const targets = new Set(exits.slice(1).map((d) => (z + d.z) * size + x + d.x));
   const visited = new Uint8Array(size * size);
   const queue = [first];
   visited[first] = 1;
@@ -93,8 +123,7 @@ function connectedAround(tiles: Tile[][], x: number, z: number, exits: Vec2[]) {
   }
   return !targets.size;
 }
-export const cellKey = (x: number, z: number) =>
-  `${Math.round(x)},${Math.round(z)}`;
+export const cellKey = (x: number, z: number) => `${Math.round(x)},${Math.round(z)}`;
 export const DIRECTIONS = [
   { x: 1, z: 0 },
   { x: -1, z: 0 },

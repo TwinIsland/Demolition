@@ -1,11 +1,5 @@
-node_modules/
-dist/
-outputs/
-*.local
-.openai/
-.local-audio/
-.pages-build/
-.env
-.env.*
-!.env.example
-*.log
+node_modules
+dist
+.pages-build
+.guard
+docs/.vitepress/cache

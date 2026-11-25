@@ -1,0 +1,80 @@
+/* Pre-match skill shop. */
+.shop-modal {
+  width: min(620px, 94vw);
+  max-height: 90dvh;
+  overflow: auto;
+}
+.shop-modal header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.shop-modal header b {
+  color: #edc779;
+  font-variant-numeric: tabular-nums;
+}
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: var(--space-4);
+  margin: var(--space-7) 0;
+}
+.shop-grid .shop-card {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  grid-template-rows: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-6);
+  text-align: left;
+  border: 1px solid var(--line-strong);
+  color: var(--text);
+}
+.shop-card .icon {
+  width: 21px;
+  color: #d2b87d;
+}
+.shop-card small,
+.shop-card b {
+  grid-column: 1/-1;
+}
+.shop-card small {
+  align-self: start;
+  font-size: var(--text-md);
+  color: var(--text-muted);
+}
+.shop-card b {
+  color: var(--gold-400);
+  font-size: var(--text-md);
+}
+.shop-grid .shop-card.purchased {
+  border-color: #8da98c;
+}
+.shop-card:disabled {
+  opacity: 0.45;
+}
+.shop-card {
+  transition:
+    background-color var(--duration-base),
+    border-color var(--duration-base),
+    color var(--duration-base),
+    opacity var(--duration-base);
+}
+#app .shop-grid .shop-card {
+  background:
+    linear-gradient(115deg, color-mix(in srgb, var(--perk-color, #b7a574) 15%, transparent), #0b111433),
+    var(--surface-1) url("/assets/hud/perk-inlay.webp") center / 100% 100%;
+}
+#app .shop-grid .shop-card.purchased {
+  background:
+    linear-gradient(115deg, #497b565b, #24362a42),
+    var(--surface-2) url("/assets/hud/perk-inlay.webp") center / 100% 100%;
+}
+#app .shop-modal {
+  background:
+    linear-gradient(120deg, #121b1dd6, #151c1eb8),
+    var(--surface-1) url("/assets/hud/loadout-weave.webp") center / 144px;
+}

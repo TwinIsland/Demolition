@@ -1,0 +1,134 @@
+/*
+ * Design tokens. Linked from index.html ahead of every other stylesheet so the
+ * loading screen and the app bundle share one definition.
+ */
+:root {
+  /* Typography */
+  --font-hud: "Barlow Semi Condensed", "Noto Sans SC", sans-serif;
+  --font-ui: var(--font-hud);
+  --text-3xs: 8px;
+  --text-2xs: 9px;
+  --text-xs: 10px;
+  --text-sm: 11px;
+  --text-md: 12px;
+  --text-lg: 13px;
+  --text-xl: 14px;
+  --text-2xl: 17px;
+
+  /* Surfaces: graphite, darkest to lightest */
+  --color-bg: #0c1110;
+  --surface-0: #101817;
+  --surface-1: #172023;
+  --surface-2: #202725;
+  --surface-3: #263033;
+  --surface-4: #32403e;
+  --panel-bg: #202725e8;
+  --scrim: #0a0f0e9e;
+
+  /* Text, strongest to faintest; every step keeps 4.5:1 on --surface-2 */
+  --text-strong: #f2f2e6;
+  --text: #ecece2;
+  --text-soft: #d4d8cc;
+  --text-muted: #b9c3bb;
+  --text-dim: #a5aea5;
+  --text-faint: #929c96;
+  --text-on-accent: #181e1c;
+
+  /* Lines and faint fills */
+  --line-faint: #ffffff10;
+  --line-subtle: #ffffff1a;
+  --line: #8c96905c;
+  --line-strong: #485651;
+  --line-bright: #68716c;
+  --fill-faint: #ffffff08;
+
+  /* Accent: brass gold */
+  --gold-100: #fff1cc;
+  --gold-200: #ffe2a4;
+  --gold-300: #e9d3a1;
+  --gold-400: #e7bc70;
+  --gold-500: #d8b56b;
+  --gold-600: #cf9a43;
+  --gold-700: #b49a69;
+  --gold-900: #3e3525;
+  --accent: var(--gold-400);
+  --accent-strong: var(--gold-200);
+
+  /* Menu olive */
+  --olive-200: #c4d49a;
+  --olive-300: #bacb81;
+  --olive-500: #81935e;
+  --olive-700: #34452a;
+  --olive-800: #263520;
+  --olive-900: #172015;
+
+  /* Status */
+  --danger: #c61d12;
+  --danger-bright: #ff5d17;
+  --danger-surface: #4d1f1a;
+  --danger-text: #ffdcc1;
+  --positive: #8ed6ba;
+  --positive-bright: #83f5c8;
+  --info: #84deff;
+
+  /* Perk tiers; keep in sync with TIERS in core/content.ts */
+  --tier-silver: #bdcad4;
+  --tier-gold: #f6c261;
+  --tier-diamond: #93e6ff;
+  --tier-mythic: #dc9cff;
+
+  /* Spacing */
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 6px;
+  --space-4: 8px;
+  --space-5: 10px;
+  --space-6: 12px;
+  --space-7: 16px;
+  --space-8: 20px;
+  --space-9: 24px;
+
+  /* Radii: the UI is deliberately sharp-cornered */
+  --radius-xs: 1px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 12px;
+  --radius-pill: 999px;
+  --radius-round: 50%;
+
+  /* Elevation */
+  --shadow-sm: 0 3px 14px #0b100f77;
+  --shadow-md: 0 10px 35px #05090855;
+  --shadow-lg: 0 25px 120px #04070688;
+  --shadow-text: 0 1px 2px #000;
+  --blur-panel: blur(12px);
+
+  /* Focus */
+  --focus-ring: 2px solid var(--gold-300);
+  --focus-offset: 2px;
+
+  /* Stacking order of the #app layers */
+  --z-vignette: 1;
+  --z-lobby: 2;
+  --z-hud: 3;
+  --z-damage: 4;
+  --z-topbar: 12;
+  --z-perk-tray: 13;
+  --z-top-actions: 13;
+  --z-overlay: 20;
+  --z-fatal: 50;
+  --z-loading: 120;
+
+  /* Motion */
+  --duration-instant: 0.08s;
+  --duration-fast: 0.12s;
+  --duration-base: 0.18s;
+  --duration-moderate: 0.24s;
+  --duration-slow: 0.32s;
+  --ease-out: ease-out;
+  --ease-emphasized: cubic-bezier(0.2, 0.75, 0.25, 1);
+}
+:root:lang(zh) {
+  --font-ui: "Noto Sans SC", "Barlow Semi Condensed", sans-serif;
+}

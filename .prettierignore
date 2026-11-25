@@ -1,0 +1,10 @@
+node_modules
+dist
+.pages-build
+public
+package-lock.json
+*.md
+.guard
+tools
+docs/tools
+docs/.vitepress/cache

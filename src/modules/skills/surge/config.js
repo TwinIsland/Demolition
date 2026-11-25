@@ -1,19 +1,21 @@
 /** @satisfies {import("../../../core/module-api").SkillConfig} */
 const config = {
-  translations: { en: {
-    name: "Blast Surge",
-    description: "Charges placed over the next 7 seconds gain two tiles of blast range.",
-  } },
+  translations: {
+    en: {
+      name: "Blast Surge",
+      description: "Charges placed over the next 5 seconds gain two tiles of blast range.",
+    },
+  },
   id: "surge",
   name: "范围爆发",
-  description: "7 秒内放置的炸药范围 +2 格",
+  description: "5 秒内放置的炸药范围 +2 格",
   icon: "surge",
-  key: "E",
+  key: "Q",
   price: 30,
-  cooldown: 16,
-  duration: 7,
+  cooldown: 18,
+  duration: 5,
   order: 2,
-  code: "KeyE",
+  code: "KeyQ",
   stats: { rangeBonus: 2 },
 };
 

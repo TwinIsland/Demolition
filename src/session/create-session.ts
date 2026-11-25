@@ -7,6 +7,6 @@ import { LocalMatchSession } from "./local-session";
  * In that setup, bot policies run on the server, alongside Simulation. */
 export function createSession(options: MatchOptions): MatchSession {
   const session = new LocalMatchSession(options);
-  session.setAgents(BOT_PROFILES.map(p => new BotAgent(p.id)));
+  session.setAgents(BOT_PROFILES.map((p) => new BotAgent(p.id)));
   return session;
 }

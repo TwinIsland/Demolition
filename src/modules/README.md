@@ -41,23 +41,46 @@ export default defineSkin({
 
 装备设置 `permanent: true` 后常驻转盘，不消耗库存，也不进入掉落池。`melee` 设置游戏格单位的触及距离、单次伤害和冷却。配置 `throwable.trajectory: "lob"` 的投掷物可在瞄准时越过掩体，普通近投沿用炸药的距离和地形限制。强化可通过 `"duration:shield"` 调整每次开启护盾的持续时间。
 
-## 地图音乐与可摧毁掩体
+## 地图音乐与障碍物预设
 
-在地图的 `defineMap` 配置中设置 `bgm` 和 `covers`。`artwork` 指向主页选图卡面，`backdrop` 指向全屏背景图。省略 `backdrop` 时使用卡面，两者都省略时显示实时三维地图。每个可摧毁格按权重抽取一种掩体，共用积分和掉落规则。内置外观有 `crate`、`bags`、`drum`、`oak`、`pine`、`logs`、`press`、`hopper`、`valve`、`robot-arm` 和 `barricade`。旧地图中的 `low-bags` 和 `pallet` 分别显示为堆叠沙袋和木箱。
+在地图的 `defineMap` 配置中设置 `bgm` 和 `obstacles`。`artwork` 指向主页选图卡面，`backdrop` 指向全屏背景图。省略 `backdrop` 时使用卡面，两者都省略时显示实时三维地图。
+
+每个可摧毁格按权重从 `obstacles` 里抽取一种障碍物，共用积分和掉落规则。障碍物由引擎统一提供，定义在 [`core/obstacles.ts`](../core/obstacles.ts)，地图只按 ID 引用：
+
+| 分组标签 | 预设 ID |
+| --- | --- |
+| `storage` | `crate` 木箱、`pallet` 弹药箱托盘、`drum` 油桶 |
+| `fortification` | `bags` 沙袋、`hesco` 防爆笼、`barricade` 混凝土路障 |
+| `industrial` | `press` 液压机、`hopper` 料斗、`valve` 阀门管段、`robot-arm` 机械臂 |
+| `woodland` | `oak` 橡树、`pine` 松树、`logs` 原木堆 |
 
 ```js
-bgm: new URL("./music.ogg", import.meta.url).href,
-backdrop: new URL("./backdrop.webp", import.meta.url).href,
-wallDensity: 0.24,
-covers: [
-  { kind: "pine", weight: 4 },
-  { kind: "bags", weight: 3 },
-  { model: new URL("./generator.glb", import.meta.url).href, height: 1.8, weight: 2 },
+obstacles: [
+  { use: "crate", weight: 20 },            // 单个预设
+  { use: "set:industrial", weight: 40 },   // 整组预设，权重在组内平分
+  { model: new URL("./generator.glb", import.meta.url).href, weight: 10,
+    surface: "metal", height: 2, footprint: 0.86 },   // 地图自带模型
 ],
 ```
 
-`height` 控制模型的最大显示高度。渲染器还会限制占地宽度，使模型落在一个格内。所有掩体占用完整的碰撞格，旧地图的 `vaultHeight` 字段会被忽略。
+所有障碍物走同一条规则：模型立在 y = 0、以格子中心为原点；渲染器把它等比缩放到 `footprint × 格宽`（默认 0.86，格宽 2.4）和 `height` 之内。`surface` 取 `wood`、`metal` 或 `soft`，决定刀击声，自带模型默认 `metal`。省略 `obstacles` 时使用 `storage` 组。所有障碍物占用完整的碰撞格，所以模型应当填满大部分格子，让玩家一眼看出这格走不了。
+
+自带 GLB 里名为 `df:<材质>` 的材质会换成引擎的共享材质，和内置障碍物保持同一套贴图与贴图密度。可用名称见 [`render/materials.ts`](../render/materials.ts) 的 `PALETTE`，例如 `df:planks`、`df:paint-olive`、`df:steel`、`df:hazard`、`df:concrete`。其他名称的材质保持原样。内置模型由 [`tools/model-forge`](../../tools/model-forge) 生成，开发服务器下打开 `/tools/model-forge/forge.html` 可重新导出。
+
+旧地图的 `covers: [{ kind, weight }]` 仍然可用，`kind` 按预设 ID 解析，`low-bags` 显示为 `bags`。`vaultHeight` 字段已移除。
+
+## 角色徽记
+
+`defineSkin` 的 `emblem` 指向一张透明背景的方形图片（SVG、PNG 或 WebP）。该角色在对局中建造的木箱会在四面和顶面喷上这枚徽记，外圈是该选手的队伍颜色。未设置徽记的皮肤和导入的自定义皮肤使用默认五角星。
+
+```js
+export default defineSkin({
+  id: "scout", name: "侦察兵", model: "default",
+  texture: new URL("./skin.png", import.meta.url).href,
+  emblem: new URL("./emblem.svg", import.meta.url).href,
+});
+```
 
 在 `defineMap` 的第二个参数中实现 `randomizeTerrain(random, size)` 可启用练习重排和「灭世」。返回的 `tileAt` 可用 0 标出希望留空的通路。核心按地图偏好移动剩余掩体，并保留每件掩体的模型、朝向和耐久。出生区、固定墙、角色身体与当前可用的相邻出口、地面物品和炸药位置受保护。前哨基地会选择新的十字通路，仓储区则选择两条货道。`density` 和 `wallDensity` 控制开局生成。
 
-自定义掩体模型可设 `surface` 为 `wood`、`metal` 或 `soft` 来选择刀击声。近战装备的 `melee.coverDamage` 指定每次命中的掩体伤害，`melee.coverSounds` 按相同材质名指定音频路径。
+近战装备的 `melee.coverDamage` 指定每次命中的掩体伤害，`melee.coverSounds` 按相同材质名指定音频路径。
