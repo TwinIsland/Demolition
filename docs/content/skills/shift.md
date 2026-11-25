@@ -12,7 +12,7 @@
 
 **Tactical View** is a skill in Demolition Front. In the game it is described as:
 
-> Toggle the overhead view. Use movement keys or arrows and press Space to drop a charge where you stand, then walk off it. Activate again to return to first person.
+> Toggle between first-person and overhead views.
 
 ## Behaviour
 

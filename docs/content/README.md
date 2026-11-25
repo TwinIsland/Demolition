@@ -11,15 +11,15 @@ Bought before the match with starting coins (115 in standard modes), up to 4 ski
 | Skill | Key | Price | Cooldown | Duration | Effect |
 | --- | --- | --- | --- | --- | --- |
 | [Blast Surge](skills/surge.md) | Q | 30 | 18 s | 5 s | Charges placed over the next 5 seconds gain two tiles of blast range. |
-| [Tactical View](skills/shift.md) | R | 25 | – | – | Toggle the overhead view. Use movement keys or arrows and press Space to drop a charge where you stand, then walk off it. Activate again to return to first person. |
+| [Tactical View](skills/shift.md) | R | 25 | – | – | Toggle between first-person and overhead views. |
 | [Med Injector](skills/medic.md) | F | 30 | 24 s | 3 s | Recover 30 HP over 3 seconds. Taking damage stops the treatment. |
-| [Slide Kick](skills/kick.md) | passive | 35 | – | – | Line up with a charge and keep pushing into it for a moment to kick it down an open lane. A charge you are still standing on is never kicked. Its fuse pauses until it hits cover, another charge, an operator, a zombie, or a blast. |
+| [Slide Kick](skills/kick.md) | passive | 35 | – | – | Push against a charge to kick it. Its fuse pauses while sliding; impact detonates it. |
 | [Threat Scan](skills/scan.md) | C | 25 | 25 s | 7 s | See operators and zombies through cover as night-vision silhouettes for 7 seconds. |
 | [Remote Detonator](skills/detonator.md) | E | 30 | 10 s | – | Set off all of your planted charges after a 0.35 second delay. |
 
 ## Items
 
-Dropped by cover, zombies and field supplies, or bought with coins in the supply shop. The knife is permanent gear. See [Item mods](../modding/items.md).
+Dropped by cover, zombies and field supplies, or bought with coins in the supply shop. The knife is permanent gear; crates are built directly with coins. See [Item mods](../modding/items.md).
 
 | Item | Base drop weight | Shop price | Numbers | Effect |
 | --- | --- | --- | --- | --- |
@@ -28,7 +28,7 @@ Dropped by cover, zombies and field supplies, or bought with coins in the supply
 | [Smoke Grenade](items/smoke.md) | 2.8 | 20 | reach 4, flight 0.55, trajectory lob; duration 6, radius 1.65 | Lob over cover to create a smoke screen that lasts 6 seconds. |
 | [Tactical Shield](items/shield.md) | 3.4 | 40 | duration 4.5 | Blocks melee and zombie attacks for up to 4.5 seconds. The first blast it absorbs shatters the shield. |
 | [Bandage](items/bandage.md) | 3 | 25 | heal 30 | Restore 30 HP. Kept in your inventory at full health. |
-| [Field Crate](items/crate.md) | never drops | 20 |  | Builds a wooden crate on the tile ahead after a 0.6 second windup. Up to 3 of your crates can stand at once. Sold in the supply shop only. |
+| [Field Crate](items/crate.md) | never drops | – |  | Right-click to build a wooden crate ahead. Takes 0.6 seconds and costs coins. |
 
 ## Perks
 

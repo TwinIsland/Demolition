@@ -1,4 +1,4 @@
-import { zoneBurning } from "./zone";
+import { zoneBurning, zoneClearing } from "./zone";
 import { ITEMS, modifiedStat } from "./content";
 import { throwReach } from "./equipment";
 import { TILE_SIZE } from "./geometry";
@@ -60,8 +60,8 @@ export function canPlace(
     !Number.isInteger(z) ||
     Math.hypot(dx, dz) > reach(p, equipment, s.time, mode) ||
     s.tiles[z]?.[x] !== 0 ||
-    // Nothing lands in zone fire: a bomb there would be an instant detonation with no fuse.
-    (s.zone && zoneBurning(s.size, target, s.zone))
+    // Keep the moving wall's route and escape lane free of new charges.
+    (s.zone && (zoneBurning(s.size, target, s.zone) || zoneClearing(s.size, target, s.zone)))
   )
     return false;
   if (mode === "lob") return canLob(equipment) && p.inventory[equipment] > 0;

@@ -23,7 +23,7 @@ Every key can be rebound in the in-game manual.
 | Sprint | Left Shift (hold) |
 | Jump | Space |
 | Plant a charge, use or throw gear | Left click |
-| Aim a lobbed throw | Right click (hold) |
+| Build a wooden crate with coins | Right click |
 | Next / previous gear | Mouse wheel |
 | Gear wheel | V (hold) |
 | Equip shield | X |
@@ -54,8 +54,9 @@ The game is first person. The [Tactical View](content/skills/shift.md) skill swi
 ## Things to know
 
 - Your own charge still hurts you, for a fifth of its power.
+- Grenades and smoke grenades always show their arc and landing tile while equipped. Aim with the mouse and left-click to lob over cover.
 - Cover drops gear more often the longer you go without a drop, and more often when you are hurt or empty-handed. See [Probabilities](probabilities.md).
 - The [knife](content/items/knife.md) is always with you. Two strikes break cover or kill a zombie.
-- A [shield](content/items/shield.md) blocks one whole explosion. It does nothing against the closing wall or the final firestorm.
+- A [shield](content/items/shield.md) blocks one whole explosion. It does nothing against the final firestorm.
 - Level 3 zombies always grant a [mutation](content/README.md#mutations).
-- Crates are bought in the supply shop. Built crates block blasts. Use them to seal a lane or cover a retreat.
+- Right-click to spend coins building a wooden crate ahead. Built crates block blasts and can seal a lane or cover a retreat. They are not carried or sold in the supply shop.

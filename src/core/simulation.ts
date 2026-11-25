@@ -8,7 +8,7 @@ import { generateMap, MAPS, movableWalls, seededRandom, spawnPoints, type MapDef
 import { DEFAULT_MODE, MATCH_MODES, modeRules, type MatchMode } from "./match-modes";
 import { BOT_PROFILES, defaultSlots } from "./room";
 import { landThrown, placeBomb, updateBombs } from "./systems/bombs";
-import { quickBuild, stepBuilding } from "./systems/building";
+import { startBuild, stepBuilding } from "./systems/building";
 import { buySupply } from "./systems/supply";
 import { stepZone } from "./systems/zone";
 import { resolveBlastDamage, stepZombies, tickShields } from "./systems/combat";
@@ -135,7 +135,7 @@ export class Simulation {
     if (HAS_TICK_HOOKS) eachOwned(p, (m, n) => m.onTick?.(p, s, dt, n));
     move(ctx, p, input, dt, inTacticalView(p, stepStart));
     if (input.activateSkill) activateSkill(ctx, p, input.activateSkill, stepStart);
-    if (input.build) quickBuild(ctx, p);
+    if (input.build) startBuild(ctx, p);
     if (input.buyItem) buySupply(ctx, p, input.buyItem);
     if (inTacticalView(p, stepStart)) {
       // Overhead, as in classic arena bombers, the bomb drops on the cell the player stands on.

@@ -229,7 +229,8 @@ export const EN_MESSAGES: Readonly<Record<string, string>> = {
   冲刺: "Sprint",
   跳跃: "Jump",
   "使用装备 / 投掷": "Use / throw equipment",
-  按住瞄准高抛: "Hold to aim a throw",
+  建造木箱: "Build a crate",
+  "建造木箱 · {0} 金币": "Build a crate · {0} coins",
   上一件装备: "Previous equipment",
   下一件装备: "Next equipment",
   "选择强化 1": "Select perk 1",
@@ -311,6 +312,4 @@ export const EN_MESSAGES: Readonly<Record<string, string>> = {
   被火场灼烧: "Burned by the fire zone",
   "{0} 被火场吞没": "{0} was consumed by the fire zone",
   自适应: "Adaptive",
-  被合拢的围墙挤压: "Crushed by the closing wall",
-  "{0} 被围墙吞没": "{0} was swallowed by the wall",
 };

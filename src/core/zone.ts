@@ -7,8 +7,12 @@ export const ZONE = {
   defaultDuration: 180,
   /** No ring closes during the opening. */
   grace: 20,
-  /** A ring flashes this long before its wall comes up. */
+  /** A ring flashes this long before the wall reaches it. */
   warning: 4,
+  /** Clear the wall's route and the escape lane before it starts moving. */
+  clearance: 0.5,
+  /** Seconds the boundary takes to slide inward by one cell. */
+  advance: 0.85,
   /** Half-width of the final safe square: 1 keeps the centre 3x3. */
   finalRadius: 1,
   /** The final square stays safe this long after the last ring closes. */
@@ -25,6 +29,8 @@ export interface ZoneState {
   closed: number;
   /** Ring that is flashing and will ignite at `nextRingAt`. */
   warningRing?: number;
+  /** The ring being cleared for the next advance, including its inner escape lane. */
+  clearingRing?: number;
   /** Simulation time of the next ignition; undefined once every ring has closed. */
   nextRingAt?: number;
   /** The zone is at minimum size and the centre burns too. */
@@ -62,10 +68,23 @@ export function zoneAt(size: number, time: number, duration: number = ZONE.defau
     closed,
     nextRingAt,
     warningRing: nextRingAt !== undefined && time >= nextRingAt - ZONE.warning ? closed + 1 : undefined,
+    clearingRing:
+      nextRingAt !== undefined && time >= nextRingAt - ZONE.advance - ZONE.clearance ? closed + 1 : undefined,
     final,
     damage: ZONE.damage + (final ? ZONE.ramp * (1 + Math.floor((time - finalAt) / ZONE.rampEvery)) : 0),
   };
 }
+
+/** Progress of the horizontal advance; shared by collision and rendering. */
+export const zoneAdvance = (time: number, zone: ZoneState) =>
+  zone.nextRingAt === undefined ? 0 : Math.max(0, Math.min(1, 1 - (zone.nextRingAt - time) / ZONE.advance));
+
+/** Inner face of the boundary wall, measured from the outermost cell centre. */
+export const zoneWallInset = (time: number, zone: ZoneState) => zone.closed + 0.5 + zoneAdvance(time, zone);
+
+/** Cells kept free of new obstacles while the boundary clears its route and advances. */
+export const zoneClearing = (size: number, cell: Vec2, zone: ZoneState) =>
+  zone.clearingRing !== undefined && ringOf(size, cell) <= zone.clearingRing + 1;
 
 /** True where nothing can stand any more: closed rings are wall, and in the final phase the rest burns. */
 export const zoneBurning = (size: number, cell: Vec2, zone: Pick<ZoneState, "closed" | "final">) =>

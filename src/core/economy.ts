@@ -8,15 +8,11 @@ export const COINS = {
   builtCrateDestroyed: 2,
 } as const;
 
-/** Crate building. Crates are equipment (`BUILD.item`) bought in the supply shop and set down on the cell ahead. */
+/** Direct crate building: pay coins to build on the cell ahead, without an inventory item. */
 export const BUILD = {
-  /** Item module that is consumed to build. */
-  item: "crate",
   cost: 20,
   /** Each crate an operator has built this match raises their next price. */
   costStep: 5,
-  /** Simultaneous crates per operator. */
-  limit: 3,
   /** Seconds of uninterrupted building; taking damage cancels it. */
   windup: 0.6,
 } as const;

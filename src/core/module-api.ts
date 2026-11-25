@@ -38,7 +38,7 @@ export type Modifier = (value: number, player: Readonly<Player>, stacks: number,
 export interface EffectContext {
   stat(key: ModifiedStat, base: number): number;
   requestTerrainReset?(delay: number): boolean;
-  /** Start building a crate on the cell ahead. False when the cell or the crate limit rules it out. */
+  /** Pay to build a crate on the cell ahead. False when coins or terrain rule it out. */
   build?(): boolean;
   forceArenaView?(duration: number, warningSeconds?: number): boolean;
 }

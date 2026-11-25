@@ -1,6 +1,7 @@
 import { eachOwned, modifiedStat, RULES } from "../content";
 import { clearSight, KICK } from "../geometry";
 import { recoverOrSpend, sprintSeconds, STAMINA } from "../stamina";
+import { zoneWallInset } from "../zone";
 import type { Bomb, Player, PlayerInput } from "../types";
 import { explode, slideBomb } from "./bombs";
 import type { SimContext } from "./context";
@@ -8,15 +9,6 @@ import type { SimContext } from "./context";
 /** Walk, sprint, jump and kick for one tick. In the overhead view movement snaps to one axis. */
 export function move(ctx: SimContext, p: Player, input: PlayerInput, dt: number, overhead: boolean) {
   const s = ctx.state;
-  if (p.shove) {
-    // A shove from the closing wall carries the player regardless of input or collision.
-    const { from, startAt, endAt } = p.shove,
-      t = Math.min(1, (s.time - startAt) / Math.max(1e-6, endAt - startAt));
-    p.x = from.x + (p.shove.x - from.x) * t;
-    p.z = from.z + (p.shove.z - from.z) * t;
-    if (t >= 1) delete p.shove;
-    return;
-  }
   const jump = !!input.jump && !overhead;
   if (jump || p.elevation > 0 || p.verticalSpeed !== 0) moveVertically(p, jump, dt);
   let mx = Number.isFinite(input.moveX) ? input.moveX : 0;
@@ -150,6 +142,10 @@ function tryKick(ctx: SimContext, p: Player, moveX: number, moveZ: number) {
 function blockerAt(ctx: SimContext, p: Player, x: number, z: number): "tile" | Bomb | undefined {
   const s = ctx.state,
     r = RULES.playerRadius;
+  if (s.zone) {
+    const edge = zoneWallInset(s.time, s.zone) + r;
+    if (x < edge || z < edge || x > s.size - 1 - edge || z > s.size - 1 - edge) return "tile";
+  }
   for (const px of [x - r, x + r])
     for (const pz of [z - r, z + r]) {
       const cx = Math.round(px),

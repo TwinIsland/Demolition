@@ -1,14 +1,11 @@
 import * as THREE from "three";
 import { MAPS } from "../core/maps";
 import type { GameSnapshot } from "../core/types";
-import { ringOf } from "../core/zone";
+import { ringOf, ZONE, zoneAdvance } from "../core/zone";
 import { world } from "./arena";
 import { hazardTexture } from "./feel/wall-telegraph";
 import type { Models } from "./models";
 
-/** The wall of the next ring starts rising this long before the ring closes, so it is solid on time. */
-const RISE = 0.85;
-const DEPTH = 2.75;
 const DUST_TIME = 1.1;
 const WARNING_TINT = "#ff7a3c";
 
@@ -30,22 +27,30 @@ interface Part {
   local: THREE.Matrix4;
 }
 
+interface WallCell {
+  x: number;
+  z: number;
+  fromX: number;
+  fromZ: number;
+}
+
 /**
- * The closing zone as physical walls: the ring about to close is marked on the ground, its wall
- * rises out of the floor just before the deadline, and closed rings stay walled off.
+ * The closing zone as physical walls: obstacles are demolished first, then a full-height boundary
+ * slides horizontally from the previous perimeter onto the marked ring. Closed rings stay solid.
  * Everything is derived from `state.zone`, so it needs no events from the simulation.
  */
 export class ZoneWalls {
   private parts: Part[] = [];
-  private cells: { x: number; z: number; ring: number }[] = [];
-  /** Instances from this index on belong to the ring that is currently rising. */
-  private risingFrom = 0;
+  private cells: WallCell[] = [];
+  /** Instances from this index on belong to the boundary currently sliding inward. */
+  private movingFrom = 0;
   private signature = "";
   private builtFor = "";
   /** Cells the arena still draws as map-defined walls; the zone does not double them. */
   private standing: ReadonlySet<number> = new Set<number>();
   private closed = 0;
-  private risingRing?: number;
+  private movingRing?: number;
+  private clearingRing?: number;
   private dustAt = -Infinity;
 
   private warningTexture = hazardTexture();
@@ -118,26 +123,40 @@ export class ZoneWalls {
     });
   }
 
-  private place(index: number, cell: { x: number; z: number }, size: number, lift: number) {
-    this.offset.makeTranslation(world(cell.x, size), lift, world(cell.z, size));
+  private place(index: number, cell: WallCell, size: number, progress: number) {
+    this.offset.makeTranslation(
+      world(cell.fromX + (cell.x - cell.fromX) * progress, size),
+      0,
+      world(cell.fromZ + (cell.z - cell.fromZ) * progress, size),
+    );
     for (const part of this.parts)
       part.mesh.setMatrixAt(index, this.matrix.multiplyMatrices(this.offset, part.local));
   }
 
-  private rebuildWalls(state: Readonly<GameSnapshot>, closed: number, rising?: number) {
+  private rebuildWalls(state: Readonly<GameSnapshot>, closed: number, moving?: number) {
     const size = state.size;
     this.cells = [];
     for (let z = 1; z < size - 1; z++)
       for (let x = 1; x < size - 1; x++) {
         const ring = ringOf(size, { x, z });
-        if ((ring <= closed || ring === rising) && !this.standing.has(z * size + x))
-          this.cells.push({ x, z, ring });
+        if (ring <= closed && !this.standing.has(z * size + x)) this.cells.push({ x, z, fromX: x, fromZ: z });
       }
-    // Settled rings first, so the rising ring is one contiguous range to animate.
-    this.cells.sort((a, b) => Number(a.ring === rising) - Number(b.ring === rising));
-    this.risingFrom = this.cells.findIndex((cell) => cell.ring === rising);
-    if (this.risingFrom < 0) this.risingFrom = this.cells.length;
-    this.cells.forEach((cell, index) => this.place(index, cell, size, index < this.risingFrom ? 0 : -DEPTH));
+    this.movingFrom = this.cells.length;
+    if (moving !== undefined) {
+      const max = size - 1 - moving;
+      // Start with every segment of the outer perimeter, clamping corners inward. This keeps
+      // the advancing face continuous instead of opening gaps at the four corners.
+      for (let z = moving - 1; z <= max + 1; z++)
+        for (let x = moving - 1; x <= max + 1; x++)
+          if (ringOf(size, { x, z }) === moving - 1)
+            this.cells.push({
+              x: Math.max(moving, Math.min(max, x)),
+              z: Math.max(moving, Math.min(max, z)),
+              fromX: x,
+              fromZ: z,
+            });
+    }
+    this.cells.forEach((cell, index) => this.place(index, cell, size, 1));
     for (const { mesh } of this.parts) {
       mesh.count = this.cells.length;
       mesh.instanceMatrix.needsUpdate = true;
@@ -203,7 +222,7 @@ export class ZoneWalls {
     this.dustAt = state.time;
   }
 
-  /** Returns the shake to apply this frame: non-zero when a wall starts rising or slams into place. */
+  /** Returns shake when demolition starts, the wall advances, or it settles. */
   sync(state: Readonly<GameSnapshot>, mapChanged: boolean, arenaWalls: ReadonlySet<number>) {
     this.standing = arenaWalls;
     const zone = state.phase === "playing" ? state.zone : undefined;
@@ -213,32 +232,36 @@ export class ZoneWalls {
     }
     this.prepare(state);
     const left = zone.nextRingAt === undefined ? Infinity : zone.nextRingAt - state.time;
-    const rising = zone.warningRing !== undefined && left <= RISE ? zone.warningRing : undefined;
-    const signature = `${zone.final}:${zone.closed}:${zone.warningRing ?? 0}:${rising ?? 0}:${state.coverRevision ?? 0}:${arenaWalls.size}`;
+    const moving =
+      zone.nextRingAt !== undefined && state.time >= zone.nextRingAt - ZONE.advance
+        ? zone.warningRing
+        : undefined;
+    const signature = `${zone.final}:${zone.closed}:${zone.warningRing ?? 0}:${zone.clearingRing ?? 0}:${moving ?? 0}:${state.coverRevision ?? 0}:${arenaWalls.size}`;
     let shake = 0;
     if (signature !== this.signature || mapChanged) {
-      const startedRising = rising !== undefined && rising !== this.risingRing;
-      this.risingRing = rising;
+      const startedMoving = moving !== undefined && moving !== this.movingRing;
+      const startedClearing = zone.clearingRing !== undefined && zone.clearingRing !== this.clearingRing;
+      this.movingRing = moving;
+      this.clearingRing = zone.clearingRing;
       this.signature = signature;
-      this.rebuildWalls(state, zone.closed, rising);
+      this.rebuildWalls(state, zone.closed, moving);
       this.rebuildWarning(state, zone.warningRing);
       this.fire?.removeFromParent();
       this.fire?.dispose();
       this.fire = undefined;
       if (zone.final) this.rebuildFire(state, zone.closed);
-      if (startedRising) {
-        this.raiseDust(state, rising);
+      if (startedClearing) {
+        this.raiseDust(state, zone.clearingRing!);
         shake = 0.22;
       }
+      if (startedMoving) shake = Math.max(shake, 0.22);
       if (zone.closed > this.closed) shake = 0.5;
       this.closed = zone.closed;
     }
-    if (rising !== undefined && this.risingFrom < this.cells.length) {
-      const u = THREE.MathUtils.clamp(1 - left / RISE, 0, 1);
-      // Fast out of the ground, then a firm stop.
-      const lift = -DEPTH * (1 - u) ** 2;
-      for (let i = this.risingFrom; i < this.cells.length; i++)
-        this.place(i, this.cells[i], state.size, lift);
+    if (moving !== undefined && this.movingFrom < this.cells.length) {
+      const progress = zoneAdvance(state.time, zone);
+      for (let i = this.movingFrom; i < this.cells.length; i++)
+        this.place(i, this.cells[i], state.size, progress);
       for (const { mesh } of this.parts) mesh.instanceMatrix.needsUpdate = true;
     }
     // The warning flashes faster as the wall approaches.
@@ -273,7 +296,7 @@ export class ZoneWalls {
     this.dustAt = -Infinity;
     this.signature = this.builtFor = "";
     this.closed = 0;
-    this.risingRing = undefined;
+    this.movingRing = this.clearingRing = undefined;
   }
 
   dispose() {

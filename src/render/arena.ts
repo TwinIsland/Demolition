@@ -215,9 +215,18 @@ export class Arena {
     const size = state.size,
       revision = state.coverRevision ?? 0;
     let changed = revision !== this.coverRevision;
-    const destinations = changed
-      ? new Map(Object.entries(state.coverOrigins ?? {}).map(([cell, id]) => [id, Number(cell)] as const))
-      : undefined;
+    // A missing origin means the cover never moved, not that it was destroyed. Zone demolition
+    // also bumps this revision, including before the first terrain reset publishes any origins.
+    const destinations = changed ? new Map<number, number>() : undefined;
+    if (destinations) {
+      const playerBuilt = new Set(builtCrates(state).map((crate) => crate.z * size + crate.x));
+      for (let z = 1; z < size - 1; z++)
+        for (let x = 1; x < size - 1; x++) {
+          const cell = z * size + x;
+          if (state.tiles[z][x] === 2 && !playerBuilt.has(cell))
+            destinations.set(state.coverOrigins?.[cell] ?? cell, cell);
+        }
+    }
     for (const [origin, previous] of this.crates) {
       const cell = destinations ? destinations.get(origin) : previous;
       if (cell === undefined || state.tiles[Math.floor(cell / size)][cell % size] !== 2) {

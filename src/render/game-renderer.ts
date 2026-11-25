@@ -249,7 +249,7 @@ export class GameRenderer {
     lookYaw?: number,
     showBackdrop = false,
     menuBeat = 0,
-    aiming = false,
+    previewThrows = true,
   ) {
     if (showBackdrop && this.preview) {
       this.renderer.info.reset();
@@ -281,7 +281,12 @@ export class GameRenderer {
     this.burnKilledZombies(state);
     this.ashes.update(state.time);
     this.syncZombies(state);
-    this.updateAim(state, you, { firstPerson, topDown, aiming, pitch, yaw: lookYaw ?? you.yaw }, mapChanged);
+    this.updateAim(
+      state,
+      you,
+      { firstPerson, topDown, previewThrows, pitch, yaw: lookYaw ?? you.yaw },
+      mapChanged,
+    );
     this.syncPlayers(view);
     this.syncBombs(view);
     this.syncThrown(state);
@@ -432,7 +437,7 @@ export class GameRenderer {
   private updateAim(
     state: Readonly<GameSnapshot>,
     you: Player,
-    aim: { firstPerson: boolean; topDown: boolean; aiming: boolean; pitch: number; yaw: number },
+    aim: { firstPerson: boolean; topDown: boolean; previewThrows: boolean; pitch: number; yaw: number },
     mapChanged: boolean,
   ) {
     this.target.visible =
@@ -448,12 +453,12 @@ export class GameRenderer {
       // The tactical view drops the bomb underfoot; no frame is drawn there, the head marker is enough.
       this.target.visible = false;
     } else if (this.target.visible) {
-      const lob = aim.aiming && canLob(you.equipped);
+      const lob = canLob(you.equipped);
       const throwMode = lob ? "lob" : "direct";
       const cell = aimCell(you, aim.yaw, aim.pitch, you.equipped, state.time, throwMode);
       const valid = canPlace(state, you, cell, you.equipped, throwMode);
       if (ITEMS[you.equipped]?.throwable) {
-        this.throwGuide.root.visible = valid || lob;
+        this.throwGuide.root.visible = aim.previewThrows && (valid || lob);
         if (this.throwGuide.root.visible) {
           this.landingPreview = { ...cell, valid };
           this.throwGuide.update(you, cell, state.size, valid, lob, state.time);

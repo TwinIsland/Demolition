@@ -12,7 +12,7 @@ export const BASIC_CONTROLS = {
   sprint: ["冲刺", "ShiftLeft"],
   jump: ["跳跃", "Space"],
   use: ["使用装备 / 投掷", "Mouse0"],
-  aim: ["按住瞄准高抛", "Mouse2"],
+  build: ["建造木箱", "Mouse2"],
   previous: ["上一件装备", "WheelUp"],
   next: ["下一件装备", "WheelDown"],
   gearWheel: ["按住拖选装备", "KeyV"],
@@ -108,7 +108,7 @@ export const keyName = (code: string) =>
 function allowed(action: BindingId, code: string) {
   if (code === "Escape" && action !== "pause") return t("Esc 用于退出或暂停");
   if (/^Mouse[0-4]$/.test(code))
-    return action === "use" || action === "aim" || action.startsWith("skill:") ? "" : t("请按一个键盘按键");
+    return action === "use" || action === "build" || action.startsWith("skill:") ? "" : t("请按一个键盘按键");
   if (/^Wheel(Up|Down)$/.test(code))
     return ["previous", "next"].includes(action) ? "" : t("滚轮用于切换装备");
   if (

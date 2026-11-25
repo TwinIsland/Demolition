@@ -1,7 +1,7 @@
 import { COMBAT } from "../combat";
 import { modifiedStat, RULES } from "../content";
-import { BUILD, COINS } from "../economy";
-import { zoneBurning } from "../zone";
+import { BUILD, COINS, crateCost } from "../economy";
+import { zoneBurning, zoneClearing } from "../zone";
 import type { GameSnapshot, Player, Vec2 } from "../types";
 import type { SimContext } from "./context";
 import { emit } from "./events";
@@ -25,9 +25,6 @@ export function removeBuiltCrate(s: GameSnapshot, x: number, z: number) {
   if (s.builtCrates) s.builtCrates = s.builtCrates.filter((crate) => crate.x !== x || crate.z !== z);
 }
 
-export const ownCrates = (s: Readonly<GameSnapshot>, p: Player) =>
-  s.builtCrates?.filter((crate) => crate.ownerId === p.id).length ?? 0;
-
 /** Whether the player could build on `cell` right now. Shared with the HUD and the bots. */
 export function canBuild(s: Readonly<GameSnapshot>, p: Player, cell: Vec2 = cellAhead(p)) {
   const { x, z } = cell;
@@ -35,9 +32,9 @@ export function canBuild(s: Readonly<GameSnapshot>, p: Player, cell: Vec2 = cell
   return (
     s.phase === "playing" &&
     p.alive &&
-    ownCrates(s, p) < BUILD.limit &&
+    p.credits + (p.building?.cost ?? 0) >= crateCost(p.cratesBuilt ?? 0) &&
     s.tiles[z]?.[x] === 0 &&
-    !(s.zone && zoneBurning(s.size, cell, s.zone)) &&
+    !(s.zone && (zoneBurning(s.size, cell, s.zone) || zoneClearing(s.size, cell, s.zone))) &&
     !s.bombs.some((b) => b.x === x && b.z === z) &&
     !s.items.some((i) => i.x === x && i.z === z) &&
     !s.blasts.some((b) => b.x === x && b.z === z) &&
@@ -48,27 +45,23 @@ export function canBuild(s: Readonly<GameSnapshot>, p: Player, cell: Vec2 = cell
 }
 
 /**
- * Begins the build windup on the cell ahead. The caller has taken one crate from the inventory;
- * `cancelBuild` hands it back if the windup is interrupted.
+ * Pays for the build and begins its windup on the cell ahead. The reserved cost is refunded if
+ * damage, movement or an obstruction interrupts construction.
  */
 export function startBuild(ctx: SimContext, p: Player) {
   const s = ctx.state;
   if (p.building || !canBuild(s, p)) return false;
-  p.building = { ...cellAhead(p), completeAt: s.time + BUILD.windup };
+  const cost = crateCost(p.cratesBuilt ?? 0);
+  p.credits -= cost;
+  p.building = { ...cellAhead(p), completeAt: s.time + BUILD.windup, cost };
   return true;
 }
 
-/** The build key: sets down a carried crate without switching equipment first. */
-export function quickBuild(ctx: SimContext, p: Player) {
-  if (!((p.inventory[BUILD.item] ?? 0) > 0) || !startBuild(ctx, p)) return;
-  if (--p.inventory[BUILD.item] === 0 && p.equipped === BUILD.item) p.equipped = "bomb";
-}
-
-/** Abandons a crate under construction and returns it to the inventory. */
+/** Abandons a crate under construction and refunds its reserved coins exactly once. */
 export function cancelBuild(p: Player) {
   if (!p.building) return;
+  p.credits += p.building.cost;
   delete p.building;
-  p.inventory[BUILD.item] = (p.inventory[BUILD.item] ?? 0) + 1;
 }
 
 /** Finishes or cancels the crate under construction. Stepping off the cell abandons it. */

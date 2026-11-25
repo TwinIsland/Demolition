@@ -29,7 +29,6 @@ const BOARD_DIRECTIONS = {
 } as const;
 
 interface Shot {
-  aimed: boolean;
   yaw: number;
   pitch: number;
 }
@@ -40,11 +39,12 @@ export class KeyboardAgent implements PlayerAgent {
   yaw = -Math.PI / 2;
   pitch = 0;
   enabled = false;
-  selectingWheel = false;
+  private wheelOpen = false;
   private keys = new Set<string>();
   private boardMode = false;
   private boardYaw = 0;
   private plantHere = false;
+  private buildRequested = false;
   private shot?: Shot;
   private pendingPlace?: { shot: Shot; until: number };
   private queuedSwing?: Equipment;
@@ -128,9 +128,10 @@ export class KeyboardAgent implements PlayerAgent {
     canvas.addEventListener(
       "mousedown",
       (e) => {
-        if (this.enabled && !this.boardMode && !this.selectingWheel) {
-          this.press("Mouse" + e.button);
-          if (e.button === 2) this.dragging = true;
+        if (this.enabled && !this.selectingWheel) {
+          const code = "Mouse" + e.button;
+          if (!this.boardMode || bindings.action(code) === "build") this.press(code);
+          if (!this.boardMode && e.button === 1 && !bindings.action(code)) this.dragging = true;
           this.pointer = { x: e.clientX, y: e.clientY };
         }
       },
@@ -140,7 +141,7 @@ export class KeyboardAgent implements PlayerAgent {
       "mouseup",
       (e) => {
         this.keys.delete("Mouse" + e.button);
-        if (e.button === 2) this.dragging = false;
+        if (e.button === 1) this.dragging = false;
       },
       { signal },
     );
@@ -236,19 +237,28 @@ export class KeyboardAgent implements PlayerAgent {
     this.boardMode = active;
     this.boardYaw = this.yaw;
     this.plantHere = this.jump = this.dragging = false;
+    this.buildRequested = false;
     this.shot = this.queuedSwing = undefined;
+    this.pendingPlace = undefined;
     this.selectedEquipment = this.submittedEquipment = undefined;
     this.wheelSteps = 0;
     for (const key of this.keys) {
       if (key.startsWith("Mouse") || key === "Space" || (!active && BOARD_ARROWS[key])) this.keys.delete(key);
     }
   }
-  get aiming() {
-    return this.enabled && !this.boardMode && !this.selectingWheel && this.held("aim");
+  get selectingWheel() {
+    return this.wheelOpen;
+  }
+  set selectingWheel(active: boolean) {
+    if (active) {
+      this.buildRequested = false;
+      this.pendingPlace = undefined;
+      this.shot = this.queuedSwing = undefined;
+    }
+    this.wheelOpen = active;
   }
   beginWheel() {
     this.selectingWheel = true;
-    this.shot = this.queuedSwing = undefined;
     this.wheelSteps = 0;
   }
   private press(code: string) {
@@ -260,14 +270,17 @@ export class KeyboardAgent implements PlayerAgent {
     }
     this.keys.add(code);
     if (action === "resetTerrain") this.resetTerrain = true;
+    if (action === "build" && !this.selectingWheel) this.buildRequested = true;
     if (this.boardMode) return;
     if (action === "jump") this.jump = true;
-    if (action === "use" && !this.selectingWheel)
-      this.shot = { aimed: this.aiming, yaw: this.yaw, pitch: this.pitch };
-    if (action === "previous") this.wheelSteps--;
-    if (action === "next") this.wheelSteps++;
+    if (action === "use" && !this.selectingWheel) this.shot = { yaw: this.yaw, pitch: this.pitch };
+    if (action === "previous" || action === "next") {
+      this.shot = undefined;
+      this.wheelSteps += action === "next" ? 1 : -1;
+    }
   }
   queueEquipment(id: Equipment) {
+    this.shot = undefined;
     this.selectedEquipment = id;
     this.wheelSteps = 0;
   }
@@ -276,6 +289,7 @@ export class KeyboardAgent implements PlayerAgent {
       return;
     const action = bindings.action(delta < 0 ? "WheelUp" : "WheelDown");
     if (action !== "previous" && action !== "next") return;
+    this.shot = undefined;
     this.lastScroll = time;
     this.wheelSteps += action === "next" ? 1 : -1;
   }
@@ -299,6 +313,7 @@ export class KeyboardAgent implements PlayerAgent {
   clear() {
     this.browsingPerks = false;
     this.plantHere = false;
+    this.buildRequested = false;
     this.resetTerrain = false;
     this.jump = false;
     this.activePerk = undefined;
@@ -307,6 +322,7 @@ export class KeyboardAgent implements PlayerAgent {
     this.selectedEquipment = undefined;
     this.wheelSteps = 0;
     this.shot = undefined;
+    this.pendingPlace = undefined;
     this.queuedSwing = undefined;
     this.skill = undefined;
     this.dragging = false;
@@ -331,8 +347,10 @@ export class KeyboardAgent implements PlayerAgent {
       sprint: this.held("sprint"),
       activateSkill: this.skill,
       buyItem: this.supply,
+      build: this.buildRequested && self.alive && state.phase === "playing" && !this.selectingWheel,
     };
     this.resetTerrain = false;
+    this.buildRequested = false;
     this.skill = this.activePerk = this.supply = undefined;
     if (this.boardMode) {
       let moveX = 0,
@@ -362,7 +380,7 @@ export class KeyboardAgent implements PlayerAgent {
     const selected = equip ?? current;
     const shot = this.bufferedShot(self, state, selected);
     const melee = ITEMS[selected]?.melee;
-    let use = !!shot;
+    let use = !!shot && !this.selectingWheel && self.alive && state.phase === "playing";
     if (this.selectingWheel || !self.alive || state.phase !== "playing" || selected !== this.queuedSwing)
       this.queuedSwing = undefined;
     if (melee && !this.selectingWheel && self.alive && state.phase === "playing") {
@@ -375,7 +393,7 @@ export class KeyboardAgent implements PlayerAgent {
         use = false;
       }
     }
-    const throwMode = shot?.aimed && canLob(selected) ? ("lob" as const) : ("direct" as const);
+    const throwMode = canLob(selected) ? ("lob" as const) : ("direct" as const);
     this.wheelSteps = 0;
     const input: PlayerInput = {
       ...shared,

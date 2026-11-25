@@ -587,7 +587,7 @@ export class GameApp {
       this.keyboard.yaw,
       inLobby && !this.previewTerrain,
       inLobby && !this.reducedMotion.matches ? this.sound.menuBeat(now) : 0,
-      this.screens.is("playing") && this.keyboard.aiming,
+      this.controllingPlayer && !this.keyboard.selectingWheel,
     );
     if (this.screens.is("lobby", "graphics")) this.renderer.renderPreview(now);
   }

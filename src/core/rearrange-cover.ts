@@ -1,6 +1,7 @@
 import { DIRECTIONS, placeWall, spawnPoints } from "./maps";
 import type { MapDefinition } from "./pack-api";
 import type { GameSnapshot, Vec2 } from "./types";
+import { zoneClearing } from "./zone";
 
 function shuffle(list: number[], random: () => number) {
   for (let i = list.length - 1; i > 0; i--) {
@@ -42,6 +43,7 @@ export function planWalls(s: GameSnapshot, map: MapDefinition, random: () => num
       const cell = z * size + x;
       if (
         tiles[z][x] === 0 &&
+        !(s.zone && zoneClearing(size, { x, z }, s.zone)) &&
         !sinking.includes(cell) &&
         !built.has(cell) &&
         !spawns.some((p) => Math.abs(p.x - x) + Math.abs(p.z - z) <= 2) &&
@@ -92,6 +94,9 @@ export function rearrangeCover(
   const layout = map.randomizeTerrain(random, s.size);
   const occupied = new Set<number>();
   const reserve = (p: Vec2) => occupied.add(Math.round(p.z) * s.size + Math.round(p.x));
+  if (s.zone)
+    for (let z = 1; z < s.size - 1; z++)
+      for (let x = 1; x < s.size - 1; x++) if (zoneClearing(s.size, { x, z }, s.zone)) reserve({ x, z });
   // Player-built crates stay where their owner put them.
   for (const p of [...s.items, ...s.bombs, ...s.thrown, ...s.blasts, ...(s.builtCrates ?? [])]) reserve(p);
   for (const b of s.bombs) if (b.slide) reserve({ x: b.x - b.slide.x, z: b.z - b.slide.z });

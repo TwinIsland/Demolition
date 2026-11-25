@@ -16,9 +16,9 @@ const notes = {
     "Bots value a pickup at `16 + 22 × missingHp`.",
   ],
   "items/crate": [
-    "Use: starts a 0.6 s build on the tile ahead (`BUILD.windup`). The crate is spent when the build starts and returned if damage or stepping away interrupts it.",
-    "Never drops. Bought in the supply shop, where each repeat purchase costs 25% of the base price more, and at most 3 can be carried.",
-    "At most 3 of your crates stand at once (`BUILD.limit`). The tile must be free of operators, zombies, items, charges and fire.",
+    "Right-click: pays coins and starts a 0.6 s build on the tile ahead (`BUILD.windup`), independently of equipped gear. Damage, movement or an obstruction cancels it and refunds the reserved coins.",
+    "Costs 20 coins initially, plus 5 for each crate completed this match (`crateCost`). Interrupted builds do not raise the price. Never dropped, carried, equipped or sold in the supply shop.",
+    "No standing-crate limit. The tile must be free of operators, zombies, items, charges and fire.",
     "A built crate behaves like cover with durability 2, but gives no score and no loot. Another operator who destroys it gets 2 coins. It shows the builder's emblem.",
   ],
   "items/grenade": [
@@ -211,7 +211,7 @@ ${skills.map(c => `| ${link("skills", c)} | ${c.code ? c.code.replace("Key", "")
 
 ## Items
 
-Dropped by cover, zombies and field supplies, or bought with coins in the supply shop. The knife is permanent gear. See [Item mods](../modding/items.md).
+Dropped by cover, zombies and field supplies, or bought with coins in the supply shop. The knife is permanent gear; crates are built directly with coins. See [Item mods](../modding/items.md).
 
 | Item | Base drop weight | Shop price | Numbers | Effect |
 | --- | --- | --- | --- | --- |

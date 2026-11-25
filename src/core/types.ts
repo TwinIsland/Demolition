@@ -36,7 +36,7 @@ export interface PlayerInput {
   meleeYaw?: number;
   /** Tactical View: drop a bomb on the cell the player stands on, independently of held equipment. */
   plantHere?: boolean;
-  /** Set down a carried crate on the cell ahead without switching equipment. Bots use it; players have no key for it. */
+  /** Spend coins to build a crate on the cell ahead, independently of equipped gear. */
   build?: boolean;
   activateSkill?: SkillId;
   /** Take one perk from the current offer. */
@@ -105,15 +105,10 @@ export interface Player extends Vec2 {
   cooldowns: Record<SkillId, number>;
   /** Crates built this match; each one raises the price of the next. */
   cratesBuilt?: number;
-  /** Crate under construction. Taking damage or leaving the cell cancels it. */
-  building?: Vec2 & { completeAt: number };
+  /** Crate under construction and its reserved coin cost. Interruptions refund that cost. */
+  building?: Vec2 & { completeAt: number; cost: number };
   /** Bomb the player is currently pushing against, and since when. Drives the Slide Kick windup. */
   kickPush?: Vec2 & { bombId: number; since: number };
-  /**
-   * Shoved out of a closing ring: the player slides from `from` to the target between `startAt`
-   * and `endAt`, passing through walls, and cannot steer meanwhile.
-   */
-  shove?: Vec2 & { from: Vec2; startAt: number; endAt: number };
 }
 export interface Bomb extends Vec2 {
   /** Destructible obstacles the blast passes through (destroying them) before it stops. */

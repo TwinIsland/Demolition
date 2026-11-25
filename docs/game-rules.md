@@ -18,9 +18,9 @@ The boundary wall closes in ring by ring until one operator is left. Source: `co
 
 - **Match duration** in the room settings is the time the zone takes to reach its minimum size: 120, 180 (default) or 240 s.
 - Nothing closes for the first 20 s. After that the rings close at even intervals, the last one exactly at the chosen duration. A 19 × 19 map has 7 rings, a 17 × 17 map has 6.
-- A ring flashes for 4 s, then every tile in it becomes permanent wall. Cover, built crates, items, zombies and charges there are removed, with no blast and no reward.
-- An operator standing in the ring is pushed to the nearest open tile inside and takes 35 damage, which shields do not block. With no open tile to go to, they die. One who only overlaps the ring's edge is pushed back to the centre of their own tile unharmed.
-- When a ring closes, every permanent wall in the next ring inward is removed, so the lap along the new boundary is always open. Cover there stays.
+- A ring flashes for 4 s. Before the wall moves, permanent walls, cover, built crates, items, zombies and charges in that ring and the next ring inward are removed, with no blast and no reward. Demolition takes 0.5 s, then the full-height boundary slides inward over 0.85 s, reaching the marked ring at its deadline.
+- The moving wall pushes operators inward along its face without dealing damage. Operators can still steer toward the safe area while being pushed.
+- The inner ring provides an open escape lane. New crates and charges cannot be placed there during demolition or the advance.
 - The centre 3 × 3 stays safe for 15 s after the last ring. Then that square burns: 16 HP/s, rising by 4 every 5 s, through shields, and no one can regain health.
 
 ## Operator
@@ -70,10 +70,10 @@ The first level-up needs 75, and each later one needs 50 more than the last (75,
 
 Source: `core/economy.ts`, `core/systems/building.ts`, the [Field Crate](content/items/crate.md) item.
 
-- Coins left after the skill shop, plus coins earned in the match, are spent in the [supply shop](#supply-shop).
-- A crate is an item bought there for 20 coins. Select it like any gear and use it to build on the tile ahead.
-- Building takes 0.6 s. If damage or stepping away interrupts it, the crate goes back to your inventory.
-- You can have 3 crates standing at once.
+- Coins left after the skill shop, plus coins earned in the match, pay for building and the [supply shop](#supply-shop).
+- Right-click to build a crate on the tile ahead, without changing equipment or buying an item first. The first costs 20 coins; each completed crate adds 5 to the next price (20, 25, 30, …). The HUD shows the next price.
+- Building takes 0.6 s. Coins are deducted when it starts and refunded if damage, stepping away or an obstruction interrupts it. Interrupted builds do not raise the next price.
+- There is no limit on how many crates you can have standing at once; each site must still be clear and affordable.
 - A built crate blocks movement and blasts like any cover and has the same durability. It gives no score and no loot. It shows the builder's emblem.
 
 ## Supply shop
@@ -81,7 +81,7 @@ Source: `core/economy.ts`, `core/systems/building.ts`, the [Field Crate](content
 Source: `SUPPLY` in `core/economy.ts`, `core/systems/supply.ts`.
 
 - Hold B during a match to open the supply wheel, slide to an item and release to buy it with coins. The match does not pause. The shop closes in the final firestorm.
-- Prices: crate 20, smoke 20, bandage 25, grenade 35, shield 40. The knife is not sold.
+- Prices: smoke 20, bandage 25, grenade 35, shield 40. Crates are built directly; the knife is not sold.
 - Each earlier purchase of the same item this match adds 25% of its base price (grenade: 35, 44, 53, …).
 - You must wait 6 s between purchases, and cannot buy an item while carrying 3 of it.
 - The item goes straight into your inventory.

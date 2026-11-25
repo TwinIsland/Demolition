@@ -23,7 +23,7 @@ npm run dev        # dev server on http://127.0.0.1:5173
 | `npm run check` | Type-check, lint and format check. Run before handing work over |
 | `npm run typecheck`, `lint`, `format`, `format:check` | The individual steps. `format` rewrites files with Prettier |
 
-The project has no automated tests. Check changes with `npm run check` and by playing.
+Run `npm test` for regression tests and `npm run check` for static checks. Also check gameplay changes by playing.
 
 ## Stack
 

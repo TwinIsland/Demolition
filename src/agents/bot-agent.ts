@@ -6,7 +6,7 @@ import { DIRECTIONS, seededRandom } from "../core/maps";
 import { canPlace, placementRadius } from "../core/placement";
 import { SUMMON_TIME } from "../core/zombies";
 import { idleInput, inTacticalView } from "../core/types";
-import { BUILD } from "../core/economy";
+import { BUILD, crateCost } from "../core/economy";
 import type { Personality } from "./tactics";
 import type {
   AgentContext,
@@ -64,16 +64,15 @@ const SHOP_TASTE: Record<string, Record<string, number>> = {
   sunny: { scan: 1.2, surge: 1.1, kick: 1, medic: 0.8, shift: 0.3, detonator: 0 },
 };
 /**
- * What a bot buys from the supply shop: a bandage when hurt, a crate to build with, then a shield,
- * then a grenade, keeping some coins back.
+ * Buys healing, shields and grenades while keeping some coins back for direct construction.
  */
 function supplyWish(p: Readonly<Player>, s: Readonly<GameSnapshot>): ItemId | undefined {
   const spare = (id: ItemId, reserve: number) =>
     !supplyRefusal(s, p, id) && p.credits - supplyPrice(p, id) >= reserve && !(p.inventory[id] ?? 0);
   if (p.hp < p.maxHp * 0.55 && spare("bandage", 0)) return "bandage";
-  if (spare(BUILD.item, 0)) return BUILD.item;
-  if (p.shield <= 0 && spare("shield", BUILD.cost)) return "shield";
-  if (spare("grenade", BUILD.cost * 2)) return "grenade";
+  const reserve = crateCost(p.cratesBuilt ?? 0);
+  if (p.shield <= 0 && spare("shield", reserve)) return "shield";
+  if (spare("grenade", reserve * 2)) return "grenade";
   return undefined;
 }
 const dist = (a: Vec2, b: Vec2) => Math.hypot(a.x - b.x, a.z - b.z);
@@ -417,7 +416,7 @@ export class BotAgent implements PlayerAgent {
    */
   private planBuild(s: Readonly<GameSnapshot>, p: Player, enemies: Contact[], f: BombForecast) {
     if (s.time < this.buildingUntil || p.building || inTacticalView(p, s.time)) return;
-    if (!((p.inventory[BUILD.item] ?? 0) > 0)) return;
+    if (p.credits < crateCost(p.cratesBuilt ?? 0)) return;
     const here = cell(p);
     if (f.burning(here.x, here.z, 0, BUILD.windup + 0.5)) return;
     const hurt = p.hp < p.maxHp * 0.5;

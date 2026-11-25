@@ -12,7 +12,7 @@
 
 **Slide Kick** is a skill in Demolition Front. In the game it is described as:
 
-> Line up with a charge and keep pushing into it for a moment to kick it down an open lane. A charge you are still standing on is never kicked. Its fuse pauses until it hits cover, another charge, an operator, a zombie, or a blast.
+> Push against a charge to kick it. Its fuse pauses while sliding; impact detonates it.
 
 ## Behaviour
 
