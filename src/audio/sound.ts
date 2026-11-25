@@ -3,12 +3,8 @@ import type { GameEvent, GameSnapshot, Vec2 } from "../core/types";
 import { ITEMS, SKILLS, TIERS, isEquipment, perkById } from "../core/content";
 export const MENU_MUSIC = "./assets/volatile-reaction.mp3";
 const menuCues = { click: "ui-click", accept: "ui-accept", back: "ui-back" } as const;
-const devAudio: Record<string,string> = JSON.parse(
-  (import.meta.env.DEV && import.meta.env.VITE_AUDIO_OVERRIDES) || "{}"
-);
 function cueUrl(file:string) {
-  const path = file.includes("/") || file.includes(":") ? file : `./assets/${file}.ogg`;
-  return devAudio[path.slice(path.lastIndexOf("/") + 1)] ?? path;
+  return file.includes("/") || file.includes(":") ? file : `./assets/${file}.ogg`;
 }
 /** Downloaded recordings only; no synthesized oscillators. */
 export class Sound {
