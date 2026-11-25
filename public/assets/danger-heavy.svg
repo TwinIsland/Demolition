@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs><pattern id="stripe" width="32" height="32" patternUnits="userSpaceOnUse">
+    <path d="m-16 16 32-32M0 32 32 0m-16 48 32-32" fill="none" stroke="white" stroke-width="11"/>
+  </pattern></defs>
+  <path fill="white" opacity=".22" d="M0 0h128v128H0z"/>
+  <rect x="11" y="11" width="106" height="106" fill="url(#stripe)"/>
+  <path d="M3 3h122v122H3zM10 10h108v108H10z" fill="none" stroke="white" stroke-width="3"/>
+</svg>

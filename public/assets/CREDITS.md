@@ -1,0 +1,128 @@
+# Downloaded asset sources
+
+<details>
+<summary>Field manual backgrounds and frames · built-in ImageGen</summary>
+
+Use case: ui-mockup. Create a single premium nine-slice item card texture for a modern tactical video game's field manual. Landscape 3:2 rectangle. Front-on orthographic scan, flush full-bleed rectangular panel exactly on all four canvas edges; zero outer margin, no cast shadow, no perspective. A quiet very dark desaturated graphite interior occupies the central 87 percent and will hold real text later. All decorative tooling must hug the outermost 5 percent, with four compact distinctive corner details; long horizontal and vertical rim segments must stretch cleanly. Carefully crafted industrial materials, fine worn edges catching a little light, never busy. No typography, lettering, numbers, icons, logos, badges or mockup background.
+
+- `public/assets/manual/backdrop.webp` — Use case: ui-mockup. Portrait 4:5 full-bleed background artwork for a premium tactical video game's field manual. A decommissioned charcoal-green topographic plotting board, viewed directly overhead with shallow grazing light; visible dry fine-grain laminate, oxidized hardware on the far corners, faint broken contour lines mapped along the outer right and lower edges, dusty narrow bronze edge of a binder spine on the left. Restrained, tactile, photographed military-industrial art direction, dark but with subtle warm light at the top. Keep broad central 80 percent dark, visually quiet, suitable for a bright text overlay. No words, numbers, labels, icons, UI panels, page layouts or objects in the middle. Edge to edge, no surrounding tabletop.
+- `public/assets/manual/skills.webp` — Skill card. Machined blackened aluminium with muted champagne brass inlays. Corner motif: twin precision diagonal cuts with the brass underneath; quiet fine brushed center.
+- `public/assets/manual/equipment.webp` — Equipment inventory tag. Blackened field-case steel with cool desaturated blue-grey enamel edge, neatly crimped lugs and minute abrasion at the corners. Fine anthracite powder coat interior.
+- `public/assets/manual/perks.webp` — Upgrade card. Graphite ceramic, double antique brass hairline tracery confined to the corners, distinctive stepped top-right corner and tiny warm glints; exceptionally restrained.
+- `public/assets/manual/genes.webp` — Genetic augment card. Dark diagnostic instrument cover, muted oxidised sea-green rims, staggered traces and recessed teal glass inserts only on corners. Deep graphite center.
+
+</details>
+
+- BGM: [Volatile Reaction](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1400039) by Kevin MacLeod, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Original recording, unchanged.
+- Former BGM: Dark Place (loop), OpenGameArt: https://opengameart.org/content/dark-place-loop (CC0 as stated on source page). Original file dark_place.ogg, unchanged.
+- Impact, hit, explosion, pickup: Kenney Impact Sounds / Sci-Fi Sounds / Digital Audio (CC0). https://kenney.nl/assets/impact-sounds ; https://kenney.nl/assets/sci-fi-sounds ; https://kenney.nl/assets/digital-audio . Download mirror: https://github.com/Mcamento8/open-game-sfx-index , original samples unchanged.
+- Barlow Semi Condensed supplies Latin UI text and HUD numerals. The local WOFF2 files come from Fontsource 5.3.0. [Font source](https://github.com/google/fonts/tree/main/ofl/barlowsemicondensed) · [Bundled SIL Open Font License](fonts/barlow-semi-condensed/OFL.txt)
+- Noto Sans SC supplies Simplified Chinese text. The local variable WOFF2 files and Unicode ranges come from Fontsource 5.3.1. [Font source](https://github.com/google/fonts/tree/main/ofl/notosanssc) · [Bundled SIL Open Font License](fonts/noto-sans-sc/OFL.txt)
+- FilmShader, postprocessing and PBR shaders: official Three.js distribution (MIT), installed via npm, no handwritten replacement GLSL. https://github.com/mrdoob/three.js
+
+- Wood: https://threejs.org/examples/textures/hardwood2_diffuse.jpg , official Three.js example texture, unchanged.
+
+- Dynamite bundle: The Base Mesh, CC0; mirrored by https://github.com/Papyszoo/CC0-Public-Domain-Models/tree/main/packs/the-base-mesh/models/dynamite_stick_bundle . The game normalizes the original geometry, unwraps the bundle and separates the wrap, collars, caps and cord into material slots.
+- Pickup confirmation and fuse tick: Kenney Interface Sounds (CC0), confirmation_002.ogg and tick_004.ogg, from https://kenney.nl/assets/interface-sounds ; downloaded via https://github.com/Mcamento8/open-game-sfx-index . Original audio unchanged; gain and playback cadence controlled at runtime.
+
+- Daylight HDRI: Kloofendal 48d Partly Cloudy (Pure Sky), Greg Zaal / Jarod Guest, Poly Haven CC0: https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky . Locally stored 1K Radiance HDR, used for background and PMREM lighting.
+- Concrete Floor 02 / Concrete Wall 003: Poly Haven CC0, https://polyhaven.com/a/concrete_floor_02 and https://polyhaven.com/a/concrete_wall_003 . Original 1K albedo, roughness and OpenGL normal maps, downloaded from dl.polyhaven.org.
+- Wood bump: official Three.js hardwood2_bump.jpg texture, matches the existing hardwood albedo.
+- Physical Sky fallback and SSAO: unmodified official Three.js addon shaders (MIT), configured by the renderer.
+
+- Minecraft articulated rig / UVs / walking and idle animation: skinview3d (MIT), https://github.com/bs-community/skinview3d ; skin normalization: skinview-utils (MIT). Default demonstration skins hacksore.png and haka.png from the upstream examples/public/img directory; original artwork ownership remains with the upstream authors. Minecraft is a trademark of Mojang; this project is not affiliated. Uploaded skin artwork belongs to its respective creator.
+
+- The fallback pickup uses Quaternius’s CC0 ammunition crate from the [Sci-Fi Essentials Kit](https://quaternius.com/packs/scifiessentialskit.html). It is bundled with its three texture maps.
+
+- Concrete footsteps 000–002: Kenney Impact Sounds (CC0), via Mcamento8/open-game-sfx-index. Grenade models A/B: Kenney Blaster Kit (CC0), via Papyszoo/CC0-Public-Domain-Models. Smoke sprite: [OpenGameArt texture distributed in Three.js examples](https://github.com/mrdoob/three.js/blob/dev/examples/textures/opengameart/smoke1.png).
+
+- Detonation flipbook — [Explosion](https://opengameart.org/content/explosion), CC0. Original `exp2_0.png`, 16 frames at 64 × 64 pixels.
+- `perk-embers.ogg` uses a 1.2-second excerpt of AntumDeluge’s CC0 fireplace recording, normalized and faded for the perk offer cue. [Fire Crackling](https://opengameart.org/content/fire-crackling)
+- `arena-fire.ogg` uses the full `fire-1.wav` recording for the looping fire under reward offers and terrain resets. Recorded by AntumDeluge, CC0. [Fire Crackling](https://opengameart.org/content/fire-crackling)
+- `reset-signal.ogg` is Kenney’s CC0 `error_002.ogg`, used for the arena-wide terrain reset countdown. [Interface Sounds](https://kenney.nl/assets/interface-sounds) · [Audio mirror](https://github.com/Mcamento8/open-game-sfx-index/blob/main/audio/interface-sounds/error_002.ogg)
+- `perk-ready.ogg` — Kenney [Interface Sounds](https://kenney.nl/assets/interface-sounds), CC0. Original `maximize_006.ogg` from the [audio mirror](https://github.com/Mcamento8/open-game-sfx-index/blob/main/audio/interface-sounds/maximize_006.ogg).
+
+## Arena, music and finishes
+
+- Trees and stacked timber use Kenney’s [Nature Kit](https://kenney.nl/assets/nature-kit). Machinery, pipe valves, barriers and robot arms use Kenney’s [Factory Kit](https://kenney.nl/assets/factory-kit). Both collections are CC0. The woodland models have game-specific UV scaling and replacement materials.
+- The three wrap textures in `src/modules/bomb-finishes/{standard,arctic,olive}/wrap.webp` were generated with OpenAI ImageGen. Art directions were worn oxblood and copper diagonal striping, pale polar splinter camouflage with contour lines, and olive tiger stripes with a survey grid. Each finish includes a derived roughness map.
+- Woodland albedo maps in `public/assets/cover/` were generated with OpenAI ImageGen from an atlas of grey-brown bark, dusty olive broadleaf, blue-green conifer needles and weathered end grain. The four maps are used on the matching surfaces of the downloaded models.
+
+- Warehouse pallet mesh and atlas by Quaternius, distributed under CC0. [Pallet on Poly Pizza](https://poly.pizza/m/MwOFAOgOhg)
+- Map music by Kevin MacLeod. [Five Armies](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100875) for the outpost, [Mechanolith](https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100879) for the warehouse. Original recordings, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- Promotion feedback uses Kenney’s CC0 `powerUp7.ogg`. [Digital Audio](https://kenney.nl/assets/digital-audio)
+- Menu click, confirm and back use Kenney’s CC0 `click_003`, `confirmation_001` and `back_002`, level-matched for playback. [Interface Sounds](https://kenney.nl/assets/interface-sounds)
+- Knife swings and hits use Kenney’s CC0 `knifeSlice` and `impactPunch_medium_001`. [RPG Audio](https://kenney.nl/assets/rpg-audio) · [Impact Sounds](https://kenney.nl/assets/impact-sounds)
+
+## Character skins from [SkinsDB](https://skinsdb.terraqueststudios.net/)
+
+Original PNGs, distributed unchanged.
+
+- Hatsune Miku-VOCALOID (SkinsDB #1013) — julito. [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- MC VOCALOID KAITO (SkinsDB #1104) — SAM7777. [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- GUMI(repair) (SkinsDB #1566) — IFRFSX. [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+- Naruto (SkinsDB #136) — LuxAtheris. [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- Goku (normal) (SkinsDB #1024) — julito. [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- vegetapromod (SkinsDB #811) — skrullox13. [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+- Sabo de one piece (SkinsDB #874) — Hisoka. [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
+
+## Deployment menu artwork
+
+The logo, hangar key art, two map illustrations and control surfaces were produced with the built-in OpenAI ImageGen tool. The alpha logo was also exported at browser-icon sizes.
+
+<details>
+<summary>Assets and generation prompts</summary>
+
+- `public/assets/hud/vital-strip.webp` — Use case: stylized-concept. Create a single landscape, edge-to-edge MATERIAL TEXTURE, not a UI mockup. A close-up of a translucent laminated jade-green military instrument light guide with fine longitudinal optical fibers, strongly horizontal micro-striations, subtle etched segment seams widely spaced, brighter mint catchlight across top, muted deep teal across bottom, consistent illumination left to right. Designed to crop down to a 210 by 10 pixel health gauge fill. Quiet, precise technical surfaces. No numbers, frame, letters, icons, shadows outside the panel or black margins.
+- `public/assets/hud/perk-inlay.webp` — Use case: stylized-concept. Create a tileable square flat macro material texture for the face of a premium tactical game augmentation card. Smoky graphite ceramic substrate, fine etched angular circuit traces concentrated at margins, hairline brushed nickel and a few tarnished gold vias, darkest and almost blank central 65 percent to accommodate live text and icons. Top-down orthographic, uniform soft light. Single material surface all the way to edges without any physical card outline, no text, letters, numbers, logos, emblems or sample UI.
+- `public/assets/hud/loadout-weave.webp` — Use case: stylized-concept. Create one square seamless albedo texture of rugged anthracite ripstop nylon bonded to a tactical equipment case, fine diagonal ballistic weave with an understated diamond reinforcement lattice, dusty graphite and desaturated olive, gentle raking light revealing threads and slight use wear. Full bleed, front-on, consistent density; suitable underneath small white game menu controls and equipment slots. No badges, lettering, symbols, objects, seams around the image, or border.
+
+- `public/assets/menu/insignia.png, public/favicon.ico, public/favicon-64.png` — Use case: logo-brand. Create one iconic original standalone insignia for a premium tactical video game about demolition arena combat. Transparent background, square composition, center emblem occupying ~85% of the canvas. Construct a bold compact forward-leaning capital D from three angular interlocking plates, with a lightning-shaped diagonal fracture carved in genuine negative space. Weighty industrial stencil geometry; one broad muted signal-amber plate and two warm near-white plates. Flat, sharp silhouette, reads instantly at 16 px. No letters beyond the implicit D, no wordmark, no lettering, no outside shield, no shadow, no gradient, no background, no fine lines. Straight-on orthographic clean vector-like raster.
+- `public/assets/menu/hangar.webp` — Use case: photorealistic-natural. Ultrawide landscape cinematic key art for an original premium military game lobby, photorealistic AAA environment matte painting, wide 16:9 frame. An abandoned concrete forward operating depot in a coastal mountain valley during a windy overcast dawn. Wide shutter doors opened onto distant low barracks, weather-faded painted concrete, stacked equipment, tall skeletal hangar girders on extreme left and overhead, hanging canvas sheets, rain-slick floor and pale ochre stripes, small restrained amber industrial lamps. Neutral blue-green steel, peat gray, misty sage and weathered brass. Strong directional light from high right, dusty god rays, layered depth with a dark quiet leftmost third for a UI, open hero-position foreground at 53% horizontal, unoccupied floor there for separately composited live character. View at shoulder height, horizon behind center. Give it a restrained textured 35mm documentary quality, expensive craft, grounded and atmospheric; no people, text, logos, markings resembling words, UI, weapons, title or watermarks.
+- `src/modules/maps/dream-garden/briefing.webp` — Use case: photorealistic-natural. Wide 16:9 cinematic game level selection thumbnail, aerial oblique three-quarter site reconnaissance photo of a compact military concrete outpost on the edge of a conifer forest, sage green trees, crates, muddy courtyard, a water tower and small weathered trailers under cold dawn light. One strong silhouette and tiny warm light, premium restrained war-film color grade, atmospheric haze, cinematic depth; scene readable at 200px. No UI, no text, labels, logos, soldiers, badges, map markers or borders.
+- `src/modules/maps/night-lab/briefing.webp` — Use case: photorealistic-natural. Wide 16:9 cinematic level selection thumbnail for a premium tactical videogame. Interior of a cavernous industrial goods depot at midnight, high three-quarter angle across orderly aisles of cargo, old overhead crane with rich tungsten amber lights, blue graphite shadows and volumetric light from clerestory windows. A striking strong amber diagonal of light through steel trusses. Grounded film cinematography, readable at 200px. No people, weapons, letters, text, logos, interface, map pins or borders.
+- `public/assets/menu/confirm.webp, public/assets/menu/selector.webp, public/assets/menu/graphite.webp` — Use case: ui-mockup. A production asset sheet containing exactly THREE horizontal rectangular material strips, each occupies a full third of a square canvas from edge to edge, strictly stacked without any gap, text, glyphs, lettering, numbers or glyph-like markings. Each strip must work independently as a subtle premium tactical game UI button background cropped at y=1/3 and 2/3. TOP THIRD: rich aged ochre-gold anodized metal confirmation rail, bright gold lit top edge, tiny brushed wear, narrow dark diagonal laser-etched hatch only at far right; broad clean gold center that takes dark text. MIDDLE THIRD: dark graphite-blue gunmetal selection rail, recessed hairline rim, faint sage edge light, small chamfer detail on far right, center calm dark with room for white text. BOTTOM THIRD: seamless deep carbon gray micro-grain horizontal brushed steel panel texture; virtually flat, matte charcoal in center with extremely subdued drafting grid. All straight-on orthographic flat material scans, no perspective, no drop shadows, no background outside the three bands, no device, no screws or ornaments in center. Full bleed.
+
+</details>
+
+Equipment and reward cues use Kenney recordings distributed under CC0. The downloaded Ogg files retain their original audio. [Source audio collection](https://github.com/Mcamento8/open-game-sfx-index/tree/main/audio)
+
+| Local cue | Source recording |
+| --- | --- |
+| gear-equip, gear-pickup, gear-throw, charge-place | RPG Audio · beltHandle2, metalLatch, cloth3, dropLeather |
+| shield-on, shield-block | Sci-Fi Sounds · forceField_002, forceField_000 |
+| Shield shatter and expiry | Kenney CC0 recordings, impactGlass_heavy_002 from [Impact Sounds](https://kenney.nl/assets/impact-sounds) and forceField_004 from [Sci-Fi Sounds](https://kenney.nl/assets/sci-fi-sounds). |
+| skill-cast, perk-silver | Interface Sounds · switch_007, confirmation_003 |
+| perk-gold, perk-diamond | Digital Audio · powerUp4, powerUp12 |
+| mutation-award | Kenney Digital Audio · powerUp11, CC0 |
+| aim-step, clock-pulse, deploy-signal | Kenney Interface Sounds · tick_001, select_002, confirmation_001 (CC0). [Interface Sounds](https://kenney.nl/assets/interface-sounds) |
+| zombie-ash | Impact Sounds · impactSoft_heavy_002 |
+| zombie-hurt-1, zombie-hurt-2, zombie-death | Minecraft: Java Edition zombie hurt and death recordings, Mojang Studios. Original Ogg files from the [official 1.21.4 asset index](https://piston-meta.mojang.com/v1/packages/819525fa2445f041d8c865e8ea3d215b362f106e/19.json). |
+| blast-ringing | Short excerpt with a fade from [Tinnitus by Joseph SARDIN, BigSoundBank](https://bigsoundbank.com/tinnitus-s1388.html), CC0. |
+| Knife contact with wood, metal, and sandbags | Kenney’s CC0 impactWood_medium_002, impactMetal_light_001, and impactSoft_heavy_001. [Impact Sounds](https://kenney.nl/assets/impact-sounds) |
+
+The permanent knife uses Quaternius’s CC0 mesh with new blade UVs and a separate steel texture. [Knife by Quaternius](https://poly.pizza/m/N9bfPFP1hr)
+
+<details>
+<summary>Field equipment surfaces · built-in ImageGen prompts and asset paths</summary>
+
+Use case: photorealistic-natural. Generate one square seamless base-color PBR material texture for the specified first-person videogame equipment, consistently art-directed for an understated realistic military supply kit. Orthodox straight-on surface scan, uniform flat diffuse lighting, physically plausible subdued color, moderate fine detail still legible on a small model. Fill the entire square with this material, tileable on opposite edges. No object photos, shadows, highlights, labels, letters, logos, layout panels, borders or vignette.
+
+- `src/modules/items/grenade/field-surface.webp` — Use case: photorealistic-natural. Generate one seamless flat tile for the base color of olive-drab field equipment in a videogame. Full-frame scanned surface of muted grey olive pebbled enamel over cast iron, with subtle handling patina, fine dark stipple and isolated worn silvery flecks. Medium olive color, even lighting, physically plausible scale. One continuous uniform material, no object, letters, logos, shadows, bevels, vignettes or frames. Square texture.
+- `src/modules/items/smoke/field-surface.webp` — Smoke canister coating. Worn cool blue-grey matte enamel on spun aluminum; ONE restrained faded ivory horizontal identification band edged with a narrow grey-blue stripe near one third of the height. Full edge-to-edge wrap, bands perfectly horizontal and continuous. Slight axial scuffs and subtly exposed aluminum.
+- `src/modules/items/shield/field-surface.webp` — Portable shield emitter casing. Matte graphite and muted petrol-blue ceramic composite casing with a fine diagonal carbon twill, fine handling scuffs and muted cyan woven tracer threads at irregular intervals, medium graphite values that read in shadow. Uniform technical material.
+- `src/modules/items/bandage/field-surface.webp` — Field dressing. Close overhead macro of muted unbleached ecru medical cotton gauze, tight fine orthogonal warp and weft, occasional loose fibers, subtle thread thickness variation. Barely visible faded olive-green woven tracer every twelve threads, soft dusty khaki at thread intersections. Tile from a single continuous flat gauze strip, no folds or blood.
+- `src/modules/items/knife/field-surface.webp` — Field knife blade. Medium-value cold grey satin-honed tool steel, fine faint lengthwise satin grind striations running horizontally, graphite temper mottling and a few shallow handling marks. Neutral silver-grey that reflects scene illumination. Single flat metal finish; no delineated blade profile.
+- `public/assets/charge-hardware.webp` — Exposed cap hardware for a fictional demolition charge game prop. Neutral pewter zinc-coated alloy with faint concentric lathe tool marks, restrained charcoal handling grime, freckled oxidation and small scratches. Mid-value neutral metal suitable to tint copper, olive or arctic in the game shader. Single continuous metal surface; no fasteners, diagrams, text, or individual components.
+
+The grenade, smoke and shield models have new UV coordinates for these surfaces. The bandage uses the bandage_roll geometry in `src/modules/items/bandage/model.glb`. The knife uses its blade UVs. The charge hardware uses the cap UVs across all player finishes.
+
+</details>
+
+<details>
+<summary>Knife and shield texture prompts · built-in ImageGen</summary>
+
+- `src/modules/items/knife/blade.jpg` — Use case: stylized-concept. One square seamless texture intended as the actual base color of a tactical game utility knife blade. An edge-to-edge flat orthographic macro scan of dark graphite / blued gunmetal steel, understated cool-gray horizontal brushing, a few fine handling scratches, tiny worn lighter steel flecks. Soft even neutral lighting, enough tonal variation to read in first person, with consistent brightness across the surface. Only the uniform metal material swatch with no knife silhouette, painted bevel, border, emblems, typography, seams, or other objects. Not a product photo of a knife. Opaque.
+- `public/assets/shield-field.webp` — Use case: stylized-concept. A single seamless square EMISSION MASK / energy-film texture for the inner and outer surfaces of a spherical sci-fi defensive shield in a premium tactical videogame. Edge-to-edge black field (almost all pixels black, 92% dark) crossed by extremely fine broken icy cyan/silver hexagonal cellular lines, about 10-12 hex cells across, sparse tiny junction pulses and whisper-thin interference fibers. Uniform scale and density; black centers of cells must stay entirely clear in additive rendering so a player can see through it. Flat UV material swatch, tile seamlessly in both axes. No sphere illustration, horizon, radial gradient, object, words, numbers, logos, vignette, graphic borders or pictograms. Opaque black background for additive blending.
+
+</details>

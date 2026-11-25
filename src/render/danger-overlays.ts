@@ -1,0 +1,95 @@
+import * as THREE from "three";
+import { blastCells } from "../core/geometry";
+import { bombGuideColor, bombWarning } from "../core/bomb-warning";
+import { powerTier } from "../core/combat";
+import type { GameSnapshot } from "../core/types";
+import { world } from "./arena";
+
+/** One instanced warning mesh per bomb, with gentle independent pulse and team tint. */
+export class DangerOverlays {
+  private entries = new Map<
+    number,
+    { mesh: THREE.InstancedMesh; material: THREE.MeshBasicMaterial; cell: string }
+  >();
+  private geometry = new THREE.PlaneGeometry(2.32, 2.32);
+  private textures: THREE.Texture[];
+  private signature = "";
+  constructor(private parent: THREE.Group, manager = THREE.DefaultLoadingManager) {
+    const loader = new THREE.TextureLoader(manager);
+    this.textures = ["base","boost","heavy"].map(name => loader.load(`./assets/danger-${name}.svg`));
+  }
+  clear() {
+    for (const entry of this.entries.values()) {
+      entry.mesh.removeFromParent();
+      entry.mesh.dispose();
+      entry.material.dispose();
+    }
+    this.entries.clear();
+    this.signature = "";
+  }
+  sync(state: Readonly<GameSnapshot>, mapChanged: boolean, viewerId: string) {
+    const signature = state.bombs.map(b => `${b.id}:${b.x}:${b.z}`).join(",");
+    if (mapChanged || signature !== this.signature) {
+      const live = new Map(state.bombs.map(b => [b.id, `${b.x},${b.z}`]));
+      for (const [id, entry] of this.entries)
+        if (live.get(id) !== entry.cell || mapChanged) {
+          entry.mesh.removeFromParent();
+          entry.mesh.dispose();
+          entry.material.dispose();
+          this.entries.delete(id);
+        }
+      for (const bomb of state.bombs)
+        if (!this.entries.has(bomb.id)) {
+          const cells = blastCells(state, bomb),
+            tier = powerTier(bomb.power ?? 70);
+          const material = new THREE.MeshBasicMaterial({
+            map: this.textures[tier],
+            transparent: true,
+            opacity: 0.23,
+            depthWrite: false,
+            polygonOffset: true,
+            polygonOffsetFactor: -2,
+          });
+          const mesh = new THREE.InstancedMesh(
+              this.geometry,
+              material,
+              cells.length,
+            ),
+            matrix = new THREE.Matrix4(),
+            rotation = new THREE.Quaternion().setFromAxisAngle(
+              new THREE.Vector3(1, 0, 0),
+              -Math.PI / 2,
+            );
+          cells.forEach((c, index) => {
+            matrix.compose(
+              new THREE.Vector3(
+                world(c.x, state.size),
+                state.tiles[c.z][c.x] === 2 ? 1.89 : 0.025,
+                world(c.z, state.size),
+              ),
+              rotation,
+              new THREE.Vector3(1, 1, 1),
+            );
+            mesh.setMatrixAt(index, matrix);
+          });
+          mesh.instanceMatrix.needsUpdate = true;
+          mesh.computeBoundingSphere();
+          this.parent.add(mesh);
+          this.entries.set(bomb.id, { mesh, material, cell: `${bomb.x},${bomb.z}` });
+        }
+      this.signature = signature;
+    }
+    for (const bomb of state.bombs) {
+      const entry = this.entries.get(bomb.id)!;
+      entry.material.color.set(bombGuideColor(state.players,bomb.ownerId,viewerId));
+      entry.mesh.renderOrder = bomb.ownerId === viewerId ? 2 : 3;
+      const w = bombWarning(bomb.detonateAt, state.time,!!bomb.slide);
+      entry.material.opacity = 0.42 + (0.14 + 0.05 * w.progress) * Math.sin(w.phase * Math.PI * 2);
+    }
+  }
+  dispose() {
+    this.clear();
+    this.geometry.dispose();
+    this.textures.forEach((t) => t.dispose());
+  }
+}

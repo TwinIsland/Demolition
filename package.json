@@ -1,0 +1,40 @@
+{
+  "name": "demolition-front",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "build:pages": "npm run build -- --outDir .pages-build --emptyOutDir",
+    "deploy:pages": "npm run build:pages && gh-pages --dist .pages-build --branch gh-pages --nojekyll",
+    "test": "tsx --test tests/*.test.ts",
+    "preview": "vite preview --host 127.0.0.1"
+  },
+  "dependencies": {
+    "skinview-utils": "^0.7.1",
+    "skinview3d": "^3.4.2",
+    "three": "^0.181.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.0",
+    "@types/three": "^0.181.0",
+    "gh-pages": "^6.3.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vite": "^7.2.2"
+  },
+  "overrides": {
+    "skinview3d": {
+      "three": "$three",
+      "@types/three": "$@types/three"
+    }
+  },
+  "imports": {
+    "#game-catalog": {
+      "types": "./src/modules/catalog.browser.ts",
+      "browser": "./src/modules/catalog.browser.ts",
+      "default": "./src/modules/catalog.node.ts"
+    }
+  }
+}
