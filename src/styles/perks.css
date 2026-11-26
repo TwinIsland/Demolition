@@ -237,6 +237,28 @@
     linear-gradient(115deg, color-mix(in srgb, var(--perk-color, #b7a574) 15%, transparent), #0b111433),
     var(--surface-1) url("/assets/hud/perk-inlay.webp") center / 100% 100%;
 }
+/* Tier frames: generated 512px art, nine-sliced so the corners keep their shape on both card layouts. */
+#app #perk-tray .perk-card[class*="tier-"] {
+  border-image: var(--tier-frame) 61 fill / 13px stretch;
+}
+#app #perk-tray.expanded .perk-card[class*="tier-"] {
+  border-image-width: 24px;
+}
+#app #perk-tray .perk-card[class*="tier-"]:is(:hover, :focus-visible) {
+  filter: brightness(1.18);
+}
+#perk-tray .tier-silver {
+  --tier-frame: url("/assets/hud/perk-card-silver.webp");
+}
+#perk-tray .tier-gold {
+  --tier-frame: url("/assets/hud/perk-card-gold.webp");
+}
+#perk-tray .tier-diamond {
+  --tier-frame: url("/assets/hud/perk-card-diamond.webp");
+}
+#perk-tray .tier-mythic {
+  --tier-frame: url("/assets/hud/perk-card-mythic.webp");
+}
 #perk-tray .perk-open,
 #perk-tray.expanded .perk-quick {
   display: none;
