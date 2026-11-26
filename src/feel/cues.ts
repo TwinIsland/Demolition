@@ -29,7 +29,8 @@ export type Cue =
   | { type: "land"; speed: number }
   /** World-space cues for other actors, stamped with simulation time. */
   | { type: "actor-consume"; playerId: string; item: string; heals: boolean; at: number }
-  | { type: "actor-hurt"; playerId: string; at: number };
+  /** Any operator, the local one included, lost health. `source` is in cell coordinates when known. */
+  | { type: "actor-hurt"; playerId: string; at: number; source?: Vec2 };
 
 const isConsumable = (item?: string) => {
   const definition = item ? ITEMS[item] : undefined;
@@ -107,11 +108,14 @@ export class CueTracker {
       const own = event.playerId === localId;
       switch (event.type) {
         case "hurt":
-          if (!own) {
-            if (!event.blocked) cues.push({ type: "actor-hurt", playerId: event.playerId, at: event.at });
-          } else if (event.blocked)
+          if (own && event.blocked)
             cues.push({ type: "blocked", source: locateAttacker(state, you, event).source });
-          else cues.push({ type: "damage", amount: Math.max(0, lost), ...locateAttacker(state, you, event) });
+          else if (!event.blocked) {
+            const victim = own ? you : state.players.find((p) => p.id === event.playerId);
+            const attack = victim ? locateAttacker(state, victim, event) : { cause: "other" as const };
+            cues.push({ type: "actor-hurt", playerId: event.playerId, at: event.at, source: attack.source });
+            if (own) cues.push({ type: "damage", amount: Math.max(0, lost), ...attack });
+          }
           break;
         case "equipment":
           if (!event.item) break;

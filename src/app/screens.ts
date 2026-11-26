@@ -3,6 +3,7 @@ export type Screen =
   | "loading"
   | "lobby"
   | "graphics"
+  | "credits"
   | "room"
   | "shop"
   | "playing"
@@ -15,6 +16,7 @@ const ALL: readonly Screen[] = [
   "loading",
   "lobby",
   "graphics",
+  "credits",
   "room",
   "shop",
   "playing",
@@ -32,11 +34,12 @@ const ENTERED_FROM: Record<Screen, readonly Screen[]> = {
   loading: ["room"],
   lobby: ALL,
   graphics: ["lobby"],
+  credits: ["lobby"],
   room: ALL,
   shop: ["loading"],
   playing: ["shop", "playing", "paused", "help", "eliminated"],
   paused: ["playing"],
-  help: ALL.filter((screen) => screen !== "shop" && screen !== "room"),
+  help: ALL.filter((screen) => screen !== "shop" && screen !== "room" && screen !== "credits"),
   eliminated: ["playing"],
   result: ["playing"],
 };

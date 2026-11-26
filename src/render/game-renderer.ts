@@ -485,7 +485,6 @@ export class GameRenderer {
     for (const p of state.players) {
       this.models.updateCharacter(p, state.time, bombGuideColor(state.players, p.id, localId));
       const avatar = this.avatars.get(p.id)!;
-      this.feel.actor(avatar as MinecraftAvatar, p, state.time);
       avatar.visible = p.alive && !(mode === "first-person" && p.id === localId);
       avatar.position.set(
         world(p.x, state.size),
@@ -493,6 +492,7 @@ export class GameRenderer {
         world(p.z, state.size),
       );
       avatar.rotation.y = p.yaw;
+      this.feel.actor(avatar as MinecraftAvatar, p, state.time);
       if (p.invulnerableUntil > state.time && state.phase === "playing")
         avatar.visible &&= Math.sin(wallTime * 30) > -0.25;
       // Optical camo: the owner (and anyone scanning) sees a rippling body, everyone else nothing.

@@ -5,6 +5,7 @@ import { BOMB_STYLES, SKINS, type Appearance } from "../core/room";
 import { field, t } from "../i18n";
 import type { SkinModel } from "../render/minecraft-skins";
 import type { UIActions } from "./actions";
+import { creditsLabel } from "./credits";
 import { query } from "./dom";
 import { icon } from "./icons";
 
@@ -46,7 +47,7 @@ const lobbyMarkup = () => `
         <div id="lobby-avatar" tabindex="0" role="group" aria-label="角色预览，可拖动或按方向键旋转"></div>
         <section class="map-selection" aria-label="作战区域"><div class="section-caption"><span>作战区域</span><button id="terrain-preview" aria-pressed="false">战场预览</button></div><div class="map-options">${MAPS.map((map, i) => `<button class="map-option ${i === 0 ? "selected" : ""}" data-map="${map.id}" aria-pressed="${i === 0}"><canvas class="map-miniature" width="${map.size}" height="${map.size}" aria-hidden="true"></canvas><span><b>${map.name}</b><small>${map.size} × ${map.size}</small></span><i class="selection-dot"></i></button>`).join("")}</div></section>
         </div>
-        <footer class="design-credit"><span class="credit-line" lang="en">Game Design by <a href="https://tianyihuang.com" target="_blank" rel="noopener noreferrer">TwinIsland</a></span><span>v${version}</span></footer>
+        <footer class="design-credit"><span class="credit-line" lang="en">Game Design by <a href="https://tianyihuang.com" target="_blank" rel="noopener noreferrer">TwinIsland</a></span><button type="button" id="credits" class="credit-open">${creditsLabel()}</button><span>v${version}</span></footer>
       `;
 
 /** Deployment screen: mode, outfit and map selection around the avatar preview. */
@@ -121,6 +122,7 @@ export class LobbyView {
     for (const option of this.bombStyle.options)
       option.textContent = field(BOMB_STYLES[option.value], "name");
     for (const map of MAPS) query(this.root, `[data-map="${map.id}"] b`).textContent = field(map, "name");
+    query(this.root, "#credits").textContent = creditsLabel();
   }
 
   dispose() {

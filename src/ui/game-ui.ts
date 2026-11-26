@@ -3,6 +3,7 @@ import "./equipment-wheel.css";
 import "./deployment-menu.css";
 import "./feedback-hud.css";
 import "./strike-panel.css";
+import "./credits.css";
 // The visual skin overrides every surface, so it must stay the last stylesheet.
 import "./game-skin.css";
 import { MATCH_MODES, type MatchMode } from "../core/match-modes";
@@ -17,6 +18,7 @@ import { BattleEffectsView, type BattleFireLayer } from "./battle-effects";
 import { BuffPanelView } from "./buff-panel";
 import { CombatFeed } from "./combat-feed";
 import { mountControls } from "./control-settings";
+import { creditsMarkup, mountCredits } from "./credits";
 import { query } from "./dom";
 import { EquipmentWheel } from "./equipment-wheel";
 import { graphicsChange, graphicsForm, syncGraphics } from "./graphics-options";
@@ -247,6 +249,10 @@ export class GameUI {
     syncGraphics(query<HTMLFormElement>(dialog, "#graphics-form"), value);
   }
 
+  showCredits() {
+    mountCredits(this.overlay.show(creditsMarkup(), "credits-modal", "#credits-close"));
+  }
+
   /** `typeTick` sounds each character of the typed after-action report. */
   showResult(snapshot: Readonly<GameSnapshot>, viewer: Player, typeTick: () => void) {
     const dialog = this.overlay.show(
@@ -418,6 +424,10 @@ export class GameUI {
         return actions.openGraphics();
       case "graphics-done":
         return actions.closeGraphics();
+      case "credits":
+        return actions.openCredits();
+      case "credits-close":
+        return actions.closeCredits();
       case "terrain-preview":
         return actions.toggleTerrainPreview();
       case "sound":

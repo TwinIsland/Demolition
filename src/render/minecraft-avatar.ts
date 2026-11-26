@@ -12,6 +12,7 @@ function patchCloak(material: THREE.MeshStandardMaterial, uniforms: CloakUniform
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uCloak = uniforms.amount;
     shader.uniforms.uCloakTime = uniforms.time;
+    shader.uniforms.uHurt = uniforms.hurt;
     shader.vertexShader = shader.vertexShader
       .replace(
         "#include <common>",
@@ -31,11 +32,16 @@ function patchCloak(material: THREE.MeshStandardMaterial, uniforms: CloakUniform
     shader.fragmentShader = shader.fragmentShader
       .replace(
         "#include <common>",
-        "#include <common>\nuniform float uCloak, uCloakTime;\nvarying vec3 vCloakWorld;",
+        "#include <common>\nuniform float uCloak, uCloakTime, uHurt;\nvarying vec3 vCloakWorld;",
       )
       .replace(
         "#include <dithering_fragment>",
         `#include <dithering_fragment>
+        if (uHurt > 0.) {
+          // Hurt overlay: the whole body is washed red, keeping only the shading of the skin.
+          float hurtShade = dot(gl_FragColor.rgb, vec3(.299, .587, .114));
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1., .13, .1) * (.3 + .9 * hurtShade), .62 * uHurt);
+        }
         if (uCloak > 0.) {
           float bend = sin(vCloakWorld.x * 6. + uCloakTime * 2.3) + sin(vCloakWorld.z * 6. - uCloakTime * 1.7);
           float wave = .5 + .5 * sin(vCloakWorld.y * 16. + bend * 1.3 - uCloakTime * 7.);
@@ -53,6 +59,8 @@ function patchCloak(material: THREE.MeshStandardMaterial, uniforms: CloakUniform
 interface CloakUniforms {
   amount: { value: number };
   time: { value: number };
+  /** Red hurt overlay, 0 to 1. It shares the cloak's program so it costs no extra shader. */
+  hurt: { value: number };
 }
 
 /** Minecraft's six rigid body parts retain their original UVs and joint pivots. */
@@ -60,7 +68,11 @@ export class MinecraftAvatar extends THREE.Group {
   readonly rig = new PlayerObject();
   readonly motion = new AvatarMotion();
   private readonly grip = new THREE.Group();
-  private readonly cloak: CloakUniforms = { amount: { value: 0 }, time: { value: 0 } };
+  private readonly cloak: CloakUniforms = {
+    amount: { value: 0 },
+    time: { value: 0 },
+    hurt: { value: 0 },
+  };
   constructor() {
     super();
     this.rig.scale.setScalar(1.8 / 32);
@@ -114,6 +126,10 @@ export class MinecraftAvatar extends THREE.Group {
   setCloak(amount: number, time: number) {
     this.cloak.amount.value = amount;
     this.cloak.time.value = time;
+  }
+  /** Red wash shown for a moment after taking damage, 0 (off) to 1. */
+  setHurt(amount: number) {
+    this.cloak.hurt.value = amount;
   }
   setSkin(skin: MinecraftSkin) {
     this.rig.skin.modelType = skin.model;

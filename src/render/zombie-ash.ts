@@ -62,6 +62,7 @@ export class ZombieAsh {
       this.root.add(body);
       body.position.set(x, 0, z);
       body.rotation.order = "YXZ";
+      body.rotation.x = 0;
       body.rig.traverse((o) => {
         if (o instanceof THREE.Mesh)
           for (const m of Array.isArray(o.material) ? o.material : [o.material])
@@ -91,6 +92,8 @@ export class ZombieAsh {
         b.body.rotation.z = -Math.PI * 0.5 * fall;
         b.body.position.y = 0.3 * b.scale * Math.sin(fall * Math.PI * 0.5);
         b.body.visible = t < 0.83;
+        // The killing blow shows red on the body as it falls.
+        b.body.setHurt(1 - THREE.MathUtils.smoothstep(t, 0.3, 0.56));
         for (const m of b.materials) m.color.setRGB(0.48 - 0.38 * ash, 0.32 - 0.22 * ash, 0.24 - 0.14 * ash);
       }
     }

@@ -35,6 +35,8 @@ const wobble = (t: number, seed: number) =>
 
 const SHAKE = { roll: 0.055, pitch: 0.036, yaw: 0.036, shift: 0.03 } as const;
 const BLAST_REACH = 9;
+/** The view rolls away from a hit and rights itself: `angle` radians at the peak, over `time` seconds. */
+const HURT_TILT = { angle: 0.16, time: 0.5 } as const;
 
 /**
  * First-person camera response: trauma shake, directional recoil, landing dip and sprint field of view.
@@ -47,9 +49,13 @@ export class CameraFeel {
   private yaw = new Spring(210, 17);
   private dip = new Spring(190, 19);
   private sprint = 0;
+  private hurtAge = Infinity;
+  private hurtRoll = 0;
+  private hurtPitch = 0;
 
   reset() {
     this.trauma = this.sprint = 0;
+    this.hurtAge = Infinity;
     for (const spring of [this.pitch, this.roll, this.yaw, this.dip]) spring.reset();
   }
 
@@ -70,6 +76,15 @@ export class CameraFeel {
     this.yaw.impulse(Math.sin(bearing) * strength * 0.45);
   }
 
+  /** Starts the hurt tilt. Even a frontal hit rolls the view a little, which is what sells the blow. */
+  private tilt(you: Vec2, viewYaw: number, source: Vec2 | undefined) {
+    const bearing = source ? relativeBearing(you, source, viewYaw) : Math.PI / 2;
+    const side = Math.sin(bearing);
+    this.hurtRoll = Math.max(-1, Math.min(1, side + (side < 0 ? -0.35 : 0.35)));
+    this.hurtPitch = source ? Math.cos(bearing) * 0.5 : 0;
+    this.hurtAge = 0;
+  }
+
   update(cues: readonly Cue[], you: Readonly<Player>, viewYaw: number, moving: boolean, dt: number) {
     for (const cue of cues)
       switch (cue.type) {
@@ -77,6 +92,7 @@ export class CameraFeel {
           const weight = Math.min(1, cue.amount / Math.max(1, you.maxHp * 0.3));
           this.trauma += (cue.cause === "blast" ? 0.5 : 0.36) + 0.4 * weight;
           this.recoil(you, viewYaw, cue.source, 1.25 + 0.9 * weight);
+          this.tilt(you, viewYaw, cue.source);
           break;
         }
         case "blocked":
@@ -99,6 +115,7 @@ export class CameraFeel {
           this.trauma += 0.1;
           break;
       }
+    this.hurtAge += dt;
     this.trauma = Math.max(0, Math.min(1, this.trauma) - dt * 1.5);
     this.pitch.step(dt);
     this.roll.step(dt);
@@ -111,6 +128,13 @@ export class CameraFeel {
   apply(camera: THREE.PerspectiveCamera, wallTime: number, scale: number) {
     if (scale <= 0) return 0;
     const shake = this.trauma * this.trauma * scale;
+    const left = 1 - this.hurtAge / HURT_TILT.time;
+    if (left > 0) {
+      // Peaks within the first tenth of a second, then settles for the rest of the half second.
+      const tilt = Math.sin(left ** 4 * Math.PI) * HURT_TILT.angle * scale;
+      camera.rotation.x += tilt * this.hurtPitch;
+      camera.rotation.z += tilt * this.hurtRoll;
+    }
     camera.rotation.x += this.pitch.value * scale + wobble(wallTime, 1.3) * SHAKE.pitch * shake;
     camera.rotation.y += this.yaw.value * scale + wobble(wallTime, 4.1) * SHAKE.yaw * shake;
     camera.rotation.z += this.roll.value * scale + wobble(wallTime, 7.9) * SHAKE.roll * shake;
