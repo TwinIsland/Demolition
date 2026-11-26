@@ -194,7 +194,7 @@ The water, its caustics and the continuous tiling are procedural shaders and use
 | `public/assets/footstep-carpet-{0,1,2}.ogg` | `footstep_carpet_000`–`002`, Kenney [Impact Sounds](https://kenney.nl/assets/impact-sounds), via the [audio mirror](https://github.com/Mcamento8/open-game-sfx-index/tree/main/audio/impact-sounds) | Kenney | CC0 1.0 | Trimmed to 0.22 s, faded, normalised |
 | `public/assets/environment/backrooms.ogg` | Synthesised for this project (fluorescent tube hum and ballast buzz with a stuttering tube, far air handling; 24 s seamless loop) | Project | CC0 1.0 | — |
 | `src/modules/maps/backrooms/bgm.mp3` | [Comfortable Mystery](https://incompetech.com/music/royalty-free/music.html), incompetech.com | Kevin MacLeod | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Re-encoded to 160 kbit/s MP3 |
-| `src/modules/maps/backrooms/briefing.webp`, `backdrop.webp` | Placeholder made from the wallpaper texture above, until the project owner supplies AI-generated key art | Project | CC0 1.0 | — |
+| `src/modules/maps/backrooms/briefing.webp`, `backdrop.webp` | AI-generated key art, made by the project owner from a prompt written for this map (receding yellow office rooms under fluorescent panels, a demolition charge on the carpet, a soldier in a far doorway) | Project | CC0 1.0 | Cropped to 16:9 and scaled to 1672 × 941 and 720 × 405 |
 
 The textures are built by `scripts/make-backrooms-textures.py`, the footsteps and the room loop by `scripts/make-backrooms-sounds.py`. The pools of light under the ceiling panels and the damp patches in the carpet are procedural shaders.
 
