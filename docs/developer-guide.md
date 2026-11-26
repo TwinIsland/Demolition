@@ -19,7 +19,7 @@ npm run dev        # dev server on http://127.0.0.1:5173
 | `npm run dev:wiki` | Live preview of the wiki |
 | `npm run preview` | Serve `dist/` locally, with packs from `dist/mods` |
 | `npm run build:pages` | Build game and wiki to `.pages-build/` for GitHub Pages |
-| `npm run deploy:pages` | Build and publish to GitHub Pages |
+| `npm run deploy:pages` | Manual fallback: build and push to the `gh-pages` branch |
 | `npm run check` | Type-check, lint and format check. Run before handing work over |
 | `npm run typecheck`, `lint`, `format`, `format:check` | The individual steps. `format` rewrites files with Prettier |
 
@@ -153,10 +153,4 @@ The wiki is the Markdown in `docs/`, published with VitePress. The site config a
 
 The game is a static site. `npm run build` output can be hosted anywhere that serves files over HTTP. Let browsers revalidate files under `mods/` so installed packs update.
 
-GitHub Pages:
-
-```sh
-npm run deploy:pages
-```
-
-This builds the game and the wiki to `.pages-build/` and pushes it to the `gh-pages` branch with the `gh-pages` tool. In the repository settings, set Pages to deploy from that branch. The game uses relative URLs (`base: "./"`), so it works under any path. The wiki does not, see [Wiki](#wiki).
+GitHub Pages: every push to `main` runs `.github/workflows/deploy-pages.yml`, which builds the game and the wiki with `npm run build:pages` and publishes `.pages-build/` through the official Pages actions. In the repository settings, Pages > Source must be "GitHub Actions". `npm run deploy:pages` is the older manual route: it pushes the same build to the `gh-pages` branch, and only takes effect while Pages is set to deploy from that branch. The game uses relative URLs (`base: "./"`), so it works under any path. The wiki does not, see [Wiki](#wiki).
