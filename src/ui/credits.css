@@ -1,0 +1,282 @@
+/* Credits roll: a full-screen dialog with one tall strip that scrolls upward. */
+#lobby .design-credit .credit-open {
+  pointer-events: auto;
+  padding: var(--space-2) 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold-300);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-shadow: inherit;
+  cursor: pointer;
+}
+#lobby .design-credit .credit-open:is(:hover, :focus-visible) {
+  color: var(--gold-100);
+}
+
+/* The extra type selector outranks the skin's dialog chassis, which loads later. */
+#app #overlay section.modal.credits-modal {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  max-width: none;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  clip-path: none;
+  box-shadow: none;
+  text-align: center;
+  color: var(--text);
+  background:
+    radial-gradient(120% 80% at 50% 50%, #0000 40%, #000000b8),
+    linear-gradient(#070b0bf0, #070b0bf0),
+    var(--skin-steel, none) center / 420px;
+  animation: credits-fade var(--duration-slow) var(--ease-out);
+}
+#app #overlay section.modal.credits-modal::before {
+  inset: 0 0 auto;
+  z-index: 1;
+}
+#app #overlay section.modal.credits-modal::after {
+  content: none;
+}
+@keyframes credits-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.credits-viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  cursor: default;
+  user-select: none;
+  mask-image: linear-gradient(#0000, #000 16%, #000 84%, #0000);
+}
+.credits-track {
+  position: absolute;
+  inset: 0 0 auto;
+  margin: 0 auto;
+  width: min(760px, 100% - 48px);
+  padding-bottom: 50vh;
+  /* Off-screen until the roll animation takes over. */
+  transform: translateY(100vh);
+  will-change: transform;
+  font-family: var(--font-hud);
+}
+/* Reduced motion: no roll, the strip is an ordinary scrolling page. */
+.credits-viewport.credits-static {
+  overflow-y: auto;
+  mask-image: none;
+}
+.credits-static .credits-track {
+  position: relative;
+  transform: none;
+  padding: 72px 0 96px;
+}
+
+.credits-head img {
+  width: 92px;
+  height: 92px;
+  object-fit: contain;
+}
+.credits-track p {
+  margin: 0;
+}
+.credits-title {
+  font-size: clamp(36px, 5vw, 58px);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  line-height: 1.2;
+  color: #f6efdc;
+  text-shadow: 0 2px 0 #000a;
+}
+.credits-kicker,
+.credits-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  font-size: var(--text-xl);
+  font-weight: 600;
+  letter-spacing: 0.42em;
+  text-indent: 0.42em;
+  text-transform: uppercase;
+  color: var(--gold-400);
+}
+.credits-track .credits-kicker {
+  margin-top: 14px;
+}
+.credits-track .credits-divider {
+  margin: 150px 0 20px;
+}
+:is(.credits-kicker, .credits-divider)::before,
+:is(.credits-kicker, .credits-divider)::after {
+  content: "";
+  width: 64px;
+  height: 1px;
+  background: linear-gradient(90deg, #0000, var(--gold-700));
+}
+:is(.credits-kicker, .credits-divider)::after {
+  transform: scaleX(-1);
+}
+
+.credits-track dl,
+.credits-track dd {
+  margin: 0;
+}
+.credits-track .credits-staff {
+  margin-top: 84px;
+}
+.credits-role {
+  margin-bottom: 58px;
+}
+.credits-role dt {
+  margin-bottom: 8px;
+  font-size: var(--text-lg);
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+  text-transform: uppercase;
+  color: var(--gold-500);
+}
+.credits-role dd {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.45;
+  color: var(--text-strong);
+}
+
+.credits-group {
+  margin-top: 64px;
+}
+.credits-group h3 {
+  margin: 0 0 20px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-indent: 0.18em;
+  text-transform: uppercase;
+  color: #f6efdc;
+}
+/* Film-style pairs: the work on the left of the centre line, its author on the right. */
+.credits-asset {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 28px;
+  align-items: baseline;
+  padding: 5px 0;
+  font-size: 16px;
+  line-height: 1.4;
+}
+.credits-asset dt {
+  text-align: right;
+  color: var(--text-muted);
+}
+.credits-asset dd {
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+.credits-asset small {
+  margin-left: 10px;
+  font-size: var(--text-md);
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+}
+.credits-asset dd small {
+  color: var(--gold-700);
+}
+
+.credits-track .credits-note {
+  margin: 72px auto 0;
+  max-width: 560px;
+  font-size: var(--text-lg);
+  line-height: 1.7;
+  color: var(--text-faint);
+}
+.credits-end {
+  margin-top: 46vh;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  font-size: 18px;
+  letter-spacing: 0.2em;
+  color: var(--text-muted);
+}
+.credits-thanks {
+  font-size: clamp(30px, 4.4vw, 48px);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #f6efdc;
+}
+.credits-end a {
+  margin-top: 18px;
+  font-size: var(--text-lg);
+  letter-spacing: 0.08em;
+  color: var(--gold-300);
+  text-underline-offset: 4px;
+}
+.credits-end a:is(:hover, :focus-visible) {
+  color: var(--gold-100);
+}
+
+.credits-bar {
+  position: absolute;
+  right: max(28px, env(safe-area-inset-right));
+  bottom: calc(22px + env(safe-area-inset-bottom));
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font: 500 var(--text-md) / 1 var(--font-hud);
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+}
+#app #overlay .credits-bar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  border: 1px solid var(--skin-edge, var(--line-strong));
+  border-radius: 0;
+  background: #121a1bd9;
+  font: 600 var(--text-xl) / 1 var(--font-hud);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text);
+  cursor: pointer;
+}
+#app #overlay .credits-bar button:is(:hover, :focus-visible) {
+  border-color: var(--gold-400);
+  color: var(--gold-100);
+}
+.credits-bar kbd {
+  padding: 2px 5px;
+  border: 1px solid var(--line-strong);
+  font: 600 var(--text-xs) / 1.2 var(--font-hud);
+  color: var(--text-dim);
+}
+
+@media (max-width: 640px) {
+  .credits-asset {
+    grid-template-columns: 1fr;
+    padding: 9px 0;
+  }
+  .credits-asset dt,
+  .credits-asset dd {
+    text-align: center;
+  }
+  .credits-role dd {
+    font-size: 24px;
+  }
+  .credits-bar span {
+    display: none;
+  }
+}

@@ -1,5 +1,7 @@
 # Downloaded asset sources
 
+The in-game credits roll (`src/ui/credits-data.ts`) is a curated summary of this file. When a third-party asset is added or removed here, update that list too.
+
 <details>
 <summary>Field manual backgrounds and frames · built-in ImageGen</summary>
 
