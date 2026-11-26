@@ -102,8 +102,8 @@ test("right click requests one paid build without changing equipment or the high
   assert.equal(build.useEquipment, false);
   sim.step(RULES.step, new Map([[self.id, build]]));
   assert.equal(self.equipped, "grenade");
-  assert.equal(self.credits, 95);
-  assert.ok(self.building);
+  assert.equal(self.credits, 90);
+  assert.equal(sim.state.builtCrates?.length, 1);
   assert.equal(decide().build, false, "holding right click does not repeat the request");
   down();
   const input = decide();

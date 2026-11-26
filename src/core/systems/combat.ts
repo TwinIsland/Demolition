@@ -5,7 +5,7 @@ import { ZOMBIE_STATS } from "../loot";
 import { grantMutation } from "../mutations";
 import type { Blast, GameSnapshot, ItemId, Player, Zombie } from "../types";
 import { COINS } from "../economy";
-import { cancelBuild, gainCredits } from "./building";
+import { gainCredits } from "./building";
 import type { SimContext } from "./context";
 import { emit } from "./events";
 import { dropZombieLoot } from "./loot";
@@ -62,7 +62,6 @@ export function hurt(
   if (s.mode === "practice" && !p.bot) return;
   if (shieldBlocks(ctx, p)) return;
   p.invulnerableUntil = s.time + immunity;
-  cancelBuild(p);
   const damage = Math.min(p.hp, amount);
   p.hp = Math.max(0, p.hp - damage);
   const attacker = s.players.find((a) => a.id === attackerId);
@@ -165,7 +164,6 @@ function zombieAttack(ctx: SimContext, p: Player, damage: number) {
   if (p.invulnerableUntil > s.time || (s.mode === "practice" && !p.bot)) return;
   if (shieldBlocks(ctx, p)) return;
   p.invulnerableUntil = s.time + COMBAT.hitImmunity;
-  cancelBuild(p);
   p.hp = Math.max(0, p.hp - damage);
   emit(ctx, p, combatMessage("僵尸攻击 · -{0} HP", damage), { type: "hurt", blocked: false });
   if (!p.hp) {

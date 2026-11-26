@@ -163,3 +163,5 @@ Stains, moss, cracks, puddles, ripples, rain streaks and splashes are procedural
 `public/assets/strike/missile.glb` is an original model built by `tools/model-forge/ordnance.ts` and exported with `tools/model-forge/export-node.ts`. It carries geometry only; its surfaces come from the shared texture sets listed above.
 
 `public/assets/danger-veil.svg` (the blast-path outline shown to the owner of a concealed charge) is original artwork. The missile exhaust, explosion, shockwave, sparks, scorch mark and the optical-camo ripple are shaders written for this project; the smoke puffs reuse `smoke-cloud.png`.
+
+`public/assets/crate-build.ogg` is original, synthesized for this project by `scripts/make-build-sound.py` (damped plank modes and filtered noise in NumPy, encoded with ffmpeg/libvorbis). No third-party recordings.

@@ -109,10 +109,6 @@ export interface Player extends Vec2 {
   /** Invisible to opponents, bots and zombies until this time. */
   cloakUntil?: number;
   cooldowns: Record<SkillId, number>;
-  /** Crates built this match; each one raises the price of the next. */
-  cratesBuilt?: number;
-  /** Crate under construction and its reserved coin cost. Interruptions refund that cost. */
-  building?: Vec2 & { completeAt: number; cost: number };
   /** Bomb the player is currently pushing against, and since when. Drives the Slide Kick windup. */
   kickPush?: Vec2 & { bombId: number; since: number };
 }
@@ -268,7 +264,7 @@ export interface GameSnapshot {
   coverRevision?: number;
   /** Accumulated melee damage keyed by the cover's original cell. */
   coverDamage?: Record<number, number>;
-  /** Crates built by players. Their cells are cover (tile 2) that yields no score and no loot. */
+  /** Crates built by players. Their cells are cover (tile 2) that yields no score. */
   builtCrates?: BuiltCrate[];
   /** Closing safe zone; absent in practice. `duration` is when it reaches minimum size. */
   zone?: ZoneState;

@@ -2,7 +2,7 @@ import { modifiedStat } from "../content";
 import type { EffectContext } from "../module-api";
 import { planWalls, rearrangeCover } from "../rearrange-cover";
 import type { GameSnapshot, Player, PlayerInput, Vec2 } from "../types";
-import { startBuild } from "./building";
+import { build } from "./building";
 import { callStrike } from "./strikes";
 import type { SimContext } from "./context";
 
@@ -51,7 +51,7 @@ export function effectContext(ctx: SimContext, p: Player, target?: Vec2): Effect
     target,
     callStrike: (cell, options) => callStrike(ctx, p, cell, options),
     stat: (key, base) => modifiedStat(p, key, base, s.time),
-    build: () => startBuild(ctx, p),
+    build: () => build(ctx, p),
     forceArenaView: (duration, warningSeconds = 0) => {
       if (
         !p.alive ||

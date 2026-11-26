@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { CONSUMABLES, EQUIPMENT_SLOTS, ITEMS, RULES, isEquipment } from "../src/core/content";
-import { BUILD, crateCost } from "../src/core/economy";
+import { BUILD } from "../src/core/economy";
 import { canEquip } from "../src/core/equipment";
 import { MAPS } from "../src/core/maps";
 import { Simulation } from "../src/core/simulation";
-import { canBuild, cancelBuild, cellAhead } from "../src/core/systems/building";
+import { canBuild, cellAhead } from "../src/core/systems/building";
 import { SUPPLY_CATALOG, supplyRefusal } from "../src/core/systems/supply";
 import { idleInput, type PlayerInput } from "../src/core/types";
 
@@ -44,42 +44,31 @@ test("crates cannot be carried, equipped, dropped or bought from the supply shop
   assert.equal(p.equipped, "bomb");
 });
 
-test("building charges coins once and completes even when the payment leaves no spare coins", () => {
+test("building charges a flat price and stands the crate at once, even with no spare coins", () => {
   const { s, p, step } = setup();
   p.credits = BUILD.cost;
   p.equipped = "knife";
   const site = cellAhead(p);
   step({ build: true });
   assert.equal(p.credits, 0);
-  assert.equal(p.building?.cost, BUILD.cost);
+  assert.equal(s.tiles[site.z][site.x], 2);
+  assert.equal(s.builtCrates?.length, 1);
   assert.equal(p.equipped, "knife");
   assert.equal(p.inventory.crate, undefined);
   step({ build: true });
-  assert.equal(p.credits, 0, "a second request cannot charge twice during construction");
-  step({}, BUILD.windup);
-  assert.equal(s.tiles[site.z][site.x], 2);
+  assert.equal(p.credits, 0, "an occupied cell cannot be charged for again");
   assert.equal(s.builtCrates?.length, 1);
-  assert.equal(p.cratesBuilt, 1);
-  assert.equal(p.building, undefined);
 });
 
-test("completed crates raise the next cost and more than three can stand at once", () => {
+test("every crate costs the same and more than three can stand at once", () => {
   const { s, p, step } = setup();
-  for (const [built, yaw] of [
-    [0, -Math.PI / 2],
-    [1, 0],
-    [2, Math.PI / 2],
-    [3, Math.PI],
-  ]) {
+  for (const yaw of [-Math.PI / 2, 0, Math.PI / 2, Math.PI]) {
     const before = p.credits;
     step({ build: true, yaw });
-    assert.equal(p.credits, before - crateCost(built));
-    step({}, BUILD.windup);
+    assert.equal(p.credits, before - BUILD.cost);
   }
   assert.equal(s.builtCrates?.length, 4);
-  assert.equal(p.cratesBuilt, 4);
-  assert.equal(p.credits, 90);
-  assert.equal(p.building, undefined);
+  assert.equal(p.credits, 200 - 4 * BUILD.cost);
 });
 
 test("insufficient coins and blocked cells reject construction without taking payment", () => {
@@ -88,40 +77,11 @@ test("insufficient coins and blocked cells reject construction without taking pa
   assert.equal(canBuild(s, p), false);
   step({ build: true });
   assert.equal(p.credits, BUILD.cost - 1);
-  assert.equal(p.building, undefined);
+  assert.equal(s.builtCrates?.length ?? 0, 0);
   p.credits = 200;
   const site = cellAhead(p);
   s.tiles[site.z][site.x] = 1;
   step({ build: true });
   assert.equal(p.credits, 200);
-  assert.equal(p.building, undefined);
-});
-
-test("movement and new obstructions refund an interrupted build without increasing its price", () => {
-  for (const obstruction of [false, true]) {
-    const { s, p, step } = setup();
-    const site = cellAhead(p);
-    step({ build: true });
-    if (obstruction) s.tiles[site.z][site.x] = 1;
-    else p.z += 1;
-    step();
-    assert.equal(p.building, undefined);
-    assert.equal(p.credits, 200);
-    assert.equal(p.cratesBuilt ?? 0, 0);
-    assert.equal(p.inventory.crate, undefined);
-    step();
-    assert.equal(p.credits, 200, "refund is issued once");
-  }
-});
-
-test("cancellation refunds the exact reserved price even if the build counter changes", () => {
-  const { p, step } = setup();
-  p.cratesBuilt = 2;
-  step({ build: true });
-  assert.equal(p.credits, 170);
-  p.cratesBuilt = 4;
-  cancelBuild(p);
-  cancelBuild(p);
-  assert.equal(p.credits, 200);
-  assert.equal(p.inventory.crate, undefined);
+  assert.equal(s.builtCrates?.length ?? 0, 0);
 });

@@ -108,8 +108,10 @@ function swing(
       const { x, z } = block;
       if (builtCrateAt(s, x, z)) {
         emit(ctx, p, "击中掩体", { type: "cover-hit", item: kind, coverSurface: BUILT_CRATE_SURFACE }, block);
-        if (damageBuiltCrate(ctx, p, x, z, melee.coverDamage))
-          emit(ctx, p, combatMessage("摧毁掩体 · +{0} 积分", 0), { type: "cover", item: kind }, block);
+        if (damageBuiltCrate(s, x, z, melee.coverDamage)) {
+          const reward = destroyCover(ctx, p, x, z);
+          emit(ctx, p, combatMessage("摧毁掩体 · +{0} 积分", reward), { type: "cover", item: kind }, block);
+        }
         return;
       }
       const cell = z * s.size + x,

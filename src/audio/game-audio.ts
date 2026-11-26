@@ -252,7 +252,10 @@ export class GameAudio {
       this.play("blast-ringing", { priority: true });
       this.nextBlastRing = event.at + BLAST_RING_COOLDOWN;
     }
-    if (event.type === "shield-end") {
+    if (event.type === "build") {
+      if (own) this.play("crate-build", { priority: true });
+      else if (distance < 9) this.play("crate-build", { gain: 0.8 * falloff(distance, 9), pan });
+    } else if (event.type === "shield-end") {
       const sound = ITEMS.shield?.shieldSounds?.[event.reason];
       const level = event.reason === "broken" ? LEVEL.shieldBroken : LEVEL.shieldExpired;
       if (sound && own) this.play(sound, { level, priority: true });

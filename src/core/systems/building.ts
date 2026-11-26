@@ -1,6 +1,6 @@
 import { COMBAT } from "../combat";
 import { modifiedStat, RULES } from "../content";
-import { BUILD, COINS, crateCost } from "../economy";
+import { BUILD, COINS } from "../economy";
 import { zoneBurning, zoneClearing } from "../zone";
 import type { GameSnapshot, Player, Vec2 } from "../types";
 import type { SimContext } from "./context";
@@ -32,7 +32,7 @@ export function canBuild(s: Readonly<GameSnapshot>, p: Player, cell: Vec2 = cell
   return (
     s.phase === "playing" &&
     p.alive &&
-    p.credits + (p.building?.cost ?? 0) >= crateCost(p.cratesBuilt ?? 0) &&
+    p.credits >= BUILD.cost &&
     s.tiles[z]?.[x] === 0 &&
     !(s.zone && (zoneBurning(s.size, cell, s.zone) || zoneClearing(s.size, cell, s.zone))) &&
     !s.bombs.some((b) => b.x === x && b.z === z) &&
@@ -44,39 +44,12 @@ export function canBuild(s: Readonly<GameSnapshot>, p: Player, cell: Vec2 = cell
   );
 }
 
-/**
- * Pays for the build and begins its windup on the cell ahead. The reserved cost is refunded if
- * damage, movement or an obstruction interrupts construction.
- */
-export function startBuild(ctx: SimContext, p: Player) {
-  const s = ctx.state;
-  if (p.building || !canBuild(s, p)) return false;
-  const cost = crateCost(p.cratesBuilt ?? 0);
-  p.credits -= cost;
-  p.building = { ...cellAhead(p), completeAt: s.time + BUILD.windup, cost };
-  return true;
-}
-
-/** Abandons a crate under construction and refunds its reserved coins exactly once. */
-export function cancelBuild(p: Player) {
-  if (!p.building) return;
-  p.credits += p.building.cost;
-  delete p.building;
-}
-
-/** Finishes or cancels the crate under construction. Stepping off the cell abandons it. */
-export function stepBuilding(ctx: SimContext, p: Player) {
+/** Pays for a crate and stands it on the cell ahead at once. */
+export function build(ctx: SimContext, p: Player) {
   const s = ctx.state,
-    site = p.building;
-  if (!site) return;
-  const moved = Math.abs(Math.round(p.x) - site.x) + Math.abs(Math.round(p.z) - site.z) !== 1;
-  if (moved || !canBuild(s, p, site)) {
-    cancelBuild(p);
-    return;
-  }
-  if (s.time < site.completeAt) return;
-  delete p.building;
-  p.cratesBuilt = (p.cratesBuilt ?? 0) + 1;
+    site = cellAhead(p);
+  if (!canBuild(s, p, site)) return false;
+  p.credits -= BUILD.cost;
   s.tiles[site.z][site.x] = 2;
   const cell = site.z * s.size + site.x;
   delete s.coverDamage?.[s.coverOrigins?.[cell] ?? cell];
@@ -84,11 +57,12 @@ export function stepBuilding(ctx: SimContext, p: Player) {
   (s.builtCrates ??= []).push({ id: ctx.nextId(), x: site.x, z: site.z, ownerId: p.id, builtAt: s.time });
   ctx.undead.terrainChanged(s.time);
   emit(ctx, p, "搭建木箱", { type: "build" }, site);
+  return true;
 }
 
 /**
- * Opens a player-built crate. It yields no score and no loot; whoever destroys someone else's
- * crate gets a token refund, far below its price, so building can never pay for itself.
+ * Opens a player-built crate. It yields no score; whoever destroys someone else's crate gets a
+ * token refund, far below its price, so building can never pay for itself. The caller rolls loot.
  */
 export function destroyBuiltCrate(ctx: SimContext, destroyer: Player, x: number, z: number) {
   const s = ctx.state,
@@ -100,12 +74,12 @@ export function destroyBuiltCrate(ctx: SimContext, destroyer: Player, x: number,
   return true;
 }
 
-/** Melee damage to a built crate. Returns true when the crate breaks. */
-export function damageBuiltCrate(ctx: SimContext, attacker: Player, x: number, z: number, amount: number) {
-  const crate = builtCrateAt(ctx.state, x, z);
+/** Melee damage to a built crate. Returns true once it has taken enough to break. */
+export function damageBuiltCrate(s: GameSnapshot, x: number, z: number, amount: number) {
+  const crate = builtCrateAt(s, x, z);
   if (!crate) return false;
   crate.damage = (crate.damage ?? 0) + amount;
-  return crate.damage >= COMBAT.coverDurability && destroyBuiltCrate(ctx, attacker, x, z);
+  return crate.damage >= COMBAT.coverDurability;
 }
 
 export function gainCredits(p: Player, amount: number) {

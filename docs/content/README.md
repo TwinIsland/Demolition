@@ -30,7 +30,7 @@ Dropped by cover, zombies and field supplies, or bought with coins in the supply
 | [Smoke Grenade](items/smoke.md) | 2.8 | 20 | reach 4, flight 0.55, trajectory lob; duration 6, radius 1.65 | Lob over cover to create a smoke screen that lasts 6 seconds. |
 | [Tactical Shield](items/shield.md) | 3.4 | 40 | duration 4.5 | Blocks melee and zombie attacks for up to 4.5 seconds. The first blast it absorbs shatters the shield. |
 | [Bandage](items/bandage.md) | 3 | 25 | heal 30 | Restore 30 HP. Kept in your inventory at full health. |
-| [Field Crate](items/crate.md) | never drops | – |  | Right-click to build a wooden crate ahead. Takes 0.6 seconds and costs coins. |
+| [Field Crate](items/crate.md) | never drops | – |  | Right-click to build a wooden crate ahead instantly for 25 coins. |
 
 ## Perks
 

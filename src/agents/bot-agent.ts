@@ -6,7 +6,7 @@ import { DIRECTIONS, seededRandom } from "../core/maps";
 import { canPlace, placementRadius } from "../core/placement";
 import { SUMMON_TIME } from "../core/zombies";
 import { idleInput, inTacticalView, isCloaked } from "../core/types";
-import { BUILD, crateCost } from "../core/economy";
+import { BUILD } from "../core/economy";
 import type { Personality } from "./tactics";
 import type {
   AgentContext,
@@ -70,7 +70,7 @@ function supplyWish(p: Readonly<Player>, s: Readonly<GameSnapshot>): ItemId | un
   const spare = (id: ItemId, reserve: number) =>
     !supplyRefusal(s, p, id) && p.credits - supplyPrice(p, id) >= reserve && !(p.inventory[id] ?? 0);
   if (p.hp < p.maxHp * 0.55 && spare("bandage", 0)) return "bandage";
-  const reserve = crateCost(p.cratesBuilt ?? 0);
+  const reserve = BUILD.cost;
   if (p.shield <= 0 && spare("shield", reserve)) return "shield";
   if (spare("grenade", reserve * 2)) return "grenade";
   return undefined;
@@ -122,8 +122,6 @@ export class BotAgent implements PlayerAgent {
   private fleeing = false;
   /** Adaptive tier: smoothed estimate of how well the human is doing, 0..1. */
   private humanLead = 0.5;
-  /** Hold position until this time while a crate is being built. */
-  private buildingUntil = 0;
   private readonly personality: Personality;
   constructor(readonly playerId: string) {
     this.personality = PERSONALITIES[playerId] ?? DEFAULT_PERSONALITY;
@@ -141,7 +139,6 @@ export class BotAgent implements PlayerAgent {
     this.sprintUntil = this.nextSprint = 0;
     this.fleeing = false;
     this.humanLead = 0.5;
-    this.buildingUntil = 0;
   }
   private observe(s: Readonly<GameSnapshot>, p: Player, limitedView: boolean, reaction: number) {
     for (const enemy of s.players) {
@@ -361,14 +358,11 @@ export class BotAgent implements PlayerAgent {
       const site = this.planBuild(s, p, enemies, f);
       if (site && !input.useEquipment && !input.plantHere) {
         weaponAim = site;
-        if (same(cellAhead(p), site) || !normal) {
-          input.build = true;
-          this.buildingUntil = s.time + BUILD.windup + 0.1;
-        }
+        if (same(cellAhead(p), site) || !normal) input.build = true;
       }
       this.facingTarget = normal ? weaponAim : undefined;
     }
-    if (this.target && s.time >= this.buildingUntil) {
+    if (this.target) {
       let dx = this.target.x - p.x,
         dz = this.target.z - p.z;
       // Center in the corridor before turning across a solid corner.
@@ -432,10 +426,9 @@ export class BotAgent implements PlayerAgent {
    * Only when the bot keeps another way out and the cell is safe to stand next to.
    */
   private planBuild(s: Readonly<GameSnapshot>, p: Player, enemies: Contact[], f: BombForecast) {
-    if (s.time < this.buildingUntil || p.building || inTacticalView(p, s.time)) return;
-    if (p.credits < crateCost(p.cratesBuilt ?? 0)) return;
+    if (inTacticalView(p, s.time) || p.credits < BUILD.cost) return;
     const here = cell(p);
-    if (f.burning(here.x, here.z, 0, BUILD.windup + 0.5)) return;
+    if (f.burning(here.x, here.z, 0, 0.5)) return;
     const hurt = p.hp < p.maxHp * 0.5;
     const threats: Vec2[] = [
       ...s.zombies.filter((z) => z.spawnAt === undefined || s.time >= z.spawnAt + SUMMON_TIME),

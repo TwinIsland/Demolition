@@ -71,10 +71,9 @@ The first level-up needs 75, and each later one needs 50 more than the last (75,
 Source: `core/economy.ts`, `core/systems/building.ts`, the [Field Crate](content/items/crate.md) item.
 
 - Coins left after the skill shop, plus coins earned in the match, pay for building and the [supply shop](#supply-shop).
-- Right-click to build a crate on the tile ahead, without changing equipment or buying an item first. The first costs 20 coins; each completed crate adds 5 to the next price (20, 25, 30, …). The HUD shows the next price.
-- Building takes 0.6 s. Coins are deducted when it starts and refunded if damage, stepping away or an obstruction interrupts it. Interrupted builds do not raise the next price.
+- Right-click to build a crate on the tile ahead, without changing equipment or buying an item first. Every crate costs 25 coins and stands at once, with no build time.
 - There is no limit on how many crates you can have standing at once; each site must still be clear and affordable.
-- A built crate blocks movement and blasts like any cover and has the same durability. It gives no score and no loot. It shows the builder's emblem.
+- A built crate blocks movement and blasts like any cover and has the same durability. It gives no score, but drops loot with the same chance as any other cover. It shows the builder's emblem.
 
 ## Supply shop
 

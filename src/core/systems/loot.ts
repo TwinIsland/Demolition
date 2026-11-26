@@ -24,16 +24,17 @@ function dropItem(ctx: SimContext, x: number, z: number, chance: number, owner: 
   return "dropped";
 }
 
-/** Opens a cover cell: scores it for a living owner and rolls its drop. Returns the score awarded. */
+/** Opens a cover cell or built crate: scores cover for a living owner and rolls the drop. Returns the score awarded. */
 export function destroyCover(ctx: SimContext, owner: Player, x: number, z: number) {
   const s = ctx.state,
     cell = z * s.size + x;
-  if (destroyBuiltCrate(ctx, owner, x, z)) return 0;
+  // A built crate pays no score, but rolls loot exactly like the map's own cover.
+  const built = destroyBuiltCrate(ctx, owner, x, z);
   s.tiles[z][x] = 0;
   delete s.coverDamage?.[s.coverOrigins?.[cell] ?? cell];
   delete s.coverOrigins?.[cell];
   let score = 0;
-  if (owner.alive) {
+  if (owner.alive && !built) {
     eachOwned(owner, (m, n) => m.onCoverDestroyed?.(owner, n));
     score = modifiedStat(owner, "crateScore", COMBAT.crateScore, s.time);
     gainScore(ctx, owner, score);

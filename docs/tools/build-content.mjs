@@ -16,10 +16,10 @@ const notes = {
     "Bots value a pickup at `16 + 22 × missingHp`.",
   ],
   "items/crate": [
-    "Right-click: pays coins and starts a 0.6 s build on the tile ahead (`BUILD.windup`), independently of equipped gear. Damage, movement or an obstruction cancels it and refunds the reserved coins.",
-    "Costs 20 coins initially, plus 5 for each crate completed this match (`crateCost`). Interrupted builds do not raise the price. Never dropped, carried, equipped or sold in the supply shop.",
+    "Right-click: pays coins and stands a crate on the tile ahead at once, independently of equipped gear.",
+    "Always costs 25 coins (`BUILD.cost`). Never dropped, carried, equipped or sold in the supply shop.",
     "No standing-crate limit. The tile must be free of operators, zombies, items, charges and fire.",
-    "A built crate behaves like cover with durability 2, but gives no score and no loot. Another operator who destroys it gets 2 coins. It shows the builder's emblem.",
+    "A built crate behaves like cover with durability 2, but gives no score. Breaking it rolls loot with the same chance as any other cover. Another operator who destroys it gets 2 coins. It shows the builder's emblem.",
   ],
   "items/grenade": [
     "Lobbed over walls and cover to any clear tile within `reach` tiles, landing after `flight` seconds. A direct (low) throw uses the charge placement radius and needs a clear path.",

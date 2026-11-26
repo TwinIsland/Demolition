@@ -1,5 +1,5 @@
 import { t } from "../i18n";
-import { crateCost } from "../core/economy";
+import { BUILD } from "../core/economy";
 import { canBuild } from "../core/systems/building";
 import { keyHint } from "./control-settings";
 import { query, replayAnimation, setText } from "./dom";
@@ -36,11 +36,10 @@ export class WalletView implements HudView {
   update({ snapshot, viewer }: HudFrame) {
     const credits = viewer.credits;
     this.root.title = t("金币 {0}", credits);
-    const cost = crateCost(viewer.cratesBuilt ?? 0);
-    setText(this.buildCost, String(cost));
-    this.buildHint.title = t("建造木箱 · {0} 金币", cost);
+    setText(this.buildCost, String(BUILD.cost));
+    this.buildHint.title = t("建造木箱 · {0} 金币", BUILD.cost);
     this.buildHint.hidden = !viewer.alive || snapshot.phase !== "playing";
-    this.buildHint.style.opacity = canBuild(snapshot, viewer) && !viewer.building ? "1" : "0.45";
+    this.buildHint.style.opacity = canBuild(snapshot, viewer) ? "1" : "0.45";
 
     // A new match or another viewer: show the balance without animating the difference.
     if (this.target === undefined || this.owner !== viewer.id || !viewer.alive) {

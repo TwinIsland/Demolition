@@ -4,23 +4,18 @@ export const COINS = {
   hit: 6,
   zombieKill: { 1: 5, 2: 8, 3: 12 },
   kill: 30,
-  /** Paid to whoever destroys a player-built crate. Far below cost, so building is never a money loop. */
+  /** Paid to whoever destroys someone else's built crate. Far below cost, so building is never a money loop. */
   builtCrateDestroyed: 2,
 } as const;
 
 /** Direct crate building: pay coins to build on the cell ahead, without an inventory item. */
 export const BUILD = {
-  cost: 20,
-  /** Each crate an operator has built this match raises their next price. */
-  costStep: 5,
-  /** Seconds of uninterrupted building; taking damage cancels it. */
-  windup: 0.6,
+  /** Flat price of every crate. */
+  cost: 25,
 } as const;
 
 /** Player-built crates are always wooden, whatever the map's cover looks like. */
 export const BUILT_CRATE_SURFACE = "wood" as const;
-
-export const crateCost = (built: number) => BUILD.cost + BUILD.costStep * built;
 
 /** In-match supply shop: equipment bought with coins at any time, delivered straight to the inventory. */
 export const SUPPLY = {
