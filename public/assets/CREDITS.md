@@ -164,7 +164,7 @@ Stains, moss, cracks, puddles, ripples, rain streaks and splashes are procedural
 | `public/assets/footstep-mud-{0,1,2}.ogg` | `footstep_snow_000`–`002`, Kenney Impact Sounds (same mirror), with a synthesised squelch | Kenney, Project | CC0 1.0 | Slowed to 70 %, low-passed, mixed with filtered noise and a low thump |
 | `public/assets/environment/jungle.ogg` | Synthesised for this project (insects, crickets, birds, frogs; 24 s seamless loop) | Project | CC0 1.0 | — |
 | `src/modules/maps/rainforest/bgm.mp3` | [Rite of Passage](https://incompetech.com/music/royalty-free/music.html), incompetech.com | Kevin MacLeod | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Re-encoded from 320 to 160 kbit/s MP3 |
-| `src/modules/maps/rainforest/briefing.webp`, `backdrop.webp` | Rendered from the game's own Rainforest scene, then colour graded | Project | CC0 1.0 | — |
+| `src/modules/maps/rainforest/briefing.webp`, `backdrop.webp` | AI-generated key art (monsoon rainforest clearing with a temple ruin turned forward base), supplied by the project owner | Project | CC0 1.0 | — |
 
 The footsteps and the ambience loop are built by `scripts/make-jungle-sounds.py`.
 
