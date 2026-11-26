@@ -269,6 +269,12 @@ export class MaterialLibrary {
    * The water that stands in a pool. The surface weathering module animates its surface, mirrors
    * the hall in it and makes it more opaque at a glancing angle.
    */
+  /**
+   * Recent steps in the water, read by its shader: world x and z, the time of the step on the
+   * weather clock, and its strength (0 for an unused slot). The length must match
+   * `WX_WAKE_COUNT` in the surface weathering.
+   */
+  readonly wakes = Array.from({ length: 14 }, () => new THREE.Vector4());
   water() {
     const cached = this.materials.get("pool-water");
     if (cached) return cached as THREE.MeshStandardMaterial;
@@ -280,6 +286,7 @@ export class MaterialLibrary {
       opacity: 0.56,
       depthWrite: false,
     });
+    mat.userData.wxUniforms = { wxWakes: { value: this.wakes } };
     this.materials.set("pool-water", mat);
     return mat;
   }

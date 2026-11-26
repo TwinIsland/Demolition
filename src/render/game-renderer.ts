@@ -37,6 +37,7 @@ import type { FireCell, GameSnapshot, Player } from "../core/types";
 import { inTacticalView, isCloaked } from "../core/types";
 import { StrikeEffect } from "./strike-effect";
 import { Arena, TILE_SIZE, world } from "./arena";
+import { WaterWake } from "./water-wake";
 import { Models } from "./models";
 import type { SkinModel } from "./minecraft-skins";
 import { CameraRig, type CameraMode } from "./camera-rig";
@@ -93,6 +94,8 @@ export class GameRenderer {
   private placements = new PlacementTiles();
   private shields = new ShieldField(this.assets.manager);
   private ashes = new ZombieAsh();
+  private wading = new WaterWake(this.models.materials);
+  private bufferSize = new THREE.Vector2();
   private target = new THREE.Mesh(
     new THREE.RingGeometry(0.76, 0.84, 4, 1, Math.PI / 4),
     new THREE.MeshBasicMaterial({
@@ -159,7 +162,7 @@ export class GameRenderer {
     this.hand = this.models.firstPersonArm();
     this.hand.hold(this.models.explosive(), "bomb");
     this.rig.held.add(this.hand);
-    this.scene.add(this.feel.root);
+    this.scene.add(this.feel.root, this.wading.root);
     this.post = new PostPipeline(
       this.renderer,
       this.scene,
@@ -216,6 +219,7 @@ export class GameRenderer {
     this.overlays.clear();
     this.zoneWalls.clear();
     this.ashes.clear();
+    this.wading.reset();
     this.blastEffect.clear();
     this.strikes.clear();
     this.arena = new Arena(this.models, state);
@@ -293,6 +297,12 @@ export class GameRenderer {
       { firstPerson, topDown, previewThrows, pitch, yaw: lookYaw ?? you.yaw },
       mapChanged,
     );
+    this.wading.update(
+      state,
+      MAPS.find((map) => map.id === state.mapId),
+      wallTime,
+      this.renderer.getDrawingBufferSize(this.bufferSize).y,
+    );
     this.syncPlayers(view);
     this.syncBombs(view);
     this.syncThrown(state);
@@ -311,6 +321,7 @@ export class GameRenderer {
       menuBeat,
       tactical: topDown,
       swing: this.models.swingAmount(you, state.time),
+      sink: this.wading.sink(localId),
       feel: (motion) =>
         this.feel.firstPerson(
           rig.camera,
@@ -488,7 +499,7 @@ export class GameRenderer {
       avatar.visible = p.alive && !(mode === "first-person" && p.id === localId);
       avatar.position.set(
         world(p.x, state.size),
-        p.elevation + Math.sin(wallTime * 3 + p.id.length) * 0.025,
+        p.elevation + Math.sin(wallTime * 3 + p.id.length) * 0.025 - this.wading.sink(p.id),
         world(p.z, state.size),
       );
       avatar.rotation.y = p.yaw;
@@ -710,6 +721,7 @@ export class GameRenderer {
     this.renderer.setAnimationLoop(null);
     this.arena?.dispose();
     this.weather.dispose();
+    this.wading.dispose();
     this.environment.dispose();
     for (const zombie of this.zombies.values()) (zombie as MinecraftAvatar).dispose();
     this.vapor.dispose();
