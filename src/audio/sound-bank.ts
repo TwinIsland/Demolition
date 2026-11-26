@@ -52,6 +52,12 @@ const CUES = {
   "footstep-0": sfx(0.22, { pitchJitter: 0.04 }),
   "footstep-1": sfx(0.22, { pitchJitter: 0.04 }),
   "footstep-2": sfx(0.22, { pitchJitter: 0.04 }),
+  "footstep-grass-0": sfx(0.3, { pitchJitter: 0.05 }),
+  "footstep-grass-1": sfx(0.3, { pitchJitter: 0.05 }),
+  "footstep-grass-2": sfx(0.3, { pitchJitter: 0.05 }),
+  "footstep-mud-0": sfx(0.3, { pitchJitter: 0.05 }),
+  "footstep-mud-1": sfx(0.3, { pitchJitter: 0.05 }),
+  "footstep-mud-2": sfx(0.3, { pitchJitter: 0.05 }),
   // Pitch stays fixed: the beep is a timing signal.
   "fuse-tick": sfx(0.32, { voices: 4, minInterval: 0.02 }),
   blast: sfx(0.5, { voices: 4, minInterval: 0.06, pitchJitter: 0.04 }),
@@ -83,6 +89,8 @@ export const MENU_MUSIC = "./assets/volatile-reaction.mp3";
 export const MUSIC_VOLUME = 0.18;
 export const FIRE_LOOP: CueSpec = { url: "./assets/arena-fire.ogg", ...sfx(0.8, { voices: 1 }) };
 export const RAIN_LOOP: CueSpec = { url: "./assets/environment/rain.ogg", ...sfx(0.3, { voices: 1 }) };
+/** Insects, birds and frogs under the rain on forest maps. */
+export const JUNGLE_LOOP: CueSpec = { url: "./assets/environment/jungle.ogg", ...sfx(0.34, { voices: 1 }) };
 const thunder = (name: string): CueSpec => ({
   url: `./assets/environment/${name}.ogg`,
   ...sfx(0.7, { voices: 1, minInterval: 2, pitchJitter: 0.06 }),

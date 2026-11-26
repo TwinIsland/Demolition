@@ -3,13 +3,13 @@ import { TILE_SIZE } from "../../core/geometry";
 import { motionScale } from "../../feel/settings";
 import { GroundReflection } from "./ground-reflection";
 import { Rain } from "./rain";
-import { CLEAR_SKY, OVERCAST_RAIN_SKY, type SkyLook, type SkyRig } from "./sky-look";
+import { CLEAR_SKY, JUNGLE_RAIN_SKY, OVERCAST_RAIN_SKY, type SkyLook, type SkyRig } from "./sky-look";
 import { SurfaceWeathering, createWeatherUniforms, type DetailLevel } from "./surface-weathering";
 
-export type WeatherKind = "clear" | "rain";
+export type WeatherKind = "clear" | "rain" | "monsoon";
 /** The part of a map definition that decides how its scene looks. */
 export interface MapLook {
-  theme: "garden" | "midnight";
+  theme: "garden" | "midnight" | "rainforest";
   weather?: WeatherKind;
 }
 /** The graphics options this module reads. */
@@ -28,21 +28,35 @@ interface Weather {
   /** Ground mist: extinction per metre at ground level, and its falloff per metre of height. */
   groundFog: [number, number];
   lightning: boolean;
+  /** Wet paving is wide enough to be worth a planar reflection pass. */
+  mirror: boolean;
 }
 const WEATHER: Record<WeatherKind, Weather> = {
-  clear: { sky: CLEAR_SKY, wet: 0, rain: 0, groundFog: [0, 0.5], lightning: false },
+  clear: { sky: CLEAR_SKY, wet: 0, rain: 0, groundFog: [0, 0.5], lightning: false, mirror: false },
   rain: {
     sky: OVERCAST_RAIN_SKY,
     wet: 1,
     rain: 1,
     groundFog: [0.02, 0.4],
     lightning: true,
+    mirror: true,
+  },
+  // Warm rain under a forest canopy: the same sky, greener and with thicker ground mist.
+  monsoon: {
+    sky: JUNGLE_RAIN_SKY,
+    wet: 1,
+    rain: 0.8,
+    groundFog: [0.03, 0.3],
+    lightning: true,
+    // Grass and mud do not mirror, and a second pass over a large arena costs too much.
+    mirror: false,
   },
 };
 /** How much grime, streaking, moss and cracking each map theme shows. */
 const WEAR: Record<MapLook["theme"], [number, number, number, number]> = {
   garden: [1, 0.9, 1, 0.9],
   midnight: [0.8, 1, 0.35, 1],
+  rainforest: [0.9, 1, 1, 0.7],
 };
 const DETAIL: Record<EnvironmentQuality["detail"], { level: DetailLevel; density: number }> = {
   low: { level: 0, density: 0.3 },
@@ -125,7 +139,7 @@ export class SceneEnvironment {
 
   private refresh() {
     const detail = DETAIL[this.detail];
-    const mirror = this.reflections && this.weather.wet > 0;
+    const mirror = this.reflections && this.weather.mirror;
     this.weathering.setDetail(detail.level, mirror);
     this.rain.set(this.weather.rain, detail.density);
     if (!mirror) this.reflection.disable();
@@ -141,7 +155,7 @@ export class SceneEnvironment {
     this.renderer.getDrawingBufferSize(this.size);
     this.rain.update(camera, this.size.y);
     this.lightning(time);
-    if (this.reflections && this.weather.wet > 0) {
+    if (this.reflections && this.weather.mirror) {
       // Rain streaks are too thin to survive the mip blur and would only add noise.
       this.reflection.render(this.renderer, this.scene, camera, [this.rain.root, ...exclude]);
     }

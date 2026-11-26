@@ -17,7 +17,7 @@ All values are in the code and listed with their source under `src/`. Distances 
 The boundary wall closes in ring by ring until one operator is left. Source: `core/zone.ts`, `core/systems/zone.ts`.
 
 - **Match duration** in the room settings is the time the zone takes to reach its minimum size: 120, 180 (default) or 240 s.
-- Nothing closes for the first 20 s. After that the rings close at even intervals, the last one exactly at the chosen duration. A 19 × 19 map has 7 rings, a 17 × 17 map has 6.
+- Nothing closes for the first 20 s. After that the rings close at even intervals, the last one exactly at the chosen duration. A 19 × 19 map has 7 rings, a 17 × 17 map has 6. Rainforest, at 31 × 31, has 13 rings and stretches every duration by 5/3, so the room offers 200, 300 or 400 s on that map.
 - A ring flashes for 4 s. Before the wall moves, permanent walls, cover, built crates, items, zombies and charges in that ring and the next ring inward are removed, with no blast and no reward. Demolition takes 0.5 s, then the full-height boundary slides inward over 0.85 s, reaching the marked ring at its deadline.
 - The moving wall pushes operators inward along its face without dealing damage. Operators can still steer toward the safe area while being pushed.
 - The inner ring provides an open escape lane. New crates and charges cannot be placed there during demolition or the advance.

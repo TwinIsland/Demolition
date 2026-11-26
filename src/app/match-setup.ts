@@ -50,6 +50,11 @@ export class MatchSetup {
     return this.mode === "practice" || this.slots.some((slot) => slot.enabled);
   }
 
+  /** How much the selected map stretches the chosen match length. */
+  get zoneScale(): number {
+    return MAPS.find((m) => m.id === this.mapId)?.zoneScale ?? 1;
+  }
+
   get zoneDuration(): number {
     return this.zone;
   }

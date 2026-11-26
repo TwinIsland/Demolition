@@ -97,6 +97,17 @@ export class OutdoorLighting implements SkyRig {
     this.scene.environment = sky.reflection.texture;
     this.scene.remove(this.fallback);
   }
+  /** Stretch the sun's shadow frustum over an arena `half` world units from centre to edge. */
+  shadowCoverage(half: number) {
+    const camera = this.sun.shadow.camera,
+      reach = Math.max(25, half);
+    if (camera.right === reach) return;
+    camera.left = camera.bottom = -reach;
+    camera.right = camera.top = reach;
+    camera.far = 70 + reach * 1.6;
+    camera.updateProjectionMatrix();
+    this.sun.shadow.needsUpdate = true;
+  }
   shadowResolution(size: number) {
     this.sun.castShadow = size > 0;
     const shadow = this.sun.shadow;

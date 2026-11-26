@@ -179,7 +179,7 @@ function initialState(
     },
     ...bots,
   ];
-  const spawns = spawnPoints(map.size),
+  const spawns = spawnPoints(map),
     rules = modeRules(mode);
   return {
     mode,
@@ -192,7 +192,7 @@ function initialState(
     tiles,
     wallOrigins: movableWalls(map, tiles),
     time: 0,
-    duration: zoneDuration(options.zoneDuration),
+    duration: zoneDuration(options.zoneDuration) * (map.zoneScale ?? 1),
     countdown: RULES.countdown,
     phase: "countdown",
     winnerId: null,

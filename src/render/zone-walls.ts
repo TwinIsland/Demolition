@@ -108,7 +108,7 @@ export class ZoneWalls {
     this.clear();
     this.builtFor = key;
     const map = MAPS.find((m) => m.id === state.mapId);
-    const template = this.models.wall(map?.theme === "midnight");
+    const template = this.models.wall(map?.theme ?? "garden");
     template.updateMatrixWorld(true);
     const capacity = (state.size - 2) ** 2;
     template.traverse((object) => {

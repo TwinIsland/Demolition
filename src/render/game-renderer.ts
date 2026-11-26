@@ -36,7 +36,7 @@ import { ITEMS, RULES } from "../core/content";
 import type { FireCell, GameSnapshot, Player } from "../core/types";
 import { inTacticalView, isCloaked } from "../core/types";
 import { StrikeEffect } from "./strike-effect";
-import { Arena, world } from "./arena";
+import { Arena, TILE_SIZE, world } from "./arena";
 import { Models } from "./models";
 import type { SkinModel } from "./minecraft-skins";
 import { CameraRig, type CameraMode } from "./camera-rig";
@@ -220,6 +220,7 @@ export class GameRenderer {
     this.strikes.clear();
     this.arena = new Arena(this.models, state);
     this.scene.add(this.arena.root);
+    this.environment.shadowCoverage((state.size * TILE_SIZE) / 2 + 2);
     this.weather.applyMap(
       MAPS.find((map) => map.id === state.mapId)!,
       state.tiles,

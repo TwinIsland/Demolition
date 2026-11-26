@@ -436,6 +436,7 @@ export class GameApp {
       this.setup.zombieRate,
       this.setup.mode,
       this.setup.zoneDuration,
+      this.setup.zoneScale,
     );
   }
 
@@ -541,6 +542,7 @@ export class GameApp {
     this.ui.strike.close();
     this.sound.battleFire(0);
     this.sound.rain(0);
+    this.sound.wildlife();
     this.equipment.closeWheel();
     this.ui.feed.close();
     this.keyboard.enabled = false;
@@ -672,6 +674,7 @@ export class GameApp {
     this.ui.setHealthDanger(battle.healthFraction);
     this.sound.battleFire(FIRE_VOLUME[battle.fireLayer], battle.resetId, battle.resetSeconds);
     this.sound.rain(playing ? this.renderer.rainLevel : 0);
+    this.sound.wildlife(playing ? state.mapId : undefined);
     if (playing)
       this.renderer.drawRewardEffects(
         now,

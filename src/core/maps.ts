@@ -24,16 +24,19 @@ export function seededRandom(seed: number) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-export function spawnPoints(size: number): Vec2[] {
+/** The four spawns sit on the diagonals, `spawnInset` cells in from the boundary wall. */
+export function spawnPoints(map: Pick<MapDefinition, "size" | "spawnInset">): Vec2[] {
+  const near = Math.max(1, Math.min((map.size - 1) / 2 - 2, Math.round(map.spawnInset ?? 1))),
+    far = map.size - 1 - near;
   return [
-    { x: 1, z: 1 },
-    { x: size - 2, z: size - 2 },
-    { x: size - 2, z: 1 },
-    { x: 1, z: size - 2 },
+    { x: near, z: near },
+    { x: far, z: far },
+    { x: far, z: near },
+    { x: near, z: far },
   ];
 }
 export function generateMap(def: MapDefinition, random: () => number): Tile[][] {
-  const spawns = spawnPoints(def.size);
+  const spawns = spawnPoints(def);
   if (def.wallDensity !== undefined) {
     const size = def.size;
     const candidates: Vec2[] = [];

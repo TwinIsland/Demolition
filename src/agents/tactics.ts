@@ -140,3 +140,41 @@ export function humanAdvantage(s: Readonly<GameSnapshot>, human: Player | undefi
   const score = (human.score - botScore) / Math.max(100, human.score + botScore);
   return clamp01(0.5 + 0.5 * hp + 0.6 * score);
 }
+
+/** Arenas up to this size are small enough that straight-line distance finds the fight. */
+export const LARGE_ARENA = 23;
+
+/**
+ * Walking distance from every cell to the nearest of `goals`, for arenas too large to steer by
+ * straight-line distance. Cover counts as a slow cell, since a bot can blast through it; walls
+ * block. Unreachable cells keep `Infinity`.
+ */
+export function approachField(s: Readonly<GameSnapshot>, goals: readonly Vec2[]) {
+  const size = s.size,
+    field = new Float32Array(size * size).fill(Infinity),
+    queue: number[] = [];
+  for (const goal of goals) {
+    const x = Math.round(goal.x),
+      z = Math.round(goal.z);
+    if (x < 0 || z < 0 || x >= size || z >= size) continue;
+    field[z * size + x] = 0;
+    queue.push(z * size + x);
+  }
+  // Label-correcting search: costs are 1 or 3, so a cell is rarely revisited.
+  for (let i = 0; i < queue.length; i++) {
+    const cell = queue[i],
+      x = cell % size,
+      z = Math.floor(cell / size);
+    for (const d of DIRECTIONS) {
+      const tile = s.tiles[z + d.z]?.[x + d.x];
+      if (tile === undefined || tile === 1) continue;
+      const next = cell + d.z * size + d.x,
+        cost = field[cell] + (tile === 2 ? 3 : 1);
+      if (cost < field[next]) {
+        field[next] = cost;
+        queue.push(next);
+      }
+    }
+  }
+  return field;
+}
