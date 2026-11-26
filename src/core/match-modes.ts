@@ -15,6 +15,10 @@ export interface ModeRules {
   credits: number;
   /** Multiplier on the score needed for each perk offer. */
   upgradePace: number;
+  /** Everyone plays the whole match in the overhead view. */
+  overhead?: boolean;
+  /** Health that comes back by itself: `rate` per second, once `delay` seconds have passed unhurt. */
+  healthRegen?: { delay: number; rate: number };
 }
 
 const STANDARD: ModeRules = {
@@ -41,10 +45,15 @@ const WILD: ModeRules = {
   stamina: 160,
   credits: 260,
   upgradePace: 0.5,
+  healthRegen: { delay: 5, rate: 12 },
 };
+
+/** Classic mode: the standard balance, played entirely from above like the games that inspired it. */
+const CLASSIC: ModeRules = { ...STANDARD, overhead: true };
 
 export const MATCH_MODES = {
   freeForAll: { name: "自由乱斗", available: true, rules: STANDARD },
+  classic: { name: "经典模式", available: true, rules: CLASSIC },
   practice: { name: "练习模式", available: true, rules: STANDARD },
   carnival: { name: "狂野模式", available: true, rules: WILD },
 } as const;

@@ -2,6 +2,7 @@ import { ITEMS } from "../core/content";
 import { RULES } from "../core/content";
 import { slidingZombieContact } from "../core/zombies";
 import { blastCells, blastContact, slideBlocked, SLIDE_STEP } from "../core/geometry";
+import { fireCells } from "../core/systems/fires";
 import { strikeCells, STRIKE_FIRE } from "../core/systems/strikes";
 import { trailHidden } from "../core/types";
 import type { Bomb, GameSnapshot, Vec2 } from "../core/types";
@@ -53,6 +54,18 @@ export class BombForecast {
         return range ? [{ x: t.x, z: t.z, range, at: t.landsAt + (throwable.fuse ?? 0) }] : [];
       })
       .sort((a, b) => a.at - b.at);
+    // Ground fire that is already burning, and the pool a Molotov in the air is about to light.
+    for (const fire of state.fires) {
+      spans(this.fire, fire, 0, fire.expiresAt - state.time);
+      this.horizon = Math.max(this.horizon, fire.expiresAt - state.time);
+    }
+    for (const t of state.thrown) {
+      const fire = ITEMS[t.kind]?.throwable?.fire;
+      if (!fire) continue;
+      const at = Math.max(0, t.landsAt - state.time);
+      for (const c of fireCells(state, t, fire.radius)) spans(this.fire, c, at, at + fire.duration);
+      this.horizon = Math.max(this.horizon, at + fire.duration);
+    }
     for (const b of state.blasts) {
       spans(this.fire, b, 0, b.expiresAt - state.time);
       this.horizon = Math.max(this.horizon, b.expiresAt - state.time);

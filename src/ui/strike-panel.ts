@@ -1,5 +1,4 @@
 import { bombGuideColor } from "../core/bomb-warning";
-import { obscured } from "../core/equipment";
 import type { PerkDefinition } from "../core/module-api";
 import { strikeCells, strikeTargetValid } from "../core/systems/strikes";
 import { isCloaked } from "../core/types";
@@ -177,13 +176,8 @@ export class StrikePanel implements HudView {
     }
     for (const p of s.players) {
       if (!p.alive) continue;
-      // Same sensor rules as the radar: smoke and optical camo hide a contact, a scan restores it.
-      if (
-        p.id !== viewer.id &&
-        viewer.scanUntil <= s.time &&
-        (obscured(s, viewer, p) || isCloaked(p, s.time))
-      )
-        continue;
+      // Same sensor rules as the radar: optical camo hides a contact, a scan restores it.
+      if (p.id !== viewer.id && viewer.scanUntil <= s.time && isCloaked(p, s.time)) continue;
       const x = at(p.x + 0.5),
         y = at(p.z + 0.5);
       ctx.fillStyle = p.id === viewer.id ? "#ffffff" : p.color;

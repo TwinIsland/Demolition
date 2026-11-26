@@ -5,7 +5,7 @@ export default definePerk(config, {
   eligible: (p) => !p.perks.includes(config.id),
   canUse: (_p, s) => !s.terrainReset,
   aiPriority: (p) => (p.hp < p.maxHp * 0.6 ? 9 : 5),
-  use: (_p, ctx) => ctx.requestTerrainReset?.(config.stats.delay) ?? false,
+  use: (_p, ctx) => ctx.requestTerrainReset?.(config.stats.delay, config.stats.scorch) ?? false,
   aiShouldUse: (p, s) =>
     !s.terrainReset &&
     (p.hp < p.maxHp * 0.45 ||

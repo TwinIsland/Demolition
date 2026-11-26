@@ -25,12 +25,12 @@ You are dropped into a grid arena with up to three AI opponents. Plant charges, 
 
 - **Bombs.** Charges explode in a cross. Blow up cover to open paths and find gear, and try not to stand in your own blast.
 - **Perk drafts.** Score points to level up, then pick one of three perks. Perks come in Silver, Gold, Diamond and Mythic tiers and stack for the rest of the match, so every run plays differently.
-- **Skills.** Before each match you spend a budget on up to four skills: Radar Jam, Blast Surge, Tactical View, Med Injector, Threat Scan, and Slide Kick, which sends charges sliding down a lane.
-- **Gear.** Grenades, smoke, shields and bandages drop from cover and zombies.
+- **Skills.** Before each match you spend a budget on up to four skills: Remote Detonator, Med Injector, Threat Scan, Blind Fuse, Optical Camo, and Slide Kick, which sends charges sliding down a lane.
+- **Gear.** Grenades, Molotovs, shields and bandages drop from cover and zombies.
 - **AI opponents.** One to three bots, each with its own difficulty and skin.
 - **Zombies.** They wander the arena and chase you on sight. Killing them drops gear and sometimes a gene mutation that boosts your stats.
-- **Two views.** The game is first person, but Tactical View switches to a top-down 2D board that plays like the original.
-- **Maps and modes.** Two maps, Outpost and Warehouse, in Free-for-All or an untimed Practice mode.
+- **Two views.** The game is first person; Classic mode plays the whole match on a top-down 2D board like the original.
+- **Maps and modes.** Two maps, Outpost and Warehouse, in Free-for-All, Classic (top-down only), Wild or an untimed Practice mode.
 - **Skins.** Pick a built-in operator or import any Minecraft skin PNG, and choose a finish for your charges.
 
 ## Controls
@@ -43,7 +43,6 @@ You are dropped into a grid arena with up to three AI opponents. Plant charges, 
 | Plant a charge, use gear | Left click |
 | Aim a lobbed throw | Hold right click |
 | Skills | Q, E, R, F, C |
-| Toggle top-down view | R (with Tactical View) |
 | Pick a perk | 1, 2, 3 |
 | Gear wheel | Hold V |
 | Pause | Esc |

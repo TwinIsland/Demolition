@@ -40,7 +40,7 @@ function setup(t: TestContext, equipment = "grenade") {
     middle = (s.size - 1) / 2;
   s.phase = "playing";
   Object.assign(self, { equipped: equipment, x: middle, z: middle });
-  self.inventory.grenade = self.inventory.smoke = 2;
+  self.inventory.grenade = self.inventory.molotov = 2;
   const agent = new KeyboardAgent(self.id, canvas as HTMLCanvasElement);
   agent.enabled = true;
   t.after(() => agent.dispose());
@@ -62,7 +62,7 @@ function setup(t: TestContext, equipment = "grenade") {
 }
 
 test("one primary press immediately lobs toward the click aim, once, without holding or right click", (t) => {
-  for (const item of ["grenade", "smoke"]) {
+  for (const item of ["grenade", "molotov"]) {
     const { agent, sim, s, self, decide, down, up } = setup(t, item);
     assert.equal(decide().useEquipment, false);
     assert.equal(self.inventory[item], 2);

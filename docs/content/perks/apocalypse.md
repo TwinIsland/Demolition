@@ -9,16 +9,18 @@
 <tr><th>Tag</th><td>Active perk</td></tr>
 <tr><th>Requires</th><td>a map with <code>randomizeTerrain</code></td></tr>
 <tr><th><code>stats.delay</code></th><td>3</td></tr>
+<tr><th><code>stats.scorch</code></th><td>20</td></tr>
 </table>
 
 **Cataclysm** is a perk in Demolition Front. In the game it is described as:
 
-> Activate once to start a three-second arena-wide countdown. Surviving cover changes position and keeps its remaining durability.
+> Activate once to start a three-second arena-wide countdown. Surviving cover changes position and keeps its remaining durability, and fire sweeps the whole floor: every other operator loses 20 HP. You are spared.
 
 ## Behaviour
 
 - Active perk: stored until you trigger it, then consumed. Only one copy can be held.
 - After `delay` seconds, all surviving cover moves to new tiles and keeps its damage. Spawn zones, walls, occupied tiles and tiles holding items or charges are protected.
+- At the same moment fire sweeps the whole floor: every other living operator loses `scorch` HP wherever they stand. A shield blocks it. The caster is spared.
 - Only offered on maps that implement `randomizeTerrain`. Cannot be triggered while another reset is pending.
 - Bots trigger it below 45% HP or with an enemy charge within 2.5 tiles.
 

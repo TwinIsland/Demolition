@@ -2,7 +2,9 @@ import { modifiedStat } from "../content";
 import type { EffectContext } from "../module-api";
 import { planWalls, rearrangeCover } from "../rearrange-cover";
 import type { GameSnapshot, Player, PlayerInput, Vec2 } from "../types";
+import { COMBAT } from "../combat";
 import { build } from "./building";
+import { hurt } from "./combat";
 import { callStrike } from "./strikes";
 import type { SimContext } from "./context";
 
@@ -16,13 +18,23 @@ export function tickCountdown(s: GameSnapshot, dt: number) {
   if (!s.countdown) s.phase = "playing";
 }
 
-/** Ends an expired arena view, or forces every player into it once its warning has run out. */
+/** Ends an expired arena view, or forces everyone but its caster into it once its warning has run out. */
 export function updateArenaView(s: GameSnapshot, stepStart: number) {
   const arenaView = s.arenaView;
   if (arenaView && s.time >= arenaView.endsAt) delete s.arenaView;
   else if (arenaView && stepStart < arenaView.startsAt && s.time >= arenaView.startsAt) {
-    for (const p of s.players) p.forcedViewUntil = arenaView.endsAt;
+    flatten(s, arenaView);
   }
+}
+
+/** The Cataclysm's fire sweep: it covers the whole floor, so where a victim stands does not matter. */
+function scorchOthers(ctx: SimContext, ownerId: string, damage: number) {
+  for (const p of ctx.state.players)
+    if (p.alive && p.id !== ownerId) hurt(ctx, p, ownerId, damage, "烈焰", COMBAT.hitImmunity);
+}
+
+function flatten(s: GameSnapshot, view: NonNullable<GameSnapshot["arenaView"]>) {
+  for (const p of s.players) if (p.id !== view.ownerId) p.forcedViewUntil = view.endsAt;
 }
 
 /** Returns true when the terrain was rearranged this tick; the rest of the tick is then skipped. */
@@ -34,7 +46,10 @@ export function updateTerrainReset(ctx: SimContext, inputs: ReadonlyMap<string, 
   if (practiceReset || (reset && reset.completedAt === undefined && s.time >= reset.at)) {
     rearrangeCover(s, ctx.map, ctx.random, reset?.wallPlan);
     ctx.undead.terrainChanged(s.time);
-    if (reset) reset.completedAt = s.time;
+    if (reset) {
+      reset.completedAt = s.time;
+      if (reset.scorch) scorchOthers(ctx, reset.ownerId, reset.scorch);
+    }
     return true;
   }
   if (reset && reset.completedAt === undefined && !reset.wallPlan && s.time >= reset.at - WALL_WARNING)
@@ -65,11 +80,11 @@ export function effectContext(ctx: SimContext, p: Player, target?: Vec2): Effect
       )
         return false;
       const startsAt = s.time + warningSeconds;
-      s.arenaView = { startsAt, endsAt: startsAt + duration };
-      if (!warningSeconds) for (const p of s.players) p.forcedViewUntil = s.arenaView.endsAt;
+      s.arenaView = { startsAt, endsAt: startsAt + duration, ownerId: p.id };
+      if (!warningSeconds) flatten(s, s.arenaView);
       return true;
     },
-    requestTerrainReset: (delay) => {
+    requestTerrainReset: (delay, scorch) => {
       if (
         !ctx.map.randomizeTerrain ||
         s.terrainReset ||
@@ -79,7 +94,12 @@ export function effectContext(ctx: SimContext, p: Player, target?: Vec2): Effect
         delay <= 0
       )
         return false;
-      s.terrainReset = { id: ctx.nextId(), ownerId: p.id, at: s.time + delay };
+      s.terrainReset = {
+        id: ctx.nextId(),
+        ownerId: p.id,
+        at: s.time + delay,
+        scorch: scorch && scorch > 0 ? scorch : undefined,
+      };
       return true;
     },
   };

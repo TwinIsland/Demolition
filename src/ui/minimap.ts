@@ -1,4 +1,3 @@
-import { obscured, DEFAULT_SMOKE } from "../core/equipment";
 import { bombGuideColor, bombWarning } from "../core/bomb-warning";
 import { isCloaked } from "../core/types";
 import type { GameSnapshot, Player } from "../core/types";
@@ -62,25 +61,11 @@ export function drawMinimap(
     ctx.fill();
   }
   ctx.globalAlpha = 1;
-  for (const cloud of state.smoke) {
-    ctx.fillStyle = "#b8c3c977";
-    ctx.beginPath();
-    ctx.arc(
-      pad + (cloud.x + 0.5) * cell,
-      pad + (cloud.z + 0.5) * cell,
-      (cloud.radius ?? DEFAULT_SMOKE.radius) * cell,
-      0,
-      Math.PI * 2,
-    );
-    ctx.fill();
-  }
+  ctx.fillStyle = "#ff8a3acc";
+  for (const fire of state.fires)
+    ctx.fillRect(pad + (fire.x + 0.12) * cell, pad + (fire.z + 0.12) * cell, cell * 0.76, cell * 0.76);
   for (const p of state.players) {
-    if (
-      p.id !== self.id &&
-      self.scanUntil <= state.time &&
-      (obscured(state, self, p) || isCloaked(p, state.time))
-    )
-      continue;
+    if (p.id !== self.id && self.scanUntil <= state.time && isCloaked(p, state.time)) continue;
     if (!p.alive) continue;
     const x = pad + (p.x + 0.5) * cell,
       y = pad + (p.z + 0.5) * cell;

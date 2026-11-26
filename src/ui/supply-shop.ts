@@ -214,9 +214,7 @@ export class SupplyShopView implements HudView {
     this.pointer.style.top = `${50 - Math.cos(angle) * radius}%`;
     const count = SLOTS.length;
     const next =
-      distance < DEAD_ZONE
-        ? undefined
-        : SLOTS[(Math.round((angle / (2 * Math.PI)) * count) + count) % count];
+      distance < DEAD_ZONE ? undefined : SLOTS[(Math.round((angle / (2 * Math.PI)) * count) + count) % count];
     if (next === drag.hover) return;
     if (drag.hover) this.sectors.get(drag.hover)?.classList.remove("hovered");
     drag.hover = next;

@@ -35,6 +35,7 @@ export default definePerk(config, {
 | `requiresSkill` | Only offered to owners of this skill ID |
 | `requiresActiveSkill` | Only offered to owners of at least one active skill |
 | `requiresTerrainReset` | Only offered on maps with `randomizeTerrain` |
+| `requiresFreeView` | Not offered in modes that lock everyone in the top-down view (Classic) |
 | `targeted` | Active perk that needs a tile: the player picks it on the targeting tablet first. `stats.radius` and `stats.delay` are shown there |
 
 How tiers and weights turn into chances is in [Probabilities](../probabilities.md#perk-offers). Adding a perk to a tier dilutes the others in that tier and does not change the tier's own chance.

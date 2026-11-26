@@ -11,7 +11,7 @@ A level-up offers 3 different perks. Each of the 3 slots is rolled in two steps.
 **1. Eligible pool.** A perk is in the pool when all of these hold:
 
 - its `weight` is above 0;
-- `requiresSkill` is owned, `requiresActiveSkill` is met, and `requiresTerrainReset` perks only appear on maps with `randomizeTerrain`;
+- `requiresSkill` is owned, `requiresActiveSkill` is met, `requiresTerrainReset` perks only appear on maps with `randomizeTerrain`, and `requiresFreeView` perks are left out of Classic mode;
 - its `eligible(player)` returns true (stack limits and stat caps live here);
 - it was not already picked for an earlier slot of this offer.
 
@@ -71,16 +71,16 @@ weight(item) = Σ influence(p) × dropWeight(item, p) ÷ Σ influence(p)  ÷  (1
 | Item | Base | `dropWeight` |
 | --- | --- | --- |
 | Frag Grenade | 2.4 | `base ÷ (1 + held)` |
-| Smoke Grenade | 2.8 | `base × (1 + 0.8 × missingHp) ÷ (1 + held)` |
+| Molotov | 2.6 | `base ÷ (1 + held)` |
 | Tactical Shield | 3.4 | `base × (1 + 1.8 × missingHp) ÷ (1 + shieldActive + held)` |
 | Bandage | 3 | `base × (0.65 + 2.6 × missingHp) ÷ (1 + held)` |
 
 Resulting shares for one operator with an empty inventory and nothing on the ground:
 
-| Health | Grenade | Smoke | Shield | Bandage |
+| Health | Grenade | Molotov | Shield | Bandage |
 | --- | --- | --- | --- | --- |
-| 100% | 22.7% | 26.5% | 32.2% | 18.5% |
-| 50% | 12.9% | 21.0% | 34.7% | 31.4% |
+| 100% | 23.2% | 25.1% | 32.9% | 18.8% |
+| 50% | 13.9% | 15.0% | 37.3% | 33.8% |
 
 Carrying one of an item halves its weight for you, and each copy already lying nearby cuts it further.
 

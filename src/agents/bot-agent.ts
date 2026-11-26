@@ -1,5 +1,4 @@
 import { STAMINA } from "../core/stamina";
-import { obscured } from "../core/equipment";
 import { ITEMS, modifiedStat, RULES, SKILLS, perkById } from "../core/content";
 import { blastCells, clearSight, KICK, slideBlocked } from "../core/geometry";
 import { DIRECTIONS, seededRandom } from "../core/maps";
@@ -59,9 +58,9 @@ function adaptiveSettings(skill: number): BotSettings {
 const ADAPTIVE_RATE = 0.03;
 /** Shop preferences per seat; a seeded jitter reorders close calls so loadouts vary between matches. */
 const SHOP_TASTE: Record<string, Record<string, number>> = {
-  momo: { kick: 1.3, surge: 1.2, medic: 0.9, veil: 0.9, cloak: 0.7, scan: 0.5, shift: 0.3, detonator: 0 },
-  mint: { medic: 1.3, surge: 1, cloak: 1, scan: 0.9, kick: 0.7, veil: 0.5, shift: 0.3, detonator: 0 },
-  sunny: { scan: 1.2, veil: 1.2, surge: 1.1, kick: 1, cloak: 0.8, medic: 0.8, shift: 0.3, detonator: 0 },
+  momo: { kick: 1.3, medic: 0.9, veil: 0.9, cloak: 0.7, scan: 0.5, detonator: 0 },
+  mint: { medic: 1.3, cloak: 1, scan: 0.9, kick: 0.7, veil: 0.5, detonator: 0 },
+  sunny: { scan: 1.2, veil: 1.2, kick: 1, cloak: 0.8, medic: 0.8, detonator: 0 },
 };
 /**
  * Buys healing, shields and grenades while keeping some coins back for direct construction.
@@ -73,6 +72,7 @@ function supplyWish(p: Readonly<Player>, s: Readonly<GameSnapshot>): ItemId | un
   const reserve = BUILD.cost;
   if (p.shield <= 0 && spare("shield", reserve)) return "shield";
   if (spare("grenade", reserve * 2)) return "grenade";
+  if (spare("molotov", reserve * 2)) return "molotov";
   return undefined;
 }
 const dist = (a: Vec2, b: Vec2) => Math.hypot(a.x - b.x, a.z - b.z);
@@ -83,12 +83,11 @@ const bearing = (from: Vec2, to: Vec2) => Math.atan2(from.x - to.x, from.z - to.
 const turnDelta = (from: number, to: number) => Math.atan2(Math.sin(to - from), Math.cos(to - from));
 const aimedAt = (p: Player, point: Vec2) => Math.abs(turnDelta(p.yaw, bearing(p, point))) < 0.42;
 type Contact = Vec2 & { id: string; dx: number; dz: number; seen: number; readyAt: number };
-type ThrowPlan = { kind: "grenade" | "smoke"; targetId: string | number; landing: Vec2; readyAt: number };
+type ThrowPlan = { kind: "grenade" | "molotov"; targetId: string | number; landing: Vec2; readyAt: number };
 
 function visible(s: Readonly<GameSnapshot>, p: Player, other: Player, limitedView: boolean) {
   if (p.scanUntil > s.time) return true;
   if (isCloaked(other, s.time)) return false;
-  if (obscured(s, p, other)) return false;
   if (limitedView) {
     const distance = dist(p, other);
     return (
@@ -325,18 +324,16 @@ export class BotAgent implements PlayerAgent {
         this.pendingThrow = plan;
         if (plan) {
           input.equip = plan.kind;
-          if (plan.kind === "grenade") weaponAim = plan.landing;
-          if (s.time >= plan.readyAt && (!normal || plan.kind === "smoke" || aimedAt(p, plan.landing))) {
+          weaponAim = plan.landing;
+          if (s.time >= plan.readyAt && (!normal || aimedAt(p, plan.landing))) {
             input.useEquipment = true;
-            input.aimTarget = plan.kind === "smoke" ? here : plan.landing;
-            input.throwMode = plan.kind === "smoke" ? "direct" : "lob";
+            input.aimTarget = plan.landing;
+            input.throwMode = "lob";
             this.pendingThrow = undefined;
             this.nextBomb = s.time + recovery;
           }
         }
-        const tactic =
-          !plan &&
-          this.attack(s, p, enemies, difficulty, config, ready("surge") && !input.activateSkill, hunted);
+        const tactic = !plan && this.attack(s, p, enemies, difficulty, config, hunted);
         if (tactic) {
           this.target = tactic.first;
           if (overhead && !tactic.kick) {
@@ -351,7 +348,6 @@ export class BotAgent implements PlayerAgent {
           if (tactic.kick)
             this.nextThink =
               s.time + Math.max(config.think, (dist(p, tactic.target) - 0.72) / p.speed + KICK.windup + 0.08);
-          if (tactic.boost && input.useEquipment) input.activateSkill = "surge";
           if (input.useEquipment || input.plantHere || tactic.kick) this.nextBomb = s.time + recovery;
         }
       } else this.pendingThrow = undefined;
@@ -395,30 +391,22 @@ export class BotAgent implements PlayerAgent {
     contacts: Contact[],
     delay: number,
   ): ThrowPlan | undefined {
-    const here = cell(p);
-    const smoke = p.hp < p.maxHp * 0.5 && !obscured(s, p, p) && canPlace(s, p, here, "smoke");
-    if (!p.inventory.grenade && !smoke) return;
+    // A grenade for the burst; otherwise a Molotov to burn the target out of its position.
+    const kind = p.inventory.grenade ? "grenade" : p.inventory.molotov ? "molotov" : undefined;
+    if (!kind) return;
 
     const threats = [
       ...contacts.filter((e) => e.seen === s.time),
       ...s.zombies.filter((z) => z.spawnAt === undefined || s.time >= z.spawnAt + SUMMON_TIME),
-    ].filter((e) => p.scanUntil > s.time || (clearSight(s, p, e) && !obscured(s, p, e)));
+    ].filter((e) => p.scanUntil > s.time || clearSight(s, p, e));
     const old = this.pendingThrow;
-    const inRange = threats.filter(
-      (e) => dist(cell(e), p) > 2.7 && canPlace(s, p, cell(e), "grenade", "lob"),
-    );
+    const reachable = (landing: Vec2) => dist(landing, p) > 2.7 && canPlace(s, p, landing, kind, "lob");
+    const inRange = threats.filter((e) => reachable(cell(e)));
     const enemy = inRange.find((e) => e.id === old?.targetId) ?? inRange[0];
-    const threat = enemy ?? (smoke && threats.find((e) => dist(e, p) <= 6));
-    if (!threat) return;
-    const kind = enemy ? "grenade" : "smoke";
-    if (
-      old?.kind === kind &&
-      old.targetId === threat.id &&
-      (kind === "smoke" || (dist(old.landing, p) > 2.7 && canPlace(s, p, old.landing, kind, "lob")))
-    )
-      return old;
+    if (!enemy) return;
+    if (old?.kind === kind && old.targetId === enemy.id && reachable(old.landing)) return old;
     // Commit to the observed tile so strafing after the windup starts can beat the throw.
-    return { kind, targetId: threat.id, landing: enemy ? cell(enemy) : here, readyAt: s.time + delay };
+    return { kind, targetId: enemy.id, landing: cell(enemy), readyAt: s.time + delay };
   }
 
   /**
@@ -459,7 +447,6 @@ export class BotAgent implements PlayerAgent {
     enemies: Contact[],
     difficulty: Difficulty,
     config: BotSettings,
-    canBoost: boolean,
     hunted: (contact: Contact) => boolean,
   ) {
     const here = cell(p),
@@ -472,7 +459,7 @@ export class BotAgent implements PlayerAgent {
     else
       for (let z = here.z - radius; z <= here.z + radius; z++)
         for (let x = here.x - radius; x <= here.x + radius; x++) placements.push({ x, z });
-    const choices: { bomb: Bomb; boost: boolean; kick: boolean; score: number; first?: Vec2 }[] = [];
+    const choices: { bomb: Bomb; kick: boolean; score: number; first?: Vec2 }[] = [];
     const scoreHit = (cells: Vec2[], ownerId = p.id) => {
       const hits = (c: Vec2) => cells.some((hit) => same(hit, cell(c)));
       let value = cells.filter((c) => s.tiles[c.z][c.x] === 2).length * 3;
@@ -500,24 +487,19 @@ export class BotAgent implements PlayerAgent {
     };
     for (const { x, z } of placements) {
       if (!canPlace(s, p, { x, z })) continue;
-      const active = p.surgeUntil > s.time;
-      for (const boost of canBoost && !active && enemies.some((e) => dist(p, e) < 7)
-        ? [false, true]
-        : [false]) {
-        const bomb: Bomb = {
-          x,
-          z,
-          id: -1,
-          range: modifiedStat(boost ? { ...p, surgeUntil: s.time + 1 } : p, "bombRange", p.range, s.time),
-          ownerId: p.id,
-          blastDuration: modifiedStat(p, "blastDuration", RULES.blastDuration, s.time),
-          pierce: modifiedStat(p, "blastPierce", 0, s.time) || undefined,
-          detonateAt: s.time + modifiedStat(p, "bombFuse", RULES.fuse, s.time),
-          passThrough: x === here.x && z === here.z ? [p.id] : [],
-        };
-        const score = scoreHit(blastCells(s, bomb)) - (boost ? 1 : 0);
-        if (score > 0) choices.push({ bomb, boost, kick: false, score });
-      }
+      const bomb: Bomb = {
+        x,
+        z,
+        id: -1,
+        range: modifiedStat(p, "bombRange", p.range, s.time),
+        ownerId: p.id,
+        blastDuration: modifiedStat(p, "blastDuration", RULES.blastDuration, s.time),
+        pierce: modifiedStat(p, "blastPierce", 0, s.time) || undefined,
+        detonateAt: s.time + modifiedStat(p, "bombFuse", RULES.fuse, s.time),
+        passThrough: x === here.x && z === here.z ? [p.id] : [],
+      };
+      const score = scoreHit(blastCells(s, bomb));
+      if (score > 0) choices.push({ bomb, kick: false, score });
     }
     if (hard && p.skills.includes("kick"))
       for (const b of s.bombs) {
@@ -532,7 +514,7 @@ export class BotAgent implements PlayerAgent {
         const shifted = new BombForecast(s, undefined, bomb, p.id);
         const score =
           scoreHit(shifted.footprints.get(b.id) ?? [], b.ownerId) - scoreHit(blastCells(s, b), b.ownerId) + 2;
-        if (score > 2) choices.push({ bomb, boost: false, kick: true, score, first: cell(b) });
+        if (score > 2) choices.push({ bomb, kick: true, score, first: cell(b) });
       }
     choices.sort((a, b) => b.score - a.score || dist(p, b.bomb) - dist(p, a.bomb));
     for (const choice of choices.slice(0, config.candidates)) {
@@ -552,7 +534,6 @@ export class BotAgent implements PlayerAgent {
         return {
           first: choice.first ?? escape.first,
           target: cell(choice.bomb),
-          boost: choice.boost,
           kick: choice.kick,
         };
     }

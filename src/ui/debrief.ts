@@ -1,12 +1,17 @@
 /**
- * After-action report shown on the result and eliminated dialogs. Rows are
- * typed out one character at a time; a click or key press finishes instantly.
+ * After-action report shown on the result and eliminated dialogs. Labels are typed out and each
+ * value is decoded from scrambled glyphs. The sequence cannot be skipped: the dialog's buttons
+ * stay locked until the last row has landed.
  */
 import type { GameSnapshot, Player } from "../core/types";
 import { t } from "../i18n";
 
-const CHAR_MS = 18;
-const ROW_PAUSE_MS = 110;
+const CHAR_MS = 16;
+const ROW_PAUSE_MS = 90;
+/** Frames of scrambling before each character of a value settles. */
+const DECODE_FRAMES = 3;
+const DECODE_MS = 26;
+const GLYPHS = "0123456789#%&$@/<>*+=";
 
 /** 1 for the best standing: survivors outrank the eliminated, then score decides. */
 export function placement(snapshot: Readonly<GameSnapshot>, viewer: Player): number {
@@ -39,53 +44,85 @@ export function debriefMarkup(snapshot: Readonly<GameSnapshot>, viewer: Player):
   ];
   return `<section class="debrief"><h3>${t("战场结算")}</h3><dl>${rows
     .map(([label, value]) => `<div><dt>${label}</dt><dd>${value}</dd></div>`)
-    .join("")}</dl><small class="debrief-skip">${t("点击跳过")}</small></section>`;
+    .join("")}</dl><i class="debrief-scan" aria-hidden="true"></i></section>`;
 }
 
 /**
- * Types the report inside `dialog`. `tick` fires for typed characters (the
- * caller rate-limits the sound). Returns a function that stops the animation.
+ * Plays the report inside `dialog`. `tick` fires for typed and decoded characters (the caller
+ * rate-limits the sound). Returns a function that stops the animation and shows the final text;
+ * it is for teardown, not for the player.
  */
 export function typeDebrief(dialog: HTMLElement, tick: () => void): () => void {
   const report = dialog.querySelector<HTMLElement>(".debrief");
   if (!report || matchMedia("(prefers-reduced-motion: reduce)").matches) return () => {};
-  const cells = [...report.querySelectorAll<HTMLElement>("dt, dd")];
-  const texts = cells.map((cell) => cell.textContent ?? "");
-  const rows = [...report.querySelectorAll<HTMLElement>("dl > div")];
-  cells.forEach((cell) => (cell.textContent = ""));
-  rows.forEach((row) => (row.dataset.pending = ""));
-  report.dataset.typing = "";
+  const rows = [...report.querySelectorAll<HTMLElement>("dl > div")].map((row) => {
+    const label = row.querySelector<HTMLElement>("dt")!,
+      value = row.querySelector<HTMLElement>("dd")!;
+    return { row, label, value, labelText: label.textContent ?? "", valueText: value.textContent ?? "" };
+  });
+  const buttons = [...dialog.querySelectorAll<HTMLButtonElement>("button")];
+  for (const { row, label, value } of rows) {
+    label.textContent = value.textContent = "";
+    row.dataset.pending = "";
+  }
+  buttons.forEach((button) => (button.disabled = true));
+  report.dataset.typing = dialog.dataset.locked = "";
 
-  let cell = 0;
-  let char = 0;
   let timer = 0;
-  const listeners = new AbortController();
+  let done = false;
   const finish = () => {
+    if (done) return;
+    done = true;
     clearTimeout(timer);
-    listeners.abort();
-    cells.forEach((el, i) => (el.textContent = texts[i]));
-    rows.forEach((row) => delete row.dataset.pending);
-    delete report.dataset.typing;
-  };
-  const step = () => {
-    if (!report.isConnected) return finish();
-    if (cell >= cells.length) return finish();
-    const el = cells[cell];
-    delete el.parentElement!.dataset.pending;
-    char++;
-    el.textContent = texts[cell].slice(0, char);
-    if (texts[cell][char - 1]?.trim()) tick();
-    let delay = CHAR_MS;
-    if (char >= texts[cell].length) {
-      cell++;
-      char = 0;
-      // Pause after the value, i.e. at the end of a row.
-      if (cell % 2 === 0) delay = ROW_PAUSE_MS;
+    for (const { row, label, value, labelText, valueText } of rows) {
+      label.textContent = labelText;
+      value.textContent = valueText;
+      delete row.dataset.pending;
+      delete row.dataset.active;
     }
-    timer = window.setTimeout(step, delay);
+    buttons.forEach((button) => (button.disabled = false));
+    delete report.dataset.typing;
+    delete dialog.dataset.locked;
+    if (dialog.isConnected) dialog.querySelector<HTMLElement>("button")?.focus();
   };
-  dialog.addEventListener("pointerdown", finish, { signal: listeners.signal });
-  dialog.addEventListener("keydown", finish, { signal: listeners.signal });
-  timer = window.setTimeout(step, 420);
+  const later = (run: () => void, ms: number) => {
+    timer = window.setTimeout(() => (report.isConnected ? run() : finish()), ms);
+  };
+  const scramble = (text: string, settled: number) =>
+    text.slice(0, settled) +
+    [...text.slice(settled)]
+      .map((c) => (c.trim() ? GLYPHS[Math.floor(Math.random() * GLYPHS.length)] : c))
+      .join("");
+
+  const play = (index: number) => {
+    const entry = rows[index];
+    if (!entry) return finish();
+    const { row, label, value, labelText, valueText } = entry;
+    delete row.dataset.pending;
+    row.dataset.active = "";
+    let char = 0;
+    const typeLabel = () => {
+      label.textContent = labelText.slice(0, ++char);
+      if (labelText[char - 1]?.trim()) tick();
+      if (char < labelText.length) later(typeLabel, CHAR_MS);
+      else later(() => decode(0, 0), CHAR_MS);
+    };
+    const decode = (settled: number, frame: number) => {
+      value.textContent = scramble(valueText, settled);
+      if (settled >= valueText.length) {
+        delete row.dataset.active;
+        // Restart the landing flash even if the same row somehow plays twice.
+        row.dataset.landed = "";
+        return later(() => play(index + 1), ROW_PAUSE_MS);
+      }
+      if (frame >= DECODE_FRAMES) {
+        tick();
+        return later(() => decode(settled + 1, 0), DECODE_MS);
+      }
+      later(() => decode(settled, frame + 1), DECODE_MS);
+    };
+    typeLabel();
+  };
+  later(() => play(0), 900);
   return finish;
 }

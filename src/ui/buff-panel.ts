@@ -1,6 +1,5 @@
 import { SKILLS, TIERS, perkById } from "../core/content";
 import { MUTATIONS } from "../core/mutations";
-import { inTacticalView } from "../core/types";
 import { field, t } from "../i18n";
 import { keyHint } from "./control-settings";
 import { HtmlSlot } from "./dom";
@@ -23,7 +22,7 @@ export class BuffPanelView implements HudView {
     const { passive, usable } = this.perks(frame);
     const genes = this.genes(frame);
     this.panel.render(
-      this.usablePerks(frame, usable) +
+      this.usablePerks(usable) +
         this.runningSkills(frame) +
         (passive || genes ? `<div class="buff-icons">${passive}${genes}</div>` : ""),
     );
@@ -52,10 +51,11 @@ export class BuffPanelView implements HudView {
     return { passive, usable };
   }
 
-  private usablePerks({ snapshot, viewer, browsingPerks }: HudFrame, rows: string[]) {
+  private usablePerks(rows: string[]) {
     if (!rows.length) return "";
-    const focusHint = inTacticalView(viewer, snapshot.time) && !browsingPerks ? keyHint("browsePerks") : "";
-    return `<section class="active-perk-list" data-focused="${browsingPerks}"><header>${t("主动强化")}<span>${focusHint} ← →</span></header><ul>${rows.join("")}</ul></section>`;
+    // The cycle key only matters when there is more than one perk to choose from.
+    const cycleHint = rows.length > 1 ? keyHint("browsePerks") : "";
+    return `<section class="active-perk-list"><header>${t("主动强化")}<span>${cycleHint}</span></header><ul>${rows.join("")}</ul></section>`;
   }
 
   private runningSkills({ snapshot, viewer }: HudFrame) {

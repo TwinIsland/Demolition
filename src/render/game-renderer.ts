@@ -10,6 +10,7 @@ import { motionScale } from "../feel/settings";
 import { SummonEffects } from "./summon-effects";
 import { NightVision } from "./night-vision";
 import { UpgradeEffects } from "./upgrade-effects";
+import { GroundFire } from "./ground-fire";
 import { OfferFire } from "./offer-fire";
 import type { Appearance } from "../core/room";
 import type { MapDefinition } from "../core/pack-api";
@@ -19,7 +20,6 @@ import { PerformancePanel } from "./performance-panel";
 import { readGraphics, type GraphicsSettings } from "./graphics-settings";
 import { DangerOverlays } from "./danger-overlays";
 import { ZoneWalls } from "./zone-walls";
-import { DEFAULT_SMOKE } from "../core/equipment";
 import { aimCell, canLob, canPlace } from "../core/placement";
 import { throwPoint } from "../core/throw-path";
 import { ThrowGuide } from "./throw-guide";
@@ -33,7 +33,7 @@ import { OutdoorLighting } from "./outdoor-lighting";
 import { SceneEnvironment, type ThunderCue } from "./environment/scene-environment";
 import { MAPS } from "../core/maps";
 import { ITEMS, RULES } from "../core/content";
-import type { GameSnapshot, Player } from "../core/types";
+import type { FireCell, GameSnapshot, Player } from "../core/types";
 import { inTacticalView, isCloaked } from "../core/types";
 import { StrikeEffect } from "./strike-effect";
 import { Arena, world } from "./arena";
@@ -109,16 +109,11 @@ export class GameRenderer {
   private dynamic = new THREE.Group();
   private hand: MinecraftAvatar;
   private flights = new Map<number, THREE.Group>();
-  private clouds = new Map<number, THREE.Group>();
-  private smokeMaterial = new THREE.SpriteMaterial({
-    map: new THREE.TextureLoader(this.assets.manager).load("./assets/smoke-cloud.png"),
-    color: 0x929899,
-    depthWrite: false,
-    transparent: true,
-    opacity: 0.84,
-  });
-  private offerFire = new OfferFire(this.smokeMaterial.map!);
-  private strikes = new StrikeEffect(this.assets.manager, this.models.materials, this.smokeMaterial.map!);
+  private groundFire = new GroundFire();
+  private sweep?: { id: number; cells: FireCell[] };
+  private vapor = new THREE.TextureLoader(this.assets.manager).load("./assets/smoke-cloud.png");
+  private offerFire = new OfferFire(this.vapor);
+  private strikes = new StrikeEffect(this.assets.manager, this.models.materials, this.vapor);
   private seed = -1;
   private mapId = "";
   private observer: ResizeObserver;
@@ -152,7 +147,13 @@ export class GameRenderer {
     this.environment = new OutdoorLighting(this.renderer, this.scene, this.assets.manager);
     this.weather = new SceneEnvironment(this.renderer, this.scene, this.environment);
     this.scene.add(this.dynamic, this.rig.camera, this.target, this.throwGuide.root, this.blastEffect.root);
-    this.scene.add(this.placements.root, this.shields.root, this.ashes.root, this.strikes.root);
+    this.scene.add(
+      this.placements.root,
+      this.shields.root,
+      this.ashes.root,
+      this.strikes.root,
+      this.groundFire.root,
+    );
     this.target.rotation.x = -Math.PI / 2;
     this.target.renderOrder = 5;
     this.hand = this.models.firstPersonArm();
@@ -236,7 +237,6 @@ export class GameRenderer {
     this.avatars.clear();
     this.bombs.clear();
     this.flights.clear();
-    this.clouds.clear();
     this.items.clear();
     for (const p of state.players) {
       const avatar = this.models.character(p);
@@ -295,7 +295,7 @@ export class GameRenderer {
     this.syncPlayers(view);
     this.syncBombs(view);
     this.syncThrown(state);
-    this.syncSmoke(state);
+    this.groundFire.update(state, wallTime, this.sweepFire(state));
     this.syncItems(view);
     this.bombLights.update(state, you);
     // A bandage stays in hand until its wrap animation ends.
@@ -508,6 +508,8 @@ export class GameRenderer {
       state.bombs,
       this.bombs,
       (bomb) => {
+        // A landed grenade stays a grenade for its short fuse.
+        if (bomb.kind) return this.models.item(bomb.kind, false);
         const owner = state.players.find((p) => p.id === bomb.ownerId)!;
         return this.models.explosive(owner.color, bomb.power ?? 70, owner.bombStyle);
       },
@@ -521,6 +523,18 @@ export class GameRenderer {
           0,
           world(bomb.z - (slide?.z ?? 0) * remaining, state.size),
         );
+        if (bomb.kind) {
+          // It rocks where it fell, faster as the fuse runs out.
+          const left = Math.max(0, bomb.detonateAt - state.time);
+          mesh.scale.setScalar(0.55);
+          mesh.rotation.set(
+            0,
+            bomb.id * 1.7,
+            Math.PI / 2 + Math.sin(state.time * (10 + 26 / (0.25 + left))) * 0.12,
+          );
+          mesh.position.y = 0.14;
+          return;
+        }
         const warning = bombWarning(bomb.detonateAt, state.time, !!slide);
         const lamp = mesh.getObjectByName("warning-lamp") as THREE.Mesh;
         lamp.material = this.models.materials.glow(bombGuideColor(state.players, bomb.ownerId, localId));
@@ -550,32 +564,33 @@ export class GameRenderer {
       },
     );
   }
-  private syncSmoke(state: Readonly<GameSnapshot>) {
-    syncEntities(
-      this.dynamic,
-      state.smoke,
-      this.clouds,
-      (c) => {
-        const group = new THREE.Group();
-        for (let i = 0; i < 9; i++) {
-          const puff = new THREE.Sprite(this.smokeMaterial);
-          const angle = c.id + i * 2.4,
-            radius = Math.sqrt(i / 8) * 2.6;
-          puff.position.set(Math.cos(angle) * radius, 0.8 + (i % 3) * 0.65, Math.sin(angle) * radius);
-          puff.scale.set(5.2, 4.2, 1);
-          group.add(puff);
-        }
-        return group;
-      },
-      (mesh, c) => {
-        const left = c.expiresAt - state.time;
-        mesh.position.set(world(c.x, state.size), 0, world(c.z, state.size));
-        mesh.rotation.y = state.time * 0.16;
-        mesh.scale.setScalar(
-          Math.max(0.02, Math.min(1, ((c.duration ?? DEFAULT_SMOKE.duration) - left) * 4, left * 2)),
-        );
-      },
-    );
+  /** The Cataclysm's flames: every open cell burns for a moment after the terrain has moved. */
+  private sweepFire(state: Readonly<GameSnapshot>): readonly FireCell[] {
+    const reset = state.terrainReset;
+    if (!reset?.scorch || reset.completedAt === undefined) {
+      this.sweep = undefined;
+      return [];
+    }
+    if (this.sweep?.id !== reset.id) {
+      const duration = 1.25,
+        cells: FireCell[] = [];
+      state.tiles.forEach((row, z) =>
+        row.forEach((tile, x) => {
+          if (tile === 0)
+            cells.push({
+              x,
+              z,
+              id: z * state.size + x + 1,
+              ownerId: reset.ownerId,
+              damage: 0,
+              duration,
+              expiresAt: reset.completedAt! + duration,
+            });
+        }),
+      );
+      this.sweep = { id: reset.id, cells };
+    }
+    return this.sweep.cells;
   }
   private syncItems({ state, wallTime }: FrameView) {
     syncEntities(
@@ -606,6 +621,7 @@ export class GameRenderer {
       await Promise.all([this.models.preload(state.players, true), this.models.preloadCatalog()]);
       if (this.seed !== state.seed || this.mapId !== state.mapId) this.rebuild(state);
       this.strikes.warm(this.renderer, this.rig.camera);
+      this.groundFire.warm(this.renderer, this.rig.camera);
       await this.assets.ready();
     } finally {
       stop();
@@ -680,8 +696,8 @@ export class GameRenderer {
     this.weather.dispose();
     this.environment.dispose();
     for (const zombie of this.zombies.values()) (zombie as MinecraftAvatar).dispose();
-    this.smokeMaterial.map?.dispose();
-    this.smokeMaterial.dispose();
+    this.vapor.dispose();
+    this.groundFire.dispose();
     this.blastEffect.dispose();
     this.strikes.dispose();
     this.target.geometry.dispose();

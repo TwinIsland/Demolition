@@ -305,15 +305,6 @@
   height: 100%;
   transition: width var(--duration-base) ease-out;
 }
-#smoke-veil {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: -1;
-  background: #949997;
-  opacity: 0;
-  transition: opacity var(--duration-fast) linear;
-}
 #hud .gear-hub {
   background:
     linear-gradient(120deg, #121b1dd6, #151c1eb8),

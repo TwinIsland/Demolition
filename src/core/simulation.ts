@@ -9,6 +9,8 @@ import { DEFAULT_MODE, MATCH_MODES, modeRules, type MatchMode } from "./match-mo
 import { BOT_PROFILES, defaultSlots } from "./room";
 import { landThrown, placeBomb, updateBombs } from "./systems/bombs";
 import { build } from "./systems/building";
+import { expireFires, resolveFireDamage } from "./systems/fires";
+import { regenerate } from "./systems/regen";
 import { buySupply } from "./systems/supply";
 import { stepStrikes } from "./systems/strikes";
 import { stepZone } from "./systems/zone";
@@ -56,6 +58,7 @@ export class Simulation {
       zoneBurn: new Map(),
       zoneBurnEventAt: new Map(),
       healthCaps: new Map(),
+      regen: new Map(),
       nextSupplyAt,
     };
   }
@@ -92,6 +95,7 @@ export class Simulation {
     if (updateTerrainReset(ctx, inputs)) return;
     tickShields(ctx, dt);
     s.blasts = s.blasts.filter((b) => b.expiresAt > s.time);
+    expireFires(s);
     stepZone(ctx, dt);
 
     // 3. Activated perks resolve for every player before any player moves or handles its skill input.
@@ -106,7 +110,6 @@ export class Simulation {
     }
 
     // 5. Projectiles and bombs: landings, fuses and chain reactions, slides.
-    s.smoke = s.smoke.filter((c) => c.expiresAt > s.time);
     landThrown(ctx);
     stepStrikes(ctx);
     updateBombs(ctx);
@@ -115,8 +118,11 @@ export class Simulation {
     for (const p of s.players) {
       if (!p.alive) continue;
       resolveBlastDamage(ctx, p);
+      if (p.alive) resolveFireDamage(ctx, p);
       if (p.alive) collectItems(ctx, p);
     }
+
+    regenerate(ctx, dt);
 
     // 7. World: zombies, then the field supply timer.
     stepZombies(ctx, dt);
@@ -194,6 +200,7 @@ function initialState(
       ...p,
       ...spawns[i],
       elevation: 0,
+      tacticalView: rules.overhead || undefined,
       verticalSpeed: 0,
       yaw: i === 0 ? -Math.PI / 2 : Math.PI / 2,
       hp: rules.health,
@@ -222,12 +229,11 @@ function initialState(
       perks: [],
       offers: [],
       scanUntil: 0,
-      surgeUntil: 0,
       cooldowns: Object.fromEntries(Object.keys(SKILLS).map((id) => [id, 0])),
     })),
     zombies: [],
     thrown: [],
-    smoke: [],
+    fires: [],
     strikes: [],
     bombs: [],
     blasts: [],

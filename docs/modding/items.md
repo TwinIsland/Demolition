@@ -59,7 +59,7 @@ The ID `bomb` is reserved.
 | Hook | When | Notes |
 | --- | --- | --- |
 | `onUse(player, context)` | The holder fires with the item equipped | Return `true` to spend one. `context.build()` starts a crate build on the tile ahead. `context.stat(key, base)` applies skill and perk modifiers, for example `context.stat("duration:shield", 4.5)` |
-| `onLand(impact)` | A thrown item lands | `impact.explode(range, { fuse, powerScale })` makes a cross blast: `fuse` seconds after landing (default 0), at `powerScale` × the thrower's power (default 1). `impact.smoke(duration, radius)` makes a cloud. `impact.projectile` has the tile and owner |
+| `onLand(impact)` | A thrown item lands | `impact.explode(range, { fuse, powerScale })` makes a cross blast: `fuse` seconds after landing (default 0), at `powerScale` × the thrower's power (default 1). `impact.burn({ radius, duration, damage })` lights the floor around the landing tile: open tiles within `radius` that the flames can reach without crossing a wall or cover burn for `duration` seconds and cost anyone standing in them `damage` HP every 0.5 s. `impact.projectile` has the tile and owner |
 | `onPickup(player)` | Any item is picked up | Runs after the inventory count is raised |
 | `dropWeight(player, base)` | Loot is rolled | Return this operator's demand for the item. Lower it as they hold more, so drops adapt |
 | `aiPickupValue(player)` | Bots plan a route | How much a bot wants it (default 19) |

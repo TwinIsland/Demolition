@@ -366,9 +366,6 @@
 .active-perk-list kbd {
   margin-left: auto;
 }
-.active-perk-list[data-focused="true"] {
-  outline: 1px solid #edcf82;
-}
 #hud .radar .active-perk.tier-mythic {
   color: #f5deff;
   border-color: var(--buff-color);

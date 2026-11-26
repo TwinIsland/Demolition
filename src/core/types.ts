@@ -104,7 +104,6 @@ export interface Player extends Vec2 {
   tacticalView?: boolean;
   forcedViewUntil?: number;
   scanUntil: number;
-  surgeUntil: number;
   /** Charges placed before this time keep their blast path hidden from everyone else. */
   veilUntil?: number;
   /** Invisible to opponents, bots and zombies until this time. */
@@ -121,6 +120,8 @@ export interface Bomb extends Vec2 {
   power?: number;
   /** A landed grenade on its short fuse: full self-damage, and it does not count against capacity. */
   source?: "throwable";
+  /** The thrown item lying there, so it is drawn as itself rather than as a planted charge. */
+  kind?: ItemId;
   /** Only the owner is shown where this charge will burn; bots have to guess. */
   concealed?: boolean;
   id: number;
@@ -190,6 +191,8 @@ export type GameEvent =
   | (EventBase<"level"> & { gains: LevelGain[] })
   /** A missile called on the event's cell, and its impact there. */
   | EventBase<"strike" | "strike-impact">
+  /** Ground fire lit on the event's cell. */
+  | EventBase<"ignite">
   | (EventBase<"equip"> & { item: Equipment })
   | (EventBase<"equipment" | "melee" | "pickup"> & { item: ItemId })
   | (EventBase<"cover-hit"> & { item: ItemId; coverSurface: CoverSurface })
@@ -232,10 +235,14 @@ export interface ThrownItem extends Vec2 {
   landsAt: number;
   power: number;
 }
-export interface SmokeCloud extends Vec2 {
-  radius?: number;
-  duration?: number;
+/** One burning floor cell. It hurts anyone standing in it, tick after tick, until it expires. */
+export interface FireCell extends Vec2 {
   id: number;
+  ownerId: string;
+  /** The item that lit it, credited in the combat feed. */
+  kind?: ItemId;
+  damage: number;
+  duration: number;
   expiresAt: number;
 }
 export interface GameSnapshot {
@@ -246,12 +253,15 @@ export interface GameSnapshot {
     ownerId: string;
     at: number;
     completedAt?: number;
+    /** Health the fire sweep takes from everyone but the owner when the reset lands. */
+    scorch?: number;
     /** Wall cells (z * size + x) about to change, published about a second before the swap. */
     wallPlan?: { rising: number[]; sinking: number[] };
   };
-  arenaView?: { startsAt: number; endsAt: number };
+  /** Dimensional Collapse: everyone except `ownerId` is held in the overhead view. */
+  arenaView?: { startsAt: number; endsAt: number; ownerId?: string };
   thrown: ThrownItem[];
-  smoke: SmokeCloud[];
+  fires: FireCell[];
   /** Missiles in flight. Absent in snapshots from before the perk existed. */
   strikes?: Strike[];
   difficulty: Difficulty;

@@ -14,6 +14,8 @@ export const PerkConfigSchema = v.object({
   requiresSkill: v.optional(text),
   requiresActiveSkill: v.optional(flag),
   requiresTerrainReset: v.optional(flag),
+  /** Only offered in modes where operators have a first-person view to lose. */
+  requiresFreeView: v.optional(flag),
   /** The player picks a cell on the targeting panel before the perk is spent. */
   targeted: v.optional(flag),
 });

@@ -8,7 +8,6 @@ export interface HudFrame {
   /** Cell the current throw would land on, when one is being aimed. */
   readonly landing?: { x: number; z: number; valid: boolean };
   readonly selectedPerk?: PerkId;
-  readonly browsingPerks: boolean;
 }
 
 /**

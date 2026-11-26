@@ -8,7 +8,7 @@ All values are in the code and listed with their source under `src/`. Distances 
 | --- | --- | --- |
 | Players | 1 human, 1 to 3 bots | `core/room.ts` |
 | Win | Last operator alive. There is no timer and score does not decide the winner. If nobody is left it is a draw | `core/systems/match.ts` |
-| Modes | Free-for-All, Wild, and Practice (no zone, no damage to you, never ends) | `core/match-modes.ts` |
+| Modes | Free-for-All, Classic (everyone in the top-down view), Wild, and Practice (no zone, no damage to you, never ends) | `core/match-modes.ts` |
 | Skill shop | 115 starting coins, up to 4 skills, bought and refunded before the start. Leftover coins carry into the match | `RULES.startingCredits`, `SLOT_LIMIT` |
 | Simulation rate | 60 Hz, fixed | `RULES.step` |
 
@@ -36,7 +36,7 @@ The boundary wall closes in ring by ring until one operator is left. Source: `co
 | Starting coins | 115 | 260 | `RULES.startingCredits` |
 | Score needed per level | ×1 | ×0.5 | `upgradePace` |
 
-Wild values are the `WILD` preset in `core/match-modes.ts`. Placement radius is 2 tiles in every mode. Sprint is ×1.55 speed and drains 25 stamina/s. Stamina recovers 18/s after 0.85 s, and a sprint needs 20 to start.
+Wild values are the `WILD` preset in `core/match-modes.ts`. Wild also regenerates health: 12 HP/s once 5 seconds have passed without losing health, up to max HP, except in the final firestorm (`core/systems/regen.ts`). Classic uses the standard values with `overhead` set, which locks every operator in the top-down view and removes Dimensional Collapse from the perk pool. Placement radius is 2 tiles in every mode. Sprint is ×1.55 speed and drains 25 stamina/s. Stamina recovers 18/s after 0.85 s, and a sprint needs 20 to start.
 
 ## Charges and damage
 
@@ -97,7 +97,7 @@ Source: `core/economy.ts`, `core/systems/building.ts`, the [Field Crate](content
 Source: `SUPPLY` in `core/economy.ts`, `core/systems/supply.ts`.
 
 - Hold B during a match to open the supply wheel, slide to an item and release to buy it with coins. The match does not pause. The shop closes in the final firestorm.
-- Prices: smoke 20, bandage 25, grenade 35, shield 40. Crates are built directly; the knife is not sold.
+- Prices: bandage 25, Molotov 30, grenade 35, shield 40. Crates are built directly; the knife is not sold.
 - Each earlier purchase of the same item this match adds 25% of its base price (grenade: 35, 44, 53, …).
 - You must wait 6 s between purchases, and cannot buy an item while carrying 3 of it.
 - The item goes straight into your inventory.

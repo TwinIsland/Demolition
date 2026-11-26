@@ -1,6 +1,4 @@
 import { KICK } from "../core/geometry";
-import { DEFAULT_SMOKE } from "../core/equipment";
-import { inTacticalView } from "../core/types";
 import { t } from "../i18n";
 import { HtmlSlot, query, replayAnimation } from "./dom";
 import { icon } from "./icons";
@@ -13,13 +11,13 @@ export type BattleFireLayer = "" | "offer" | "warning" | "eruption";
 const CRITICAL_HEALTH = 0.3;
 
 /**
- * Full-screen layers over the 3D view: smoke, crosshair, start countdown, battle fire, the wounded
+ * Full-screen layers over the 3D view: crosshair, start countdown, battle fire, the wounded
  * veil, arena warnings and the damage flash. `root` is the app shell because `#damage` sits outside
  * the HUD so that it also covers menus.
  */
 export class BattleEffectsView implements HudView {
   /** Markup for the layers that live inside `#hud`, in stacking order. */
-  static readonly markup = `<div id="smoke-veil" aria-hidden="true"></div><div id="crosshair"><i></i></div><div id="countdown"></div>
+  static readonly markup = `<div id="crosshair"><i></i></div><div id="countdown"></div>
         <div class="battle-heat" aria-hidden="true"></div>
         <div class="critical-veil" aria-hidden="true"></div>
         <div class="arena-warnings">
@@ -28,7 +26,6 @@ export class BattleEffectsView implements HudView {
         </div>`;
 
   private readonly damage: HTMLElement;
-  private readonly smoke: HTMLElement;
   private readonly crosshair: HTMLElement;
   private kickWindup = 0;
   private readonly countdown: HtmlSlot;
@@ -42,7 +39,6 @@ export class BattleEffectsView implements HudView {
 
   constructor(readonly root: HTMLElement) {
     this.damage = query(root, "#damage");
-    this.smoke = query(root, "#smoke-veil");
     this.crosshair = query(root, "#crosshair");
     this.countdown = new HtmlSlot(query(root, "#countdown"));
     this.heat = query(root, ".battle-heat");
@@ -54,23 +50,6 @@ export class BattleEffectsView implements HudView {
   }
 
   update({ snapshot, viewer }: HudFrame) {
-    const { time } = snapshot;
-    // Each cloud fades in, thins towards its edge and fades out; the densest one wins.
-    const density = snapshot.smoke.reduce(
-      (max, cloud) =>
-        Math.max(
-          max,
-          Math.min(
-            1,
-            ((cloud.radius ?? DEFAULT_SMOKE.radius) - Math.hypot(viewer.x - cloud.x, viewer.z - cloud.z)) /
-              0.55,
-            ((cloud.duration ?? DEFAULT_SMOKE.duration) - cloud.expiresAt + time) * 4,
-            (cloud.expiresAt - time) * 2,
-          ),
-        ),
-      0,
-    );
-    this.smoke.style.opacity = String(viewer.alive && !inTacticalView(viewer, time) ? density * 0.76 : 0);
     this.countdown.render(
       snapshot.phase === "countdown"
         ? `<span>${t("准备开始")}</span><b>${Math.ceil(snapshot.countdown)}</b>`

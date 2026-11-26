@@ -7,6 +7,7 @@ import type { Blast, Bomb, Player, Vec2 } from "../types";
 import { slidingZombieContact } from "../zombies";
 import type { SimContext } from "./context";
 import { emit } from "./events";
+import { spreadFire } from "./fires";
 import { destroyCover } from "./loot";
 
 /** Half-extent within which a player still overlaps a bomb's cell. */
@@ -132,8 +133,7 @@ export function landThrown(ctx: SimContext) {
     if (t.landsAt > s.time) continue;
     ITEMS[t.kind]?.onLand?.({
       projectile: t,
-      smoke: (duration, radius) =>
-        s.smoke.push({ id: t.id, x: t.x, z: t.z, expiresAt: s.time + duration, duration, radius }),
+      burn: (fire) => spreadFire(ctx, t, fire),
       explode: (range, { fuse = 0, powerScale = 1 } = {}) => {
         const charge: Bomb = {
           id: t.id,
@@ -143,6 +143,7 @@ export function landThrown(ctx: SimContext) {
           range,
           power: Math.round(t.power * powerScale),
           source: "throwable",
+          kind: t.kind,
           passThrough: s.players
             .filter((a) => Math.abs(a.x - t.x) < PLANT_OVERLAP && Math.abs(a.z - t.z) < PLANT_OVERLAP)
             .map((a) => a.id),

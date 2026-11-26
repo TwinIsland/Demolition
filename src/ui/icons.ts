@@ -17,7 +17,8 @@ const ICON_PATHS: Record<string, string> = {
     '<path d="M13 2c1 6 5 7 5 12 0 4-3 7-7 7s-7-3-7-7c0-2 1-5 4-8 0 3 1 4 2 5 2-2 3-5 3-9Z"/><path d="M12 14c2 2 2 4 0 6"/>',
   grenade:
     '<path d="M10 7V4h5l4 4m-7-4V2"/><ellipse cx="12" cy="14" rx="7" ry="8"/><path d="M6 11h12M5 16h14m-9-8v13m4-13v13"/>',
-  smoke: '<path d="m7 11 7-2 3 11-7 2zM8 10l-1-3 5-1 1 3m3-3c4-2-2-3 2-5"/>',
+  molotov:
+    '<path d="M10 9V6h4v3c2 1 3 3 3 5v6a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1v-6c0-2 1-4 3-5ZM7 14h10"/><path d="M12 6c-1-2 1-2 0-4m3 3c2-1 1-2 3-2"/>',
   chat: '<path d="M3 4h18v12H9l-5 4v-4H3zM7 8h10M7 12h7"/>',
   bomb: '<rect x="4" y="8" width="16" height="12" rx="1"/><path d="M9 8v12m6-12v12M12 8V5q0-3 4-3M7 12h10"/>',
   speed: '<path d="m13 3-3 8h7l-6 10 1-8H5l8-10Z"/>',

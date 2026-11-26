@@ -31,6 +31,7 @@ function offerUpgrades(ctx: SimContext, p: Player) {
       history.previous,
       history.silverHands >= SILVER_STREAK_LIMIT,
       !!ctx.map.randomizeTerrain,
+      !modeRules(ctx.state.mode).overhead,
     );
     history.previous = p.offers;
     history.silverHands = p.offers.every((id) => perkById(id)?.tier === "silver")

@@ -29,6 +29,8 @@ export interface SimContext {
   readonly zoneBurn: Map<string, number>;
   readonly zoneBurnEventAt: Map<string, number>;
   readonly healthCaps: Map<string, number>;
+  /** Passive health regeneration: health last seen, when recovery may start, and the fraction owed. */
+  readonly regen: Map<string, { hp: number; from: number; owed: number }>;
   /** Simulation time of the next field supply drop. */
   nextSupplyAt: number;
 }

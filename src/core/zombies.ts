@@ -1,4 +1,3 @@
-import { obscured } from "./equipment";
 import { clearSight, laneDistances, SLIDE_STEP } from "./geometry";
 import { ZOMBIE_STATS } from "./loot";
 import { DIRECTIONS } from "./maps";
@@ -84,7 +83,9 @@ export class ZombieDirector {
       s.players.filter((p) => p.alive),
     );
     const occupied = new Set(
-      [...s.zombies, ...s.blasts, ...s.items].map((p) => Math.round(p.z) * s.size + Math.round(p.x)),
+      [...s.zombies, ...s.blasts, ...s.fires, ...s.items].map(
+        (p) => Math.round(p.z) * s.size + Math.round(p.x),
+      ),
     );
     const candidates: number[] = [];
     const burning = (i: number) =>
@@ -105,13 +106,7 @@ export class ZombieDirector {
     let distance: number = ZOMBIE_STATS[enemy.level].sight;
     for (const p of s.players) {
       const d = Math.hypot(p.x - enemy.x, p.z - enemy.z);
-      if (
-        p.alive &&
-        !isCloaked(p, s.time) &&
-        d <= distance &&
-        !obscured(s, enemy, p) &&
-        clearSight(s, enemy, p)
-      ) {
+      if (p.alive && !isCloaked(p, s.time) && d <= distance && clearSight(s, enemy, p)) {
         nearest = p;
         distance = d;
       }
@@ -177,7 +172,8 @@ export class ZombieDirector {
     }
     s.zombies = s.zombies.filter((enemy) => {
       if (enemy.spawnAt !== undefined && s.time < enemy.spawnAt + SUMMON_TIME) return true;
-      const hit = s.blasts.find((b) => Math.abs(b.x - enemy.x) < 0.58 && Math.abs(b.z - enemy.z) < 0.58);
+      const scorched = (b: Vec2) => Math.abs(b.x - enemy.x) < 0.58 && Math.abs(b.z - enemy.z) < 0.58;
+      const hit = s.blasts.find(scorched) ?? s.fires.find(scorched);
       if (hit) {
         this.tracking.delete(enemy.id);
         onKill(enemy, hit.ownerId);

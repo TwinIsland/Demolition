@@ -63,66 +63,35 @@ function grenade() {
   return f.build();
 }
 
-function smoke() {
-  const f = new Forge("smoke", 1);
-  const r = 0.27,
-    h = 0.72;
+/** Incendiary bottle: a glass body with a paper label, a cork and a rag wick. */
+function molotov() {
+  const f = new Forge("molotov", 1);
+  const r = 0.2;
   f.lathe(
-    "paint-slate",
+    "glass",
     [
       [0, 0],
-      [r - 0.02, 0],
-      [r + 0.01, 0.012],
-      [r + 0.01, 0.035],
-      [r, 0.045],
-      [r, h - 0.045],
-      [r + 0.01, h - 0.035],
-      [r + 0.01, h - 0.01],
-      [r - 0.03, h],
-      [0.11, h + 0.035],
-      [0, h + 0.035],
+      [r - 0.03, 0],
+      [r, 0.03],
+      [r, 0.46],
+      [r - 0.03, 0.56],
+      [0.075, 0.68],
+      [0.07, 0.86],
+      [0.085, 0.87],
+      [0.085, 0.9],
+      [0, 0.9],
     ],
     {},
-    24,
+    22,
   );
-  f.cyl(
-    "paint-ivory",
-    r + 0.004,
-    r + 0.004,
-    0.1,
-    { at: [0, 0.5, 0] },
-    24,
-    true,
+  f.cyl("paint-ivory", r + 0.004, r + 0.004, 0.2, { at: [0, 0.27, 0] }, 22, true);
+  f.cyl("paint-red", r + 0.006, r + 0.006, 0.035, { at: [0, 0.27, 0] }, 22, true);
+  f.cyl("endgrain", 0.062, 0.07, 0.06, { at: [0, 0.92, 0] }, 12);
+  // The rag: stuffed through the cork, then flopping over to one side.
+  f.cyl("burlap", 0.04, 0.045, 0.12, { at: [0, 1, 0] }, 8);
+  f.frame({ at: [0, 1.05, 0], rot: [0, 0, -0.9] }, () =>
+    f.box("burlap", [0.07, 0.2, 0.03], { at: [0, 0.09, 0] }, 0.01),
   );
-  f.cyl(
-    "paint-teal",
-    r + 0.004,
-    r + 0.004,
-    0.025,
-    { at: [0, 0.425, 0] },
-    24,
-    true,
-  );
-  for (let i = 0; i < 4; i++)
-    f.cyl(
-      "steel-dark",
-      0.028,
-      0.028,
-      0.012,
-      {
-        at: [
-          Math.cos((i * PI) / 2 + 0.8) * 0.17,
-          h + 0.008,
-          Math.sin((i * PI) / 2 + 0.8) * 0.17,
-        ],
-      },
-      8,
-    );
-  f.cyl("steel-dark", 0.1, 0.11, 0.08, { at: [0, h + 0.075, 0] }, 14);
-  f.cyl("steel", 0.085, 0.085, 0.12, { at: [0, h + 0.17, 0] }, 14);
-  f.box("steel-dark", [0.18, 0.045, 0.12], { at: [0, h + 0.245, 0] }, 0.014);
-  lever(f, h + 0.275, 0.285, 0.6, 0);
-  pullRing(f, h + 0.19, -0.15);
   return f.build();
 }
 
@@ -250,7 +219,7 @@ function crate() {
 
 export const items: Record<string, () => THREE.Group> = {
   grenade,
-  smoke,
+  molotov,
   shield,
   knife,
   crate,

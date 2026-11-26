@@ -132,11 +132,13 @@ export function rollPerks(
   previous: PerkId[] = [],
   guaranteeRare = false,
   supportsTerrainReset = false,
+  freeView = true,
 ) {
   const pool = PERKS.filter(
     (p) =>
       p.weight > 0 &&
       (!p.requiresTerrainReset || supportsTerrainReset) &&
+      (!p.requiresFreeView || freeView) &&
       (!p.requiresSkill || player.skills.includes(p.requiresSkill)) &&
       (!p.requiresActiveSkill || player.skills.some((id) => skills[id]?.activate)) &&
       (!p.eligible || p.eligible(player)),

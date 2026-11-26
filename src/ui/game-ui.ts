@@ -24,12 +24,13 @@ import { icon } from "./icons";
 import { LobbyView } from "./lobby";
 import { manualMarkup } from "./manual";
 import { eliminatedMarkup, pauseMarkup, resultMarkup, outcomeOf } from "./match-menus";
-import { typeDebrief } from "./debrief";
+import { typeDebrief, placement } from "./debrief";
 import { roomMarkup, updateRoom } from "./match-room";
 import { MutationNotice } from "./mutation-notice";
 import { Overlay } from "./overlay";
 import { PerkTray } from "./perk-tray";
 import { RadarView } from "./radar";
+import { OutcomeBadge } from "./outcome-badge";
 import { clearRankBanner, showRankBanner } from "./rank-banner";
 import { RoundStatusView } from "./round-status";
 import { ScoreboardView } from "./scoreboard";
@@ -89,6 +90,9 @@ export class GameUI {
   private readonly listeners = new AbortController();
   /** Id of the newest event already shown. */
   private eventCursor = 0;
+
+  /** Built at startup so its WebGL programs are compiled long before a match ends. */
+  private readonly badge = new OutcomeBadge();
 
   constructor(
     private readonly root: HTMLElement,
@@ -248,11 +252,14 @@ export class GameUI {
       resultMarkup(snapshot, viewer),
       `outcome-modal outcome-${outcomeOf(snapshot, viewer)}`,
     );
+    const outcome = outcomeOf(snapshot, viewer);
+    this.badge.show(query(dialog, ".outcome-badge-slot"), outcome, placement(snapshot, viewer));
     typeDebrief(dialog, typeTick);
   }
 
   showEliminated(snapshot: Readonly<GameSnapshot>, viewer: Player, typeTick: () => void) {
     const dialog = this.overlay.show(eliminatedMarkup(snapshot, viewer), "outcome-modal outcome-eliminated");
+    this.badge.show(query(dialog, ".outcome-badge-slot"), "defeat", placement(snapshot, viewer));
     typeDebrief(dialog, typeTick);
   }
 

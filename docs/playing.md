@@ -27,10 +27,11 @@ Every key can be rebound in the in-game manual.
 | Next / previous gear | Mouse wheel |
 | Gear wheel | V (hold) |
 | Equip shield | X |
-| Skills | Q Blast Surge, E Remote Detonator, R Tactical View, F Med Injector, C Threat Scan, Z Blind Fuse, X Optical Camo |
+| Skills | E Remote Detonator, F Med Injector, C Threat Scan, Z Blind Fuse, X Optical Camo |
 | Pick perk 1 / 2 / 3 | 1, 2, 3 |
 | Expand perk cards | Tab |
-| Trigger an active perk, choose which | T, G |
+| Trigger the selected active perk | T |
+| Switch to the next active perk | G |
 | Supply wheel | B (hold, slide to an item, release to buy) |
 | Reshuffle cover (Practice) | P |
 | Chat | Enter |
@@ -39,7 +40,7 @@ Every key can be rebound in the in-game manual.
 
 ## Views
 
-The game is first person. The [Tactical View](content/skills/shift.md) skill switches to a top-down view that plays like the classic genre: four-way movement, Space plants a charge on your own tile.
+The game is first person. Classic mode, and the Dimensional Collapse perk when someone else triggers it, put you in a top-down view that plays like the classic genre: four-way movement, Space plants a charge on your own tile.
 
 ![Top-down view](media/top-down.jpg)
 
@@ -48,13 +49,15 @@ The game is first person. The [Tactical View](content/skills/shift.md) skill swi
 | Mode | Rules |
 | --- | --- |
 | Free-for-All | The standard match |
-| Wild | Everyone starts oversized: 300 HP, range 4, 10 charges, and perk offers twice as often. See [Game rules](game-rules.md#operator) |
+| Classic | The standard match, played entirely in the top-down view by everyone |
+| Wild | Everyone starts oversized: 300 HP, range 4, 10 charges, and perk offers twice as often. Health regenerates at 12 HP/s after 5 seconds without taking damage. See [Game rules](game-rules.md#operator) |
 | Practice | No opponents needed, you take no damage, no zone, and P reshuffles the cover |
 
 ## Things to know
 
 - Your own charge still hurts you, for a fifth of its power.
-- Grenades and smoke grenades always show their arc and landing tile while equipped. Aim with the mouse and left-click to lob over cover.
+- Grenades and Molotovs always show their arc and landing tile while equipped. Aim with the mouse and left-click to lob over cover. A grenade lies where it lands for one second before it explodes; a [Molotov](content/items/molotov.md) sets the floor alight and burns anyone in it, you included.
+- The result screen types its report out before its buttons unlock. The medal can be dragged to spin it.
 - Cover drops gear more often the longer you go without a drop, and more often when you are hurt or empty-handed. See [Probabilities](probabilities.md).
 - The [knife](content/items/knife.md) is always with you. Two strikes break cover or kill a zombie.
 - A [shield](content/items/shield.md) blocks one whole explosion. It does nothing against the final firestorm.

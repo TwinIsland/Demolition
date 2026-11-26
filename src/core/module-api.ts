@@ -47,7 +47,8 @@ export type ModifiedStat =
 export type Modifier = (value: number, player: Readonly<Player>, stacks: number, time: number) => number;
 export interface EffectContext {
   stat(key: ModifiedStat, base: number): number;
-  requestTerrainReset?(delay: number): boolean;
+  /** `scorch` also sweeps the floor with fire when the reset lands, costing every other operator that much health. */
+  requestTerrainReset?(delay: number, scorch?: number): boolean;
   /** Pay to build a crate on the cell ahead. False when coins or terrain rule it out. */
   build?(): boolean;
   forceArenaView?(duration: number, warningSeconds?: number): boolean;
@@ -96,7 +97,8 @@ export interface Impact {
   projectile: Readonly<ThrownItem>;
   /** `fuse` leaves a live charge on the cell for that many seconds; `powerScale` scales the thrower's attack. */
   explode(range: number, options?: { fuse?: number; powerScale?: number }): void;
-  smoke(duration: number, radius: number): void;
+  /** Lights the floor around the landing cell; walls and cover stop the flames. */
+  burn(fire: { radius: number; duration: number; damage: number }): void;
 }
 
 export interface ItemBehavior {

@@ -10,8 +10,6 @@ Bought before the match with starting coins (115 in standard modes), up to 4 ski
 
 | Skill | Key | Price | Cooldown | Duration | Effect |
 | --- | --- | --- | --- | --- | --- |
-| [Blast Surge](skills/surge.md) | Q | 30 | 18 s | 5 s | Charges placed over the next 5 seconds gain two tiles of blast range. |
-| [Tactical View](skills/shift.md) | R | 25 | – | – | Toggle between first-person and overhead views. |
 | [Med Injector](skills/medic.md) | F | 30 | 24 s | 3 s | Recover 30 HP over 3 seconds. Taking damage stops the treatment. |
 | [Slide Kick](skills/kick.md) | passive | 35 | – | – | Push against a charge to kick it. Its fuse pauses while sliding; impact detonates it. |
 | [Threat Scan](skills/scan.md) | C | 25 | 25 s | 7 s | See operators and zombies through cover as night-vision silhouettes for 7 seconds. |
@@ -26,8 +24,8 @@ Dropped by cover, zombies and field supplies, or bought with coins in the supply
 | Item | Base drop weight | Shop price | Numbers | Effect |
 | --- | --- | --- | --- | --- |
 | [Knife](items/knife.md) | never drops | – | reach 0.94, damage 24, cooldown 0.36, inputBuffer 0.1, coverDamage 1 | Always available. Two strikes take down a zombie or break a piece of destructible cover. |
-| [Frag Grenade](items/grenade.md) | 2.4 | 35 | reach 4, flight 0.6, blastRange 2, fuse 0.45, powerScale 0.75, trajectory lob | Lob over walls and cover. Lands on a clear tile within four tiles and explodes a moment later at 75% of your charge power. |
-| [Smoke Grenade](items/smoke.md) | 2.8 | 20 | reach 4, flight 0.55, trajectory lob; duration 6, radius 1.65 | Lob over cover to create a smoke screen that lasts 6 seconds. |
+| [Frag Grenade](items/grenade.md) | 2.4 | 35 | reach 4, flight 0.6, blastRange 2, fuse 1, powerScale 0.75, trajectory lob | Lob over walls and cover. Lands on a clear tile within four tiles and explodes one second after landing at 75% of your charge power. |
+| [Molotov](items/molotov.md) | 2.6 | 30 | reach 4, flight 0.6, trajectory lob | Lob over cover. It shatters on landing and sets the floor around it alight for 4.5 seconds, burning anyone who stands in the flames, you included. |
 | [Tactical Shield](items/shield.md) | 3.4 | 40 | duration 4.5 | Blocks melee and zombie attacks for up to 4.5 seconds. The first blast it absorbs shatters the shield. |
 | [Bandage](items/bandage.md) | 3 | 25 | heal 30 | Restore 30 HP. Kept in your inventory at full health. |
 | [Field Crate](items/crate.md) | never drops | – |  | Right-click to build a wooden crate ahead instantly for 25 coins. |
@@ -46,21 +44,20 @@ Each level-up offers three perks. The tier is rolled first (Silver 61, Gold 30, 
 | [Salvage](perks/salvage.md) | Silver | 14% | – | – | Recover 3 HP for each piece of cover you destroy. Stacks. |
 | [Endurance](perks/endurance.md) | Silver | 14% | 3 stacks | – | Per stack: +25 max stamina, 15% faster stamina recovery, and 25 stamina restored at once. Up to 3 stacks. |
 | [Bounty Contract](perks/contract.md) | Silver | 14% | 2 stacks | – | Earn 40% more coins per stack, up to 2 stacks. |
-| [Shaped Charge](perks/shaped-charge.md) | Gold | 14% | 3 stacks | – | Increase attack power by 15 per stack, up to 3 stacks. Your charge bundle and blast warning change with power. |
-| [Field Recovery](perks/repair.md) | Gold | 14% | – | – | Recover 40 HP and activate or refresh your tactical shield. |
-| [Overcharge](perks/overcharge.md) | Gold | 14% | – | `surge` skill | Add one more tile to Blast Surge and immediately refresh its cooldown. |
-| [Extended Reach](perks/long-reach.md) | Gold | 14% | 2 stacks | – | Increase charge placement reach by one tile per stack, up to 2 stacks. |
-| [Afterburn](perks/afterburn.md) | Gold | 14% | 3 stacks | – | Each stack extends charge fire by 0.2 seconds, up to 3 stacks. |
-| [Short Fuse](perks/short-fuse.md) | Gold | 14% | 2 stacks | – | Your charges go off 15% sooner per stack, up to 2 stacks. |
-| [Last Stand](perks/last-stand.md) | Gold | 14% | 1 held | – | Below 35% HP you move 12% faster and your charges hit 25% harder. Does not stack. |
+| [Shaped Charge](perks/shaped-charge.md) | Gold | 17% | 3 stacks | – | Increase attack power by 15 per stack, up to 3 stacks. Your charge bundle and blast warning change with power. |
+| [Field Recovery](perks/repair.md) | Gold | 17% | – | – | Recover 40 HP and activate or refresh your tactical shield. |
+| [Extended Reach](perks/long-reach.md) | Gold | 17% | 2 stacks | – | Increase charge placement reach by one tile per stack, up to 2 stacks. |
+| [Afterburn](perks/afterburn.md) | Gold | 17% | 3 stacks | – | Each stack extends charge fire by 0.2 seconds, up to 3 stacks. |
+| [Short Fuse](perks/short-fuse.md) | Gold | 17% | 2 stacks | – | Your charges go off 15% sooner per stack, up to 2 stacks. |
+| [Last Stand](perks/last-stand.md) | Gold | 17% | 1 held | – | Below 35% HP you move 12% faster and your charges hit 25% harder. Does not stack. |
 | [Siphon Charge](perks/siphon.md) | Diamond | 20% | 2 stacks | – | Recover HP equal to 15% of the damage you deal to opponents per stack, up to 2 stacks. |
 | [Rapid Circuit](perks/capacitor.md) | Diamond | 20% | 2 stacks | an active skill | Reduce active skill cooldowns by 20%. Each stack applies to the remaining cooldown, up to 2 stacks. |
 | [Piercing Charge](perks/piercing-charge.md) | Diamond | 20% | 1 held | – | Your blasts break through one destructible obstacle and keep going. Permanent walls still stop them. Does not stack. |
-| [Cataclysm](perks/apocalypse.md) | Diamond | 20% | 1 held | map with terrain reset | Activate once to start a three-second arena-wide countdown. Surviving cover changes position and keeps its remaining durability. |
+| [Cataclysm](perks/apocalypse.md) | Diamond | 20% | 1 held | map with terrain reset | Activate once to start a three-second arena-wide countdown. Surviving cover changes position and keeps its remaining durability, and fire sweeps the whole floor: every other operator loses 20 HP. You are spared. |
 | [Missile Strike](perks/missile-strike.md) | Diamond | 20% | 1 held | – | Activate once to open the targeting tablet and pick a tile. Three seconds later a missile lands there: a wide blast that ignores walls and hits hard. |
-| [Dimensional Collapse](perks/dimension-collapse.md) | Mythic | 100% | 1 held | – | After a 3-second arena countdown, lock every operator in overhead view for 10 seconds. Each operator then returns to their previous view. |
+| [Dimensional Collapse](perks/dimension-collapse.md) | Mythic | 100% | 1 held | – | After a 3-second arena countdown, lock every operator except you in overhead view for 10 seconds. Each operator then returns to their previous view. |
 
-Perks per tier: Silver 7, Gold 7, Diamond 5, Mythic 1.
+Perks per tier: Silver 7, Gold 6, Diamond 5, Mythic 1.
 
 ## Mutations
 

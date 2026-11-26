@@ -23,7 +23,7 @@ const notes = {
   ],
   "items/grenade": [
     "Lobbed over walls and cover to any clear tile within `reach` tiles, landing after `flight` seconds. A direct (low) throw uses the charge placement radius and needs a clear path.",
-    "After landing it lies live for `fuse` seconds, then explodes in a cross of `blastRange` tiles at `powerScale` × the thrower's attack power.",
+    "After landing it lies there as a grenade for `fuse` seconds, then explodes in a cross of `blastRange` tiles at `powerScale` × the thrower's attack power.",
     "The thrower takes normal blast damage from it, not the reduced damage of an own charge.",
     "Drop weight: `weight ÷ (1 + grenades held)`.",
   ],
@@ -39,10 +39,12 @@ const notes = {
     "Drop weight: `weight × (1 + 1.8 × missingHp) ÷ (1 + shieldActive + shields held)`.",
     "Bots value a pickup at 25, or 14 while shielded.",
   ],
-  "items/smoke": [
-    "Lobbed to any clear tile within `reach` tiles, landing after `flight` seconds.",
-    "Creates a cloud of `radius` tiles for `duration` seconds. A sight line passing through the cloud is blocked for zombies and bots.",
-    "Drop weight: `weight × (1 + 0.8 × missingHp) ÷ (1 + smokes held)`.",
+  "items/molotov": [
+    "Lobbed to any clear tile within `reach` tiles, landing after `flight` seconds. It shatters on landing; there is no fuse.",
+    "Lights every open tile within `fire.radius` tiles that the flames can reach without crossing a wall or cover, for `fire.duration` seconds.",
+    "Anyone standing in the fire, the thrower included, loses `fire.damage` HP every 0.5 s. A shield blocks it. Zombies that touch it die. It does not open cover or set off charges.",
+    "Drop weight: `weight ÷ (1 + Molotovs held)`.",
+    "Bots treat burning tiles as blast cells, and throw one at a visible target more than 2.7 tiles away when they hold no grenade.",
   ],
   "skills/kick": [
     "Passive. Stand outside a charge, line up with it (within 0.3 tile sideways, 0.8 tile ahead) and keep pushing into it for 0.12 s.",
@@ -58,14 +60,6 @@ const notes = {
   "skills/scan": [
     "Shows operators and zombies through cover for `duration` seconds.",
     "Bots cast it when they have no opponent in sight.",
-  ],
-  "skills/shift": [
-    "Toggles the overhead view. No cooldown. Unavailable while a forced view (Dimensional Collapse) is active.",
-    "In overhead view movement is four-way, Space plants a charge on the tile you stand on, movement keeps you centred in the lane, and jumping and gear are disabled.",
-  ],
-  "skills/surge": [
-    "For `duration` seconds, charges you place get `rangeBonus` extra tiles of range. Range is fixed when the charge is placed.",
-    "Upgraded by the [Overcharge](../perks/overcharge.md) perk.",
   ],
   "skills/detonator": [
     "Every charge you have planted goes off `delay` seconds after the cast, unless its own fuse is shorter.",
@@ -105,6 +99,7 @@ const notes = {
   "perks/apocalypse": [
     "Active perk: stored until you trigger it, then consumed. Only one copy can be held.",
     "After `delay` seconds, all surviving cover moves to new tiles and keeps its damage. Spawn zones, walls, occupied tiles and tiles holding items or charges are protected.",
+    "At the same moment fire sweeps the whole floor: every other living operator loses `scorch` HP wherever they stand. A shield blocks it. The caster is spared.",
     "Only offered on maps that implement `randomizeTerrain`. Cannot be triggered while another reset is pending.",
     "Bots trigger it below 45% HP or with an enemy charge within 2.5 tiles.",
   ],
@@ -116,14 +111,14 @@ const notes = {
   ],
   "perks/dimension-collapse": [
     "Active perk: stored until you trigger it, then consumed. Only one copy can be held.",
-    "After a `warningSeconds` countdown every operator is locked in overhead view for `duration` seconds, then returns to their previous view.",
+    "After a `warningSeconds` countdown every operator except the caster is locked in overhead view for `duration` seconds, then returns to their previous view.",
+    "Not offered in Classic mode, where everyone is already overhead.",
     "Bots trigger it when an opponent is within 6 tiles.",
   ],
   "perks/endurance": ["Per stack: `amount` max stamina, `regenBonus` × 100% faster stamina recovery, and `amount` stamina restored at once.", "Offered until you hold `maxStacks`."],
   "perks/light-feet": ["Multiplies movement speed by `amount` (base 2.3 tiles/s).", "Offered while speed is below `cap` tiles/s, and never raises it past that."],
   "perks/long-reach": ["Adds `reach` tile(s) to the charge placement radius per stack (base 2).", "Offered until you hold `maxStacks`."],
   "perks/long-wave": ["Adds `amount` tile(s) of blast range to every charge (base 2).", "Offered while range is below `cap`."],
-  "perks/overcharge": ["Adds `bonus` tile(s) of range per stack to charges placed during Blast Surge, and resets its cooldown when picked.", "Requires the Blast Surge skill. No stack limit."],
   "perks/repair": ["Heals `heal` HP and sets the shield timer to at least `duration` seconds.", "Offered only while you are hurt or your shield has less than `duration` seconds left."],
   "perks/salvage": ["Heals `heal` HP per stack for each piece of cover you destroy. No stack limit."],
   "perks/shaped-charge": ["Adds `amount` attack power per stack (base 70). Charges switch visuals at 85 and 130 power.", "Offered until you hold `maxStacks`."],

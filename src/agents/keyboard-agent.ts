@@ -2,7 +2,7 @@ import { ITEMS, RULES, perkById } from "../core/content";
 import { cycleEquipment } from "../core/equipment";
 import { aimCell, canLob } from "../core/placement";
 import { idleInput, inTacticalView } from "../core/types";
-import { bindings, skillBinding, type Action } from "../input/bindings";
+import { bindings, type Action } from "../input/bindings";
 import type {
   AgentContext,
   Equipment,
@@ -57,7 +57,6 @@ export class KeyboardAgent implements PlayerAgent {
   onTargetedPerk?: (id: PerkId) => void;
   private perkInventory: readonly string[] = [];
   private perkCursor?: PerkId;
-  browsingPerks = false;
   private wheelSteps = 0;
   private selectedEquipment?: Equipment;
   private submittedEquipment?: { id: Equipment; time: number };
@@ -85,18 +84,6 @@ export class KeyboardAgent implements PlayerAgent {
         )
           return;
         if (this.handlePerkKey(e)) return;
-        if (
-          this.boardMode &&
-          e.code === "KeyR" &&
-          !bindings
-            .codes(skillBinding("shift"))
-            .some((code) => !code.startsWith("Mouse") && !BOARD_ARROWS[code] && code !== "Space")
-        ) {
-          e.preventDefault();
-          e.stopImmediatePropagation();
-          if (!e.repeat) this.queueSkill("shift");
-          return;
-        }
         if (this.boardMode && (e.code === "Space" || BOARD_ARROWS[e.code])) {
           e.preventDefault();
           e.stopImmediatePropagation();
@@ -215,22 +202,16 @@ export class KeyboardAgent implements PlayerAgent {
     if (this.perkCursor && this.perkInventory.includes(this.perkCursor)) return this.perkCursor;
     return this.perkInventory.find((id) => perkById(id)?.use);
   }
+  /** The cycle key steps to the next usable perk; the use key fires the selected one. */
   private handlePerkKey(e: KeyboardEvent) {
     const selected = this.selectedPerk;
     if (!selected) return false;
     const action = bindings.action(e.code);
-    const direction = e.code === "ArrowLeft" ? -1 : e.code === "ArrowRight" ? 1 : 0;
     if (action === "usePerk") {
-      if (!e.repeat) {
-        this.queuePerk(selected);
-        this.browsingPerks = false;
-      }
+      if (!e.repeat) this.queuePerk(selected);
     } else if (action === "browsePerks") {
-      if (!e.repeat) this.browsingPerks = !this.browsingPerks;
-    } else if (direction && (this.browsingPerks || !this.boardMode)) {
       const ids = [...new Set(this.perkInventory.filter((id) => perkById(id)?.use))];
-      if (!this.browsingPerks && ids.length === 1) return false;
-      if (!e.repeat) this.perkCursor = ids[(ids.indexOf(selected) + direction + ids.length) % ids.length];
+      if (!e.repeat) this.perkCursor = ids[(ids.indexOf(selected) + 1) % ids.length];
     } else return false;
     e.preventDefault();
     e.stopImmediatePropagation();
@@ -321,7 +302,6 @@ export class KeyboardAgent implements PlayerAgent {
     }
   }
   clear() {
-    this.browsingPerks = false;
     this.plantHere = false;
     this.buildRequested = false;
     this.resetTerrain = false;
@@ -345,10 +325,7 @@ export class KeyboardAgent implements PlayerAgent {
   }
   decide({ dt, self, state }: AgentContext): PlayerInput {
     this.perkInventory = self.perks;
-    if (!this.selectedPerk) {
-      this.perkCursor = undefined;
-      this.browsingPerks = false;
-    }
+    if (!this.selectedPerk) this.perkCursor = undefined;
     this.setTopDown(self.alive && inTacticalView(self, state.time));
     if (!this.enabled) return idleInput(this.yaw);
     const shared: Partial<PlayerInput> = {

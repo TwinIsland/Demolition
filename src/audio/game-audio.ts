@@ -252,6 +252,8 @@ export class GameAudio {
       this.play("blast-ringing", { priority: true });
       this.nextBlastRing = event.at + BLAST_RING_COOLDOWN;
     }
+    if (event.type === "ignite" && distance < 12)
+      this.play("fire-ignite", { gain: own ? 1 : falloff(distance, 12), pan, priority: own });
     if (event.type === "build") {
       if (own) this.play("crate-build", { priority: true });
       else if (distance < 9) this.play("crate-build", { gain: 0.8 * falloff(distance, 9), pan });

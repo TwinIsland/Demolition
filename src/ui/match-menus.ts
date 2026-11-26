@@ -15,8 +15,9 @@ export function outcomeOf(snapshot: Readonly<GameSnapshot>, viewer: Player): Out
   return snapshot.winnerId ? "defeat" : "draw";
 }
 
+/** The badge canvas is mounted into `.outcome-badge-slot` once the dialog is open. */
 const banner = (kicker: string, headline: string, detail = "") =>
-  `<header class="outcome-banner"><small class="modal-kicker">${kicker}</small><h2>${headline}</h2>${detail ? `<p>${detail}</p>` : ""}</header>`;
+  `<header class="outcome-banner"><div class="outcome-badge-slot"></div><small class="modal-kicker">${kicker}</small><h2 data-text="${headline}">${headline}</h2>${detail ? `<p>${detail}</p>` : ""}</header>`;
 
 export function eliminatedMarkup(snapshot: Readonly<GameSnapshot>, viewer: Player) {
   return `${banner(t("行动中止"), t("已淘汰"))}${debriefMarkup(snapshot, viewer)}<button class="primary" id="resume">${t("观战剩余对局")}</button><div class="modal-actions"><button id="restart">${t("再来一局")}</button><button id="home">${t("返回首页")}</button></div>`;

@@ -27,28 +27,52 @@ def write(name, x):
         w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR); w.writeframes((x*32767).astype(np.int16).tobytes())
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", f"{OUT}/{name}.wav", "-c:a", "libvorbis", "-q:a", "4", f"{OUT}/{name}.ogg"], check=True)
 
-# Victory: rising brass call that lands on a held major chord, with a timpani hit.
-v = np.zeros(int(SR*2.6))
-C, E, G, C2 = 261.63, 329.63, 392.0, 523.25
-for f, at, d in ((G/2*2, 0, .16), (G, .17, .16), (C2, .34, .22), (E*2, .58, 1.7)):
-    place(v, brass(f, d, 1.25), at, .8)
-for f, g in ((C, .5), (E, .4), (G, .45), (C2, .4)):
-    place(v, brass(f, 1.7), .58, g)
-x = t(.9); drum = np.sin(2*np.pi*(62+38*np.exp(-x*18))*x)*np.exp(-x*5)
-place(v, drum, .58, 1.6)
-write("match-victory", reverb(v))
+def felt(f, d):
+    """A soft, felted piano-like note: few partials, slightly detuned pair, slow release."""
+    x = t(d); s = np.zeros(len(x))
+    for k, g in ((1, 1), (2, .32), (3, .12), (4, .05)):
+        for det in (-.0012, .0012):
+            s += g*np.sin(2*np.pi*f*k*(1+det)*x)*np.exp(-x*(1.1+.55*k))
+    a = int(SR*.012); s[:a] *= np.linspace(0, 1, a)
+    return s
+def pad(f, d, swell):
+    """A warm sustained tone that swells in and out, with a slow beat between detuned voices."""
+    x = t(d); s = sum(np.sin(2*np.pi*f*(1+det)*x+ph) for det, ph in ((-.003, 0), (0, 1.3), (.003, 2.1)))
+    s += .25*np.sin(2*np.pi*2*f*x)
+    return lowpass(s, .12)*np.sin(np.pi*np.clip(x/d, 0, 1))**swell
+def hall(x, seconds=2.2, mix=.5):
+    """Long diffuse tail: dense decaying noise convolved in, far smoother than a few taps."""
+    n = int(SR*seconds); ir = rng.normal(0, 1, n)*np.exp(-t(seconds)*3.2); ir = lowpass(ir, .25)
+    m = len(x)+n; wet = np.fft.irfft(np.fft.rfft(x, m)*np.fft.rfft(ir, m), m); wet /= np.max(np.abs(wet))+1e-9
+    dry = np.concatenate([x, np.zeros(n)]); dry /= np.max(np.abs(dry))+1e-9
+    return dry*(1-mix)+wet*mix
+def sub(d, f0=44, drop=30, decay=3.2):
+    x = t(d); return np.sin(2*np.pi*np.cumsum(f0+drop*np.exp(-x*12))/SR)*np.exp(-x*decay)
 
-# Eliminated: impact thud, falling tone and a dull metallic ring.
-e = np.zeros(int(SR*1.9))
-x = t(1.0); place(e, np.sin(2*np.pi*(48+70*np.exp(-x*14))*x)*np.exp(-x*4.2), 0, 1.8)
-noise = lowpass(rng.normal(0, 1, int(SR*.5)), .08)*np.exp(-t(.5)*9); place(e, noise, 0, 1.2)
-x = t(1.5); fall = 220*np.exp(-x*1.1)
-ph = 2*np.pi*np.cumsum(fall)/SR
-tone = (np.sin(ph)+.5*np.sin(ph*1.5)+.3*np.sin(ph*2.01))*env(len(x), .02, .9)
-place(e, tone, .08, .45)
-x = t(1.2); ring = sum(np.sin(2*np.pi*f*x)*np.exp(-x*d) for f, d in ((311, 3.5), (467, 5), (733, 7)))
-place(e, ring, .02, .12)
-write("match-eliminated", reverb(e))
+# Victory: restrained and cinematic. A deep soft hit, two rising felt notes over a warm open
+# fifth, and air. No fanfare.
+D2, A2, D3, A3, D4, Fs4, A4 = 73.42, 110.0, 146.83, 220.0, 293.66, 369.99, 440.0
+v = np.zeros(int(SR*3.6))
+place(v, sub(1.6), 0, 1.1)
+for f, g in ((D2, .5), (A2, .42), (D3, .4), (A3, .22)):
+    place(v, pad(f, 3.4, 1.4), 0, g*.5)
+place(v, felt(D4, 2.8), .12, .5)
+place(v, felt(A4, 3.0), .62, .58)
+place(v, felt(Fs4, 2.6), .62, .2)
+air = rng.normal(0, 1, int(SR*3)); air = air-lowpass(air, .5)
+place(v, air*np.sin(np.pi*np.linspace(0, 1, len(air)))**2, .3, .012)
+write("match-victory", hall(v))
+
+# Eliminated: the same palette turned down. A heavier hit and two falling notes over a minor third.
+F3, C4, Ab3 = 174.61, 261.63, 207.65
+e = np.zeros(int(SR*3.0))
+place(e, sub(1.8, 40, 46, 2.6), 0, 1.3)
+noise = lowpass(rng.normal(0, 1, int(SR*.6)), .05)*np.exp(-t(.6)*7); place(e, noise, 0, .7)
+for f, g in ((D2, .5), (F3/2, .4), (A2, .3)):
+    place(e, pad(f, 2.8, 1.2), 0, g*.5)
+place(e, felt(C4, 2.4), .14, .42)
+place(e, felt(Ab3, 2.6), .7, .5)
+write("match-eliminated", hall(e, 2.0, .45))
 
 # Typewriter tick for the debrief.
 x = t(.035); tick = (rng.normal(0, 1, len(x))*np.exp(-x*240)+.6*np.sin(2*np.pi*2400*x)*np.exp(-x*160))

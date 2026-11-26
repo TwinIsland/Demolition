@@ -24,7 +24,7 @@ export const BASIC_CONTROLS = {
   supply: ["按住拖选补给", "KeyB"],
   resetTerrain: ["练习：重置地形", "KeyP"],
   usePerk: ["发动主动强化", "KeyT"],
-  browsePerks: ["选择主动强化", "KeyG"],
+  browsePerks: ["切换主动强化", "KeyG"],
   pause: ["暂停", "Escape"],
   performance: ["性能面板", "F8"],
   fullscreen: ["切换全屏", "F10"],

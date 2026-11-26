@@ -587,7 +587,6 @@ export class GameApp {
         viewer,
         landing: this.renderer.landingPreview,
         selectedPerk: this.keyboard.selectedPerk,
-        browsingPerks: this.keyboard.browsingPerks,
       });
   }
 

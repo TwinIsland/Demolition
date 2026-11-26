@@ -13,12 +13,13 @@
 
 **Dimensional Collapse** is a perk in Demolition Front. In the game it is described as:
 
-> After a 3-second arena countdown, lock every operator in overhead view for 10 seconds. Each operator then returns to their previous view.
+> After a 3-second arena countdown, lock every operator except you in overhead view for 10 seconds. Each operator then returns to their previous view.
 
 ## Behaviour
 
 - Active perk: stored until you trigger it, then consumed. Only one copy can be held.
-- After a `warningSeconds` countdown every operator is locked in overhead view for `duration` seconds, then returns to their previous view.
+- After a `warningSeconds` countdown every operator except the caster is locked in overhead view for `duration` seconds, then returns to their previous view.
+- Not offered in Classic mode, where everyone is already overhead.
 - Bots trigger it when an opponent is within 6 tiles.
 
 ## Source

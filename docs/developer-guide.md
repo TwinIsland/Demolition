@@ -86,7 +86,7 @@ A match is a pure function of its options, seed and inputs.
 | Fuse, base speed, starting coins | `RULES` in `core/content.ts` |
 | Safe zone timing and damage | `core/zone.ts`, `core/systems/zone.ts` |
 | Coins and crate building | `core/economy.ts`, `core/systems/building.ts` |
-| Mode presets (Standard, Wild) | `core/match-modes.ts` |
+| Mode presets (Standard, Classic, Wild) | `core/match-modes.ts` |
 | Perk tier weights and offer rules | `TIERS`, `rollPerks` in `core/content.ts` |
 | Loot chances | `core/loot.ts`, `core/field-supplies.ts` |
 | Zombies | `core/zombies.ts`, `ZOMBIE_STATS` in `core/loot.ts`, `ZOMBIE_RATES` in `core/room.ts` |
@@ -107,7 +107,7 @@ After changing numbers, update [Game rules](game-rules.md) and [Probabilities](p
 2. scores reachable tiles for loot (`aiPickupValue`), cover to farm and opponents to hunt, weighted by its personality and a threat map;
 3. picks a route that avoids predicted blasts, the closing zone, and tiles an opponent could seal with one charge (`BombForecast`, `safeRoute`, `likelyCharges`, `threatField`);
 4. casts the ready skill with the highest `aiCastPriority`, and uses shield, bandage and knife when they apply;
-5. otherwise throws a grenade or smoke, builds a crate, or places a charge where the blast scores best and an escape route exists.
+5. otherwise throws a grenade or Molotov, builds a crate, or places a charge where the blast scores best and an escape route exists.
 
 The helpers in `agents/tactics.ts` are pure functions of the snapshot, so replays stay deterministic.
 
