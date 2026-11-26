@@ -72,6 +72,12 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
         license: CC_BY,
       },
       {
+        title: "Dreamy Flashback",
+        map: "poolrooms",
+        author: "Kevin MacLeod · incompetech.com",
+        license: CC_BY,
+      },
+      {
         title: "Dark Place (loop)",
         use: ["备用曲目", "Fallback track"],
         author: "OpenGameArt",
