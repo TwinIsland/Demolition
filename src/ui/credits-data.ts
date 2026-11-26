@@ -95,6 +95,12 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
       { title: "Fire Crackling", author: "AntumDeluge · OpenGameArt", license: CC0 },
       { title: "Tinnitus", author: "Joseph Sardin · BigSoundBank", license: CC0 },
       {
+        title: "Water footsteps",
+        map: "poolrooms",
+        author: "AGFX · Freesound, via Minetest Game",
+        license: "CC BY 3.0",
+      },
+      {
         title: "Zombie hurt & death",
         author: "Mojang Studios · Minecraft: Java Edition",
         license: "© Mojang Studios",

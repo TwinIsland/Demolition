@@ -14,6 +14,8 @@ export interface CameraFrame {
   tactical: boolean;
   /** Melee swing progress in 0..1, applied to the held-item anchor. */
   swing: number;
+  /** How far the local player stands below the deck, wading in a pool. */
+  sink?: number;
   /**
    * Called once the first-person eye is placed. Poses the held-item anchor, may offset the camera
    * (shake, recoil) and returns a field-of-view offset in degrees.
@@ -67,7 +69,7 @@ export class CameraRig {
       const bob = moved > 0.0001 && you.verticalSpeed === 0 ? Math.sin(this.travel * 5.5) * 0.006 : 0;
       camera.position.set(
         world(you.x, state.size),
-        EYE_HEIGHT + you.elevation + bob,
+        EYE_HEIGHT + you.elevation + bob - (frame.sink ?? 0),
         world(you.z, state.size),
       );
       camera.rotation.order = "YXZ";

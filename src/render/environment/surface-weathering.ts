@@ -177,6 +177,10 @@ uniform float wxTile;
   uniform float wxReflectionOn;
   varying vec4 vWxReflUv;
 #endif
+#ifdef WX_WATER
+  // Recent steps in the water: xy is the place, z the time of the step, w its strength.
+  uniform vec4 wxWakes[WX_WAKE_COUNT];
+#endif
 #ifdef WX_SOIL
   // Natural ground: the base maps are grass, and these take over where the mask says mud.
   uniform sampler2D wxSoilMask;
@@ -394,9 +398,27 @@ vec2 wxWaterSlope = vec2(0.0);
     #if WX_LEVEL >= 1
       wxWaterSlope += wxRipples(wxP.xz * 0.45) * 0.5;
     #endif
+    // Every step sends out a short train of rings, led by a crest of broken water.
+    float wxFoam = 0.0;
+    for (int i = 0; i < WX_WAKE_COUNT; i++) {
+      vec4 wxWake = wxWakes[i];
+      float wxAge = wxTime - wxWake.z;
+      vec2 wxFrom = wxP.xz - wxWake.xy;
+      float wxR = length(wxFrom);
+      if (wxWake.w <= 0.0 || wxAge < 0.0 || wxAge > WX_WAKE_LIFE || wxR > 3.4) continue;
+      float wxLeft = 1.0 - wxAge / WX_WAKE_LIFE;
+      float wxAcross = (wxR - 0.08 - wxAge * 1.3) * 11.0;
+      float wxTrain = exp(-wxAcross * wxAcross * 0.1) * wxLeft * wxLeft * wxWake.w;
+      wxWaterSlope += wxFrom / max(wxR, 0.001) * cos(wxAcross * 1.8) * wxTrain * 7.0;
+      wxFoam += smoothstep(0.35, 1.0, cos(wxAcross * 1.8)) * wxTrain * wxLeft
+        + (1.0 - smoothstep(0.0, 0.32, wxR)) * max(0.0, 1.0 - wxAge / 0.3) * wxWake.w;
+    }
+    wxFoam = min(wxFoam, 1.0);
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.82, 0.94, 0.95), wxFoam * 0.72);
+    diffuseColor.a = max(diffuseColor.a, wxFoam * 0.75);
     vec3 wxSurface = normalize(vec3(-wxWaterSlope.x * 0.3, 1.0, -wxWaterSlope.y * 0.3));
     normal = normalize((viewMatrix * vec4(wxSurface, 0.0)).xyz);
-    roughnessFactor = 0.035;
+    roughnessFactor = 0.035 + wxFoam * 0.4;
     // Water hides its floor at a glancing angle and shows it from above.
     float wxGlance = 1.0 - abs(dot(normal, normalize(vViewPosition)));
     diffuseColor.a = mix(diffuseColor.a, 0.96, wxGlance * wxGlance * wxGlance);
@@ -529,7 +551,14 @@ const DEFINES: Record<SurfaceProfile, string[]> = {
   tile: ["WX_WORLD_UV 0.8333333", "WX_TONE 0.0", "WX_WET_DARKEN 0.97", "WX_WET_GLOSS 0.75"],
   deck: ["WX_WORLD_UV 0.8333333", "WX_PUDDLES", "WX_TONE 0.0", "WX_WET_DARKEN 0.95", "WX_WET_GLOSS 0.6"],
   basin: ["WX_WORLD_UV 0.8333333", "WX_CAUSTICS", "WX_TONE 0.0", "WX_WET_DARKEN 1.0", "WX_WET_GLOSS 1.0"],
-  water: ["WX_WATER", "WX_TONE 0.0", "WX_WET_DARKEN 1.0", "WX_WET_GLOSS 1.0"],
+  water: [
+    "WX_WATER",
+    "WX_WAKE_COUNT 14",
+    "WX_WAKE_LIFE 1.9",
+    "WX_TONE 0.0",
+    "WX_WET_DARKEN 1.0",
+    "WX_WET_GLOSS 1.0",
+  ],
   // One repeat is a whole cell: eight stripes of wallpaper, or two ceiling tiles each way.
   wallpaper: ["WX_WORLD_UV 0.4166667", "WX_LAMPS", "WX_TONE 0.0", "WX_WET_DARKEN 1.0", "WX_WET_GLOSS 1.0"],
   carpet: [
