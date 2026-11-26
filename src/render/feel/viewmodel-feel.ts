@@ -102,7 +102,11 @@ export class ViewmodelFeel {
           if (!this.action) this.play("pickup");
           break;
         case "damage":
-          this.flinch.impulse(-1.5);
+          this.flinch.impulse(-2.2);
+          break;
+        case "strike":
+          // A landed hit pushes back through the arm.
+          this.flinch.impulse(0.7);
           break;
         case "land":
           this.drop.impulse(-Math.min(1.5, cue.speed * 0.12));

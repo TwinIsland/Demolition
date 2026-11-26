@@ -1,16 +1,24 @@
 import * as THREE from "three";
-import { CueTracker, type Cue } from "../../feel/cues";
+import { CueTracker, relativeBearing, type Cue } from "../../feel/cues";
 import { motionScale } from "../../feel/settings";
-import type { GameSnapshot, Player, Zombie } from "../../core/types";
+import type { GameSnapshot, Player, Vec2, Zombie } from "../../core/types";
 import type { MinecraftAvatar } from "../minecraft-avatar";
-import { BANDAGE_TIME, flashAvatar, poseBandaging } from "./actor-feel";
+import {
+  BANDAGE_TIME,
+  HURT_TIME,
+  hurtHop,
+  hurtKick,
+  hurtTint,
+  leanAvatar,
+  poseBandaging,
+} from "./actor-feel";
 import { CameraFeel } from "./camera-feel";
 import { SelfMarker } from "./self-marker";
 import { ViewmodelFeel } from "./viewmodel-feel";
 import { WallTelegraph } from "./wall-telegraph";
 
-const HURT_FLASH = 0.22;
-const hurtTint = new THREE.Color("#ff5a4d");
+/** World units a struck operator's body is shoved away from the hit before it settles back. */
+const HURT_SHOVE = 0.14;
 
 /**
  * Renderer-side game feel. The renderer calls `begin` once per frame, then the per-object hooks.
@@ -26,7 +34,9 @@ export class RenderFeel {
   private viewmodel = new ViewmodelFeel();
   private cues: readonly Cue[] = [];
   private bandaging = new Map<string, number>();
-  private hurt = new Map<string, number>();
+  private hurt = new Map<string, { at: number; source?: Vec2 }>();
+  /** Seconds of wall time since the local player was last hurt; drives the first-person arm tint. */
+  private ownHurtAge = Infinity;
   private seed = Number.NaN;
   private lastFrame = 0;
   private dt = 0;
@@ -38,13 +48,15 @@ export class RenderFeel {
       this.seed = state.seed;
       this.bandaging.clear();
       this.hurt.clear();
+      this.ownHurtAge = Infinity;
       this.camera.reset();
       this.viewmodel.reset();
     }
     this.cues = this.tracker.collect(state, localId);
     for (const cue of this.cues)
       if (cue.type === "actor-consume" && cue.heals) this.bandaging.set(cue.playerId, cue.at);
-      else if (cue.type === "actor-hurt") this.hurt.set(cue.playerId, cue.at);
+      else if (cue.type === "actor-hurt") this.hurt.set(cue.playerId, { at: cue.at, source: cue.source });
+      else if (cue.type === "damage") this.ownHurtAge = 0;
   }
 
   /** Player to show in the first-person hand; differs from `you` only while a bandage is being wrapped. */
@@ -67,18 +79,32 @@ export class RenderFeel {
     steady = false,
   ) {
     const scale = motionScale();
+    this.ownHurtAge += this.dt;
+    hand.setHurt(you.alive ? hurtTint(this.ownHurtAge) : 0);
     this.camera.update(this.cues, you, look.yaw, motion.moving, this.dt);
     this.viewmodel.update(this.cues, you, look.yaw, look.pitch, motion.moving, this.dt, wallTime);
     this.viewmodel.pose(held, hand, camera.aspect, motion.swing, motion.travel, scale);
     return steady ? 0 : this.camera.apply(camera, wallTime, scale);
   }
 
+  /** Call after the zombie is placed and turned. A struck zombie turns red, hops and tips away from the hit. */
   zombie(avatar: MinecraftAvatar, enemy: Readonly<Zombie>, time: number) {
-    const age = enemy.hurtAt === undefined ? 1 : time - enemy.hurtAt;
-    flashAvatar(avatar, age >= 0 && age < 0.16 ? 1 - age / 0.16 : 0);
+    const age = enemy.hurtAt === undefined ? Infinity : time - enemy.hurtAt;
+    avatar.setHurt(hurtTint(age));
+    const scale = motionScale();
+    const push = enemy.knockback;
+    // The simulation slides the zombie along `knockback`; the body leans the same way.
+    const bearing = push
+      ? relativeBearing(enemy, { x: enemy.x - push.x, z: enemy.z - push.z }, avatar.rotation.y)
+      : 0;
+    leanAvatar(avatar, hurtKick(age) * scale, bearing);
+    avatar.position.y += hurtHop(age) * scale;
   }
 
-  /** Call after Models.updateCharacter so the pose overrides the walk cycle. */
+  /**
+   * Call after Models.updateCharacter and after the avatar is placed and turned, so the poses here
+   * override the walk cycle and the hurt stagger is added on top of the authoritative position.
+   */
   actor(avatar: MinecraftAvatar, player: Readonly<Player>, time: number) {
     const wrapped = this.bandaging.get(player.id);
     if (wrapped !== undefined) {
@@ -86,12 +112,22 @@ export class RenderFeel {
       if (age < 0 || age >= BANDAGE_TIME || !player.alive) this.bandaging.delete(player.id);
       else poseBandaging(avatar, age);
     }
-    const hurtAt = this.hurt.get(player.id);
-    if (hurtAt === undefined) return;
-    const age = time - hurtAt;
-    const live = age >= 0 && age < HURT_FLASH;
-    flashAvatar(avatar, live ? 1 - age / HURT_FLASH : 0, hurtTint);
-    if (!live) this.hurt.delete(player.id);
+    const hurt = this.hurt.get(player.id);
+    const age = hurt ? time - hurt.at : Infinity;
+    if (hurt && (age < 0 || age >= HURT_TIME || !player.alive)) this.hurt.delete(player.id);
+    avatar.setHurt(player.alive ? hurtTint(age) : 0);
+    const kick = hurtKick(age) * motionScale();
+    const source = hurt?.source;
+    leanAvatar(avatar, kick, source ? relativeBearing(player, source, player.yaw) : 0);
+    if (!kick) return;
+    avatar.position.y += hurtHop(age) * motionScale();
+    if (!source) return;
+    const dx = player.x - source.x,
+      dz = player.z - source.z,
+      reach = Math.hypot(dx, dz);
+    if (reach < 0.05) return;
+    avatar.position.x += (dx / reach) * HURT_SHOVE * kick;
+    avatar.position.z += (dz / reach) * HURT_SHOVE * kick;
   }
 
   /** Marks the local actor in the tactical view. `x` and `z` are world units, `blend` is the view transition. */
