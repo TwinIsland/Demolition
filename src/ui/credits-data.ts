@@ -30,16 +30,9 @@ const OWNER = "TwinIsland";
 const solo = (zh: string, en: string): StaffCredit => ({ role: [zh, en], names: [OWNER] });
 
 export const STAFF: readonly StaffCredit[] = [
-  solo("游戏设计", "Game Design"),
-  solo("制作人", "Producer"),
-  solo("总监", "Director"),
+  solo("游戏设计与制作", "Game Design & Production"),
   { role: ["程序", "Programming"], names: [OWNER, "Claude Code", "Codex"] },
-  solo("美术指导", "Art Direction"),
-  solo("关卡设计", "Level Design"),
-  solo("界面设计", "Interface Design"),
-  solo("音效设计", "Sound Design"),
-  solo("数值与 AI 设计", "Balance & AI Design"),
-  solo("测试", "Quality Assurance"),
+  solo("美术与音效", "Art & Audio"),
 ];
 
 const CC0 = "CC0 1.0";
