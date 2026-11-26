@@ -1,10 +1,20 @@
 # Builds the Tauri desktop app for Windows and macOS and attaches the installers to a GitHub
-# Release. Runs when a version tag such as v1.0.0 is pushed.
+# Release. Runs when a version tag such as v1.0.0 is pushed, or by hand from the Actions tab with
+# the version typed in; a manual run creates the tag on the commit it builds.
 name: Release desktop builds
 
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Tag to release, for example v1.0.0
+        required: true
+        default: v1.0.0
+
+env:
+  RELEASE_TAG: ${{ inputs.version || github.ref_name }}
 
 permissions:
   contents: write
@@ -40,8 +50,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.ref_name }}
-          releaseName: Demolition ${{ github.ref_name }}
+          tagName: ${{ env.RELEASE_TAG }}
+          releaseName: Demolition ${{ env.RELEASE_TAG }}
           releaseBody: |
             Desktop builds of Demolition.
 
