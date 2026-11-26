@@ -654,7 +654,8 @@ export class GameApp {
   }
 
   private renderScene(state: Readonly<GameSnapshot>, viewer: Player, now: number) {
-    const inLobby = this.screens.is("lobby", "graphics", "credits") || (this.screens.is("help") && this.helpFromLobby);
+    const inLobby =
+      this.screens.is("lobby", "graphics", "credits") || (this.screens.is("help") && this.helpFromLobby);
     const mode = inLobby ? "lobby" : viewer.alive ? "first-person" : "spectator";
     this.renderer.render(
       this.session.getRenderSnapshot?.() ?? state,
