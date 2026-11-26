@@ -2,7 +2,8 @@ import { COMBAT } from "../combat";
 import { modeRules } from "../match-modes";
 import { combatMessage } from "../combat-message";
 import { modifiedStat, perkById, rollPerks, SKILLS, SLOT_LIMIT } from "../content";
-import type { PerkId, Player, PlayerInput, SkillId } from "../types";
+import type { PerkId, Player, PlayerInput, SkillId, Vec2 } from "../types";
+import { strikeTargetValid } from "./strikes";
 import type { SimContext } from "./context";
 import { emit } from "./events";
 import { effectContext } from "./match";
@@ -70,14 +71,15 @@ export function choosePerk(ctx: SimContext, p: Player, chosen: PerkId | undefine
 }
 
 /** Spends one owned copy of an activatable perk, if the perk accepts the use. */
-export function usePerk(ctx: SimContext, p: Player, id: PerkId) {
+export function usePerk(ctx: SimContext, p: Player, id: PerkId, target?: Vec2) {
   const slot = p.perks.indexOf(id),
     perk = perkById(id);
   if (
     slot >= 0 &&
     perk?.use &&
+    (!perk.targeted || strikeTargetValid(ctx.state, target)) &&
     (!perk.canUse || perk.canUse(p, ctx.state)) &&
-    perk.use(p, effectContext(ctx, p))
+    perk.use(p, effectContext(ctx, p, perk.targeted ? target : undefined))
   ) {
     p.perks.splice(slot, 1);
     emit(ctx, p, combatMessage("启动{0}", perk), { type: "perk-use", perk: id });

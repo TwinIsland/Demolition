@@ -72,6 +72,25 @@ const notes = {
     "Thrown explosives are not affected. Cannot be cast with no planted charge.",
     "Bots do not buy it.",
   ],
+  "skills/veil": [
+    "For `duration` seconds, charges you plant are concealed, and so are the charges you already have on the ground at the cast. A concealed charge stays concealed until it goes off.",
+    "Other operators see the charge itself but no blast path. You see the path as a violet dashed outline instead of the usual warning stripes.",
+    "Bots cannot read a concealed charge either: they assume a reach of 1 tile, so longer blasts catch them. The fire itself is visible to everyone as usual.",
+    "Bots cast it when an opponent they have seen is within 6 tiles.",
+  ],
+  "skills/cloak": [
+    "Invisible for `duration` seconds: other operators do not see your body, health bar, shield or radar blip. Your footsteps are still heard.",
+    "Bots lose sight of you and cannot aim charges, grenades, knives or a Missile Strike at you; zombies stop tracking and attacking you. Blasts and the fire zone still hurt.",
+    "[Threat Scan](scan.md) reveals cloaked operators to whoever is scanning, bots included.",
+    "You see your own arm and body ripple while it lasts. Bots cast it when hurt with an opponent in sight, or with one within 5 tiles.",
+  ],
+  "perks/missile-strike": [
+    "Active perk: stored until you trigger it, then consumed. Only one copy can be held.",
+    "Triggering opens the targeting tablet, a 2D map of the arena. Click a tile (or steer with the movement keys and press Enter) to fire; right-click or Esc cancels and keeps the perk. The match keeps running while the tablet is open.",
+    "After `delay` seconds the missile lands. Every open or cover tile within `radius` tiles burns for 0.9 s at `power` blast power, falling off with distance from the centre. Walls give no shelter, cover inside is destroyed, and charges inside are set off.",
+    "The caller takes full damage from it. A shield blocks it like any blast. Everyone sees the marker on the ground and on the radar and hears the warning.",
+    "Bots fire at the opponent they have seen with the most others nearby, never within `radius` + 1.5 tiles of themselves, and move out of a marked area.",
+  ],
   "perks/short-fuse": ["Multiplies the fuse of charges you plant by `1 − rate × stacks` (base 2.65 s; two stacks: 1.86 s).", "Offered until you hold `maxStacks`."],
   "perks/last-stand": [
     "While at or below `threshold` × max HP: movement speed × `speed`, and charges planted in that state carry × `power` blast power.",
@@ -146,6 +165,7 @@ const facts = {
     c.requiresSkill && ["Requires skill", `\`${c.requiresSkill}\``],
     c.requiresActiveSkill && ["Requires", "any active skill"],
     c.requiresTerrainReset && ["Requires", "a map with `randomizeTerrain`"],
+    c.targeted && ["Targeting", "pick a tile on the targeting tablet"],
   ],
   mutations: () => [],
 };
@@ -224,7 +244,7 @@ Each level-up offers three perks. The tier is rolled first (Silver 61, Gold 30, 
 
 | Perk | Tier | Share in tier | Limit | Requires | Effect |
 | --- | --- | --- | --- | --- | --- |
-${perks.map(c => `| ${link("perks", c)} | ${TIER[c.tier]} | ${Math.round(100 * c.weight / perks.filter(p => p.tier === c.tier).reduce((n, p) => n + p.weight, 0))}% | ${c.stats?.maxStacks ? `${c.stats.maxStacks} stacks` : c.stats?.cap ? `stat cap ${c.stats.cap}` : ["apocalypse", "dimension-collapse", "last-stand", "piercing-charge"].includes(c.id) ? "1 held" : "–"} | ${c.requiresSkill ? `\`${c.requiresSkill}\` skill` : c.requiresActiveSkill ? "an active skill" : c.requiresTerrainReset ? "map with terrain reset" : "–"} | ${en(c, "description")} |`).join("\n")}
+${perks.map(c => `| ${link("perks", c)} | ${TIER[c.tier]} | ${Math.round(100 * c.weight / perks.filter(p => p.tier === c.tier).reduce((n, p) => n + p.weight, 0))}% | ${c.stats?.maxStacks ? `${c.stats.maxStacks} stacks` : c.stats?.cap ? `stat cap ${c.stats.cap}` : ["apocalypse", "dimension-collapse", "last-stand", "missile-strike", "piercing-charge"].includes(c.id) ? "1 held" : "–"} | ${c.requiresSkill ? `\`${c.requiresSkill}\` skill` : c.requiresActiveSkill ? "an active skill" : c.requiresTerrainReset ? "map with terrain reset" : "–"} | ${en(c, "description")} |`).join("\n")}
 
 Perks per tier: ${TIER_ORDER.map(t => `${TIER[t]} ${tierCount[t]}`).join(", ")}.
 

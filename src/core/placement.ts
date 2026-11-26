@@ -66,6 +66,9 @@ export function canPlace(
     return false;
   if (mode === "lob") return canLob(equipment) && p.inventory[equipment] > 0;
   if (s.bombs.some((b) => b.x === x && b.z === z)) return false;
+  // A charge planted into live fire would go off at once and free its slot, so every further
+  // press would chain another explosion for as long as the fire lasts.
+  if (equipment === "bomb" && s.blasts.some((b) => b.x === x && b.z === z)) return false;
   if (equipment === "bomb")
     return s.bombs.filter((b) => b.ownerId === p.id && b.source !== "throwable").length < p.capacity;
   // Low throws travel through each intervening cell.

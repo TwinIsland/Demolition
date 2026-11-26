@@ -155,3 +155,11 @@ Stains, moss, cracks, puddles, ripples, rain streaks and splashes are procedural
 `public/assets/match-victory.ogg`, `match-eliminated.ogg` and `type-tick.ogg` are original, synthesized for this project by `scripts/make-outcome-sounds.py` (additive synthesis and filtered noise in NumPy, encoded with ffmpeg/libvorbis). No third-party recordings.
 
 `public/assets/shop-open.ogg`, `shop-close.ogg`, `shop-buy.ogg` and `shop-deny.ogg` are likewise original, synthesized by `scripts/make-shop-sounds.py`.
+
+## Blind Fuse, Optical Camo and Missile Strike
+
+`src/modules/skills/veil/activate.ogg`, `src/modules/skills/cloak/activate.ogg`, `public/assets/missile-incoming.ogg` and `public/assets/missile-impact.ogg` are original, synthesized for this project by `scripts/make-ability-sounds.py` (oscillators and filtered noise in NumPy, encoded with ffmpeg/libvorbis). No third-party recordings.
+
+`public/assets/strike/missile.glb` is an original model built by `tools/model-forge/ordnance.ts` and exported with `tools/model-forge/export-node.ts`. It carries geometry only; its surfaces come from the shared texture sets listed above.
+
+`public/assets/danger-veil.svg` (the blast-path outline shown to the owner of a concealed charge) is original artwork. The missile exhaust, explosion, shockwave, sparks, scorch mark and the optical-camo ripple are shaders written for this project; the smoke puffs reuse `smoke-cloud.png`.

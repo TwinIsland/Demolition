@@ -262,6 +262,17 @@ export class GameAudio {
       if (sound && own) this.play(sound, { level: LEVEL.coverHit, priority: true });
       else if (sound && distance < 6)
         this.play(sound, { level: LEVEL.coverHit, gain: 0.55 * falloff(distance, 6), pan });
+    } else if (event.type === "strike") {
+      // The warning and the falling whistle carry across the whole arena.
+      this.play("missile-incoming", {
+        gain: Math.max(0.45, falloff(distance, 14, 0.1)),
+        pan,
+        priority: true,
+      });
+    } else if (event.type === "strike-impact") {
+      const gain = Math.max(0.4, falloff(distance, 16, 0.1));
+      this.play("missile-impact", { gain, pan: panTo(self, event), priority: true });
+      this.engine.duckMusic();
     } else if (event.type === "blast" && distance < 9) {
       const gain = falloff(distance, 10, 0.1);
       this.play("blast", { gain, pan: panTo(self, event) });

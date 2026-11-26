@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { isCloaked } from "../core/types";
 import type { GameSnapshot } from "../core/types";
 import { world } from "./arena";
 
@@ -51,10 +52,12 @@ export class ShieldField {
     this.root.add(shell);
     return shell;
   }
-  update(s: Readonly<GameSnapshot>) {
+  /** A cloaked opponent's shield would give them away, so it is hidden unless the viewer is scanning. */
+  update(s: Readonly<GameSnapshot>, viewerId: string, scanning: boolean) {
     for (const shell of this.shells.values()) shell.visible = false;
     for (const p of s.players) {
       if (!p.alive || p.shield <= 0) continue;
+      if (p.id !== viewerId && !scanning && isCloaked(p, s.time)) continue;
       let shell = this.shells.get(p.id);
       if (!shell) {
         shell = this.create();

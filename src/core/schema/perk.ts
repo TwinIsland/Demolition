@@ -14,6 +14,8 @@ export const PerkConfigSchema = v.object({
   requiresSkill: v.optional(text),
   requiresActiveSkill: v.optional(flag),
   requiresTerrainReset: v.optional(flag),
+  /** The player picks a cell on the targeting panel before the perk is spent. */
+  targeted: v.optional(flag),
 });
 
 const hookEntries = {
@@ -24,6 +26,7 @@ const hookEntries = {
   eligible: v.optional(hook),
   onAcquire: v.optional(hook),
   aiPriority: v.optional(hook),
+  aiTarget: v.optional(hook),
 } satisfies Record<keyof PerkBehavior, v.GenericSchema>;
 
 export const PerkDefinitionSchema = v.object({

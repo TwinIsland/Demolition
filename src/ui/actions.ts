@@ -1,6 +1,6 @@
 import type { MatchMode } from "../core/match-modes";
 import type { Appearance, BotSlot, ZombieRate } from "../core/room";
-import type { ItemId, PerkId, SkillId } from "../core/types";
+import type { ItemId, PerkId, SkillId, Vec2 } from "../core/types";
 import type { Language } from "../i18n";
 import type { GraphicsSettings } from "../render/graphics-settings";
 import type { SkinModel } from "../render/minecraft-skins";
@@ -26,6 +26,9 @@ export interface UIActions {
   activateSkill(id: SkillId): void;
   choosePerk(id: PerkId): void;
   usePerk(id: PerkId): void;
+  /** Targeting tablet: fire at the picked cell, or put the tablet away. */
+  confirmStrike(target: Vec2): void;
+  cancelStrike(): void;
   /** In-match supply shop. */
   canShop(): boolean;
   /** Holds camera look and equipment use while the supply wheel is open. */

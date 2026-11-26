@@ -9,6 +9,14 @@ import type {
 } from "./schema";
 import type { GameSnapshot, Player, ThrownItem, Vec2 } from "./types";
 
+export interface StrikeOptions {
+  /** Seconds from the call to the impact. */
+  delay: number;
+  /** Blast radius in cells; walls do not shelter anyone inside it. */
+  radius: number;
+  power: number;
+}
+
 /** Declarative config types are inferred from the schemas that validate them at load time. */
 export type Tier = (typeof TIER_IDS)[number];
 export type DropPool = (typeof DROP_POOL_IDS)[number];
@@ -27,6 +35,8 @@ export type ModifiedStat =
   | "bombPower"
   /** Number of destructible obstacles a blast passes through before it stops. Base 0. */
   | "blastPierce"
+  /** Above 0, a charge planted now hides its blast path from everyone but its owner. Base 0. */
+  | "bombConcealed"
   /** Coins credited for one reward. */
   | "coinGain"
   | "blastDuration"
@@ -41,6 +51,10 @@ export interface EffectContext {
   /** Pay to build a crate on the cell ahead. False when coins or terrain rule it out. */
   build?(): boolean;
   forceArenaView?(duration: number, warningSeconds?: number): boolean;
+  /** Cell the player picked, for perks declared `targeted`. */
+  target?: Vec2;
+  /** Calls a missile onto a cell of the arena. False when the cell is outside it. */
+  callStrike?(target: Vec2, options: StrikeOptions): boolean;
 }
 
 /** Skills and perks receive these hooks while owned. Time and dt use simulation seconds. */
@@ -70,6 +84,12 @@ export interface PerkBehavior extends Hooks {
   eligible?(player: Readonly<Player>): boolean;
   onAcquire?(player: Player, context?: EffectContext): void;
   aiPriority?(player: Readonly<Player>): number;
+  /** Targeted perks: the cell a bot should aim at, from its own sightings, or nothing to hold fire. */
+  aiTarget?(
+    player: Readonly<Player>,
+    state: Readonly<GameSnapshot>,
+    contacts: readonly Vec2[],
+  ): Vec2 | undefined;
 }
 
 export interface Impact {

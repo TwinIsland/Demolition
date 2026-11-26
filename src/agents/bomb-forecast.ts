@@ -2,10 +2,14 @@ import { ITEMS } from "../core/content";
 import { RULES } from "../core/content";
 import { slidingZombieContact } from "../core/zombies";
 import { blastCells, blastContact, slideBlocked, SLIDE_STEP } from "../core/geometry";
+import { strikeCells, STRIKE_FIRE } from "../core/systems/strikes";
+import { trailHidden } from "../core/types";
 import type { Bomb, GameSnapshot, Vec2 } from "../core/types";
 import { ZONE, zoneIgnitesIn } from "../core/zone";
 
 type Span = { from: number; to: number };
+/** Reach a bot assumes for a charge whose blast path is hidden from it. */
+const GUESSED_RANGE = 1;
 const key = (p: Vec2, size: number) => p.z * size + p.x;
 
 /** Event-driven copy of just the grid and bombs. Times are relative to this decision. */
@@ -18,12 +22,22 @@ export class BombForecast {
     private state: Readonly<GameSnapshot>,
     extra?: Bomb | readonly Bomb[],
     kick?: Bomb,
+    /** The bot this forecast is for. It cannot read the blast path of other players' concealed charges. */
+    viewerId?: string,
   ) {
     const tiles = state.tiles.map((row) => row.slice());
     const bombs = [...state.bombs, ...(Array.isArray(extra) ? extra : extra ? [extra] : [])].map(
       (original) => {
         const b = kick && original.id === kick.id ? kick : original;
-        return { ...b, slide: b.slide && { ...b.slide }, awaitingKick: b === kick, entered: 0 };
+        // The charge itself is in plain sight; only its reach is a guess.
+        const unread = viewerId !== undefined && trailHidden(b, viewerId);
+        return {
+          ...b,
+          ...(unread ? { range: Math.min(b.range, GUESSED_RANGE), pierce: undefined } : undefined),
+          slide: b.slide && { ...b.slide },
+          awaitingKick: b === kick,
+          entered: 0,
+        };
       },
     );
     const spans = (map: Map<number, Span[]>, p: Vec2, from: number, to: number) => {
@@ -104,6 +118,12 @@ export class BombForecast {
           if (this.burning(x, z, time, time)) resolveExplosions(next);
         }
       }
+    }
+    // Incoming missiles: the marker is public, so every bot knows where and when.
+    for (const strike of state.strikes ?? []) {
+      const at = Math.max(0, strike.landsAt - state.time);
+      for (const c of strikeCells(state, strike, strike.radius)) spans(this.fire, c, at, at + STRIKE_FIRE);
+      this.horizon = Math.max(this.horizon, at + STRIKE_FIRE);
     }
     // The closing zone: cells already alight, and the ring that is about to catch fire.
     const zone = state.zone;

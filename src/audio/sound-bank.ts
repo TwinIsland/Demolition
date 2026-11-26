@@ -56,6 +56,8 @@ const CUES = {
   "fuse-tick": sfx(0.32, { voices: 4, minInterval: 0.02 }),
   blast: sfx(0.5, { voices: 4, minInterval: 0.06, pitchJitter: 0.04 }),
   "blast-ringing": sfx(0.2, { voices: 1 }),
+  "missile-incoming": sfx(0.62, { voices: 2, minInterval: 0.2 }),
+  "missile-impact": sfx(0.85, { voices: 2, minInterval: 0.1 }),
   "bomb-place": sfx(0.34, { pitchJitter: 0.03 }),
   "gear-equip": sfx(0.5, { voices: 2 }),
   "gear-throw": sfx(0.46, { pitchJitter: 0.04 }),

@@ -43,6 +43,8 @@ export interface PlayerInput {
   choosePerk?: PerkId;
   /** Spend an owned, activatable perk. */
   usePerk?: PerkId;
+  /** Cell picked on the targeting panel for a perk that needs one. */
+  perkTarget?: Vec2;
   resetTerrain?: boolean;
   /** Pre-match shop commands. */
   /** Buy one unit of this equipment from the supply shop. An edge, like the other purchase fields. */
@@ -102,6 +104,10 @@ export interface Player extends Vec2 {
   forcedViewUntil?: number;
   scanUntil: number;
   surgeUntil: number;
+  /** Charges placed before this time keep their blast path hidden from everyone else. */
+  veilUntil?: number;
+  /** Invisible to opponents, bots and zombies until this time. */
+  cloakUntil?: number;
   cooldowns: Record<SkillId, number>;
   /** Crates built this match; each one raises the price of the next. */
   cratesBuilt?: number;
@@ -118,6 +124,8 @@ export interface Bomb extends Vec2 {
   power?: number;
   /** A landed grenade on its short fuse: full self-damage, and it does not count against capacity. */
   source?: "throwable";
+  /** Only the owner is shown where this charge will burn; bots have to guess. */
+  concealed?: boolean;
   id: number;
   ownerId: string;
   range: number;
@@ -127,7 +135,7 @@ export interface Bomb extends Vec2 {
 }
 export interface Blast extends Vec2 {
   /** Snapshots without this field use the planted-bomb rules. */
-  source?: "bomb" | "throwable";
+  source?: "bomb" | "throwable" | "missile";
   /** All flame cells from one bomb or grenade share this ID. */
   explosionId?: number;
   absorbedBy?: string[];
@@ -140,6 +148,15 @@ export interface Blast extends Vec2 {
   id: number;
   ownerId: string;
   expiresAt: number;
+}
+/** A called-in missile on its way down. Everyone sees the marker; `radius` is in cells. */
+export interface Strike extends Vec2 {
+  id: number;
+  ownerId: string;
+  launchedAt: number;
+  landsAt: number;
+  radius: number;
+  power: number;
 }
 /** A crate a player built during the match. */
 export interface BuiltCrate extends Vec2 {
@@ -172,6 +189,8 @@ export interface ZombieHit {
 }
 export type GameEvent =
   | EventBase<"bomb" | "blast" | "blast-contact" | "kill" | "level" | "build">
+  /** A missile called on the event's cell, and its impact there. */
+  | EventBase<"strike" | "strike-impact">
   | (EventBase<"equip"> & { item: Equipment })
   | (EventBase<"equipment" | "melee" | "pickup"> & { item: ItemId })
   | (EventBase<"cover-hit"> & { item: ItemId; coverSurface: CoverSurface })
@@ -201,6 +220,10 @@ export interface Zombie extends Vec2 {
 }
 export const inTacticalView = (p: Readonly<Player>, time: number) =>
   (p.forcedViewUntil ?? 0) > time || !!p.tacticalView;
+export const isCloaked = (p: Readonly<Player>, time: number) => (p.cloakUntil ?? 0) > time;
+/** Whether `viewer` is denied the blast path of this charge. */
+export const trailHidden = (bomb: Pick<Bomb, "concealed" | "ownerId">, viewerId: string) =>
+  !!bomb.concealed && bomb.ownerId !== viewerId;
 export interface ThrownItem extends Vec2 {
   mode?: ThrowMode;
   id: number;
@@ -230,6 +253,8 @@ export interface GameSnapshot {
   arenaView?: { startsAt: number; endsAt: number };
   thrown: ThrownItem[];
   smoke: SmokeCloud[];
+  /** Missiles in flight. Absent in snapshots from before the perk existed. */
+  strikes?: Strike[];
   difficulty: Difficulty;
   seed: number;
   mapId: string;

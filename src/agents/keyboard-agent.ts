@@ -13,6 +13,7 @@ import type {
   PlayerAgent,
   PlayerInput,
   SkillId,
+  Vec2,
 } from "../core/types";
 
 const BOARD_ARROWS: Readonly<Record<string, Action | undefined>> = {
@@ -51,6 +52,9 @@ export class KeyboardAgent implements PlayerAgent {
   private jump = false;
   private resetTerrain = false;
   private activePerk?: PerkId;
+  private perkTarget?: Vec2;
+  /** Called instead of queueing when a perk needs a cell picked first. */
+  onTargetedPerk?: (id: PerkId) => void;
   private perkInventory: readonly string[] = [];
   private perkCursor?: PerkId;
   browsingPerks = false;
@@ -300,8 +304,14 @@ export class KeyboardAgent implements PlayerAgent {
   queueSkill(skill: SkillId) {
     this.skill = skill;
   }
-  queuePerk(id: PerkId) {
+  /** Targeted perks open the targeting tablet first and come back here with the picked cell. */
+  queuePerk(id: PerkId, target?: Vec2) {
+    if (perkById(id)?.targeted && !target) {
+      this.onTargetedPerk?.(id);
+      return;
+    }
     this.activePerk = id;
+    this.perkTarget = target;
   }
   async lockPointer() {
     try {
@@ -316,7 +326,7 @@ export class KeyboardAgent implements PlayerAgent {
     this.buildRequested = false;
     this.resetTerrain = false;
     this.jump = false;
-    this.activePerk = undefined;
+    this.activePerk = this.perkTarget = undefined;
     this.keys.clear();
     this.submittedEquipment = undefined;
     this.selectedEquipment = undefined;
@@ -344,6 +354,7 @@ export class KeyboardAgent implements PlayerAgent {
     const shared: Partial<PlayerInput> = {
       resetTerrain: this.resetTerrain && state.canResetTerrain && state.phase === "playing",
       usePerk: this.activePerk,
+      perkTarget: this.perkTarget,
       sprint: this.held("sprint"),
       activateSkill: this.skill,
       buyItem: this.supply,
@@ -351,7 +362,7 @@ export class KeyboardAgent implements PlayerAgent {
     };
     this.resetTerrain = false;
     this.buildRequested = false;
-    this.skill = this.activePerk = this.supply = undefined;
+    this.skill = this.activePerk = this.supply = this.perkTarget = undefined;
     if (this.boardMode) {
       let moveX = 0,
         moveZ = 0;

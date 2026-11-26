@@ -1,6 +1,7 @@
 import { preloadEverything } from "./preload";
 import { KeyboardAgent } from "../agents/keyboard-agent";
 import { MENU_MUSIC, Sound } from "../audio/sound";
+import { perkById } from "../core/content";
 import { MAPS } from "../core/maps";
 import { MATCH_MODES } from "../core/match-modes";
 import { ZONE } from "../core/zone";
@@ -12,6 +13,7 @@ import {
   type PerkId,
   type Player,
   type SkillId,
+  type Vec2,
 } from "../core/types";
 import { setLanguage, t, type Language } from "../i18n";
 import type { GameRenderer } from "../render/game-renderer";
@@ -68,6 +70,8 @@ export class GameApp {
   private displayedLevel = 1;
   private roomBackdropPending = false;
   private previewTerrain = false;
+  /** Perk whose targeting tablet is open. */
+  private targetingPerk?: PerkId;
 
   constructor(
     root: HTMLElement,
@@ -75,6 +79,7 @@ export class GameApp {
   ) {
     this.session = createSession(this.setup.initialOptions());
     this.keyboard = new KeyboardAgent(LOCAL_PLAYER_ID, renderer.canvas);
+    this.keyboard.onTargetedPerk = (id) => this.beginTargeting(id);
     this.ui = new GameUI(root, this.uiActions());
     this.feedback = new FeedbackHud(root);
     this.equipment = new EquipmentControl({
@@ -215,6 +220,52 @@ export class GameApp {
     if (this.keyboard.enabled) void this.keyboard.lockPointer();
   }
 
+  // --- Targeted perks ---
+
+  /** True while the targeting tablet has the keyboard and mouse. */
+  get targeting(): boolean {
+    return this.targetingPerk !== undefined;
+  }
+
+  /** Opens the targeting tablet. The match keeps running; the operator stands still meanwhile. */
+  private beginTargeting(id: PerkId) {
+    const state = this.session.getSnapshot(),
+      viewer = this.viewer(state),
+      perk = perkById(id);
+    if (!this.controllingPlayer || this.ui.feed.editing || state.phase !== "playing") return;
+    if (!perk?.targeted || !viewer.perks.includes(id) || (perk.canUse && !perk.canUse(viewer, state))) return;
+    this.targetingPerk = id;
+    this.keyboard.clear();
+    this.keyboard.enabled = false;
+    this.equipment.closeWheel();
+    if (document.pointerLockElement) document.exitPointerLock();
+    this.ui.strike.open(perk, state, viewer);
+    this.sound.menu("accept");
+  }
+
+  /** Closes the tablet and hands control back; with a `target`, the perk is fired at it. */
+  endTargeting(target?: Vec2) {
+    const id = this.targetingPerk;
+    if (!id) return;
+    this.targetingPerk = undefined;
+    this.ui.strike.close();
+    this.keyboard.clear();
+    this.keyboard.enabled = this.screens.is("playing") && this.viewer().alive;
+    if (!this.keyboard.enabled) return;
+    if (target) this.keyboard.queuePerk(id, target);
+    else this.sound.menu("back");
+    void this.keyboard.lockPointer();
+  }
+
+  /** Keyboard steering of the tablet cursor, and Enter to fire. */
+  steerTargeting(dx: number, dz: number) {
+    this.ui.strike.nudge(dx, dz);
+  }
+
+  confirmTargeting() {
+    this.ui.strike.confirm();
+  }
+
   // --- Equipment and perks ---
 
   /** Takes the offered perk at `index`. Returns false when there is nothing to take. */
@@ -318,6 +369,8 @@ export class GameApp {
       usePerk: (id) => {
         if (this.controllingPlayer) this.keyboard.queuePerk(id);
       },
+      confirmStrike: (target) => this.endTargeting(target),
+      cancelStrike: () => this.endTargeting(),
       openChat: () => this.openChat(),
       pause: () => this.pause(),
       resume: () => this.resume(),
@@ -483,6 +536,8 @@ export class GameApp {
 
   /** Hands input back to the page: closes transient input UI, clears held keys, frees the pointer. */
   private releaseControls() {
+    this.targetingPerk = undefined;
+    this.ui.strike.close();
     this.sound.battleFire(0);
     this.sound.rain(0);
     this.equipment.closeWheel();

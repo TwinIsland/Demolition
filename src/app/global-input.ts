@@ -5,6 +5,17 @@ const TEXT_FIELDS =
   'textarea,input:not([type]),input[type="text"],input[type="search"],[contenteditable="true"]';
 const FOCUSABLE_CONTROLS = "select,button,summary,input,a";
 const OFFER_ACTIONS = ["reward1", "reward2", "reward3"];
+/** Cursor steps on the targeting tablet, by key code or movement action. */
+const TARGET_STEPS: Readonly<Record<string, readonly [number, number] | undefined>> = {
+  ArrowUp: [0, -1],
+  ArrowDown: [0, 1],
+  ArrowLeft: [-1, 0],
+  ArrowRight: [1, 0],
+  forward: [0, -1],
+  back: [0, 1],
+  left: [-1, 0],
+  right: [1, 0],
+};
 
 const editable = (target: EventTarget | null) => target instanceof Element && !!target.closest(TEXT_FIELDS);
 
@@ -48,6 +59,17 @@ export function attachGlobalInput(app: GameApp, root: HTMLElement, canvas: HTMLC
     }
     if (event.altKey || event.ctrlKey || event.metaKey || event.isComposing) return;
     const action = bindings.action(event.code);
+    if (app.targeting) {
+      // The targeting tablet owns the keyboard: steer the cursor, fire, or put it away.
+      const step = TARGET_STEPS[event.code] ?? (action ? TARGET_STEPS[action] : undefined);
+      event.preventDefault();
+      if (event.code === "Escape" || action === "usePerk" || action === "pause") {
+        if (!event.repeat) app.endTargeting();
+      } else if (event.code === "Enter" || event.code === "Space") {
+        if (!event.repeat) app.confirmTargeting();
+      } else if (step) app.steerTargeting(step[0], step[1]);
+      return;
+    }
     if (action === "fullscreen" && !editable(event.target)) {
       event.preventDefault();
       if (!event.repeat) app.toggleFullscreen();

@@ -1,5 +1,6 @@
 import { obscured, DEFAULT_SMOKE } from "../core/equipment";
 import { bombGuideColor, bombWarning } from "../core/bomb-warning";
+import { isCloaked } from "../core/types";
 import type { GameSnapshot, Player } from "../core/types";
 
 export function drawMinimap(
@@ -33,6 +34,22 @@ export function drawMinimap(
     ctx.fillStyle = "#c9f6dc";
     ctx.fillRect(pad + (item.x + 0.35) * cell, pad + (item.z + 0.35) * cell, cell * 0.3, cell * 0.3);
   }
+  // Incoming missiles: the blast radius and a blinking centre.
+  for (const strike of state.strikes ?? []) {
+    const cx = pad + (strike.x + 0.5) * cell,
+      cy = pad + (strike.z + 0.5) * cell;
+    ctx.fillStyle = "#ff3b2f38";
+    ctx.strokeStyle = "#ff5a47";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, (strike.radius + 0.5) * cell, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    if (Math.sin(state.time * 14) > 0) {
+      ctx.fillStyle = "#ffd9cf";
+      ctx.fillRect(cx - 2, cy - 2, 4, 4);
+    }
+  }
   for (const b of state.blasts) {
     ctx.fillStyle = "#c4f3ffa0";
     ctx.fillRect(pad + b.x * cell, pad + b.z * cell, cell, cell);
@@ -58,7 +75,12 @@ export function drawMinimap(
     ctx.fill();
   }
   for (const p of state.players) {
-    if (p.id !== self.id && self.scanUntil <= state.time && obscured(state, self, p)) continue;
+    if (
+      p.id !== self.id &&
+      self.scanUntil <= state.time &&
+      (obscured(state, self, p) || isCloaked(p, state.time))
+    )
+      continue;
     if (!p.alive) continue;
     const x = pad + (p.x + 0.5) * cell,
       y = pad + (p.z + 0.5) * cell;

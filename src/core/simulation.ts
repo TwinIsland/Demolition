@@ -10,6 +10,7 @@ import { BOT_PROFILES, defaultSlots } from "./room";
 import { landThrown, placeBomb, updateBombs } from "./systems/bombs";
 import { startBuild, stepBuilding } from "./systems/building";
 import { buySupply } from "./systems/supply";
+import { stepStrikes } from "./systems/strikes";
 import { stepZone } from "./systems/zone";
 import { resolveBlastDamage, stepZombies, tickShields } from "./systems/combat";
 import type { SimContext } from "./systems/context";
@@ -95,8 +96,8 @@ export class Simulation {
 
     // 3. Activated perks resolve for every player before any player moves or handles its skill input.
     for (const p of s.players) {
-      const id = inputs.get(p.id)?.usePerk;
-      if (p.alive && id) usePerk(ctx, p, id);
+      const command = inputs.get(p.id);
+      if (p.alive && command?.usePerk) usePerk(ctx, p, command.usePerk, command.perkTarget);
     }
 
     // 4. Player actions, one player at a time in roster order.
@@ -109,6 +110,7 @@ export class Simulation {
     // 5. Projectiles and bombs: landings, fuses and chain reactions, slides.
     s.smoke = s.smoke.filter((c) => c.expiresAt > s.time);
     landThrown(ctx);
+    stepStrikes(ctx);
     updateBombs(ctx);
 
     // 6. Blast damage, then pickups for those still standing.
@@ -228,6 +230,7 @@ function initialState(
     zombies: [],
     thrown: [],
     smoke: [],
+    strikes: [],
     bombs: [],
     blasts: [],
     items: [],

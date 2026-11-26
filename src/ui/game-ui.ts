@@ -2,6 +2,7 @@ import "./reward-effects.css";
 import "./equipment-wheel.css";
 import "./deployment-menu.css";
 import "./feedback-hud.css";
+import "./strike-panel.css";
 // The visual skin overrides every surface, so it must stay the last stylesheet.
 import "./game-skin.css";
 import { MATCH_MODES, type MatchMode } from "../core/match-modes";
@@ -34,6 +35,7 @@ import { RoundStatusView } from "./round-status";
 import { ScoreboardView } from "./scoreboard";
 import { shopMarkup, updateShop } from "./shop";
 import { SkillBarView } from "./skill-bar";
+import { StrikePanel } from "./strike-panel";
 import { TopBar } from "./top-bar";
 import { SupplyShopView } from "./supply-shop";
 import type { HudFrame, HudView } from "./view";
@@ -60,6 +62,7 @@ const SHELL = `
         <div class="bottom-hud"><div id="wallet" class="wallet"></div><div id="player-stats" class="player-stats"></div><div class="loadout"><div class="skill-buttons"></div>
           </div></div>
       </div>
+      <aside id="strike-panel" class="strike-panel" hidden></aside>
       <div id="overlay" hidden></div><div id="fatal" hidden role="alert"></div>`;
 
 /**
@@ -70,6 +73,8 @@ export class GameUI {
   readonly feed: CombatFeed;
   readonly wheel: EquipmentWheel;
   readonly mutationNotice: MutationNotice;
+  /** Targeting tablet for perks that need a cell. */
+  readonly strike: StrikePanel;
   private readonly hud: HTMLElement;
   private readonly topBar: TopBar;
   private readonly lobby: LobbyView;
@@ -109,7 +114,13 @@ export class GameUI {
       buy: (id) => actions.buySupply(id),
       sound: (cue) => actions.shopSound(cue),
     });
+    this.strike = new StrikePanel(query(root, "#strike-panel"), {
+      confirm: (target) => actions.confirmStrike(target),
+      cancel: () => actions.cancelStrike(),
+      tick: () => actions.shopTick(),
+    });
     this.hudViews = [
+      this.strike,
       this.effects,
       this.roundStatus,
       scoreboard,
@@ -151,6 +162,7 @@ export class GameUI {
     this.hud.hidden = !inGame;
     this.hideOverlay();
     this.clearPerks();
+    this.strike.close();
     clearRankBanner(this.hud);
     this.feed.clear();
     this.eventCursor = 0;

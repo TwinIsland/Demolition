@@ -41,6 +41,11 @@ const ICON_PATHS: Record<string, string> = {
   refresh: '<path d="M20 7v5h-5M4 17v-5h5M6 6a8 8 0 0 1 13 3M5 15a8 8 0 0 0 13 3"/>',
   map: '<path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2V5ZM9 3v16M15 5v16"/>',
   target: '<circle cx="12" cy="12" r="7"/><path d="M12 1v7m0 8v7M1 12h7m8 0h7"/>',
+  veil: '<rect x="7" y="10" width="10" height="9" rx="1"/><path d="M12 10V7q0-3 3-3M3 5l18 16"/><path d="M2 14h2m16 0h2M12 21v2M5 8 4 7" stroke-dasharray="2 2.5"/>',
+  cloak:
+    '<circle cx="12" cy="6" r="3" stroke-dasharray="2.4 2"/><path d="M6 21c0-3 1-4 0-6s1-5 6-5 7 3 6 5 0 3 0 6" stroke-dasharray="3 2.2"/><path d="M2 12c2-2 3 2 5 0m10 0c2-2 3 2 5 0"/>',
+  missile:
+    '<path d="M14 3c4 0 7 3 7 7l-9 9-7-7z"/><path d="m8 9-5 1 3 3m9 3-1 5-3-3M3 21l4-4m-2 0-2-2m6 4-2-2"/><circle cx="15.5" cy="8.5" r="1.5"/>',
 };
 export const icon = (name: string, cls = "") =>
   /^(?:\/|https?:\/\/|data:image\/)/i.test(name)

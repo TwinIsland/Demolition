@@ -1,8 +1,9 @@
 import { modifiedStat } from "../content";
 import type { EffectContext } from "../module-api";
 import { planWalls, rearrangeCover } from "../rearrange-cover";
-import type { GameSnapshot, Player, PlayerInput } from "../types";
+import type { GameSnapshot, Player, PlayerInput, Vec2 } from "../types";
 import { startBuild } from "./building";
+import { callStrike } from "./strikes";
 import type { SimContext } from "./context";
 
 /** Seconds the finished terrain reset stays in the snapshot so clients can play it out. */
@@ -44,9 +45,11 @@ export function updateTerrainReset(ctx: SimContext, inputs: ReadonlyMap<string, 
 }
 
 /** The capabilities a content module gets while one of its effects runs for this player. */
-export function effectContext(ctx: SimContext, p: Player): EffectContext {
+export function effectContext(ctx: SimContext, p: Player, target?: Vec2): EffectContext {
   const s = ctx.state;
   return {
+    target,
+    callStrike: (cell, options) => callStrike(ctx, p, cell, options),
     stat: (key, base) => modifiedStat(p, key, base, s.time),
     build: () => startBuild(ctx, p),
     forceArenaView: (duration, warningSeconds = 0) => {
@@ -92,5 +95,6 @@ export function finishIfDecided(s: GameSnapshot) {
   s.phase = "finished";
   delete s.terrainReset;
   delete s.arenaView;
+  s.strikes = [];
   s.winnerId = living[0]?.id ?? null;
 }

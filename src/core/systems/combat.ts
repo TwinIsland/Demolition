@@ -126,9 +126,16 @@ export function resolveBlastDamage(ctx: SimContext, p: Player) {
     // A blocked explosion stays blocked across its whole footprint and lifetime.
     markExplosion(s, explosionOf(strongest), "absorbedBy", p.id);
   } else if (strongest && p.invulnerableUntil <= s.time) {
-    hurt(ctx, p, strongest.ownerId, damage, "爆炸", COMBAT.hitImmunity);
+    hurt(
+      ctx,
+      p,
+      strongest.ownerId,
+      damage,
+      strongest.source === "missile" ? "导弹" : "爆炸",
+      COMBAT.hitImmunity,
+    );
     // An own bomb costs its self-damage once, however long the owner stays in it.
-    if (strongest.ownerId === p.id && strongest.source !== "throwable")
+    if (strongest.ownerId === p.id && (strongest.source ?? "bomb") === "bomb")
       markExplosion(s, explosionOf(strongest), "absorbedBy", p.id);
   }
 }

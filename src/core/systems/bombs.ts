@@ -31,6 +31,7 @@ export function placeBomb(
     range: modifiedStat(p, "bombRange", p.range, s.time),
     pierce: modifiedStat(p, "blastPierce", 0, s.time) || undefined,
     blastDuration: modifiedStat(p, "blastDuration", RULES.blastDuration, s.time),
+    concealed: modifiedStat(p, "bombConcealed", 0, s.time) > 0 || undefined,
     detonateAt: s.time + modifiedStat(p, "bombFuse", RULES.fuse, s.time),
     passThrough: s.players
       .filter((a) => Math.abs(a.x - x) < PLANT_OVERLAP && Math.abs(a.z - z) < PLANT_OVERLAP)
@@ -70,10 +71,21 @@ export function explode(ctx: SimContext, bomb: Bomb, origin: Vec2 = bomb) {
 
 /** Lays down blast cells, opens cover, then sets off every bomb the blast reaches. */
 function detonate(ctx: SimContext, bomb: Bomb, source: NonNullable<Blast["source"]> = bomb.source ?? "bomb") {
+  // Capture the original blockers before modifying crates for this explosion.
+  ignite(ctx, bomb, blastCells(ctx.state, bomb), source, "blast", "炸药爆开");
+}
+
+/** One explosion over an arbitrary footprint: fire, opened cover, and the charges it sets off. */
+export function ignite(
+  ctx: SimContext,
+  bomb: Pick<Bomb, "id" | "ownerId" | "x" | "z" | "range" | "power" | "blastDuration">,
+  cells: readonly Vec2[],
+  source: NonNullable<Blast["source"]>,
+  announce: "blast" | "strike-impact",
+  text: string,
+) {
   const s = ctx.state;
   const owner = s.players.find((p) => p.id === bomb.ownerId)!;
-  // Capture the original blockers before modifying crates for this explosion.
-  const cells = blastCells(s, bomb);
   const duration = bomb.blastDuration ?? RULES.blastDuration;
   let destroyed = 0,
     coverScore = 0;
@@ -105,7 +117,7 @@ function detonate(ctx: SimContext, bomb: Bomb, source: NonNullable<Blast["source
       { type: "cover" },
       bomb,
     );
-  emit(ctx, owner, "炸药爆开", { type: "blast" }, bomb);
+  emit(ctx, owner, text, { type: announce }, bomb);
   const reached = (x: number, z: number) => cells.some((c) => c.x === x && c.z === z);
   for (const other of s.bombs) {
     const contact = blastContact(other, s.time, reached);

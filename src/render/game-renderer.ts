@@ -34,7 +34,8 @@ import { SceneEnvironment, type ThunderCue } from "./environment/scene-environme
 import { MAPS } from "../core/maps";
 import { ITEMS, RULES } from "../core/content";
 import type { GameSnapshot, Player } from "../core/types";
-import { inTacticalView } from "../core/types";
+import { inTacticalView, isCloaked } from "../core/types";
+import { StrikeEffect } from "./strike-effect";
 import { Arena, world } from "./arena";
 import { Models } from "./models";
 import type { SkinModel } from "./minecraft-skins";
@@ -56,6 +57,8 @@ interface FrameView {
   mode: CameraMode;
   localId: string;
   wallTime: number;
+  /** The local player's Threat Scan is running, which also reveals cloaked operators. */
+  scanning: boolean;
 }
 
 export class GameRenderer {
@@ -115,6 +118,7 @@ export class GameRenderer {
     opacity: 0.84,
   });
   private offerFire = new OfferFire(this.smokeMaterial.map!);
+  private strikes = new StrikeEffect(this.assets.manager, this.models.materials, this.smokeMaterial.map!);
   private seed = -1;
   private mapId = "";
   private observer: ResizeObserver;
@@ -148,7 +152,7 @@ export class GameRenderer {
     this.environment = new OutdoorLighting(this.renderer, this.scene, this.assets.manager);
     this.weather = new SceneEnvironment(this.renderer, this.scene, this.environment);
     this.scene.add(this.dynamic, this.rig.camera, this.target, this.throwGuide.root, this.blastEffect.root);
-    this.scene.add(this.placements.root, this.shields.root, this.ashes.root);
+    this.scene.add(this.placements.root, this.shields.root, this.ashes.root, this.strikes.root);
     this.target.rotation.x = -Math.PI / 2;
     this.target.renderOrder = 5;
     this.hand = this.models.firstPersonArm();
@@ -212,6 +216,7 @@ export class GameRenderer {
     this.zoneWalls.clear();
     this.ashes.clear();
     this.blastEffect.clear();
+    this.strikes.clear();
     this.arena = new Arena(this.models, state);
     this.scene.add(this.arena.root);
     this.weather.applyMap(
@@ -272,12 +277,12 @@ export class GameRenderer {
     this.overlays.sync(state, mapChanged, localId);
     const zoneShake = this.zoneWalls.sync(state, mapChanged, this.arena!.fixedWalls);
     if (zoneShake) this.feel.rumble(zoneShake);
-    const view: FrameView = { state, mode, localId, wallTime };
     const you = state.players.find((p) => p.id === localId)!;
     const firstPerson = mode === "first-person";
     const topDown = firstPerson && you.alive && inTacticalView(you, state.time);
     const scanning = firstPerson && you.alive && you.scanUntil > state.time;
-    this.shields.update(state);
+    const view: FrameView = { state, mode, localId, wallTime, scanning };
+    this.shields.update(state, localId, scanning);
     this.burnKilledZombies(state);
     this.ashes.update(state.time);
     this.syncZombies(state);
@@ -328,6 +333,11 @@ export class GameRenderer {
     this.target.scale.setScalar(topDown && motionScale() > 0 ? 1 + 0.1 * Math.sin(wallTime * 7) : 1);
     if (firstPerson && rig.tacticalBlend > 0) this.avatars.get(localId)!.visible = rig.tacticalBlend > 0.35;
     this.blastEffect.update(state, rig.camera);
+    for (const impact of this.strikes.update(state, this.renderer.getPixelRatio())) {
+      // Felt across the whole arena, hardest close to the impact.
+      const distance = Math.hypot(impact.x - you.x, impact.z - you.z);
+      this.feel.rumble(THREE.MathUtils.clamp(1.25 - distance / 12, 0.3, 1.1));
+    }
     this.renderer.info.reset();
     this.submitStarted = performance.now();
     // The blended perspective/orthographic projection breaks AO's depth reconstruction.
@@ -470,7 +480,7 @@ export class GameRenderer {
       }
     }
   }
-  private syncPlayers({ state, mode, localId, wallTime }: FrameView) {
+  private syncPlayers({ state, mode, localId, wallTime, scanning }: FrameView) {
     for (const p of state.players) {
       this.models.updateCharacter(p, state.time, bombGuideColor(state.players, p.id, localId));
       const avatar = this.avatars.get(p.id)!;
@@ -484,6 +494,12 @@ export class GameRenderer {
       avatar.rotation.y = p.yaw;
       if (p.invulnerableUntil > state.time && state.phase === "playing")
         avatar.visible &&= Math.sin(wallTime * 30) > -0.25;
+      // Optical camo: the owner (and anyone scanning) sees a rippling body, everyone else nothing.
+      const cloaked = p.alive && isCloaked(p, state.time);
+      const cloak = cloaked ? Math.min(1, ((p.cloakUntil ?? 0) - state.time) / 0.35) : 0;
+      (avatar as MinecraftAvatar).setCloak(cloak, state.time);
+      if (p.id === localId) this.hand.setCloak(cloak, state.time);
+      else if (cloaked && !scanning) avatar.visible = false;
     }
   }
   private syncBombs({ state, localId }: FrameView) {
@@ -589,6 +605,7 @@ export class GameRenderer {
       for (const map of maps) this.preview?.backdrop.preload(map);
       await Promise.all([this.models.preload(state.players, true), this.models.preloadCatalog()]);
       if (this.seed !== state.seed || this.mapId !== state.mapId) this.rebuild(state);
+      this.strikes.warm(this.renderer, this.rig.camera);
       await this.assets.ready();
     } finally {
       stop();
@@ -666,6 +683,7 @@ export class GameRenderer {
     this.smokeMaterial.map?.dispose();
     this.smokeMaterial.dispose();
     this.blastEffect.dispose();
+    this.strikes.dispose();
     this.target.geometry.dispose();
     this.throwGuide.dispose();
     this.placements.dispose();

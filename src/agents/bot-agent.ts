@@ -5,7 +5,7 @@ import { blastCells, clearSight, KICK, slideBlocked } from "../core/geometry";
 import { DIRECTIONS, seededRandom } from "../core/maps";
 import { canPlace, placementRadius } from "../core/placement";
 import { SUMMON_TIME } from "../core/zombies";
-import { idleInput, inTacticalView } from "../core/types";
+import { idleInput, inTacticalView, isCloaked } from "../core/types";
 import { BUILD, crateCost } from "../core/economy";
 import type { Personality } from "./tactics";
 import type {
@@ -59,9 +59,9 @@ function adaptiveSettings(skill: number): BotSettings {
 const ADAPTIVE_RATE = 0.03;
 /** Shop preferences per seat; a seeded jitter reorders close calls so loadouts vary between matches. */
 const SHOP_TASTE: Record<string, Record<string, number>> = {
-  momo: { kick: 1.3, surge: 1.2, medic: 0.9, scan: 0.5, shift: 0.3, detonator: 0 },
-  mint: { medic: 1.3, surge: 1, scan: 0.9, kick: 0.7, shift: 0.3, detonator: 0 },
-  sunny: { scan: 1.2, surge: 1.1, kick: 1, medic: 0.8, shift: 0.3, detonator: 0 },
+  momo: { kick: 1.3, surge: 1.2, medic: 0.9, veil: 0.9, cloak: 0.7, scan: 0.5, shift: 0.3, detonator: 0 },
+  mint: { medic: 1.3, surge: 1, cloak: 1, scan: 0.9, kick: 0.7, veil: 0.5, shift: 0.3, detonator: 0 },
+  sunny: { scan: 1.2, veil: 1.2, surge: 1.1, kick: 1, cloak: 0.8, medic: 0.8, shift: 0.3, detonator: 0 },
 };
 /**
  * Buys healing, shields and grenades while keeping some coins back for direct construction.
@@ -87,6 +87,7 @@ type ThrowPlan = { kind: "grenade" | "smoke"; targetId: string | number; landing
 
 function visible(s: Readonly<GameSnapshot>, p: Player, other: Player, limitedView: boolean) {
   if (p.scanUntil > s.time) return true;
+  if (isCloaked(other, s.time)) return false;
   if (obscured(s, p, other)) return false;
   if (limitedView) {
     const distance = dist(p, other);
@@ -173,7 +174,13 @@ export class BotAgent implements PlayerAgent {
     this.nextRadar = s.time + 1.8 + 0.8 * variation;
     let nearest: Player | undefined;
     for (const other of s.players) {
-      if (other.id !== p.id && other.alive && (!nearest || dist(p, other) < dist(p, nearest)))
+      // A cloaked operator drops off the radar too.
+      if (
+        other.id !== p.id &&
+        other.alive &&
+        !isCloaked(other, s.time) &&
+        (!nearest || dist(p, other) < dist(p, nearest))
+      )
         nearest = other;
     }
     // A sampled radar tile guides navigation. Only confirmed sightings can direct an attack.
@@ -233,7 +240,7 @@ export class BotAgent implements PlayerAgent {
       );
       // Pessimistic opponent model: careful bots also avoid cells a nearby opponent could seal.
       const wary = difficulty === "hard" || (difficulty !== "easy" && p.hp < p.maxHp * 0.6);
-      const f = new BombForecast(s, wary ? likelyCharges(s, p, enemies, 3) : undefined),
+      const f = new BombForecast(s, wary ? likelyCharges(s, p, enemies, 3) : undefined, undefined, p.id),
         here = cell(p);
       const threat = threatField(s, p, enemies),
         frailty = 1 - p.hp / p.maxHp,
@@ -264,6 +271,16 @@ export class BotAgent implements PlayerAgent {
             s.tiles[c.z]?.[c.x] === 0 && !f.occupied(c.x, c.z, 0, 0.4) && !f.burning(c.x, c.z, 0.15, 0.65),
         ) ??
         here;
+      // Targeted perks aim at what the bot has actually seen, so a cloaked operator is safe from them.
+      for (const id of new Set(p.perks)) {
+        const perk = perkById(id);
+        const aim = perk?.targeted && (!perk.canUse || perk.canUse(p, s)) && perk.aiTarget?.(p, s, enemies);
+        if (aim) {
+          input.usePerk = id;
+          input.perkTarget = aim;
+          break;
+        }
+      }
       const ready = (id: SkillId) => p.skills.includes(id) && p.cooldowns[id] <= s.time;
       let bestPriority = 0;
       for (const id of p.skills) {
@@ -519,14 +536,16 @@ export class BotAgent implements PlayerAgent {
           z = b.z + dz;
         if (slideBlocked(s, x, z) || b.detonateAt <= s.time + delay + 0.2) continue;
         const bomb = { ...b, slide: { x: dx, z: dz, arrivedAt: s.time + delay } };
-        const shifted = new BombForecast(s, undefined, bomb);
+        const shifted = new BombForecast(s, undefined, bomb, p.id);
         const score =
           scoreHit(shifted.footprints.get(b.id) ?? [], b.ownerId) - scoreHit(blastCells(s, b), b.ownerId) + 2;
         if (score > 2) choices.push({ bomb, boost: false, kick: true, score, first: cell(b) });
       }
     choices.sort((a, b) => b.score - a.score || dist(p, b.bomb) - dist(p, a.bomb));
     for (const choice of choices.slice(0, config.candidates)) {
-      const f = choice.kick ? new BombForecast(s, undefined, choice.bomb) : new BombForecast(s, choice.bomb);
+      const f = choice.kick
+        ? new BombForecast(s, undefined, choice.bomb, p.id)
+        : new BombForecast(s, choice.bomb, undefined, p.id);
       const escape = safeRoute(
         s,
         p,

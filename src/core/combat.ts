@@ -27,7 +27,7 @@ export function blastDamage(
   time = blast.expiresAt - (blast.duration ?? RULES.blastDuration),
 ) {
   if (time >= blast.expiresAt) return 0;
-  if (blast.source !== "throwable" && blast.ownerId === target.id)
+  if ((blast.source ?? "bomb") === "bomb" && blast.ownerId === target.id)
     return Math.max(
       COMBAT.ownBombDamage,
       Math.round((blast.power ?? COMBAT.attack) * COMBAT.ownBombDamageRate),

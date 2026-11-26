@@ -2,6 +2,7 @@ import type * as THREE from "three";
 import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
 import { obstacles } from "./obstacles";
 import { items } from "./items";
+import { ordnance } from "./ordnance";
 
 const builders: Record<string, () => THREE.Group> = {
   ...Object.fromEntries(
@@ -9,6 +10,9 @@ const builders: Record<string, () => THREE.Group> = {
   ),
   ...Object.fromEntries(
     Object.entries(items).map(([id, build]) => [`items/${id}`, build]),
+  ),
+  ...Object.fromEntries(
+    Object.entries(ordnance).map(([id, build]) => [`ordnance/${id}`, build]),
   ),
 };
 async function exportModel(id: string) {

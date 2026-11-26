@@ -1,0 +1,140 @@
+/* Targeting tablet for the Missile Strike perk: a rugged field terminal over the HUD. */
+.strike-panel {
+  position: absolute;
+  inset: 0;
+  /* Above the HUD, top bar and perk tray; below modal overlays. */
+  z-index: 15;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at center, #0308068c 0, #030806d9 78%);
+  cursor: crosshair;
+  pointer-events: auto;
+}
+.strike-panel[hidden] {
+  display: none;
+}
+.strike-tablet {
+  width: min(78vh, 92vw, 720px);
+  padding: 14px 16px 12px;
+  border: 2px solid #33473e;
+  border-radius: 10px;
+  background: linear-gradient(160deg, #1b2622, #0d1512);
+  box-shadow:
+    0 0 0 4px #0a100e,
+    0 24px 60px #000c,
+    inset 0 0 0 1px #5d7a6c40;
+  color: #b9f5d5;
+  font-family: "Barlow Semi Condensed", "Noto Sans SC", sans-serif;
+  animation: strike-open 0.18s ease-out;
+}
+.strike-tablet header,
+.strike-tablet footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.strike-tablet header {
+  margin-bottom: 10px;
+}
+.strike-tablet footer {
+  margin-top: 10px;
+  color: #8fb8a3;
+  flex-wrap: wrap;
+}
+.strike-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ffb27a;
+}
+.strike-title .icon {
+  width: 20px;
+  height: 20px;
+}
+.strike-title b {
+  font-size: 18px;
+  font-weight: 800;
+}
+.strike-title small {
+  color: #8dffc4;
+  font-size: 13px;
+}
+.strike-readout {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: #8dffc4;
+}
+.strike-readout.danger {
+  color: #ff6a57;
+  animation: strike-blink 0.5s steps(2) infinite;
+}
+.strike-screen {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #3f6a58;
+  border-radius: 4px;
+  box-shadow: inset 0 0 40px #000a;
+}
+.strike-screen canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+}
+.strike-screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom, #0000 0 2px, #00000038 2px 3px);
+}
+.strike-sweep {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 22%;
+  pointer-events: none;
+  background: linear-gradient(to bottom, #8dffc400, #8dffc41f);
+  animation: strike-sweep 2.6s linear infinite;
+}
+.strike-keys {
+  display: flex;
+  gap: 14px;
+}
+.strike-keys kbd {
+  padding: 1px 6px;
+  border: 1px solid #5d7a6c;
+  border-radius: 3px;
+  background: #101a16;
+  color: #d8ffe9;
+  font: inherit;
+  font-size: 12px;
+}
+@keyframes strike-open {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+@keyframes strike-sweep {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(460%);
+  }
+}
+@keyframes strike-blink {
+  50% {
+    opacity: 0.45;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .strike-tablet,
+  .strike-sweep,
+  .strike-readout.danger {
+    animation: none;
+  }
+}

@@ -27,7 +27,7 @@ Every key can be rebound in the in-game manual.
 | Next / previous gear | Mouse wheel |
 | Gear wheel | V (hold) |
 | Equip shield | X |
-| Skills | Q Blast Surge, E Remote Detonator, R Tactical View, F Med Injector, C Threat Scan |
+| Skills | Q Blast Surge, E Remote Detonator, R Tactical View, F Med Injector, C Threat Scan, Z Blind Fuse, X Optical Camo |
 | Pick perk 1 / 2 / 3 | 1, 2, 3 |
 | Expand perk cards | Tab |
 | Trigger an active perk, choose which | T, G |

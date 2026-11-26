@@ -51,6 +51,8 @@ A skill that is not `passive` must define `activate`.
 
 Keep per-player state in `player.moduleData`, a map of numbers. Prefix your keys with the pack ID.
 
+Two built-in states are read by the renderer and the bots, and a skill may set them directly: `player.cloakUntil` (invisible to opponents, bots and zombies until that time) and `player.veilUntil` (HUD timer of [Blind Fuse](../content/skills/veil.md)).
+
 ## Hooks shared with perks
 
 A skill gets these while owned. Perks get the same ones, with `stacks` set to the number of copies.
@@ -73,6 +75,7 @@ Stats that accept modifiers:
 | `bombFuse` | 2.65 s, read when a charge is placed |
 | `bombPower` | The operator's attack power, read when a charge is placed |
 | `blastPierce` | 0. Pieces of destructible cover a blast passes through |
+| `bombConcealed` | 0, read when a charge is placed. Above 0 the charge hides its blast path from everyone but its owner |
 | `coinGain` | The coins of one reward |
 | `blastDuration` | 0.42 s |
 | `cooldown` | The skill's cooldown, read when it is cast |

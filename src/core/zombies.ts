@@ -3,6 +3,7 @@ import { clearSight, laneDistances, SLIDE_STEP } from "./geometry";
 import { ZOMBIE_STATS } from "./loot";
 import { DIRECTIONS } from "./maps";
 import { ZOMBIE_RATES, type ZombieRate } from "./room";
+import { isCloaked } from "./types";
 import type { Bomb, GameSnapshot, Player, Vec2, Zombie } from "./types";
 import { zoneBurning } from "./zone";
 
@@ -104,7 +105,13 @@ export class ZombieDirector {
     let distance: number = ZOMBIE_STATS[enemy.level].sight;
     for (const p of s.players) {
       const d = Math.hypot(p.x - enemy.x, p.z - enemy.z);
-      if (p.alive && d <= distance && !obscured(s, enemy, p) && clearSight(s, enemy, p)) {
+      if (
+        p.alive &&
+        !isCloaked(p, s.time) &&
+        d <= distance &&
+        !obscured(s, enemy, p) &&
+        clearSight(s, enemy, p)
+      ) {
         nearest = p;
         distance = d;
       }
@@ -240,6 +247,7 @@ export class ZombieDirector {
         const target = s.players.find(
           (p) =>
             p.alive &&
+            !isCloaked(p, s.time) &&
             Math.hypot(p.x - enemy.x, p.z - enemy.z) < ZOMBIE_STRIKE.reach &&
             clearSight(s, enemy, p),
         );

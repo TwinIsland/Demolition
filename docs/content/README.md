@@ -16,6 +16,8 @@ Bought before the match with starting coins (115 in standard modes), up to 4 ski
 | [Slide Kick](skills/kick.md) | passive | 35 | – | – | Push against a charge to kick it. Its fuse pauses while sliding; impact detonates it. |
 | [Threat Scan](skills/scan.md) | C | 25 | 25 s | 7 s | See operators and zombies through cover as night-vision silhouettes for 7 seconds. |
 | [Remote Detonator](skills/detonator.md) | E | 30 | 10 s | – | Set off all of your planted charges after a 0.35 second delay. |
+| [Blind Fuse](skills/veil.md) | Z | 30 | 22 s | 7 s | For 7 seconds your charges hide their blast path from everyone else. You see it as a violet dashed trail. |
+| [Optical Camo](skills/cloak.md) | X | 35 | 30 s | 6 s | Turn invisible for 6 seconds. Opponents, bots and zombies lose sight of you; Threat Scan still reveals you. |
 
 ## Items
 
@@ -51,13 +53,14 @@ Each level-up offers three perks. The tier is rolled first (Silver 61, Gold 30, 
 | [Afterburn](perks/afterburn.md) | Gold | 14% | 3 stacks | – | Each stack extends charge fire by 0.2 seconds, up to 3 stacks. |
 | [Short Fuse](perks/short-fuse.md) | Gold | 14% | 2 stacks | – | Your charges go off 15% sooner per stack, up to 2 stacks. |
 | [Last Stand](perks/last-stand.md) | Gold | 14% | 1 held | – | Below 35% HP you move 12% faster and your charges hit 25% harder. Does not stack. |
-| [Siphon Charge](perks/siphon.md) | Diamond | 25% | 2 stacks | – | Recover HP equal to 15% of the damage you deal to opponents per stack, up to 2 stacks. |
-| [Rapid Circuit](perks/capacitor.md) | Diamond | 25% | 2 stacks | an active skill | Reduce active skill cooldowns by 20%. Each stack applies to the remaining cooldown, up to 2 stacks. |
-| [Piercing Charge](perks/piercing-charge.md) | Diamond | 25% | 1 held | – | Your blasts break through one destructible obstacle and keep going. Permanent walls still stop them. Does not stack. |
-| [Cataclysm](perks/apocalypse.md) | Diamond | 25% | 1 held | map with terrain reset | Activate once to start a three-second arena-wide countdown. Surviving cover changes position and keeps its remaining durability. |
+| [Siphon Charge](perks/siphon.md) | Diamond | 20% | 2 stacks | – | Recover HP equal to 15% of the damage you deal to opponents per stack, up to 2 stacks. |
+| [Rapid Circuit](perks/capacitor.md) | Diamond | 20% | 2 stacks | an active skill | Reduce active skill cooldowns by 20%. Each stack applies to the remaining cooldown, up to 2 stacks. |
+| [Piercing Charge](perks/piercing-charge.md) | Diamond | 20% | 1 held | – | Your blasts break through one destructible obstacle and keep going. Permanent walls still stop them. Does not stack. |
+| [Cataclysm](perks/apocalypse.md) | Diamond | 20% | 1 held | map with terrain reset | Activate once to start a three-second arena-wide countdown. Surviving cover changes position and keeps its remaining durability. |
+| [Missile Strike](perks/missile-strike.md) | Diamond | 20% | 1 held | – | Activate once to open the targeting tablet and pick a tile. Three seconds later a missile lands there: a wide blast that ignores walls and hits hard. |
 | [Dimensional Collapse](perks/dimension-collapse.md) | Mythic | 100% | 1 held | – | After a 3-second arena countdown, lock every operator in overhead view for 10 seconds. Each operator then returns to their previous view. |
 
-Perks per tier: Silver 7, Gold 7, Diamond 4, Mythic 1.
+Perks per tier: Silver 7, Gold 7, Diamond 5, Mythic 1.
 
 ## Mutations
 

@@ -35,6 +35,7 @@ export default definePerk(config, {
 | `requiresSkill` | Only offered to owners of this skill ID |
 | `requiresActiveSkill` | Only offered to owners of at least one active skill |
 | `requiresTerrainReset` | Only offered on maps with `randomizeTerrain` |
+| `targeted` | Active perk that needs a tile: the player picks it on the targeting tablet first. `stats.radius` and `stats.delay` are shown there |
 
 How tiers and weights turn into chances is in [Probabilities](../probabilities.md#perk-offers). Adding a perk to a tier dilutes the others in that tier and does not change the tier's own chance.
 
@@ -58,6 +59,7 @@ A perk with `use` is stored and triggered later by the player. It then appears i
 | `use(player, context)` | Do the effect. Return `true` to consume one copy |
 | `canUse(player, state)` | Greys out the button and blocks the action when `false` |
 | `aiShouldUse(player, state)` | When a bot triggers it |
+| `aiTarget(player, state, contacts)` | Targeted perks only: the tile a bot fires at, or `undefined` to hold. `contacts` are opponents the bot has seen, so a cloaked operator is never in it |
 
 `context` offers arena-wide effects:
 
@@ -66,5 +68,7 @@ A perk with `use` is stored and triggered later by the player. It then appears i
 | `context.stat(key, base)` | A stat with the player's modifiers applied |
 | `context.requestTerrainReset(delay)` | Reshuffles cover after `delay` seconds. Returns `false` if the map does not support it or a reset is pending |
 | `context.forceArenaView(duration, warningSeconds)` | Locks every operator in overhead view. Returns `false` while another forced view is running |
+| `context.target` | The tile picked for a `targeted` perk |
+| `context.callStrike(target, { delay, radius, power })` | Calls a missile onto `target`. After `delay` seconds every open or cover tile within `radius` burns at `power`; walls give no shelter. Returns `false` outside the arena |
 
-See [Cataclysm](../content/perks/apocalypse.md) and [Dimensional Collapse](../content/perks/dimension-collapse.md).
+See [Cataclysm](../content/perks/apocalypse.md), [Dimensional Collapse](../content/perks/dimension-collapse.md) and [Missile Strike](../content/perks/missile-strike.md).
