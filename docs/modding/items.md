@@ -48,7 +48,7 @@ The fields you set decide how the item works.
 | `quickEquipCode` | Default key to equip it, as a `KeyboardEvent.code` such as `"KeyX"` |
 | `price` | Coin price in the in-match supply shop. Omit it to keep the item out of the shop |
 | `pickupScore` | Score for picking it up (default 10) |
-| `throwable` | `{ reach, flight, blastRange?, fuse?, powerScale?, trajectory? }`. `reach` in tiles, `flight` in seconds. `fuse` and `powerScale` are passed to `explode`. `trajectory: "lob"` makes player throws arc over walls and cover. Equipped throwables automatically preview their landing tile; press use to throw. A direct throw uses the charge placement radius and needs a clear path |
+| `throwable` | `{ reach, flight, blastRange?, fuse?, powerScale?, trajectory?, fire?, landSound? }`. `landSound` is an audio URL played where the item comes down, for everyone in earshot. `reach` in tiles, `flight` in seconds. `fuse` and `powerScale` are passed to `explode`. `trajectory: "lob"` makes player throws arc over walls and cover. Equipped throwables automatically preview their landing tile; press use to throw. A direct throw uses the charge placement radius and needs a clear path |
 | `melee` | `{ reach, damage, cooldown, inputBuffer?, hitSound?, coverDamage?, coverSounds? }`. `coverSounds` maps `wood`, `metal`, `soft` to audio URLs |
 | `shieldSounds` | `{ broken, expired }` audio for items that set `player.shield` |
 

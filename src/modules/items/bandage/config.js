@@ -14,7 +14,7 @@ const config = {
   weight: 3,
   price: 25,
   stats: { heal: 30 },
-  sound: "./assets/gear-equip.ogg",
+  sound: new URL("./use.ogg", import.meta.url).href,
 };
 
 export default config;

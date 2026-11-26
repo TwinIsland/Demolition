@@ -37,7 +37,7 @@ export default defineSkin({
 
 每个包使用浏览器原生 ES 模块。相对导入带上 `.js` 后缀，包内图片或模型通过 `new URL("./文件名", import.meta.url).href` 引用。优先使用独立 ID 制作自定义包，升级游戏时内置同名文件会随版本更新。
 
-物品、主动技能和强化的配置支持可选的 `sound`，例如 `sound: new URL("./activate.ogg", import.meta.url).href`。本机玩家成功使用物品、发动技能或领取强化时播放。省略时使用对应类别或强化稀有度的默认音效。
+物品、主动技能和强化的配置支持可选的 `sound`，例如 `sound: new URL("./activate.ogg", import.meta.url).href`。本机玩家成功使用物品、发动技能或领取强化时播放。省略时使用对应类别或强化稀有度的默认音效。主动技能还可以用 `endSound` 指定效果结束时的音效（需要 `activeUntil`），`endSoundRange` 是其他玩家能听到它的格数，省略时只有自己听到。投掷物的 `throwable.landSound` 在落点播放，附近所有人都能听到。
 
 装备设置 `permanent: true` 后常驻转盘，不消耗库存，也不进入掉落池。`melee` 设置游戏格单位的触及距离、单次伤害和冷却。配置 `throwable.trajectory: "lob"` 的投掷物可在瞄准时越过掩体，普通近投沿用炸药的距离和地形限制。强化可通过 `"duration:shield"` 调整每次开启护盾的持续时间。
 

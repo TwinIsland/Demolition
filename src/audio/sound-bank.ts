@@ -84,6 +84,19 @@ const CUES = {
   "zombie-death": sfx(0.5, { pitchJitter: 0.04 }),
   "zombie-hurt-1": sfx(0.5, { minInterval: 0.06, pitchJitter: 0.04 }),
   "zombie-hurt-2": sfx(0.5, { minInterval: 0.06, pitchJitter: 0.04 }),
+  "zombie-spawn": sfx(0.5, { voices: 2, minInterval: 0.12, pitchJitter: 0.06 }),
+  "zombie-attack-0": sfx(0.55, { voices: 2, minInterval: 0.08, pitchJitter: 0.05 }),
+  "zombie-attack-1": sfx(0.55, { voices: 2, minInterval: 0.08, pitchJitter: 0.05 }),
+  "zombie-groan-0": sfx(0.4, { voices: 1, pitchJitter: 0.08 }),
+  "zombie-groan-1": sfx(0.4, { voices: 1, pitchJitter: 0.08 }),
+  "zombie-groan-2": sfx(0.4, { voices: 1, pitchJitter: 0.08 }),
+  "glass-shatter": sfx(0.7, { voices: 2, minInterval: 0.06, pitchJitter: 0.04 }),
+  "bomb-kick": sfx(0.6, { minInterval: 0.08, pitchJitter: 0.05 }),
+  "cover-break-0": sfx(0.6, { minInterval: 0.05, pitchJitter: 0.06 }),
+  "cover-break-1": sfx(0.6, { minInterval: 0.05, pitchJitter: 0.06 }),
+  "body-fall": sfx(0.7, { voices: 2, minInterval: 0.1, pitchJitter: 0.04 }),
+  "zone-wall": sfx(0.8, { voices: 1, minInterval: 0.5 }),
+  "kill-confirm": ui(0.5, { voices: 1, minInterval: 0.15 }),
 } satisfies Record<string, CueDef>;
 
 export type CueId = keyof typeof CUES;

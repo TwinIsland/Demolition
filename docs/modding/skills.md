@@ -36,6 +36,8 @@ export default defineSkill(config, {
 | `key` | Label shown on the skill bar |
 | `code` | Default key as a `KeyboardEvent.code`. Must be unique among skills. Players can rebind it |
 | `passive` | No activation. The skill only contributes hooks |
+| `endSound` | Optional audio URL played when the effect runs out or is cut short. Needs `activeUntil` |
+| `endSoundRange` | Tiles from which other operators hear `endSound`. Omitted, only the owner hears it |
 
 A skill that is not `passive` must define `activate`.
 

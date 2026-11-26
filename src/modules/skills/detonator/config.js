@@ -10,6 +10,7 @@ const config = {
   name: "遥控起爆",
   description: "让自己已部署的全部炸药在 0.35 秒后引爆",
   icon: "bomb",
+  sound: new URL("./activate.ogg", import.meta.url).href,
   key: "E",
   price: 30,
   cooldown: 10,

@@ -92,6 +92,8 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
       kenney("Sci-Fi Sounds"),
       kenney("Digital Audio"),
       kenney("RPG Audio"),
+      { title: "Zombies Sound Pack", author: "artisticdude · OpenGameArt", license: CC0 },
+      { title: "Battle Sound Effects", author: "Ogrebane · OpenGameArt", license: CC0 },
       { title: "Fire Crackling", author: "AntumDeluge · OpenGameArt", license: CC0 },
       { title: "Tinnitus", author: "Joseph Sardin · BigSoundBank", license: CC0 },
       {

@@ -21,6 +21,7 @@ const config = {
     reach: 4,
     flight: 0.6,
     trajectory: "lob",
+    landSound: "./assets/glass-shatter.ogg",
     fire: { radius: 1.5, duration: 4.5, damage: 14 },
   },
 };

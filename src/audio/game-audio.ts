@@ -1,6 +1,7 @@
 import { bombWarning, finalCountdown } from "../core/bomb-warning";
 import { ITEMS, SKILLS, TIERS, isEquipment, perkById } from "../core/content";
 import type { GameEvent, GameSnapshot, Player, Vec2 } from "../core/types";
+import { SUMMON_TIME } from "../core/zombies";
 import { AudioEngine } from "./audio-engine";
 import type { PlayOptions } from "./audio-engine";
 import { BassPulse } from "./bass-pulse";
@@ -45,7 +46,15 @@ const LEVEL = {
   shieldExpired: 0.45,
   skill: 0.42,
   perk: 0.46,
+  landing: 0.7,
 } as const;
+/** How far, in cells, the actions of other operators and of zombies carry. */
+const EARSHOT = { action: 7, kick: 8, fall: 10, zombie: 8, groan: 6 } as const;
+/** Seconds between idle groans from the zombies around the listener, shortest to longest. */
+const GROAN_GAP = [3.5, 8] as const;
+const GROANS = 3;
+/** Seconds back from a snapshot in which a kill event still belongs to the operator who just fell. */
+const KILL_WINDOW = 0.25;
 
 interface Stride extends Vec2 {
   travel: number;
@@ -68,6 +77,17 @@ export class GameAudio {
   private aimedCell?: Vec2;
   private lastEventId = 0;
   private nextBlastRing = 0;
+  /** State of the previous snapshot, for the cues that mark a change rather than an event. */
+  private readonly seen = {
+    primed: false,
+    skills: new Set<string>(),
+    sliding: new Set<number>(),
+    airborne: new Set<string>(),
+    fallen: new Set<string>(),
+    zombies: new Map<number, number | undefined>(),
+    ringsClosed: 0,
+    nextGroan: 0,
+  };
 
   constructor() {
     this.engine.preload([...BANK_CUES, ...contentCues()].map(cue));
@@ -248,6 +268,7 @@ export class GameAudio {
     this.aimedCell = undefined;
     this.fuseBeats.clear();
     this.strides.clear();
+    this.seen.primed = false;
     this.engine.stopVoices();
   }
 
@@ -260,6 +281,7 @@ export class GameAudio {
       if (this.enabled) this.worldEvent(event, self);
     }
     this.fuseBeeps(state, self);
+    this.changes(state, self);
   }
 
   dispose() {
@@ -301,8 +323,24 @@ export class GameAudio {
       this.play("blast-ringing", { priority: true });
       this.nextBlastRing = event.at + BLAST_RING_COOLDOWN;
     }
-    if (event.type === "ignite" && distance < 12)
+    if (event.type === "ignite" && distance < 12) {
+      const landing = event.item ? ITEMS[event.item]?.throwable?.landSound : undefined;
+      // A thrown bottle comes down away from its owner, so its break is placed like anyone else's.
+      if (landing)
+        this.play(landing, {
+          level: LEVEL.landing,
+          gain: falloff(distance, 12, 0.1),
+          pan: panTo(self, event),
+          priority: own,
+        });
       this.play("fire-ignite", { gain: own ? 1 : falloff(distance, 12), pan, priority: own });
+    }
+    if (event.type === "cover" && distance < 10)
+      this.play(`cover-break-${event.id % 2}`, {
+        gain: falloff(distance, 10, 0.1),
+        pan: panTo(self, event),
+        priority: own,
+      });
     if (event.type === "build") {
       if (own) this.play("crate-build", { priority: true });
       else if (distance < 9) this.play("crate-build", { gain: 0.8 * falloff(distance, 9), pan });
@@ -333,6 +371,23 @@ export class GameAudio {
       // Only close blasts push the music down; distant ones sit under it.
       if (gain > 0.5) this.engine.duckMusic();
     } else if (own) this.localEvent(event);
+    else if (distance < EARSHOT.action) this.overheard(event, falloff(distance, EARSHOT.action), pan);
+  }
+
+  /** What another operator nearby is doing, quieter than the listener's own actions. */
+  private overheard(event: GameEvent, nearness: number, pan: number) {
+    const gain = 0.6 * nearness;
+    switch (event.type) {
+      case "bomb":
+        return this.play("bomb-place", { gain, pan });
+      case "equipment": {
+        const item = ITEMS[event.item];
+        const fallback = item?.throwable ? "gear-throw" : "gear-equip";
+        return this.play(item?.sound ?? fallback, { level: LEVEL.equipmentUse, gain, pan });
+      }
+      case "melee":
+        return this.play(ITEMS[event.item]?.sound ?? "gear-throw", { level: LEVEL.meleeSwing, gain, pan });
+    }
   }
 
   /** Feedback for the local player's own actions, unattenuated and centred. */
@@ -374,6 +429,105 @@ export class GameAudio {
     }
   }
 
+  /**
+   * Cues for things the snapshot shows changing without an event of their own: an effect running
+   * out, a charge kicked, a landing, an operator going down, the zone wall closing, zombies.
+   * The first snapshot of a match only records what is already there.
+   */
+  private changes(state: Readonly<GameSnapshot>, self: Player) {
+    const seen = this.seen,
+      audible = seen.primed && this.enabled && state.phase === "playing";
+    const placed = (at: Vec2, reach: number, level = 1): PlayOptions => ({
+      gain: level * falloff(distanceTo(self, at), reach, 0.1),
+      pan: panTo(self, at),
+    });
+
+    const skills = new Set<string>(),
+      airborne = new Set<string>(),
+      fallen = new Set<string>();
+    for (const p of state.players) {
+      const own = p.id === self.id,
+        distance = distanceTo(self, p);
+      if (!p.alive) {
+        fallen.add(p.id);
+        if (audible && !seen.fallen.has(p.id)) {
+          if (own || distance < EARSHOT.fall) this.play("body-fall", own ? {} : placed(p, EARSHOT.fall));
+          // The kill feed names the killer; a zombie's or one's own victim earns no confirmation.
+          const credited = state.events.some(
+            (e) => e.type === "kill" && e.playerId === self.id && e.at > state.time - KILL_WINDOW,
+          );
+          if (!own && self.alive && credited) this.play("kill-confirm", { priority: true });
+        }
+        continue;
+      }
+      for (const id of p.skills) {
+        const skill = SKILLS[id];
+        if (!skill?.endSound || !skill.activeUntil) continue;
+        const key = `${p.id}:${id}`;
+        if (skill.activeUntil(p) > state.time) skills.add(key);
+        else if (audible && seen.skills.has(key)) {
+          if (own) this.play(skill.endSound, { level: LEVEL.skill, priority: true });
+          else if (skill.endSoundRange && distance < skill.endSoundRange)
+            this.play(skill.endSound, { level: LEVEL.skill, ...placed(p, skill.endSoundRange, 0.8) });
+        }
+      }
+      if (p.verticalSpeed !== 0) airborne.add(p.id);
+      else if (audible && seen.airborne.has(p.id) && (own || distance < EARSHOT.action)) {
+        // Coming down from a jump: the surface's own step, heavier and lower.
+        const map = MAPS.find((candidate) => candidate.id === state.mapId);
+        const step = `${map ? STEP_FAMILY[groundAt(map, p.x, p.z)] : "footstep"}-0`;
+        this.play(step, { rate: 0.78, ...(own ? { gain: 1.7 } : placed(p, EARSHOT.action, 1.1)) });
+      }
+    }
+    seen.skills = skills;
+    seen.airborne = airborne;
+    seen.fallen = fallen;
+
+    const sliding = new Set<number>();
+    for (const bomb of state.bombs) {
+      if (!bomb.slide) continue;
+      sliding.add(bomb.id);
+      if (audible && !seen.sliding.has(bomb.id) && distanceTo(self, bomb) < EARSHOT.kick)
+        this.play("bomb-kick", placed(bomb, EARSHOT.kick));
+    }
+    seen.sliding = sliding;
+
+    const closed = state.zone?.closed ?? 0;
+    if (audible && closed > seen.ringsClosed) {
+      this.play("zone-wall", { priority: true });
+      this.engine.duckMusic();
+    }
+    seen.ringsClosed = closed;
+
+    const zombies = new Map<number, number | undefined>();
+    let nearest: Vec2 | undefined,
+      nearestDistance: number = EARSHOT.groan;
+    for (const zombie of state.zombies) {
+      const distance = distanceTo(self, zombie),
+        struck = zombie.attack?.at;
+      zombies.set(zombie.id, struck);
+      if (!audible || distance >= EARSHOT.zombie) continue;
+      if (!seen.zombies.has(zombie.id)) {
+        if (zombie.spawnAt !== undefined && state.time < zombie.spawnAt + SUMMON_TIME)
+          this.play("zombie-spawn", placed(zombie, EARSHOT.zombie));
+      } else if (struck !== undefined && struck !== seen.zombies.get(zombie.id))
+        this.play(`zombie-attack-${zombie.id % 2}`, placed(zombie, EARSHOT.zombie));
+      const risen = zombie.spawnAt === undefined || state.time >= zombie.spawnAt + SUMMON_TIME;
+      if (risen && distance < nearestDistance) {
+        nearest = zombie;
+        nearestDistance = distance;
+      }
+    }
+    seen.zombies = zombies;
+    // One zombie at a time gives itself away, so a horde reads as a presence, not a chorus.
+    if (state.time < seen.nextGroan - GROAN_GAP[1]) seen.nextGroan = 0;
+    if (audible && nearest && state.time >= seen.nextGroan) {
+      this.play(`zombie-groan-${Math.floor(Math.random() * GROANS)}`, placed(nearest, EARSHOT.groan + 2));
+      seen.nextGroan = state.time + GROAN_GAP[0] + Math.random() * (GROAN_GAP[1] - GROAN_GAP[0]);
+    }
+    seen.primed = true;
+  }
+
   /** One beep per bombWarning() beat, so audio stays on the simulation clock with the warning light. */
   private fuseBeeps(state: Readonly<GameSnapshot>, self: Listener) {
     const live = new Set(state.bombs.map((b) => b.id));
@@ -406,6 +560,10 @@ function contentCues() {
     if (item.melee?.hitSound) refs.add(item.melee.hitSound);
     for (const sound of Object.values(item.melee?.coverSounds ?? {})) if (sound) refs.add(sound);
   }
-  for (const skill of Object.values(SKILLS)) if (skill.sound) refs.add(skill.sound);
+  for (const item of Object.values(ITEMS)) if (item.throwable?.landSound) refs.add(item.throwable.landSound);
+  for (const skill of Object.values(SKILLS)) {
+    if (skill.sound) refs.add(skill.sound);
+    if (skill.endSound) refs.add(skill.endSound);
+  }
   return refs;
 }

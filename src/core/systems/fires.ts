@@ -62,7 +62,7 @@ export function spreadFire(
     });
   }
   const owner = s.players.find((p) => p.id === source.ownerId);
-  if (owner) emit(ctx, owner, "地面起火", { type: "ignite" }, source);
+  if (owner) emit(ctx, owner, "地面起火", { type: "ignite", item: source.kind }, source);
 }
 
 export function expireFires(s: GameSnapshot) {
