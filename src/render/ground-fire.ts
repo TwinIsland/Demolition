@@ -2,40 +2,36 @@ import * as THREE from "three";
 import type { FireCell, GameSnapshot } from "../core/types";
 import { TILE_SIZE, world } from "./arena";
 
-/** Flame billboards per burning cell; the Cataclysm's sweep uses fewer, it covers the whole floor. */
-const FLAMES_PER_CELL = 4;
+/**
+ * Flame billboards per burning cell: enough, scattered widely enough, that a pool burns as one low
+ * carpet of fire. The Cataclysm's sweep covers the whole floor for a moment and uses fewer.
+ */
+const FLAMES_PER_CELL = 7;
 const SWEEP_FLAMES = 2;
 const SPARKS_PER_CELL = 3;
 /** The ground layer of a cell reaches one tile past it, so neighbouring cells blend into one pool. */
 const GROUND_SPAN = TILE_SIZE * 2;
 
 /**
- * `sheet` is the baked flipbook (scripts/make-fire-flipbook.py): 8 x 8 frames with heat in red and
- * soot in green, plus tileable noise in blue over the whole sheet.
+ * Both sheets come from Unity's CC0 flipbook pack, packed by scripts/make-fire-sheets.py.
+ * `flames`: 16 x 4 frames, colour and alpha. `smoke`: 8 x 8 frames with shade in red and coverage
+ * in green; its blue channel is tileable noise over the whole sheet.
  */
-const SHEET = /* glsl */ `
-  uniform sampler2D sheet;
+const SHEETS = /* glsl */ `
+  uniform sampler2D flames;
+  uniform sampler2D smoke;
   uniform float time;
-  vec2 gfFrame(float index, vec2 uv) {
-    vec2 inside = clamp(uv, 0.5 / 128.0, 1.0 - 0.5 / 128.0);
-    return vec2((mod(index, 8.0) + inside.x) / 8.0, 1.0 - (floor(index / 8.0) + 1.0 - inside.y) / 8.0);
-  }
-  /** Heat and soot at a frame-local position, blended between two frames so 24 fps plays smooth. */
-  vec2 gfFlame(vec2 uv, float seed) {
-    float at = fract(time * 0.36 + seed) * 64.0;
+  /** One frame of a sheet, blended into the next so the loop plays smooth at any frame rate. */
+  vec4 gfFrames(sampler2D sheet, vec2 grid, vec2 uv, float at) {
+    vec2 inside = clamp(uv, 0.004, 0.996);
+    float count = grid.x * grid.y;
     float first = floor(at);
-    vec2 a = texture2D(sheet, gfFrame(first, uv)).rg;
-    vec2 b = texture2D(sheet, gfFrame(mod(first + 1.0, 64.0), uv)).rg;
-    return mix(a, b, at - first);
+    float next = mod(first + 1.0, count);
+    vec2 a = vec2(mod(first, grid.x) + inside.x, grid.y - floor(first / grid.x) - 1.0 + inside.y) / grid;
+    vec2 b = vec2(mod(next, grid.x) + inside.x, grid.y - floor(next / grid.x) - 1.0 + inside.y) / grid;
+    return mix(texture2D(sheet, a), texture2D(sheet, b), at - first);
   }
-  float gfNoise(vec2 p) { return texture2D(sheet, p).b; }
-  /** Blackbody-like ramp: dull red at the cool edge, orange body, pale yellow core. */
-  vec3 gfGlow(float heat) {
-    vec3 color = mix(vec3(0.5, 0.035, 0.0), vec3(1.0, 0.27, 0.02), smoothstep(0.08, 0.42, heat));
-    color = mix(color, vec3(1.0, 0.62, 0.14), smoothstep(0.38, 0.72, heat));
-    color = mix(color, vec3(1.0, 0.92, 0.68), smoothstep(0.72, 1.0, heat));
-    return color * smoothstep(0.02, 0.3, heat);
-  }
+  float gfNoise(vec2 p) { return texture2D(smoke, p).b; }
 `;
 
 /** Emission adds, soot covers: one pass, premultiplied. */
@@ -50,7 +46,11 @@ const OVER = {
   toneMapped: false,
 } as const;
 
-type Uniforms = { sheet: { value: THREE.Texture }; time: { value: number } };
+type Uniforms = {
+  flames: { value: THREE.Texture };
+  smoke: { value: THREE.Texture };
+  time: { value: number };
+};
 
 /** Camera-facing flames. `fire` carries seed, strength (0 to 1), width and mirror flag. */
 function flameMaterial(uniforms: Uniforms) {
@@ -63,29 +63,28 @@ function flameMaterial(uniforms: Uniforms) {
       varying vec2 vUv;
       varying vec2 vFire;
       void main() {
-        vUv = vec2(fire.w > 0.5 ? 1.0 - uv.x : uv.x, uv.y);
+        // The sheet leaves a few empty rows under each flame; skip them so the base sits on the floor.
+        vUv = vec2(fire.w > 0.5 ? 1.0 - uv.x : uv.x, 0.04 + uv.y * 0.96);
         vFire = fire.xy;
         vec4 center = modelViewMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);
         // A flame catching or dying is shorter, not just dimmer.
-        vec2 size = fire.z * vec2(0.75 + 0.25 * fire.y, 1.5 * (0.3 + 0.7 * fire.y));
+        vec2 size = fire.z * vec2(0.8 + 0.2 * fire.y, 1.45 * (0.25 + 0.75 * fire.y));
         center.xy += position.xy * size;
         gl_Position = projectionMatrix * center;
       }`,
     fragmentShader: /* glsl */ `
-      ${SHEET}
+      ${SHEETS}
       varying vec2 vUv;
       varying vec2 vFire;
       void main() {
-        // Scrolling noise frays the silhouette, more towards the tips.
-        float fray = gfNoise(vec2(vUv.x * 0.21 + vFire.x, vUv.y * 0.17 - time * 0.11 + vFire.x * 3.0)) - 0.5;
-        vec2 sampled = gfFlame(vUv + vec2(fray * 0.07 * vUv.y, 0.0), vFire.x);
-        float heat = sampled.r * (0.55 + 0.45 * vFire.y);
-        float soot = sampled.g * vFire.y;
-        float body = smoothstep(0.12, 0.75, heat) * 0.5;
-        float smoke = soot * 0.42 * (1.0 - body);
-        float alpha = body + smoke;
-        if (heat < 0.02 && alpha < 0.01) discard;
-        gl_FragColor = vec4(gfGlow(heat) * 2.3 * vFire.y + vec3(0.035, 0.03, 0.028) * smoke, alpha);
+        // Every flame runs the loop from its own point and at its own pace.
+        float at = fract(time * (0.42 + 0.16 * vFire.x) + vFire.x * 7.0) * 64.0;
+        vec4 flame = gfFrames(flames, vec2(16.0, 4.0), vUv, at);
+        float alpha = flame.a * vFire.y;
+        if (alpha < 0.01) discard;
+        // Hot enough to bloom at the core; half-opaque, so flames stack into a dense carpet
+        // without the order they are drawn in showing.
+        gl_FragColor = vec4(flame.rgb * alpha * 2.1, alpha * 0.5);
       }`,
   });
 }
@@ -110,24 +109,59 @@ function groundMaterial(uniforms: Uniforms) {
         gl_Position = projectionMatrix * viewMatrix * at;
       }`,
     fragmentShader: /* glsl */ `
-      ${SHEET}
+      ${SHEETS}
       varying vec2 vUv;
       varying vec2 vWorld;
       varying float vStrength;
       void main() {
         // Cosine windows two tiles wide add up to one across neighbouring cells: no seams, no grid.
+        // Everything is weighted by the window alone; any other mask would double up where cells overlap.
         vec2 w = 0.5 + 0.5 * cos(3.14159265 * clamp((vUv - 0.5) * 2.0, -1.0, 1.0));
         float window = w.x * w.y;
         // World-space noise, so the pattern runs unbroken from cell to cell.
         float slow = gfNoise(vWorld * 0.047 + vec2(time * 0.011, -time * 0.017));
         float fast = gfNoise(vWorld * 0.093 + vec2(-time * 0.05, time * 0.071));
-        // Everything is weighted by the window alone: any other mask would double up where cells overlap.
-        float film = smoothstep(0.4, 0.76, slow * 0.6 + fast * 0.75 - 0.18);
-        float flicker = 0.82 + 0.18 * gfNoise(vec2(time * 0.31, vWorld.x * 0.013));
-        vec3 light = vec3(1.0, 0.36, 0.06) * flicker * 0.3;
-        vec3 fuel = gfGlow(0.3 + 0.7 * film) * film * 1.5;
-        float scorch = 0.32 * window;
-        gl_FragColor = vec4((light + fuel) * window * vStrength, scorch * vStrength);
+        float film = smoothstep(0.36, 0.74, slow * 0.6 + fast * 0.75 - 0.18);
+        float flicker = 0.8 + 0.2 * gfNoise(vec2(time * 0.31, vWorld.x * 0.013));
+        vec3 light = vec3(1.0, 0.4, 0.07) * flicker * 0.42;
+        vec3 fuel = mix(vec3(1.0, 0.3, 0.03), vec3(1.0, 0.72, 0.2), film) * film * 1.7;
+        gl_FragColor = vec4((light + fuel) * window * vStrength, 0.4 * window * vStrength);
+      }`,
+  });
+}
+
+/** Black smoke rolling up off the fire. `fire` carries seed, strength, size and mirror flag. */
+function smokeMaterial(uniforms: Uniforms) {
+  return new THREE.ShaderMaterial({
+    ...OVER,
+    uniforms,
+    side: THREE.DoubleSide,
+    vertexShader: /* glsl */ `
+      attribute vec4 fire;
+      uniform float time;
+      varying vec2 vUv;
+      varying vec3 vPuff;
+      void main() {
+        vUv = vec2(fire.w > 0.5 ? 1.0 - uv.x : uv.x, uv.y);
+        float age = fract(time * 0.3 + fire.x);
+        // Thin where it leaves the flames, then it swells, drifts and thins out again.
+        vPuff = vec3(fire.x, age, fire.y * smoothstep(0.0, 0.25, age) * (1.0 - age));
+        vec3 rise = vec3(sin(fire.x * 31.0) * 0.5 * age, 1.1 + 3.4 * age, cos(fire.x * 17.0) * 0.5 * age);
+        vec4 center = modelViewMatrix * instanceMatrix * vec4(rise, 1.0);
+        center.xy += (position.xy - vec2(0.0, 0.5)) * fire.z * (0.7 + 1.3 * age);
+        gl_Position = projectionMatrix * center;
+      }`,
+    fragmentShader: /* glsl */ `
+      ${SHEETS}
+      varying vec2 vUv;
+      varying vec3 vPuff;
+      void main() {
+        vec4 puff = gfFrames(smoke, vec2(8.0, 8.0), vUv, fract(time * 0.2 + vPuff.x * 5.0) * 64.0);
+        float alpha = puff.g * vPuff.z * 0.55;
+        if (alpha < 0.01) discard;
+        // Lit from below by the fire while it is still young.
+        vec3 shade = vec3(0.02 + 0.1 * puff.r) + vec3(0.5, 0.16, 0.02) * (1.0 - vPuff.y) * (1.0 - vPuff.y) * 0.5;
+        gl_FragColor = vec4(shade * alpha, alpha);
       }`,
   });
 }
@@ -168,18 +202,19 @@ function sparkMaterial(uniforms: Uniforms) {
 const fraction = (value: number) => value - Math.floor(value);
 
 /**
- * Ground fire: Molotov pools and the Cataclysm sweep. Three instanced draws however many cells
- * burn. The sheet loads with the other assets and the programs are compiled by `warm`, both on
+ * Ground fire: Molotov pools and the Cataclysm sweep. Four instanced draws however many cells
+ * burn. The sheets load with the other assets and the programs are compiled by `warm`, both on
  * the loading screen.
  */
 export class GroundFire {
   readonly root = new THREE.Group();
-  private sheet: THREE.Texture;
+  private sheets: THREE.Texture[];
   private renderer?: THREE.WebGLRenderer;
   private uniforms: Uniforms;
   private materials: THREE.ShaderMaterial[];
-  private flames?: THREE.InstancedMesh;
   private ground?: THREE.InstancedMesh;
+  private flames?: THREE.InstancedMesh;
+  private smoke?: THREE.InstancedMesh;
   private sparks?: THREE.InstancedMesh;
   private quad = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0);
   private dot = new THREE.PlaneGeometry(1, 1);
@@ -187,18 +222,26 @@ export class GroundFire {
   private transform = new THREE.Object3D();
 
   constructor(manager: THREE.LoadingManager) {
-    this.sheet = new THREE.TextureLoader(manager).load("./assets/effects/fire-flipbook.webp", (sheet) =>
-      this.renderer?.initTexture(sheet),
-    );
-    // Data, not colour. No mipmaps: they would bleed neighbouring frames into each other.
-    this.sheet.colorSpace = THREE.NoColorSpace;
-    this.sheet.wrapS = this.sheet.wrapT = THREE.RepeatWrapping;
-    this.sheet.minFilter = this.sheet.magFilter = THREE.LinearFilter;
-    this.sheet.generateMipmaps = false;
-    this.uniforms = { sheet: { value: this.sheet }, time: { value: 0 } };
+    const loader = new THREE.TextureLoader(manager);
+    const load = (file: string, colour: boolean) => {
+      const sheet = loader.load(`./assets/effects/${file}`, (loaded) => this.renderer?.initTexture(loaded));
+      sheet.colorSpace = colour ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+      sheet.wrapS = sheet.wrapT = THREE.RepeatWrapping;
+      // No mipmaps: they would bleed neighbouring frames into each other.
+      sheet.minFilter = sheet.magFilter = THREE.LinearFilter;
+      sheet.generateMipmaps = false;
+      return sheet;
+    };
+    this.sheets = [load("fire-flames.webp", true), load("fire-smoke.webp", false)];
+    this.uniforms = {
+      flames: { value: this.sheets[0] },
+      smoke: { value: this.sheets[1] },
+      time: { value: 0 },
+    };
     this.materials = [
       groundMaterial(this.uniforms),
       flameMaterial(this.uniforms),
+      smokeMaterial(this.uniforms),
       sparkMaterial(this.uniforms),
     ];
   }
@@ -206,9 +249,9 @@ export class GroundFire {
   warm(renderer: THREE.WebGLRenderer, camera: THREE.Camera) {
     this.resize(1);
     renderer.compile(this.root, camera);
-    // Upload the sheet now, or as soon as it arrives: still on the loading screen either way.
+    // Upload the sheets now, or as soon as they arrive: still on the loading screen either way.
     this.renderer = renderer;
-    if (this.sheet.image) renderer.initTexture(this.sheet);
+    for (const sheet of this.sheets) if (sheet.image) renderer.initTexture(sheet);
   }
 
   private resize(cells: number) {
@@ -235,7 +278,8 @@ export class GroundFire {
     };
     this.ground = make(this.ground, this.floor, 0, capacity);
     this.flames = make(this.flames, this.quad, 1, capacity * FLAMES_PER_CELL);
-    this.sparks = make(this.sparks, this.dot, 2, capacity * SPARKS_PER_CELL);
+    this.smoke = make(this.smoke, this.quad, 2, capacity);
+    this.sparks = make(this.sparks, this.dot, 3, capacity * SPARKS_PER_CELL);
   }
 
   /** `sweep` is extra, harmless fire: the Cataclysm's flames rolling over the floor. */
@@ -246,22 +290,25 @@ export class GroundFire {
     this.resize(cells);
     const ground = this.ground!,
       flames = this.flames!,
+      smoke = this.smoke!,
       sparks = this.sparks!;
     const data = (mesh: THREE.InstancedMesh) =>
       mesh.geometry.getAttribute("fire") as THREE.InstancedBufferAttribute;
     const groundData = data(ground),
       flameData = data(flames),
+      smokeData = data(smoke),
       sparkData = data(sparks);
     this.uniforms.time.value = wallTime;
     let cell = 0,
       flame = 0,
+      puff = 0,
       spark = 0;
     const place = (mesh: THREE.InstancedMesh, index: number, x: number, y: number, z: number) => {
       this.transform.position.set(x, y, z);
       this.transform.updateMatrix();
       mesh.setMatrixAt(index, this.transform.matrix);
     };
-    const draw = (fire: FireCell, tongues: number) => {
+    const draw = (fire: FireCell, tongues: number, smoky: boolean) => {
       const left = fire.expiresAt - state.time,
         age = fire.duration - left;
       if (age <= 0) return;
@@ -272,45 +319,48 @@ export class GroundFire {
       place(ground, cell, x, 0.04, z);
       groundData.setXYZW(cell++, 0, strength, 0, 0);
       for (let k = 0; k < tongues; k++) {
-        // Scattered over the cell and a little beyond, so a pool never reads as a grid of flames.
+        // Spread over the whole cell and a little beyond its edge, so neighbouring cells run
+        // together and a pool never reads as a grid of separate fires.
         const seed = fraction(fire.id * 0.137 + k * 0.371),
-          angle = seed * Math.PI * 2 + k * 2.4,
-          reach = TILE_SIZE * (k ? 0.24 + 0.24 * fraction(seed * 7.3) : 0.08);
-        place(flames, flame, x + Math.cos(angle) * reach, 0.02, z + Math.sin(angle) * reach);
-        const width = TILE_SIZE * (k ? 0.5 + 0.22 * fraction(seed * 3.7) : 0.82);
+          dx = (fraction(seed * 7.3 + k * 0.29) - 0.5) * TILE_SIZE * 1.1,
+          dz = (fraction(seed * 3.9 + k * 0.53) - 0.5) * TILE_SIZE * 1.1;
+        place(flames, flame, x + dx, 0.02, z + dz);
+        // Low and wide: waist height for most, a few taller ones to break the skyline.
+        const width = TILE_SIZE * (k === 0 ? 0.62 : 0.36 + 0.2 * fraction(seed * 5.7));
         flameData.setXYZW(flame++, seed, strength, width, fraction(seed * 5.1) > 0.5 ? 1 : 0);
+      }
+      if (smoky) {
+        const seed = fraction(fire.id * 0.311);
+        place(smoke, puff, x, 0, z);
+        smokeData.setXYZW(puff++, seed, strength, TILE_SIZE * 0.9, seed > 0.5 ? 1 : 0);
       }
       for (let k = 0; k < SPARKS_PER_CELL; k++) {
         const seed = fraction(fire.id * 0.219 + k * 0.447),
-          angle = seed * Math.PI * 2;
-        place(
-          sparks,
-          spark,
-          x + Math.cos(angle) * TILE_SIZE * 0.35 * seed,
-          0.15,
-          z + Math.sin(angle) * TILE_SIZE * 0.35 * seed,
-        );
+          angle = seed * Math.PI * 2,
+          reach = TILE_SIZE * 0.35 * seed;
+        place(sparks, spark, x + Math.cos(angle) * reach, 0.15, z + Math.sin(angle) * reach);
         sparkData.setXYZW(spark++, seed, strength, 1.6 + 1.6 * fraction(seed * 9.1), fraction(seed * 4.3));
       }
     };
-    for (const fire of state.fires) draw(fire, FLAMES_PER_CELL);
-    for (const fire of sweep) draw(fire, SWEEP_FLAMES);
+    for (const fire of state.fires) draw(fire, FLAMES_PER_CELL, true);
+    for (const fire of sweep) draw(fire, SWEEP_FLAMES, false);
     ground.count = cell;
     flames.count = flame;
+    smoke.count = puff;
     sparks.count = spark;
-    for (const mesh of [ground, flames, sparks]) {
+    for (const mesh of [ground, flames, smoke, sparks]) {
       mesh.instanceMatrix.needsUpdate = true;
       data(mesh).needsUpdate = true;
     }
   }
 
   dispose() {
-    for (const mesh of [this.ground, this.flames, this.sparks]) {
+    for (const mesh of [this.ground, this.flames, this.smoke, this.sparks]) {
       mesh?.geometry.dispose();
       mesh?.dispose();
     }
     for (const geometry of [this.quad, this.dot, this.floor]) geometry.dispose();
     for (const material of this.materials) material.dispose();
-    this.sheet.dispose();
+    for (const sheet of this.sheets) sheet.dispose();
   }
 }

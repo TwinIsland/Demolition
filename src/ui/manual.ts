@@ -87,6 +87,8 @@ function equipmentEntries() {
     }),
   ];
   for (const item of Object.values(ITEMS)) {
+    // Only what can be equipped. The crate is built with its own key and is listed under controls.
+    if (!isEquipment(item)) continue;
     const name = field(item, "name");
     rows.push(
       entry({
@@ -94,7 +96,7 @@ function equipmentEntries() {
         name,
         description: field(item, "description"),
         color: item.color,
-        control: isEquipment(item) ? quickEquipControl(item.id, name) : "",
+        control: quickEquipControl(item.id, name),
       }),
     );
   }
