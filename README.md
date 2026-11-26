@@ -30,7 +30,7 @@ You are dropped into a grid arena with up to three AI opponents. Plant charges, 
 - **AI opponents.** One to three bots, each with its own difficulty and skin.
 - **Zombies.** They wander the arena and chase you on sight. Killing them drops gear and sometimes a gene mutation that boosts your stats.
 - **Two views.** The game is first person; Classic mode plays the whole match on a top-down 2D board like the original.
-- **Maps and modes.** Four maps, Outpost, Rainforest (a large 31 × 31 jungle arena), Warehouse and Pool (a flooded hall of white tile), in Free-for-All, Classic (top-down only), Wild or an untimed Practice mode.
+- **Maps and modes.** Five maps, Outpost, Rainforest (a large 31 × 31 jungle arena), Warehouse, Pool (a flooded hall of white tile) and Backrooms (a maze of yellow office rooms), in Free-for-All, Classic (top-down only), Wild or an untimed Practice mode.
 - **Skins.** Pick a built-in operator or import any Minecraft skin PNG, and choose a finish for your charges.
 
 ## Controls

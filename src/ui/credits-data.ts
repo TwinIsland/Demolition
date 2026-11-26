@@ -78,6 +78,12 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
         license: CC_BY,
       },
       {
+        title: "Comfortable Mystery",
+        map: "backrooms",
+        author: "Kevin MacLeod · incompetech.com",
+        license: CC_BY,
+      },
+      {
         title: "Dark Place (loop)",
         use: ["备用曲目", "Fallback track"],
         author: "OpenGameArt",
@@ -123,6 +129,8 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
       polyHaven("Mud Forest"),
       polyHaven("Mossy Rock"),
       polyHaven("Mossy Sandstone"),
+      polyHaven("Decrepit Wallpaper", "Rob Tuytel · Poly Haven"),
+      polyHaven("Dirty Carpet", "Rohit Seervi · Poly Haven"),
       { title: "Explosion", use: ["爆炸序列帧", "Blast flipbook"], author: "OpenGameArt", license: CC0 },
       {
         title: "Smoke",

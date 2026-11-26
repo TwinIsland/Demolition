@@ -6,6 +6,7 @@ import { Rain } from "./rain";
 import {
   CLEAR_SKY,
   JUNGLE_RAIN_SKY,
+  OFFICE_FLOOR,
   OVERCAST_RAIN_SKY,
   POOL_HALL,
   type SkyLook,
@@ -13,10 +14,10 @@ import {
 } from "./sky-look";
 import { SurfaceWeathering, createWeatherUniforms, type DetailLevel } from "./surface-weathering";
 
-export type WeatherKind = "clear" | "rain" | "monsoon" | "indoor";
+export type WeatherKind = "clear" | "rain" | "monsoon" | "indoor" | "office";
 /** The part of a map definition that decides how its scene looks. */
 export interface MapLook {
-  theme: "garden" | "midnight" | "rainforest" | "poolrooms";
+  theme: "garden" | "midnight" | "rainforest" | "poolrooms" | "backrooms";
   weather?: WeatherKind;
 }
 /** The graphics options this module reads. */
@@ -60,6 +61,8 @@ const WEATHER: Record<WeatherKind, Weather> = {
   },
   // No rain and no sky, but the tiles never dry: a film of water with standing sheets on the deck.
   indoor: { sky: POOL_HALL, wet: 0.45, rain: 0, groundFog: [0.004, 0.25], lightning: false, mirror: true },
+  // Nothing falls and nothing shines: the damp only shows as dark patches soaked into the carpet.
+  office: { sky: OFFICE_FLOOR, wet: 0.3, rain: 0, groundFog: [0, 0.5], lightning: false, mirror: false },
 };
 /** How much grime, streaking, moss and cracking each map theme shows. */
 const WEAR: Record<MapLook["theme"], [number, number, number, number]> = {
@@ -68,6 +71,8 @@ const WEAR: Record<MapLook["theme"], [number, number, number, number]> = {
   rainforest: [0.9, 1, 1, 0.7],
   // Tile profiles ignore wear; props in the hall stay nearly clean.
   poolrooms: [0.15, 0.2, 0, 0.1],
+  // Wallpaper and carpet carry their own stains; the office furniture stays as it was left.
+  backrooms: [0.2, 0.25, 0, 0.15],
 };
 const DETAIL: Record<EnvironmentQuality["detail"], { level: DetailLevel; density: number }> = {
   low: { level: 0, density: 0.3 },

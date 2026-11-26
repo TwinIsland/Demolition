@@ -51,6 +51,7 @@ const PREVIEW: Record<string, string> = {
   leaf: "#3f7a2c",
   "leaf-dark": "#2f5a2a",
   "pool-tile": "#eef2f0",
+  cardboard: "#a98554",
 };
 
 export function seeded(seed: number) {

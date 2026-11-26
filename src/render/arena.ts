@@ -8,6 +8,7 @@ import { StaticBatches } from "./static-batches";
 import { groundAt } from "../core/pack-api";
 import { buildJungle } from "./jungle-scenery";
 import { COLUMN_PITCH, buildPoolHall } from "./pool-hall";
+import { buildBackrooms } from "./backrooms-hall";
 export { TILE_SIZE };
 export const world = (value: number, size: number) => (value - (size - 1) / 2) * TILE_SIZE;
 
@@ -59,7 +60,10 @@ export class Arena {
       width = size * TILE_SIZE,
       map = MAPS.find((m) => m.id === state.mapId)!,
       jungle = map.theme === "rainforest",
-      pool = map.theme === "poolrooms";
+      pool = map.theme === "poolrooms",
+      office = map.theme === "backrooms",
+      // These themes lay their own ground and close off or fill what lies outside the grid.
+      enclosed = jungle || pool || office;
     const m = models.materials;
     // Which permanent walls of a natural map are trees or rock instead of masonry.
     const wallVariant = (x: number, z: number, scattered: boolean) => {
@@ -82,7 +86,7 @@ export class Arena {
     const coverAt = coverLayout(map, state.seed);
     const playerBuilt = new Set(builtCrates(state).map((crate) => crate.z * size + crate.x));
     this.coverRevision = state.coverRevision ?? 0;
-    if (!jungle && !pool) {
+    if (!enclosed) {
       const base = models.box(
         width + 0.55,
         1.5,
@@ -105,6 +109,8 @@ export class Arena {
             deck.position.set(px, -0.1, pz);
             this.root.add(deck);
           }
+        } else if (office) {
+          // One carpet covers the whole floor.
         } else if (!jungle || groundAt(map, x, z) === "stone") {
           const tile = models.slab(map.theme, (x + z) % 2);
           tile.position.set(px, -0.1, pz);
@@ -150,13 +156,14 @@ export class Arena {
       }
     if (jungle) buildJungle(this.root, models, map, state);
     else if (pool) buildPoolHall(this.root, models, state);
+    else if (office) buildBackrooms(this.root, models, state);
     else {
       const terrain = models.box(240, 0.3, 240, m.standard("terrain", "#8e9287", "ceramic"), 0.01);
       terrain.position.y = -1.6;
       this.root.add(terrain);
     }
     // Distant industrial silhouettes sit outside the playable collision grid.
-    for (let i = 0; i < (jungle || pool ? 0 : 12); i++) {
+    for (let i = 0; i < (enclosed ? 0 : 12); i++) {
       const angle = (i * Math.PI) / 6,
         distance = 48 + (i % 3) * 11,
         height = 5 + (i % 4) * 3;

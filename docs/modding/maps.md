@@ -8,6 +8,7 @@ A map is one `defineMap` call in `maps/<id>/index.js`. Types are in `src/core/pa
 | Rainforest | `rainforest` | 31 × 31 | Grass and mud ground, temple ruins in the centre, inset spawns, longer zone timer |
 | Warehouse | `night-lab` | 17 × 17 | Night, close quarters |
 | Pool | `poolrooms` | 21 × 21 | Indoor tiled hall, shallow pools kept open, columns on a fixed grid |
+| Backrooms | `backrooms` | 21 × 21 | Windowless office floor: fixed partitions and doorways in four-fold symmetry, carpet, low ceiling of light panels |
 
 ## Setup
 
@@ -44,8 +45,8 @@ export default defineMap(
 | `density` | 0 to 1. Chance that an open interior tile starts with destructible cover |
 | `wallDensity` | 0 to 1. Share of interior tiles turned into permanent walls. Omit for the classic pillar grid |
 | `wallShuffle` | 0 to 1. Share of generated walls that move on a terrain reshuffle. Needs `wallDensity`. Default 0 |
-| `theme` | `"garden"` (daylight, outdoor), `"midnight"` (night, industrial), `"rainforest"` (grass ground, forest scenery, tree and rock walls) or `"poolrooms"` (white tile hall under a ceiling of light panels, shallow water, walls on every fourth cell become columns) |
-| `weather` | `"clear"` (default), `"rain"`, `"monsoon"` (rain with thicker, greener mist) or `"indoor"` (no sky or rain, wet reflective floor). Presentation only |
+| `theme` | `"garden"` (daylight, outdoor), `"midnight"` (night, industrial), `"rainforest"` (grass ground, forest scenery, tree and rock walls) or `"poolrooms"` (white tile hall under a ceiling of light panels, shallow water, walls on every fourth cell become columns) or `"backrooms"` (yellow papered walls up to a low suspended ceiling with a light panel over every second cell, one carpet across the floor; meant for a size whose middle cell is an even number of cells from the edge, such as 21) |
+| `weather` | `"clear"` (default), `"rain"`, `"monsoon"` (rain with thicker, greener mist) `"indoor"` (no sky or rain, wet reflective floor) or `"office"` (dim windowless floor, damp patches in the carpet). Presentation only |
 | `spawnInset` | Cells between the boundary wall and each of the four spawns, measured along the diagonal. Default 1, the corners. Use a larger value on big maps so operators meet sooner |
 | `zoneScale` | Multiplier on the match length chosen in the room. Default 1. A map with many rings needs more time per match |
 | `obstacles` | Weighted pool of cover models. Defaults to the `storage` set |
@@ -83,7 +84,7 @@ The renderer batches a map larger than 21 cells in a 3 × 3 grid of chunks, so t
 
 ## Ground
 
-`groundAt(x, z, size)` in the layout object tells the engine what each cell's ground is: `"slab"`, `"stone"`, `"grass"`, `"mud"` or `"water"`. It selects the footstep sound (hard, grass, mud or splash). On a `rainforest` map it also drives the look: grass and mud are blended into one continuous ground, and `"stone"` cells are paved. On a `poolrooms` map, `"water"` cells have no deck: the pool lining and its water show instead, so keep them open in `tileAt`, because obstacles stand at deck height. Without it, a `rainforest` map is all grass and the other themes are all slab.
+`groundAt(x, z, size)` in the layout object tells the engine what each cell's ground is: `"slab"`, `"stone"`, `"grass"`, `"mud"`, `"water"` or `"carpet"`. It selects the footstep sound (hard, grass, mud, splash or carpet). On a `rainforest` map it also drives the look: grass and mud are blended into one continuous ground, and `"stone"` cells are paved. On a `poolrooms` map, `"water"` cells have no deck: the pool lining and its water show instead, so keep them open in `tileAt`, because obstacles stand at deck height. Without it, a `rainforest` map is all grass and the other themes are all slab.
 
 ```js
 groundAt(x, z, size) {
@@ -135,6 +136,11 @@ Presets are defined in `src/core/obstacles.ts`:
 | `locker` | metal | 2.05 | poolrooms |
 | `planter` | soft | 1.9 | poolrooms |
 | `towel-cart` | soft | 1.5 | poolrooms |
+| `cardboard-boxes` | soft | 1.55 | backrooms, office |
+| `filing-cabinet` | metal | 1.88 | backrooms, office |
+| `office-desk` | wood | 1.35 | backrooms, office |
+| `water-cooler` | soft | 1.52 | backrooms, office |
+| `partition` | soft | 1.63 | backrooms, office |
 
 `built-crate` is reserved for crates built by players and is never drawn from a pool.
 

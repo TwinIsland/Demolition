@@ -19,7 +19,11 @@ export type SurfaceProfile =
   | "tile"
   | "deck"
   | "basin"
-  | "water";
+  | "water"
+  // An office floor: papered walls, carpet and a suspended ceiling.
+  | "wallpaper"
+  | "carpet"
+  | "ceiling";
 /**
  * 0: instance variation and plain wetness. 1: adds raindrop ripples and rivulets.
  * 2: adds grime, streaks, moss, cracks and a second ripple layer.
@@ -71,6 +75,9 @@ export function profileFor(material: THREE.Material): SurfaceProfile | undefined
   if (name === "pool-deck") return "deck";
   if (name === "pool-floor") return "basin";
   if (name === "pool-water") return "water";
+  if (name === "backrooms-wall") return "wallpaper";
+  if (name === "backrooms-carpet") return "carpet";
+  if (name === "backrooms-ceiling") return "ceiling";
   if (name === "wall-base" || name === "platform") return "metal";
   if (name.startsWith("df:")) return name === "df:glass" ? undefined : "prop";
   return undefined;
@@ -435,6 +442,25 @@ vec2 wxWaterSlope = vec2(0.0);
       normal = normalize(mix(normal, normalize((viewMatrix * vec4(wxWater, 0.0)).xyz), wxPuddle));
     }
   #endif
+  #ifdef WX_SOAK
+    if (wxWet > 0.001) {
+      // Carpet does not puddle: the damp sinks in and shows as darker, slightly matted patches.
+      float wxSoak = wxFbm(wxP.xz * 0.23 + 5.0) + (wxNoise(wxP.xz * 2.3) - 0.5) * 0.08;
+      wxSoak = smoothstep(wxPuddleLevel - 0.16, wxPuddleLevel + 0.03, wxSoak) * wxFacingUp
+        * min(1.0, wxWet * 3.4);
+      diffuseColor.rgb *= mix(vec3(1.0), vec3(0.6, 0.58, 0.54), wxSoak);
+      roughnessFactor = mix(roughnessFactor, roughnessFactor * 0.62, wxSoak);
+    }
+  #endif
+  #ifdef WX_LAMPS
+  {
+    // Ceiling panels hang over every second cell in both directions. Their pools of light are
+    // painted here, which costs nothing and keeps the room from being evenly lit.
+    vec2 wxLamp = mod(wxP.xz, wxTile * 2.0) - wxTile;
+    float wxGlow = exp(-dot(wxLamp, wxLamp) / (wxTile * wxTile * 0.75));
+    diffuseColor.rgb *= mix(0.66, 1.16, wxGlow);
+  }
+  #endif
 }
 `;
 
@@ -504,6 +530,17 @@ const DEFINES: Record<SurfaceProfile, string[]> = {
   deck: ["WX_WORLD_UV 0.8333333", "WX_PUDDLES", "WX_TONE 0.0", "WX_WET_DARKEN 0.95", "WX_WET_GLOSS 0.6"],
   basin: ["WX_WORLD_UV 0.8333333", "WX_CAUSTICS", "WX_TONE 0.0", "WX_WET_DARKEN 1.0", "WX_WET_GLOSS 1.0"],
   water: ["WX_WATER", "WX_TONE 0.0", "WX_WET_DARKEN 1.0", "WX_WET_GLOSS 1.0"],
+  // One repeat is a whole cell: eight stripes of wallpaper, or two ceiling tiles each way.
+  wallpaper: ["WX_WORLD_UV 0.4166667", "WX_LAMPS", "WX_TONE 0.0", "WX_WET_DARKEN 1.0", "WX_WET_GLOSS 1.0"],
+  carpet: [
+    "WX_WORLD_UV 0.8333333",
+    "WX_SOAK",
+    "WX_LAMPS",
+    "WX_TONE 0.0",
+    "WX_WET_DARKEN 1.0",
+    "WX_WET_GLOSS 1.0",
+  ],
+  ceiling: ["WX_WORLD_UV 0.4166667", "WX_TONE 0.0", "WX_WET_DARKEN 1.0", "WX_WET_GLOSS 1.0"],
 };
 /** Level surfaces that show the planar reflection when it is on. */
 const MIRRORS: ReadonlySet<SurfaceProfile> = new Set(["ground", "deck", "water"]);

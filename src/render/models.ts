@@ -18,6 +18,8 @@ import { TILE_SIZE } from "../core/geometry";
 
 /** Height of the ceiling of a tiled hall above the deck. */
 export const POOL_CEILING = 5.7;
+/** Height of the suspended ceiling of an office floor. Its walls reach it. */
+export const BACKROOMS_CEILING = 2.9;
 
 export class Models {
   private avatars = new Map<string, MinecraftAvatar>();
@@ -302,6 +304,14 @@ export class Models {
       0.003,
     );
   }
+  /** Worn loop-pile carpet, laid as one sheet under the whole floor. */
+  backroomsCarpet() {
+    return this.materials.standard("backrooms-carpet", "#ffffff", "ceramic", "backrooms-carpet");
+  }
+  /** Mineral-fibre tiles in a metal grid. */
+  backroomsCeiling() {
+    return this.materials.standard("backrooms-ceiling", "#d9d2bb", "ceramic", "backrooms-ceiling");
+  }
   /**
    * A permanent wall. The rainforest also has `tree` and `rock` variants; its plain block is
    * ruined masonry, which is what the closing zone raises. A tiled hall has `pillar`, a column
@@ -321,6 +331,38 @@ export class Models {
       const cap = this.box(TILE_SIZE, 0.04, TILE_SIZE, this.poolTile(true), 0.003);
       cap.position.y = height + 0.02;
       g.add(body, band, cap);
+      return g;
+    }
+    if (theme === "backrooms") {
+      const g = new THREE.Group(),
+        height = BACKROOMS_CEILING;
+      // Papered from the carpet to the ceiling; the pattern runs on across neighbouring blocks.
+      const body = this.box(
+        TILE_SIZE,
+        height + 0.1,
+        TILE_SIZE,
+        this.materials.standard("backrooms-wall", "#ffffff", "ceramic", "backrooms-wall"),
+        0.003,
+      );
+      body.position.y = height / 2 - 0.05;
+      const skirting = this.box(
+        TILE_SIZE + 0.03,
+        0.13,
+        TILE_SIZE + 0.03,
+        this.materials.standard("backrooms-trim", "#4b3a20"),
+        0.003,
+      );
+      skirting.position.y = 0.065;
+      // Seen from overhead a wall is only its top, so that is pale against the dark carpet.
+      const cap = this.box(
+        TILE_SIZE,
+        0.04,
+        TILE_SIZE,
+        this.materials.standard("backrooms-cap", "#cfc49a"),
+        0.003,
+      );
+      cap.position.y = height + 0.02;
+      g.add(body, skirting, cap);
       return g;
     }
     if (theme === "rainforest") {

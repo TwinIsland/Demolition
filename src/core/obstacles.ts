@@ -96,6 +96,13 @@ preset("locker", "metal", 2.05, ["poolrooms"], 0.88);
 preset("planter", "soft", 1.9, ["poolrooms"], 0.92);
 preset("towel-cart", "soft", 1.5, ["poolrooms"], 0.8);
 
+// Backrooms
+preset("cardboard-boxes", "soft", 1.55, ["backrooms", "office"]);
+preset("filing-cabinet", "metal", 1.88, ["backrooms", "office"]);
+preset("office-desk", "wood", 1.35, ["backrooms", "office"]);
+preset("water-cooler", "soft", 1.52, ["backrooms", "office"], 0.6);
+preset("partition", "soft", 1.63, ["backrooms", "office"]);
+
 /** IDs accepted by maps written for earlier releases. */
 const LEGACY_IDS: Readonly<Record<string, string>> = { "low-bags": "bags" };
 const FALLBACK: readonly MapObstacle[] = [{ use: "set:storage", weight: 1 }];

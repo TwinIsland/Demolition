@@ -11,6 +11,7 @@ import {
   FIRE_LOOP,
   JUNGLE_LOOP,
   POOL_LOOP,
+  OFFICE_LOOP,
   MENU_MUSIC,
   MUSIC_VOLUME,
   RAIN_LOOP,
@@ -31,6 +32,7 @@ const STEP_FAMILY: Record<GroundKind, string> = {
   grass: "footstep-grass",
   mud: "footstep-mud",
   water: "footstep-water",
+  carpet: "footstep-carpet",
 };
 
 /** Levels for cues whose file is chosen by a content module, by the role they play. */
@@ -74,6 +76,7 @@ export class GameAudio {
     this.engine.setLoopLevel(RAIN_LOOP, 0);
     this.engine.setLoopLevel(JUNGLE_LOOP, 0);
     this.engine.setLoopLevel(POOL_LOOP, 0);
+    this.engine.setLoopLevel(OFFICE_LOOP, 0);
     this.engine.playMusic(MENU_MUSIC, { volume: MUSIC_VOLUME });
   }
 
@@ -214,7 +217,14 @@ export class GameAudio {
    */
   wildlife(mapId?: string) {
     const theme = MAPS.find((map) => map.id === mapId)?.theme;
-    const bed = theme === "rainforest" ? JUNGLE_LOOP : theme === "poolrooms" ? POOL_LOOP : undefined;
+    const bed =
+      theme === "rainforest"
+        ? JUNGLE_LOOP
+        : theme === "poolrooms"
+          ? POOL_LOOP
+          : theme === "backrooms"
+            ? OFFICE_LOOP
+            : undefined;
     if (bed === this.bed) return;
     if (this.bed) this.engine.setLoopLevel(this.bed, 0);
     if (bed) this.engine.setLoopLevel(bed, 1);

@@ -45,6 +45,19 @@ export const POOL_HALL: SkyLook = {
   fill: { sky: "#dff3f6", ground: "#4f8f98", intensity: 0.55 },
   fog: { color: "#8fb1b5", density: 0.0105 },
 };
+/**
+ * A windowless office floor under fluorescent panels. Dim and yellow on purpose: the walls are
+ * already loud, and the danger tiles and placement marks have to stay the brightest things on
+ * the carpet. The lamp pools themselves are painted by the surface shader.
+ */
+export const OFFICE_FLOOR: SkyLook = {
+  sky: "./assets/environment/overcast-sky.hdr",
+  backgroundIntensity: 0.12,
+  environmentIntensity: 0.36,
+  sun: { color: "#fff0c4", intensity: 0.32 },
+  fill: { sky: "#fff1c2", ground: "#7a6634", intensity: 0.62 },
+  fog: { color: "#6f6435", density: 0.013 },
+};
 export const JUNGLE_RAIN_SKY: SkyLook = {
   sky: "./assets/environment/overcast-sky.hdr",
   backgroundIntensity: 0.5,

@@ -67,9 +67,12 @@ const PALETTE: Record<string, Surface> = {
   "leaf-dark": { maps: "leaf", color: "#74906a", doubleSided: true, normal: 0.8 },
   // Poolrooms
   "pool-tile": { maps: "pool-tile", color: "#f4f7f5", normal: 0.9 },
+  // Backrooms
+  cardboard: { maps: "paint", diff: "paint-neutral", color: "#b08d5c", normal: 0.5 },
 };
 /** Texture sets that `standard` can use in place of the default concrete. */
-type SurfaceSet = "ruin-stone" | "pool-tile" | "pool-mosaic";
+type SurfaceSet =
+  "ruin-stone" | "pool-tile" | "pool-mosaic" | "backrooms-wall" | "backrooms-carpet" | "backrooms-ceiling";
 export const PALETTE_PREFIX = "df:";
 
 /** Downloaded PBR texture sets; color maps use sRGB, data maps stay linear. */
