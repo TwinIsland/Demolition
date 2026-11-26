@@ -1,4 +1,5 @@
 import { COMBAT } from "../combat";
+import { applyLevelGains, LEVEL_GAIN_TEXT } from "../level-rewards";
 import { modeRules } from "../match-modes";
 import { combatMessage } from "../combat-message";
 import { modifiedStat, perkById, rollPerks, SKILLS, SLOT_LIMIT } from "../content";
@@ -11,7 +12,7 @@ import { effectContext } from "./match";
 /** A run of all-silver offers this long guarantees a rarer card in the next one. */
 const SILVER_STREAK_LIMIT = 2;
 
-/** Score doubles as experience; crossing a threshold rolls a perk offer. */
+/** Score doubles as experience; crossing a threshold grants fixed gains and rolls a perk offer. */
 export function gainScore(ctx: SimContext, p: Player, value: number) {
   p.score += value;
   p.xp += value;
@@ -36,7 +37,12 @@ function offerUpgrades(ctx: SimContext, p: Player) {
       ? history.silverHands + 1
       : 0;
     ctx.offerHistory.set(p.id, history);
-    emit(ctx, p, combatMessage("升到 Lv.{0}", p.level), { type: "level" });
+    const gains = applyLevelGains(p, p.level);
+    const text = ["升到 Lv.{0}", ...gains.map((_, i) => `{${i + 1}}`)].join(" · ");
+    emit(ctx, p, combatMessage(text, p.level, ...gains.map((gain) => LEVEL_GAIN_TEXT[gain])), {
+      type: "level",
+      gains,
+    });
   }
 }
 

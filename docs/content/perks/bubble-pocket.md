@@ -8,7 +8,7 @@
 <tr><th>Weight within tier</th><td>1</td></tr>
 <tr><th>Tag</th><td>Firepower</td></tr>
 <tr><th><code>stats.amount</code></th><td>1</td></tr>
-<tr><th><code>stats.cap</code></th><td>5</td></tr>
+<tr><th><code>stats.cap</code></th><td>7</td></tr>
 </table>
 
 **Ammo Pouch** is a perk in Demolition Front. In the game it is described as:
@@ -17,8 +17,8 @@
 
 ## Behaviour
 
-- Adds `amount` to the number of charges you can have placed at once (base 2).
-- Offered until capacity reaches `cap`.
+- Adds `amount` to the number of charges you can have placed at once (base 2, and levels 2, 4, 6 and 8 each add one more).
+- Offered until capacity reaches `cap`, the ceiling shared with level gains.
 
 ## Source
 

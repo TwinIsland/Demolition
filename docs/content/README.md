@@ -42,7 +42,7 @@ Each level-up offers three perks. The tier is rolled first (Silver 61, Gold 30, 
 | [Conditioning](perks/armor-training.md) | Silver | 14% | – | – | Gain 25 max HP and recover 25 HP. |
 | [High Explosive](perks/long-wave.md) | Silver | 14% | stat cap 5 | – | Increase the blast range of all charges by one tile for the rest of the match. |
 | [Fleet Footed](perks/light-feet.md) | Silver | 14% | stat cap 3.3 | – | Increase movement speed by 12% for the rest of the match. |
-| [Ammo Pouch](perks/bubble-pocket.md) | Silver | 14% | stat cap 5 | – | Carry one additional active charge. |
+| [Ammo Pouch](perks/bubble-pocket.md) | Silver | 14% | stat cap 7 | – | Carry one additional active charge. |
 | [Salvage](perks/salvage.md) | Silver | 14% | – | – | Recover 3 HP for each piece of cover you destroy. Stacks. |
 | [Endurance](perks/endurance.md) | Silver | 14% | 3 stacks | – | Per stack: +25 max stamina, 15% faster stamina recovery, and 25 stamina restored at once. Up to 3 stacks. |
 | [Bounty Contract](perks/contract.md) | Silver | 14% | 2 stacks | – | Earn 40% more coins per stack, up to 2 stacks. |

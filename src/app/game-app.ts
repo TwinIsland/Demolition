@@ -1,3 +1,4 @@
+import { LEVEL_GAIN_TEXT } from "../core/level-rewards";
 import { preloadEverything } from "./preload";
 import { KeyboardAgent } from "../agents/keyboard-agent";
 import { MENU_MUSIC, Sound } from "../audio/sound";
@@ -622,7 +623,13 @@ export class GameApp {
     } else {
       if (this.ui.offerPerks(viewer)) this.sound.perkReady();
       if (viewer.level > this.displayedLevel) {
-        const { banner, cards } = this.ui.showPromotion(this.displayedLevel, viewer.level);
+        // The fixed gains of every level crossed since the banner last showed.
+        const gains = state.events
+          .flatMap((e) => (e.type === "level" && e.playerId === viewer.id ? [e.gains] : []))
+          .slice(this.displayedLevel - viewer.level)
+          .flat()
+          .map((gain) => LEVEL_GAIN_TEXT[gain]);
+        const { banner, cards } = this.ui.showPromotion(this.displayedLevel, viewer.level, gains);
         this.renderer.promotion(now, banner, cards);
         this.sound.levelUp();
         this.displayedLevel = viewer.level;

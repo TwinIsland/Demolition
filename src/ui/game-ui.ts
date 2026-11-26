@@ -304,8 +304,8 @@ export class GameUI {
   }
 
   /** Shows the level-up banner and returns the elements the renderer decorates with effects. */
-  showPromotion(from: number, to: number) {
-    return { banner: showRankBanner(this.hud, from, to), cards: this.perkTray.cards };
+  showPromotion(from: number, to: number, gains: string[]) {
+    return { banner: showRankBanner(this.hud, from, to, gains), cards: this.perkTray.cards };
   }
 
   setBattleFire(layer: BattleFireLayer, seconds?: number) {

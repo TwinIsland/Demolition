@@ -1,4 +1,5 @@
 /** Serializable contracts. This layer deliberately has no DOM or Three.js imports. */
+import type { LevelGain } from "./level-rewards";
 import type { CoverSurface } from "./pack-api";
 import type { Appearance, BotSlot, ZombieRate } from "./room";
 import type { MatchMode } from "./match-modes";
@@ -184,7 +185,9 @@ export interface ZombieHit {
   outcome: "hurt" | "killed";
 }
 export type GameEvent =
-  | EventBase<"bomb" | "blast" | "blast-contact" | "kill" | "level" | "build">
+  | EventBase<"bomb" | "blast" | "blast-contact" | "kill" | "build">
+  /** A level reached, with the fixed stat gains that took effect. */
+  | (EventBase<"level"> & { gains: LevelGain[] })
   /** A missile called on the event's cell, and its impact there. */
   | EventBase<"strike" | "strike-impact">
   | (EventBase<"equip"> & { item: Equipment })

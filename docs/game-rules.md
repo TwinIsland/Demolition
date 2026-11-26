@@ -53,7 +53,7 @@ Sources: `core/combat.ts`, `core/geometry.ts`, `core/systems/bombs.ts`, `RULES` 
 
 ## Score and levels
 
-Score doubles as experience and only drives perk offers.
+Score doubles as experience. Each level grants fixed stat gains and a perk offer.
 
 | Action | Score | Coins |
 | --- | --- | --- |
@@ -65,6 +65,23 @@ Score doubles as experience and only drives perk offers.
 | Destroy another operator's built crate | 0 | 2 |
 
 The first level-up needs 75, and each later one needs 50 more than the last (75, 125, 175, …). Wild mode halves these (38, 63, 88, …). Every level-up offers three perks, see [Probabilities](probabilities.md).
+
+Each level also grants fixed gains (`core/level-rewards.ts`). Levelling never heals: extra max HP arrives empty.
+
+| Level | Total score | Fixed gain | Capacity | Max HP | Range | Attack |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | 0 | – | 2 | 100 | 2 | 70 |
+| 2 | 75 | +1 capacity | 3 | 100 | 2 | 70 |
+| 3 | 200 | +10 max HP | 3 | 110 | 2 | 70 |
+| 4 | 375 | +1 capacity | 4 | 110 | 2 | 70 |
+| 5 | 600 | +1 range | 4 | 110 | 3 | 70 |
+| 6 | 875 | +1 capacity, +10 max HP | 5 | 120 | 3 | 70 |
+| 7 | 1200 | +10 attack | 5 | 120 | 3 | 80 |
+| 8 | 1575 | +1 capacity, +10 max HP | 6 | 130 | 3 | 80 |
+| 9 | 2000 | +1 range | 6 | 130 | 4 | 80 |
+| 10+ | +50 more per level | +10 max HP | 6 | +10 per level | 4 | 80 |
+
+The table shows standard mode without perks or mutations. Capacity from all sources stops at 7 and range at 5; a gain that would pass its ceiling is skipped, so Wild mode, which starts at 10 charges, gets no capacity from levels.
 
 ## Coins and crate building
 

@@ -109,7 +109,7 @@ const notes = {
     "Bots trigger it below 45% HP or with an enemy charge within 2.5 tiles.",
   ],
   "perks/armor-training": ["Adds `health` max HP and heals the same amount. No stack limit."],
-  "perks/bubble-pocket": ["Adds `amount` to the number of charges you can have placed at once (base 2).", "Offered until capacity reaches `cap`."],
+  "perks/bubble-pocket": ["Adds `amount` to the number of charges you can have placed at once (base 2, and levels 2, 4, 6 and 8 each add one more).", "Offered until capacity reaches `cap`, the ceiling shared with level gains."],
   "perks/capacitor": [
     "Multiplies the cooldown of every active skill by `factor` per stack (two stacks: ×0.64). Applied when the skill is cast.",
     "Requires at least one active skill. Offered until you hold `maxStacks`.",

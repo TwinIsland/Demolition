@@ -16,7 +16,7 @@ const config = {
   tier: "silver",
   order: 5,
   weight: 1,
-  stats: { amount: 1, cap: 5 },
+  stats: { amount: 1, cap: 7 },
 };
 
 export default config;
