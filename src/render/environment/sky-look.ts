@@ -38,11 +38,12 @@ export const OVERCAST_RAIN_SKY: SkyLook = {
  */
 export const POOL_HALL: SkyLook = {
   sky: "./assets/environment/overcast-sky.hdr",
-  backgroundIntensity: 0.9,
-  environmentIntensity: 0.95,
-  sun: { color: "#f3fbff", intensity: 0.7 },
-  fill: { sky: "#f2fdff", ground: "#6fb9c0", intensity: 1.15 },
-  fog: { color: "#d3ecec", density: 0.0105 },
+  // Kept dim on purpose: on a bright white deck the danger tiles and placement marks wash out.
+  backgroundIntensity: 0.5,
+  environmentIntensity: 0.45,
+  sun: { color: "#eaf6fb", intensity: 0.4 },
+  fill: { sky: "#dff3f6", ground: "#4f8f98", intensity: 0.55 },
+  fog: { color: "#8fb1b5", density: 0.0105 },
 };
 export const JUNGLE_RAIN_SKY: SkyLook = {
   sky: "./assets/environment/overcast-sky.hdr",

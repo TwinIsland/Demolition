@@ -48,7 +48,7 @@ export function buildPoolHall(root: THREE.Group, models: Models, state: Readonly
   };
 
   sheet(
-    m.standard("pool-floor", "#ffffff", "ceramic", "pool-mosaic"),
+    m.standard("pool-floor", "#a9c3c8", "ceramic", "pool-mosaic"),
     LINING_LEVEL,
     extent,
     extent,
@@ -56,9 +56,9 @@ export function buildPoolHall(root: THREE.Group, models: Models, state: Readonly
   sheet(m.water(), WATER_LEVEL, extent, extent);
 
   // The ceiling faces down only, so the overhead view looks straight through it.
-  const ceiling = sheet(m.standard("pool-ceiling", "#eef2f0"), POOL_CEILING, extent, extent);
+  const ceiling = sheet(m.standard("pool-ceiling", "#aeb9b9"), POOL_CEILING, extent, extent);
   ceiling.rotation.x = Math.PI;
-  const panel = m.lamp("#f1fdff", 1.9);
+  const panel = m.lamp("#f1fdff", 1.5);
   for (let z = -REACH; z < size + REACH; z++)
     for (let x = -REACH; x < size + REACH; x++) {
       // A panel over every second cell, except where a column meets the ceiling.
@@ -81,7 +81,7 @@ export function buildPoolHall(root: THREE.Group, models: Models, state: Readonly
 
   // Four walls close the hall. Each has tall openings with nothing but light behind them.
   const edge = extent / 2,
-    doorway = m.lamp("#f6ffff", 1.5);
+    doorway = m.lamp("#f6ffff", 1.2);
   for (let side = 0; side < 4; side++) {
     const turn = (side * Math.PI) / 2,
       along = new THREE.Vector3(Math.cos(turn), 0, -Math.sin(turn)),

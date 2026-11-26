@@ -44,7 +44,7 @@ export class Models {
     // The same for the tiled hall.
     this.wall("poolrooms", "pillar");
     this.poolSlab();
-    this.materials.standard("pool-floor", "#ffffff", "ceramic", "pool-mosaic");
+    this.materials.standard("pool-floor", "#a9c3c8", "ceramic", "pool-mosaic");
   }
   async preload(players: readonly Player[], includeDrops: boolean) {
     for (const p of players)
@@ -289,7 +289,7 @@ export class Models {
   }
   /** White glazed tile, or the same tile in the hall's accent colour. */
   poolTile(accent = false) {
-    return this.materials.standard("pool-tile", accent ? "#4fbfc4" : "#f6f9f7", "ceramic", "pool-tile");
+    return this.materials.standard("pool-tile", accent ? "#3fa9b0" : "#b4c1c2", "ceramic", "pool-tile");
   }
   /** The deck of one cell of a tiled hall. Cells without one show the pool lining and its water. */
   poolSlab() {
@@ -298,7 +298,7 @@ export class Models {
       TILE_SIZE,
       0.18,
       TILE_SIZE,
-      this.materials.standard("pool-deck", "#f6f9f7", "ceramic", "pool-tile"),
+      this.materials.standard("pool-deck", "#7f9195", "ceramic", "pool-tile"),
       0.003,
     );
   }

@@ -36,12 +36,12 @@ export default defineMap(
   {
     translations: {
       en: {
-        name: "Poolrooms",
+        name: "Pool",
         subtitle: "21 × 21 · Flooded tile halls",
       },
     },
     id: "poolrooms",
-    name: "池核泳池",
+    name: "泳池",
     subtitle: "21 × 21 · 浅水瓷砖大厅",
     order: 3,
     size: 21,

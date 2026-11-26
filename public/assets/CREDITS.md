@@ -170,7 +170,7 @@ Stains, moss, cracks, puddles, ripples, rain streaks and splashes are procedural
 
 The footsteps and the ambience loop are built by `scripts/make-jungle-sounds.py`.
 
-## Poolrooms map
+## Pool map
 
 | File | Source | Author | License | Changes |
 | --- | --- | --- | --- | --- |

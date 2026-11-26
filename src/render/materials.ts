@@ -271,7 +271,7 @@ export class MaterialLibrary {
     if (cached) return cached as THREE.MeshStandardMaterial;
     const mat = new THREE.MeshStandardMaterial({
       name: "pool-water",
-      color: "#2fb6c0",
+      color: "#1f97a4",
       roughness: 0.04,
       transparent: true,
       opacity: 0.56,

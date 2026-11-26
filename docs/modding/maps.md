@@ -7,7 +7,7 @@ A map is one `defineMap` call in `maps/<id>/index.js`. Types are in `src/core/pa
 | Outpost | `dream-garden` | 19 × 19 | Rain, concrete outpost |
 | Rainforest | `rainforest` | 31 × 31 | Grass and mud ground, temple ruins in the centre, inset spawns, longer zone timer |
 | Warehouse | `night-lab` | 17 × 17 | Night, close quarters |
-| Poolrooms | `poolrooms` | 21 × 21 | Indoor tiled hall, shallow pools kept open, columns on a fixed grid |
+| Pool | `poolrooms` | 21 × 21 | Indoor tiled hall, shallow pools kept open, columns on a fixed grid |
 
 ## Setup
 

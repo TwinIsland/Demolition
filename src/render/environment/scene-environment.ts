@@ -59,7 +59,7 @@ const WEATHER: Record<WeatherKind, Weather> = {
     mirror: false,
   },
   // No rain and no sky, but the tiles never dry: a film of water with standing sheets on the deck.
-  indoor: { sky: POOL_HALL, wet: 0.7, rain: 0, groundFog: [0.004, 0.25], lightning: false, mirror: true },
+  indoor: { sky: POOL_HALL, wet: 0.45, rain: 0, groundFog: [0.004, 0.25], lightning: false, mirror: true },
 };
 /** How much grime, streaking, moss and cracking each map theme shows. */
 const WEAR: Record<MapLook["theme"], [number, number, number, number]> = {
