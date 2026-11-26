@@ -1,6 +1,37 @@
-node_modules
-dist
-.pages-build
-.guard
-docs/.vitepress/cache
-.desktop-build
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.pages-build/
+.desktop-build/
+.guard/
+docs/.vitepress/cache/
+docs/.vitepress/dist/
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Local env
+.env
+.env.*
+!.env.example
+
+# OS files
+.DS_Store
+._*
+Thumbs.db
+desktop.ini
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
