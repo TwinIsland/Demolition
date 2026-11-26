@@ -48,7 +48,7 @@ export interface MapDefinition extends Pack {
   bgm?: string;
   artwork?: string;
   backdrop?: string;
-  theme: "garden" | "midnight" | "rainforest";
+  theme: "garden" | "midnight" | "rainforest" | "poolrooms";
   /** Cells between the boundary wall and each corner spawn. Defaults to 1, the corner itself. */
   spawnInset?: number;
   /**
@@ -61,8 +61,11 @@ export interface MapDefinition extends Pack {
    * texture. Presentation only. Defaults to the theme's own floor.
    */
   groundAt?(x: number, z: number, size: number): GroundKind | undefined;
-  /** Sky, fog and surface wetness. Presentation only; the simulation never reads it. Defaults to clear. */
-  weather?: "clear" | "rain" | "monsoon";
+  /**
+   * Sky, fog and surface wetness, or `indoor` for a lit hall with wet floors and no sky.
+   * Presentation only; the simulation never reads it. Defaults to clear.
+   */
+  weather?: "clear" | "rain" | "monsoon" | "indoor";
   /** Return a tile to override the default interior layout. Borders and spawns stay protected. */
   tileAt?(x: number, z: number, size: number, random: () => number): Tile | undefined;
   /** Supply layout preferences for moving surviving cover. Borders, walls and occupied cells stay protected. */
@@ -72,7 +75,7 @@ export interface MapDefinition extends Pack {
   ): Partial<Pick<MapDefinition, "density" | "wallDensity" | "tileAt">>;
 }
 
-export type GroundKind = "slab" | "grass" | "mud" | "stone";
+export type GroundKind = "slab" | "grass" | "mud" | "stone" | "water";
 /** The ground under a cell of a map, with the theme's default where the map does not say. */
 export const groundAt = (map: MapDefinition, x: number, z: number): GroundKind =>
   map.groundAt?.(Math.round(x), Math.round(z), map.size) ?? (map.theme === "rainforest" ? "grass" : "slab");

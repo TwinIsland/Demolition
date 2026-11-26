@@ -3,13 +3,20 @@ import { TILE_SIZE } from "../../core/geometry";
 import { motionScale } from "../../feel/settings";
 import { GroundReflection } from "./ground-reflection";
 import { Rain } from "./rain";
-import { CLEAR_SKY, JUNGLE_RAIN_SKY, OVERCAST_RAIN_SKY, type SkyLook, type SkyRig } from "./sky-look";
+import {
+  CLEAR_SKY,
+  JUNGLE_RAIN_SKY,
+  OVERCAST_RAIN_SKY,
+  POOL_HALL,
+  type SkyLook,
+  type SkyRig,
+} from "./sky-look";
 import { SurfaceWeathering, createWeatherUniforms, type DetailLevel } from "./surface-weathering";
 
-export type WeatherKind = "clear" | "rain" | "monsoon";
+export type WeatherKind = "clear" | "rain" | "monsoon" | "indoor";
 /** The part of a map definition that decides how its scene looks. */
 export interface MapLook {
-  theme: "garden" | "midnight" | "rainforest";
+  theme: "garden" | "midnight" | "rainforest" | "poolrooms";
   weather?: WeatherKind;
 }
 /** The graphics options this module reads. */
@@ -51,12 +58,16 @@ const WEATHER: Record<WeatherKind, Weather> = {
     // Grass and mud do not mirror, and a second pass over a large arena costs too much.
     mirror: false,
   },
+  // No rain and no sky, but the tiles never dry: a film of water with standing sheets on the deck.
+  indoor: { sky: POOL_HALL, wet: 0.7, rain: 0, groundFog: [0.004, 0.25], lightning: false, mirror: true },
 };
 /** How much grime, streaking, moss and cracking each map theme shows. */
 const WEAR: Record<MapLook["theme"], [number, number, number, number]> = {
   garden: [1, 0.9, 1, 0.9],
   midnight: [0.8, 1, 0.35, 1],
   rainforest: [0.9, 1, 1, 0.7],
+  // Tile profiles ignore wear; props in the hall stay nearly clean.
+  poolrooms: [0.15, 0.2, 0, 0.1],
 };
 const DETAIL: Record<EnvironmentQuality["detail"], { level: DetailLevel; density: number }> = {
   low: { level: 0, density: 0.3 },

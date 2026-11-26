@@ -89,6 +89,13 @@ preset("fallen-log", "wood", 1.3, ["rainforest"], 0.92);
 preset("ruin-pillar", "metal", 2.3, ["rainforest", "ruins"]);
 preset("idol", "metal", 2.1, ["rainforest", "ruins"], 0.9);
 
+// Poolrooms
+preset("swim-rings", "soft", 1.25, ["poolrooms"], 0.8);
+preset("lifeguard-chair", "metal", 2.4, ["poolrooms"], 0.7);
+preset("locker", "metal", 2.05, ["poolrooms"], 0.88);
+preset("planter", "soft", 1.9, ["poolrooms"], 0.92);
+preset("towel-cart", "soft", 1.5, ["poolrooms"], 0.8);
+
 /** IDs accepted by maps written for earlier releases. */
 const LEGACY_IDS: Readonly<Record<string, string>> = { "low-bags": "bags" };
 const FALLBACK: readonly MapObstacle[] = [{ use: "set:storage", weight: 1 }];

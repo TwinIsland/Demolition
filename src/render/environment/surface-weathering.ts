@@ -8,7 +8,18 @@ import { NOISE_GLSL } from "./noise.glsl";
  * instance's world position, and every mask is procedural noise in world space, so static
  * batches keep their draw calls.
  */
-export type SurfaceProfile = "structure" | "ground" | "terrain" | "soil" | "metal" | "prop";
+export type SurfaceProfile =
+  | "structure"
+  | "ground"
+  | "terrain"
+  | "soil"
+  | "metal"
+  | "prop"
+  // A tiled hall: walls, the deck people walk on, the pool lining and the water over it.
+  | "tile"
+  | "deck"
+  | "basin"
+  | "water";
 /**
  * 0: instance variation and plain wetness. 1: adds raindrop ripples and rivulets.
  * 2: adds grime, streaks, moss, cracks and a second ripple layer.
@@ -56,6 +67,10 @@ export function profileFor(material: THREE.Material): SurfaceProfile | undefined
   if (name === "floor") return "ground";
   if (name === "terrain") return "terrain";
   if (name === "soil") return "soil";
+  if (name === "pool-tile") return "tile";
+  if (name === "pool-deck") return "deck";
+  if (name === "pool-floor") return "basin";
+  if (name === "pool-water") return "water";
   if (name === "wall-base" || name === "platform") return "metal";
   if (name.startsWith("df:")) return name === "df:glass" ? undefined : "prop";
   return undefined;
@@ -118,6 +133,23 @@ const VERTEX_WORLD = /* glsl */ `
   vWxNormal = normalize(mat3(modelMatrix) * wxObjectNormal);
   #ifdef WX_REFLECT
     vWxReflUv = wxReflectionMatrix * wxWorld;
+  #endif
+  #ifdef WX_WORLD_UV
+  {
+    // Tiles are laid out in world space, so joints run unbroken from one block to the next.
+    vec3 wxFacing = abs(vWxNormal);
+    vec2 wxTileUv = (wxFacing.y > 0.6 ? wxWorld.xz : (wxFacing.x > wxFacing.z ? wxWorld.zy : wxWorld.xy))
+      * WX_WORLD_UV;
+    #ifdef USE_MAP
+      vMapUv = wxTileUv;
+    #endif
+    #ifdef USE_NORMALMAP
+      vNormalMapUv = wxTileUv;
+    #endif
+    #ifdef USE_ROUGHNESSMAP
+      vRoughnessMapUv = wxTileUv;
+    #endif
+  }
   #endif
 }
 `;
@@ -271,7 +303,7 @@ vec2 wxWaterSlope = vec2(0.0);
   vec2 wxPlane = abs(wxN.y) > 0.6 ? wxP.xz : (abs(wxN.x) > abs(wxN.z) ? wxP.zy : wxP.xy);
   float wxHeight = 0.0;
 
-  #ifdef USE_INSTANCING
+  #if defined(USE_INSTANCING) && !defined(WX_WORLD_UV)
     diffuseColor.rgb *= 1.0 + (vWxSeed.x - 0.5) * WX_TONE;
     diffuseColor.rgb *= mix(vec3(0.965, 1.0, 1.04), vec3(1.04, 1.0, 0.955), vWxSeed.z);
     roughnessFactor = clamp(roughnessFactor + (vWxSeed.w - 0.5) * 0.16, 0.04, 1.0);
@@ -332,6 +364,36 @@ vec2 wxWaterSlope = vec2(0.0);
         wxHeight -= wxCrack * 0.0025;
       }
     #endif
+  #endif
+
+  #ifdef WX_CAUSTICS
+  {
+    // Light focused by the ripples above: two drifting cell patterns, bright along their edges.
+    vec2 wxC = wxP.xz * 1.15;
+    vec2 wxSway = vec2(wxNoise(wxC * 0.6 + wxTime * 0.22), wxNoise(wxC * 0.6 + 9.1 - wxTime * 0.19)) - 0.5;
+    float wxNetA = wxVoronoiEdge(wxC + wxSway * 0.8 + vec2(wxTime * 0.06, 0.0));
+    float wxNetB = wxVoronoiEdge(wxC * 1.43 - wxSway * 0.6 + vec2(4.3, wxTime * 0.05));
+    float wxCaustic = (1.0 - smoothstep(0.0, 0.14, wxNetA)) * 0.65 + (1.0 - smoothstep(0.0, 0.1, wxNetB)) * 0.45;
+    diffuseColor.rgb *= 0.86 + wxCaustic * wxFacingUp * 0.8;
+  }
+  #endif
+  #ifdef WX_WATER
+  {
+    // A slow swell from three drifting noise layers, differentiated for the surface slope.
+    #define wxSwell(p) (wxNoise((p) * 0.8 + wxTime * 0.17) * 0.6 + wxNoise((p) * 2.1 - wxTime * 0.21) * 0.3 \
+      + wxNoise((p) * 5.3 + vec2(wxTime * 0.33, -wxTime * 0.27)) * 0.1)
+    float wxH = wxSwell(wxP.xz);
+    wxWaterSlope = vec2(wxSwell(wxP.xz + vec2(0.06, 0.0)) - wxH, wxSwell(wxP.xz + vec2(0.0, 0.06)) - wxH) / 0.06;
+    #if WX_LEVEL >= 1
+      wxWaterSlope += wxRipples(wxP.xz * 0.45) * 0.5;
+    #endif
+    vec3 wxSurface = normalize(vec3(-wxWaterSlope.x * 0.3, 1.0, -wxWaterSlope.y * 0.3));
+    normal = normalize((viewMatrix * vec4(wxSurface, 0.0)).xyz);
+    roughnessFactor = 0.035;
+    // Water hides its floor at a glancing angle and shows it from above.
+    float wxGlance = 1.0 - abs(dot(normal, normalize(vViewPosition)));
+    diffuseColor.a = mix(diffuseColor.a, 0.96, wxGlance * wxGlance * wxGlance);
+  }
   #endif
 
   if (wxWet > 0.001) {
@@ -437,7 +499,14 @@ const DEFINES: Record<SurfaceProfile, string[]> = {
   soil: ["WX_HEX", "WX_SOIL", "WX_PUDDLES", "WX_TONE 0.0", "WX_WET_DARKEN 0.85", "WX_WET_GLOSS 0.92"],
   metal: ["WX_TONE 0.12", "WX_WET_DARKEN 0.85", "WX_WET_GLOSS 0.4"],
   prop: ["WX_TONE 0.1", "WX_WET_DARKEN 0.72", "WX_WET_GLOSS 0.45"],
+  // One texture repeat is half a cell, which makes a wall tile 30 cm and a mosaic tile 15 cm.
+  tile: ["WX_WORLD_UV 0.8333333", "WX_TONE 0.0", "WX_WET_DARKEN 0.97", "WX_WET_GLOSS 0.75"],
+  deck: ["WX_WORLD_UV 0.8333333", "WX_PUDDLES", "WX_TONE 0.0", "WX_WET_DARKEN 0.95", "WX_WET_GLOSS 0.6"],
+  basin: ["WX_WORLD_UV 0.8333333", "WX_CAUSTICS", "WX_TONE 0.0", "WX_WET_DARKEN 1.0", "WX_WET_GLOSS 1.0"],
+  water: ["WX_WATER", "WX_TONE 0.0", "WX_WET_DARKEN 1.0", "WX_WET_GLOSS 1.0"],
 };
+/** Level surfaces that show the planar reflection when it is on. */
+const MIRRORS: ReadonlySet<SurfaceProfile> = new Set(["ground", "deck", "water"]);
 
 interface Patch {
   profile: SurfaceProfile;
@@ -473,13 +542,13 @@ export class SurfaceWeathering {
     const profile = profileFor(material);
     if (!profile) return;
     this.patched.set(material, { profile });
-    const key = () => `wx:${profile}:${this.level}:${profile === "ground" && this.reflect ? 1 : 0}`;
+    const key = () => `wx:${profile}:${this.level}:${MIRRORS.has(profile) && this.reflect ? 1 : 0}`;
     material.customProgramCacheKey = key;
     material.onBeforeCompile = (shader) => {
       // A material may bring uniforms of its own, such as the soil mask.
       Object.assign(shader.uniforms, this.uniforms, material.userData.wxUniforms);
       const defines = [...DEFINES[profile], `WX_LEVEL ${this.level}`];
-      if (profile === "ground" && this.reflect) defines.push("WX_REFLECT");
+      if (MIRRORS.has(profile) && this.reflect) defines.push("WX_REFLECT");
       const header = defines.map((define) => `#define ${define}`).join("\n") + "\n";
       shader.vertexShader = (header + shader.vertexShader)
         .replace("#include <common>", `#include <common>\n${VERTEX_PARS}`)

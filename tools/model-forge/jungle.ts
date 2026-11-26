@@ -12,7 +12,7 @@ const PI = Math.PI;
  * A leaf blade that leaves the origin along +X, starts at `rise` radians above the horizon and
  * bends down by `droop` radians over its length. U runs across the blade, V along it.
  */
-function blade(length: number, width: number, rise: number, droop: number, segments = 6, fold = 0.18) {
+export function blade(length: number, width: number, rise: number, droop: number, segments = 6, fold = 0.18) {
   const positions: number[] = [],
     uvs: number[] = [],
     index: number[] = [];
@@ -46,7 +46,7 @@ function blade(length: number, width: number, rise: number, droop: number, segme
 }
 
 /** A rosette of blades around the Y axis. */
-function rosette(
+export function rosette(
   f: Forge,
   material: string,
   random: () => number,
