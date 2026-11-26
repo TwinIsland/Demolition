@@ -30,6 +30,8 @@ const throwable = v.object({
   /** Share of the thrower's attack the explosion carries. */
   powerScale: v.optional(nonNegative),
   trajectory: v.optional(v.literal("lob", 'must be "lob"')),
+  /** Audio asset played where the item comes down, for everyone in earshot. */
+  landSound: v.optional(text),
   /** Ground fire lit on landing: cells from the centre, seconds alight, health lost per tick. */
   fire: v.optional(v.object({ radius: positive, duration: positive, damage: positive })),
 });

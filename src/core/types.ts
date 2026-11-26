@@ -200,8 +200,8 @@ export type GameEvent =
   | (EventBase<"level"> & { gains: LevelGain[] })
   /** A missile called on the event's cell, and its impact there. */
   | EventBase<"strike" | "strike-impact">
-  /** Ground fire lit on the event's cell. */
-  | EventBase<"ignite">
+  /** Ground fire lit on the event's cell, by the named thrown item when there was one. */
+  | (EventBase<"ignite"> & { item?: ItemId })
   | (EventBase<"equip"> & { item: Equipment })
   | (EventBase<"equipment" | "melee" | "pickup"> & { item: ItemId })
   | (EventBase<"cover-hit"> & { item: ItemId; coverSurface: CoverSurface })
