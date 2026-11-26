@@ -26,7 +26,7 @@ npm run build:desktop   # release build and installers
 | Windows | `nsis/Demolition_1.0.0_x64-setup.exe` and `msi/Demolition_1.0.0_x64_en-US.msi`; the bare program is `src-tauri/target/release/demolition.exe` |
 | macOS | `macos/Demolition.app` and `dmg/Demolition_1.0.0_aarch64.dmg` (or `x64` on Intel) |
 
-Each platform is built on that platform: Tauri does not cross-compile a Windows installer from macOS. For a universal macOS app, run `rustup target add x86_64-apple-darwin` once and then `npm run build:desktop -- --target universal-apple-darwin`.
+Each platform is built on that platform: Tauri does not cross-compile a Windows installer from macOS. Pushing a version tag (`git tag v1.0.1 && git push origin v1.0.1`) runs `.github/workflows/release-desktop.yml`, which builds both on GitHub Actions and attaches the installers to a GitHub Release. For a universal macOS app, run `rustup target add x86_64-apple-darwin` once and then `npm run build:desktop -- --target universal-apple-darwin`.
 
 The first build downloads and compiles the Rust dependencies and takes several minutes; later builds take well under a minute.
 

@@ -24,7 +24,7 @@ Dropped by cover, zombies and field supplies, or bought with coins in the supply
 | Item | Base drop weight | Shop price | Numbers | Effect |
 | --- | --- | --- | --- | --- |
 | [Knife](items/knife.md) | never drops | – | reach 0.94, damage 24, cooldown 0.36, inputBuffer 0.1, coverDamage 1 | Always available. Two strikes take down a zombie or break a piece of destructible cover. |
-| [Frag Grenade](items/grenade.md) | 2.4 | 35 | reach 4, flight 0.6, blastRange 2, fuse 1, powerScale 0.75, trajectory lob | Lob over walls and cover. Lands on a clear tile within four tiles and explodes one second after landing at 75% of your charge power. |
+| [Frag Grenade](items/grenade.md) | 2.4 | 35 | reach 4, flight 0.6, blastRange 2, powerScale 0.75, trajectory lob | Lob over walls and cover. Lands on a clear tile within four tiles and explodes on impact at 75% of your charge power. |
 | [Molotov](items/molotov.md) | 2.6 | 30 | reach 4, flight 0.6, trajectory lob | Lob over cover. It shatters on landing and sets the floor around it alight for 4.5 seconds, burning anyone who stands in the flames, you included. |
 | [Tactical Shield](items/shield.md) | 3.4 | 40 | duration 4.5 | Blocks melee and zombie attacks for up to 4.5 seconds. The first blast it absorbs shatters the shield. |
 | [Bandage](items/bandage.md) | 3 | 25 | heal 30 | Restore 30 HP. Kept in your inventory at full health. |

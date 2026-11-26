@@ -23,7 +23,7 @@ const notes = {
   ],
   "items/grenade": [
     "Lobbed over walls and cover to any clear tile within `reach` tiles, landing after `flight` seconds. A direct (low) throw uses the charge placement radius and needs a clear path.",
-    "After landing it lies there as a grenade for `fuse` seconds, then explodes in a cross of `blastRange` tiles at `powerScale` × the thrower's attack power.",
+    "It explodes the moment it lands, in a cross of `blastRange` tiles at `powerScale` × the thrower's attack power.",
     "The thrower takes normal blast damage from it, not the reduced damage of an own charge.",
     "Drop weight: `weight ÷ (1 + grenades held)`.",
   ],

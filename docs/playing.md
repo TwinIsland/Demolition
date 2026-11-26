@@ -56,7 +56,7 @@ The game is first person. Classic mode, and the Dimensional Collapse perk when s
 ## Things to know
 
 - Your own charge still hurts you, for a fifth of its power.
-- Grenades and Molotovs always show their arc and landing tile while equipped. Aim with the mouse and left-click to lob over cover. A grenade lies where it lands for one second before it explodes; a [Molotov](content/items/molotov.md) sets the floor alight and burns anyone in it, you included.
+- Grenades and Molotovs always show their arc and landing tile while equipped. Aim with the mouse and left-click to lob over cover. A grenade explodes the moment it lands; a [Molotov](content/items/molotov.md) sets the floor alight and burns anyone in it, you included.
 - The result screen types its report out before its buttons unlock. The medal can be dragged to spin it.
 - Cover drops gear more often the longer you go without a drop, and more often when you are hurt or empty-handed. See [Probabilities](probabilities.md).
 - The [knife](content/items/knife.md) is always with you. Two strikes break cover or kill a zombie.

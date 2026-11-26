@@ -1,0 +1,54 @@
+# Builds the Tauri desktop app for Windows and macOS and attaches the installers to a GitHub
+# Release. Runs when a version tag such as v1.0.0 is pushed.
+name: Release desktop builds
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+            args: ""
+            targets: ""
+          # One universal app that runs on both Apple silicon and Intel Macs.
+          - platform: macos-latest
+            args: --target universal-apple-darwin
+            targets: aarch64-apple-darwin,x86_64-apple-darwin
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.targets }}
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: npm ci
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: Demolition ${{ github.ref_name }}
+          releaseBody: |
+            Desktop builds of Demolition.
+
+            - Windows: run the `-setup.exe` installer (or the `.msi`).
+            - macOS: open the `.dmg` and drag Demolition to Applications. The app is universal (Apple silicon and Intel).
+
+            The builds are not code-signed. Windows SmartScreen shows "Windows protected your PC": choose More info, then Run anyway. On macOS, right-click the app and choose Open the first time; if it is reported as damaged, run `xattr -cr /Applications/Demolition.app`.
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
