@@ -109,8 +109,8 @@ export class GameRenderer {
   private dynamic = new THREE.Group();
   private hand: MinecraftAvatar;
   private flights = new Map<number, THREE.Group>();
-  private groundFire = new GroundFire();
-  private sweep?: { id: number; cells: FireCell[] };
+  private groundFire = new GroundFire(this.assets.manager);
+  private sweep?: { id: number; cells: FireCell[]; from: number; until: number };
   private vapor = new THREE.TextureLoader(this.assets.manager).load("./assets/smoke-cloud.png");
   private offerFire = new OfferFire(this.vapor);
   private strikes = new StrikeEffect(this.assets.manager, this.models.materials, this.vapor);
@@ -568,12 +568,22 @@ export class GameRenderer {
   private sweepFire(state: Readonly<GameSnapshot>): readonly FireCell[] {
     const reset = state.terrainReset;
     if (!reset?.scorch || reset.completedAt === undefined) {
+      // The snapshot drops the reset before the last flames are out; let them burn down.
+      const sweep = this.sweep;
+      if (sweep && state.phase === "playing" && state.time >= sweep.from && state.time < sweep.until)
+        return sweep.cells;
       this.sweep = undefined;
       return [];
     }
     if (this.sweep?.id !== reset.id) {
-      const duration = 1.25,
-        cells: FireCell[] = [];
+      // The fire rolls outward from whoever called it down, then burns for a moment everywhere.
+      const duration = 1.1,
+        speed = 16,
+        cells: FireCell[] = [],
+        origin = state.players.find((p) => p.id === reset.ownerId) ?? {
+          x: state.size / 2,
+          z: state.size / 2,
+        };
       state.tiles.forEach((row, z) =>
         row.forEach((tile, x) => {
           if (tile === 0)
@@ -584,11 +594,16 @@ export class GameRenderer {
               ownerId: reset.ownerId,
               damage: 0,
               duration,
-              expiresAt: reset.completedAt! + duration,
+              expiresAt: reset.completedAt! + Math.hypot(x - origin.x, z - origin.z) / speed + duration,
             });
         }),
       );
-      this.sweep = { id: reset.id, cells };
+      this.sweep = {
+        id: reset.id,
+        cells,
+        from: reset.completedAt,
+        until: Math.max(...cells.map((cell) => cell.expiresAt), reset.completedAt),
+      };
     }
     return this.sweep.cells;
   }

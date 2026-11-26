@@ -45,7 +45,7 @@ export class KeyboardAgent implements PlayerAgent {
   private boardMode = false;
   private boardYaw = 0;
   private plantHere = false;
-  private buildRequested = false;
+  private buildRequested?: Shot;
   private shot?: Shot;
   private pendingPlace?: { shot: Shot; until: number };
   private queuedSwing?: Equipment;
@@ -222,7 +222,7 @@ export class KeyboardAgent implements PlayerAgent {
     this.boardMode = active;
     this.boardYaw = this.yaw;
     this.plantHere = this.jump = this.dragging = false;
-    this.buildRequested = false;
+    this.buildRequested = undefined;
     this.shot = this.queuedSwing = undefined;
     this.pendingPlace = undefined;
     this.selectedEquipment = this.submittedEquipment = undefined;
@@ -236,7 +236,7 @@ export class KeyboardAgent implements PlayerAgent {
   }
   set selectingWheel(active: boolean) {
     if (active) {
-      this.buildRequested = false;
+      this.buildRequested = undefined;
       this.pendingPlace = undefined;
       this.shot = this.queuedSwing = undefined;
     }
@@ -255,7 +255,8 @@ export class KeyboardAgent implements PlayerAgent {
     }
     this.keys.add(code);
     if (action === "resetTerrain") this.resetTerrain = true;
-    if (action === "build" && !this.selectingWheel) this.buildRequested = true;
+    if (action === "build" && !this.selectingWheel)
+      this.buildRequested = { yaw: this.yaw, pitch: this.pitch };
     if (this.boardMode) return;
     if (action === "jump") this.jump = true;
     if (action === "use" && !this.selectingWheel) this.shot = { yaw: this.yaw, pitch: this.pitch };
@@ -303,7 +304,7 @@ export class KeyboardAgent implements PlayerAgent {
   }
   clear() {
     this.plantHere = false;
-    this.buildRequested = false;
+    this.buildRequested = undefined;
     this.resetTerrain = false;
     this.jump = false;
     this.activePerk = this.perkTarget = undefined;
@@ -328,6 +329,7 @@ export class KeyboardAgent implements PlayerAgent {
     if (!this.selectedPerk) this.perkCursor = undefined;
     this.setTopDown(self.alive && inTacticalView(self, state.time));
     if (!this.enabled) return idleInput(this.yaw);
+    const building = !!this.buildRequested && self.alive && state.phase === "playing" && !this.selectingWheel;
     const shared: Partial<PlayerInput> = {
       resetTerrain: this.resetTerrain && state.canResetTerrain && state.phase === "playing",
       usePerk: this.activePerk,
@@ -335,10 +337,15 @@ export class KeyboardAgent implements PlayerAgent {
       sprint: this.held("sprint"),
       activateSkill: this.skill,
       buyItem: this.supply,
-      build: this.buildRequested && self.alive && state.phase === "playing" && !this.selectingWheel,
+      build: building,
+      // Aimed exactly like a planted charge. The top-down view has no aim: the cell ahead it is.
+      buildTarget:
+        building && !this.boardMode
+          ? aimCell(self, this.buildRequested!.yaw, this.buildRequested!.pitch, "bomb", state.time)
+          : undefined,
     };
     this.resetTerrain = false;
-    this.buildRequested = false;
+    this.buildRequested = undefined;
     this.skill = this.activePerk = this.supply = this.perkTarget = undefined;
     if (this.boardMode) {
       let moveX = 0,

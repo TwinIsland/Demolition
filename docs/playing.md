@@ -40,7 +40,7 @@ Every key can be rebound in the in-game manual.
 
 ## Views
 
-The game is first person. Classic mode, and the Dimensional Collapse perk when someone else triggers it, put you in a top-down view that plays like the classic genre: four-way movement, Space plants a charge on your own tile, and jumping and gear are off; crates, skills and perks still work.
+The game is first person. Classic mode, and the Dimensional Collapse perk when someone else triggers it, put you in a top-down view that plays like the classic genre: four-way movement one tile at a time (tap for one tile, hold to keep walking), Space plants a charge on your own tile, and jumping and gear are off; crates, skills and perks still work.
 
 ![Top-down view](media/top-down.jpg)
 
@@ -62,4 +62,4 @@ The game is first person. Classic mode, and the Dimensional Collapse perk when s
 - The [knife](content/items/knife.md) is always with you. Two strikes break cover or kill a zombie.
 - A [shield](content/items/shield.md) blocks one whole explosion. It does nothing against the final firestorm.
 - Level 3 zombies always grant a [mutation](content/README.md#mutations).
-- Right-click to spend coins building a wooden crate ahead. Built crates block blasts and can seal a lane or cover a retreat. They are not carried or sold in the supply shop.
+- Right-click to spend coins building a wooden crate on the tile you aim at, within the same reach as a charge. Built crates block blasts and can seal a lane or cover a retreat. They are not carried or sold in the supply shop.

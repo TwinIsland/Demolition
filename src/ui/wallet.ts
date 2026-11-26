@@ -1,6 +1,5 @@
 import { t } from "../i18n";
 import { BUILD } from "../core/economy";
-import { canBuild } from "../core/systems/building";
 import { keyHint } from "./control-settings";
 import { query, replayAnimation, setText } from "./dom";
 import { icon } from "./icons";
@@ -39,7 +38,7 @@ export class WalletView implements HudView {
     setText(this.buildCost, String(BUILD.cost));
     this.buildHint.title = t("建造木箱 · {0} 金币", BUILD.cost);
     this.buildHint.hidden = !viewer.alive || snapshot.phase !== "playing";
-    this.buildHint.style.opacity = canBuild(snapshot, viewer) ? "1" : "0.45";
+    this.buildHint.style.opacity = credits >= BUILD.cost ? "1" : "0.45";
 
     // A new match or another viewer: show the balance without animating the difference.
     if (this.target === undefined || this.owner !== viewer.id || !viewer.alive) {

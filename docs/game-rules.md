@@ -48,6 +48,7 @@ Wild values are the `WILD` preset in `core/match-modes.ts`. Wild also regenerate
 - After blast or zombie damage you are immune for 1.3 s. After a knife hit, 0.3 s.
 - Cover has 2 durability against the knife. Any blast destroys it.
 - In overhead view a charge is planted on the tile you stand on, and you walk off it.
+- Overhead movement is tile by tile (`moveOnGrid` in `core/systems/movement.ts`): you stand on tile centres, a tap walks exactly one tile, a held key keeps walking without pausing, and a turn pressed during a step is taken when the step ends (0.22 s buffer). A step that gets blocked midway returns to the tile it left. A Slide Kick triggers from the neighbouring tile, since you cannot lean into the charge.
 
 Sources: `core/combat.ts`, `core/geometry.ts`, `core/systems/bombs.ts`, `RULES` in `core/content.ts`.
 
@@ -88,7 +89,7 @@ The table shows standard mode without perks or mutations. Capacity from all sour
 Source: `core/economy.ts`, `core/systems/building.ts`, the [Field Crate](content/items/crate.md) item.
 
 - Coins left after the skill shop, plus coins earned in the match, pay for building and the [supply shop](#supply-shop).
-- Right-click to build a crate on the tile ahead, without changing equipment or buying an item first. Every crate costs 25 coins and stands at once, with no build time.
+- Right-click to build a crate on the tile you aim at, without changing equipment or buying an item first. It is aimed like a planted charge and reaches as far (the placement radius, 2 tiles by default). Every crate costs 20 coins and stands at once, with no build time. In the top-down view it goes on the tile ahead.
 - There is no limit on how many crates you can have standing at once; each site must still be clear and affordable.
 - A built crate blocks movement and blasts like any cover and has the same durability. It gives no score, but drops loot with the same chance as any other cover. It shows the builder's emblem.
 

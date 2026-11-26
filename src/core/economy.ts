@@ -11,7 +11,7 @@ export const COINS = {
 /** Direct crate building: pay coins to build on the cell ahead, without an inventory item. */
 export const BUILD = {
   /** Flat price of every crate. */
-  cost: 25,
+  cost: 20,
 } as const;
 
 /** Player-built crates are always wooden, whatever the map's cover looks like. */

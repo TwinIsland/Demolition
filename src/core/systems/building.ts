@@ -1,6 +1,7 @@
 import { COMBAT } from "../combat";
 import { modifiedStat, RULES } from "../content";
 import { BUILD, COINS } from "../economy";
+import { placementRadius } from "../placement";
 import { zoneBurning, zoneClearing } from "../zone";
 import type { GameSnapshot, Player, Vec2 } from "../types";
 import type { SimContext } from "./context";
@@ -25,9 +26,14 @@ export function removeBuiltCrate(s: GameSnapshot, x: number, z: number) {
   if (s.builtCrates) s.builtCrates = s.builtCrates.filter((crate) => crate.x !== x || crate.z !== z);
 }
 
-/** Whether the player could build on `cell` right now. Shared with the HUD and the bots. */
+/**
+ * Whether the player could build on `cell` right now. Shared with the bots. A crate reaches as far
+ * as a planted charge does: any free cell within the placement radius.
+ */
 export function canBuild(s: Readonly<GameSnapshot>, p: Player, cell: Vec2 = cellAhead(p)) {
   const { x, z } = cell;
+  if (!Number.isInteger(x) || !Number.isInteger(z)) return false;
+  if (Math.hypot(x - Math.round(p.x), z - Math.round(p.z)) > placementRadius(p, s.time)) return false;
   const overlaps = (body: Vec2) => Math.abs(body.x - x) < FOOTPRINT && Math.abs(body.z - z) < FOOTPRINT;
   return (
     s.phase === "playing" &&
@@ -44,10 +50,10 @@ export function canBuild(s: Readonly<GameSnapshot>, p: Player, cell: Vec2 = cell
   );
 }
 
-/** Pays for a crate and stands it on the cell ahead at once. */
-export function build(ctx: SimContext, p: Player) {
+/** Pays for a crate and stands it on the aimed cell at once; without an aim, on the cell ahead. */
+export function build(ctx: SimContext, p: Player, target?: Vec2) {
   const s = ctx.state,
-    site = cellAhead(p);
+    site = target ?? cellAhead(p);
   if (!canBuild(s, p, site)) return false;
   p.credits -= BUILD.cost;
   s.tiles[site.z][site.x] = 2;

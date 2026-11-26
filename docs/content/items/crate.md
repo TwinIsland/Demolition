@@ -12,12 +12,12 @@
 
 **Field Crate** is an item in Demolition Front. In the game it is described as:
 
-> Right-click to build a wooden crate ahead instantly for 25 coins.
+> Right-click to build a wooden crate on the aimed tile instantly for 20 coins. Reaches as far as a planted charge.
 
 ## Behaviour
 
-- Right-click: pays coins and stands a crate on the tile ahead at once, independently of equipped gear.
-- Always costs 25 coins (`BUILD.cost`). Never dropped, carried, equipped or sold in the supply shop.
+- Right-click: pays coins and stands a crate on the aimed tile at once (same reach as a planted charge), independently of equipped gear.
+- Always costs 20 coins (`BUILD.cost`). Never dropped, carried, equipped or sold in the supply shop.
 - No standing-crate limit. The tile must be free of operators, zombies, items, charges and fire.
 - A built crate behaves like cover with durability 2, but gives no score. Breaking it rolls loot with the same chance as any other cover. Another operator who destroys it gets 2 coins. It shows the builder's emblem.
 

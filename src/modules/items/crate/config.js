@@ -3,12 +3,13 @@ const config = {
   translations: {
     en: {
       name: "Field Crate",
-      description: "Right-click to build a wooden crate ahead instantly for 25 coins.",
+      description:
+        "Right-click to build a wooden crate on the aimed tile instantly for 20 coins. Reaches as far as a planted charge.",
     },
   },
   id: "crate",
   name: "木箱",
-  description: "右键花 25 金币在面前瞬间搭建木箱。",
+  description: "右键花 20 金币在瞄准的格子瞬间搭建木箱，范围和放炸药一样。",
   icon: "crate",
   color: "#c9a26b",
   model: new URL("./model.glb", import.meta.url).href,

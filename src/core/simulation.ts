@@ -141,7 +141,7 @@ export class Simulation {
     if (HAS_TICK_HOOKS) eachOwned(p, (m, n) => m.onTick?.(p, s, dt, n));
     move(ctx, p, input, dt, inTacticalView(p, stepStart));
     if (input.activateSkill) activateSkill(ctx, p, input.activateSkill, stepStart);
-    if (input.build) build(ctx, p);
+    if (input.build) build(ctx, p, input.buildTarget);
     if (input.buyItem) buySupply(ctx, p, input.buyItem);
     if (inTacticalView(p, stepStart)) {
       // Overhead, as in classic arena bombers, the bomb drops on the cell the player stands on.

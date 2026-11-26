@@ -37,8 +37,10 @@ export interface PlayerInput {
   meleeYaw?: number;
   /** Tactical View: drop a bomb on the cell the player stands on, independently of held equipment. */
   plantHere?: boolean;
-  /** Spend coins to build a crate on the cell ahead, independently of equipped gear. */
+  /** Spend coins to build a crate, independently of equipped gear. */
   build?: boolean;
+  /** Where the crate goes, aimed like a planted charge. Absent: the cell ahead. */
+  buildTarget?: Vec2;
   activateSkill?: SkillId;
   /** Take one perk from the current offer. */
   choosePerk?: PerkId;
@@ -111,6 +113,13 @@ export interface Player extends Vec2 {
   cooldowns: Record<SkillId, number>;
   /** Bomb the player is currently pushing against, and since when. Drives the Slide Kick windup. */
   kickPush?: Vec2 & { bombId: number; since: number };
+  /**
+   * Overhead view only: the tile the player is walking to and the direction of that step (zero
+   * while walking back onto the grid). `queued` is a turn pressed during the step.
+   */
+  gridStep?: Vec2 & { dx: number; dz: number; queued?: GridTurn };
+  /** A turn buffered by the step that just ended, taken at the tile centre if still fresh. */
+  gridQueued?: GridTurn;
 }
 export interface Bomb extends Vec2 {
   /** Destructible obstacles the blast passes through (destroying them) before it stops. */
@@ -220,6 +229,13 @@ export interface Zombie extends Vec2 {
   yaw: number;
   destination: Vec2;
 }
+/** A buffered direction for grid movement and the simulation time it was pressed. */
+export interface GridTurn {
+  dx: number;
+  dz: number;
+  at: number;
+}
+
 export const inTacticalView = (p: Readonly<Player>, time: number) =>
   (p.forcedViewUntil ?? 0) > time || !!p.tacticalView;
 export const isCloaked = (p: Readonly<Player>, time: number) => (p.cloakUntil ?? 0) > time;

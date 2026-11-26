@@ -24,6 +24,7 @@ export class LocalMatchSession implements MatchSession {
       jump: !!(prior?.jump || input.jump),
       resetTerrain: !!(prior?.resetTerrain || input.resetTerrain),
       build: !!(prior?.build || input.build),
+      buildTarget: input.build ? input.buildTarget : prior?.buildTarget,
       useEquipment: !!(prior?.useEquipment || input.useEquipment),
       plantHere: !!(prior?.plantHere || input.plantHere),
       meleeYaw: input.useEquipment ? input.meleeYaw : prior?.meleeYaw,

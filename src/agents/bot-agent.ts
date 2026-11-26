@@ -19,7 +19,7 @@ import type {
   SkillId,
   Vec2,
 } from "../core/types";
-import { canBuild, cellAhead } from "../core/systems/building";
+import { canBuild } from "../core/systems/building";
 import { supplyPrice, supplyRefusal } from "../core/systems/supply";
 import { ZONE, zoneIgnitesIn } from "../core/zone";
 import { BombForecast } from "./bomb-forecast";
@@ -354,7 +354,8 @@ export class BotAgent implements PlayerAgent {
       const site = this.planBuild(s, p, enemies, f);
       if (site && !input.useEquipment && !input.plantHere) {
         weaponAim = site;
-        if (same(cellAhead(p), site) || !normal) input.build = true;
+        input.build = true;
+        input.buildTarget = site;
       }
       this.facingTarget = normal ? weaponAim : undefined;
     }
@@ -437,7 +438,7 @@ export class BotAgent implements PlayerAgent {
         Math.abs(dx) > Math.abs(dz)
           ? { x: here.x + Math.sign(dx), z: here.z }
           : { x: here.x, z: here.z + Math.sign(dz) };
-      if (canBuild(s, { ...p, yaw: bearing(p, site) }, site)) return site;
+      if (canBuild(s, p, site)) return site;
     }
   }
 
