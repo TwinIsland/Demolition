@@ -1,12 +1,13 @@
 # Map mods
 
-A map is one `defineMap` call in `maps/<id>/index.js`. Types are in `src/core/pack-api.ts`, generation in `src/core/maps.ts`, obstacle presets in `src/core/obstacles.ts`. The three built-in maps are complete examples:
+A map is one `defineMap` call in `maps/<id>/index.js`. Types are in `src/core/pack-api.ts`, generation in `src/core/maps.ts`, obstacle presets in `src/core/obstacles.ts`. The four built-in maps are complete examples:
 
 | Map | ID | Size | Notes |
 | --- | --- | --- | --- |
 | Outpost | `dream-garden` | 19 × 19 | Rain, concrete outpost |
 | Rainforest | `rainforest` | 31 × 31 | Grass and mud ground, temple ruins in the centre, inset spawns, longer zone timer |
 | Warehouse | `night-lab` | 17 × 17 | Night, close quarters |
+| Poolrooms | `poolrooms` | 21 × 21 | Indoor tiled hall, shallow pools kept open, columns on a fixed grid |
 
 ## Setup
 
@@ -43,8 +44,8 @@ export default defineMap(
 | `density` | 0 to 1. Chance that an open interior tile starts with destructible cover |
 | `wallDensity` | 0 to 1. Share of interior tiles turned into permanent walls. Omit for the classic pillar grid |
 | `wallShuffle` | 0 to 1. Share of generated walls that move on a terrain reshuffle. Needs `wallDensity`. Default 0 |
-| `theme` | `"garden"` (daylight, outdoor), `"midnight"` (night, industrial) or `"rainforest"` (grass ground, forest scenery, tree and rock walls) |
-| `weather` | `"clear"` (default), `"rain"` or `"monsoon"` (rain with thicker, greener mist). Presentation only |
+| `theme` | `"garden"` (daylight, outdoor), `"midnight"` (night, industrial), `"rainforest"` (grass ground, forest scenery, tree and rock walls) or `"poolrooms"` (white tile hall under a ceiling of light panels, shallow water, walls on every fourth cell become columns) |
+| `weather` | `"clear"` (default), `"rain"`, `"monsoon"` (rain with thicker, greener mist) or `"indoor"` (no sky or rain, wet reflective floor). Presentation only |
 | `spawnInset` | Cells between the boundary wall and each of the four spawns, measured along the diagonal. Default 1, the corners. Use a larger value on big maps so operators meet sooner |
 | `zoneScale` | Multiplier on the match length chosen in the room. Default 1. A map with many rings needs more time per match |
 | `obstacles` | Weighted pool of cover models. Defaults to the `storage` set |
@@ -82,7 +83,7 @@ The renderer batches a map larger than 21 cells in a 3 × 3 grid of chunks, so t
 
 ## Ground
 
-`groundAt(x, z, size)` in the layout object tells the engine what each cell's ground is: `"slab"`, `"stone"`, `"grass"` or `"mud"`. It selects the footstep sound (hard, grass or mud). On a `rainforest` map it also drives the look: grass and mud are blended into one continuous ground, and `"stone"` cells are paved. Without it, a `rainforest` map is all grass and the other themes are all slab.
+`groundAt(x, z, size)` in the layout object tells the engine what each cell's ground is: `"slab"`, `"stone"`, `"grass"`, `"mud"` or `"water"`. It selects the footstep sound (hard, grass, mud or splash). On a `rainforest` map it also drives the look: grass and mud are blended into one continuous ground, and `"stone"` cells are paved. On a `poolrooms` map, `"water"` cells have no deck: the pool lining and its water show instead, so keep them open in `tileAt`, because obstacles stand at deck height. Without it, a `rainforest` map is all grass and the other themes are all slab.
 
 ```js
 groundAt(x, z, size) {
@@ -129,6 +130,11 @@ Presets are defined in `src/core/obstacles.ts`:
 | `fallen-log` | wood | 1.3 | rainforest |
 | `ruin-pillar` | metal | 2.3 | rainforest, ruins |
 | `idol` | metal | 2.1 | rainforest, ruins |
+| `swim-rings` | soft | 1.25 | poolrooms |
+| `lifeguard-chair` | metal | 2.4 | poolrooms |
+| `locker` | metal | 2.05 | poolrooms |
+| `planter` | soft | 1.9 | poolrooms |
+| `towel-cart` | soft | 1.5 | poolrooms |
 
 `built-crate` is reserved for crates built by players and is never drawn from a pool.
 

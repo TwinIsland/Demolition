@@ -58,6 +58,9 @@ const CUES = {
   "footstep-mud-0": sfx(0.3, { pitchJitter: 0.05 }),
   "footstep-mud-1": sfx(0.3, { pitchJitter: 0.05 }),
   "footstep-mud-2": sfx(0.3, { pitchJitter: 0.05 }),
+  "footstep-water-0": sfx(0.3, { pitchJitter: 0.06 }),
+  "footstep-water-1": sfx(0.3, { pitchJitter: 0.06 }),
+  "footstep-water-2": sfx(0.3, { pitchJitter: 0.06 }),
   // Pitch stays fixed: the beep is a timing signal.
   "fuse-tick": sfx(0.32, { voices: 4, minInterval: 0.02 }),
   blast: sfx(0.5, { voices: 4, minInterval: 0.06, pitchJitter: 0.04 }),
@@ -91,6 +94,8 @@ export const FIRE_LOOP: CueSpec = { url: "./assets/arena-fire.ogg", ...sfx(0.8, 
 export const RAIN_LOOP: CueSpec = { url: "./assets/environment/rain.ogg", ...sfx(0.3, { voices: 1 }) };
 /** Insects, birds and frogs under the rain on forest maps. */
 export const JUNGLE_LOOP: CueSpec = { url: "./assets/environment/jungle.ogg", ...sfx(0.34, { voices: 1 }) };
+/** Light ballasts, ventilation and lapping water in a tiled hall. */
+export const POOL_LOOP: CueSpec = { url: "./assets/environment/poolrooms.ogg", ...sfx(0.5, { voices: 1 }) };
 const thunder = (name: string): CueSpec => ({
   url: `./assets/environment/${name}.ogg`,
   ...sfx(0.7, { voices: 1, minInterval: 2, pitchJitter: 0.06 }),

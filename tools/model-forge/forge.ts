@@ -4,6 +4,7 @@ import { obstacles } from "./obstacles";
 import { items } from "./items";
 import { ordnance } from "./ordnance";
 import { jungle } from "./jungle";
+import { pool } from "./pool";
 
 const builders: Record<string, () => THREE.Group> = {
   ...Object.fromEntries(
@@ -17,6 +18,9 @@ const builders: Record<string, () => THREE.Group> = {
   ),
   ...Object.fromEntries(
     Object.entries(jungle).map(([id, build]) => [`jungle/${id}`, build]),
+  ),
+  ...Object.fromEntries(
+    Object.entries(pool).map(([id, build]) => [`pool/${id}`, build]),
   ),
 };
 async function exportModel(id: string) {

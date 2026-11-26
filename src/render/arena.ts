@@ -7,6 +7,7 @@ import type { Models } from "./models";
 import { StaticBatches } from "./static-batches";
 import { groundAt } from "../core/pack-api";
 import { buildJungle } from "./jungle-scenery";
+import { COLUMN_PITCH, buildPoolHall } from "./pool-hall";
 export { TILE_SIZE };
 export const world = (value: number, size: number) => (value - (size - 1) / 2) * TILE_SIZE;
 
@@ -57,10 +58,19 @@ export class Arena {
     const size = state.size,
       width = size * TILE_SIZE,
       map = MAPS.find((m) => m.id === state.mapId)!,
-      jungle = map.theme === "rainforest";
+      jungle = map.theme === "rainforest",
+      pool = map.theme === "poolrooms";
     const m = models.materials;
     // Which permanent walls of a natural map are trees or rock instead of masonry.
     const wallVariant = (x: number, z: number, scattered: boolean) => {
+      // In a tiled hall every wall on the column grid that never moves carries the ceiling.
+      if (
+        pool &&
+        x % COLUMN_PITCH === 0 &&
+        z % COLUMN_PITCH === 0 &&
+        state.wallOrigins?.[z * size + x] === undefined
+      )
+        return "pillar" as const;
       if (!jungle) return "block" as const;
       const roll = ((Math.imul(x * 73856093 + z * 19349663, 83492791) >>> 0) % 100) / 100;
       // Walls the map fixes are masonry: the temple. The scattered ones are mostly forest.
@@ -72,7 +82,7 @@ export class Arena {
     const coverAt = coverLayout(map, state.seed);
     const playerBuilt = new Set(builtCrates(state).map((crate) => crate.z * size + crate.x));
     this.coverRevision = state.coverRevision ?? 0;
-    if (!jungle) {
+    if (!jungle && !pool) {
       const base = models.box(
         width + 0.55,
         1.5,
@@ -88,7 +98,14 @@ export class Arena {
         const px = world(x, size),
           pz = world(z, size);
         // A natural map has one continuous ground and is only paved where it says stone.
-        if (!jungle || groundAt(map, x, z) === "stone") {
+        if (pool) {
+          // Deck everywhere except where the map leaves the pool lining and its water showing.
+          if (groundAt(map, x, z) !== "water") {
+            const deck = models.poolSlab();
+            deck.position.set(px, -0.1, pz);
+            this.root.add(deck);
+          }
+        } else if (!jungle || groundAt(map, x, z) === "stone") {
           const tile = models.slab(map.theme, (x + z) % 2);
           tile.position.set(px, -0.1, pz);
           this.root.add(tile);
@@ -132,13 +149,14 @@ export class Arena {
         }
       }
     if (jungle) buildJungle(this.root, models, map, state);
+    else if (pool) buildPoolHall(this.root, models, state);
     else {
       const terrain = models.box(240, 0.3, 240, m.standard("terrain", "#8e9287", "ceramic"), 0.01);
       terrain.position.y = -1.6;
       this.root.add(terrain);
     }
     // Distant industrial silhouettes sit outside the playable collision grid.
-    for (let i = 0; i < (jungle ? 0 : 12); i++) {
+    for (let i = 0; i < (jungle || pool ? 0 : 12); i++) {
       const angle = (i * Math.PI) / 6,
         distance = 48 + (i % 3) * 11,
         height = 5 + (i % 4) * 3;

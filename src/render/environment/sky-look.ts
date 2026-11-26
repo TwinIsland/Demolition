@@ -32,6 +32,18 @@ export const OVERCAST_RAIN_SKY: SkyLook = {
   fill: { sky: "#9fb0bf", ground: "#3f3d38", intensity: 0.5 },
   fog: { color: "#6f7b83", density: 0.0075 },
 };
+/**
+ * A tiled hall under panel lights. The sky image only feeds reflections: a ceiling hides it.
+ * Light comes mostly from above and from every side, so shadows stay faint.
+ */
+export const POOL_HALL: SkyLook = {
+  sky: "./assets/environment/overcast-sky.hdr",
+  backgroundIntensity: 0.9,
+  environmentIntensity: 0.95,
+  sun: { color: "#f3fbff", intensity: 0.7 },
+  fill: { sky: "#f2fdff", ground: "#6fb9c0", intensity: 1.15 },
+  fog: { color: "#d3ecec", density: 0.0105 },
+};
 export const JUNGLE_RAIN_SKY: SkyLook = {
   sky: "./assets/environment/overcast-sky.hdr",
   backgroundIntensity: 0.5,

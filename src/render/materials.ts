@@ -65,9 +65,11 @@ const PALETTE: Record<string, Surface> = {
   moss: { maps: "ground", color: "#7f9a45", normal: 1.4 },
   leaf: { maps: "leaf", color: "#a9bd94", doubleSided: true, normal: 0.8 },
   "leaf-dark": { maps: "leaf", color: "#74906a", doubleSided: true, normal: 0.8 },
+  // Poolrooms
+  "pool-tile": { maps: "pool-tile", color: "#f4f7f5", normal: 0.9 },
 };
 /** Texture sets that `standard` can use in place of the default concrete. */
-type SurfaceSet = "ruin-stone";
+type SurfaceSet = "ruin-stone" | "pool-tile" | "pool-mosaic";
 export const PALETTE_PREFIX = "df:";
 
 /** Downloaded PBR texture sets; color maps use sRGB, data maps stay linear. */
@@ -258,6 +260,36 @@ export class MaterialLibrary {
       transparent: true,
     });
     this.materials.set(`label:${text}`, mat);
+    return mat;
+  }
+  /**
+   * The water that stands in a pool. The surface weathering module animates its surface, mirrors
+   * the hall in it and makes it more opaque at a glancing angle.
+   */
+  water() {
+    const cached = this.materials.get("pool-water");
+    if (cached) return cached as THREE.MeshStandardMaterial;
+    const mat = new THREE.MeshStandardMaterial({
+      name: "pool-water",
+      color: "#2fb6c0",
+      roughness: 0.04,
+      transparent: true,
+      opacity: 0.56,
+      depthWrite: false,
+    });
+    this.materials.set("pool-water", mat);
+    return mat;
+  }
+  /** A lit ceiling panel or a bright doorway: brighter than white, so it blooms. Fades with fog. */
+  lamp(color: string, gain: number) {
+    const key = `lamp:${color}:${gain}`;
+    const cached = this.materials.get(key);
+    if (cached) return cached as THREE.MeshBasicMaterial;
+    const mat = new THREE.MeshBasicMaterial({
+      color: new THREE.Color(color).multiplyScalar(gain),
+      toneMapped: false,
+    });
+    this.materials.set(key, mat);
     return mat;
   }
   private soilMaterial?: THREE.MeshStandardMaterial;

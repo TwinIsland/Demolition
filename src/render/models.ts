@@ -14,6 +14,10 @@ import { BombFinishes } from "./bomb-finishes";
 import { CoverModels, type SceneryId } from "./cover-models";
 import type { MapDefinition } from "../core/pack-api";
 import type { Obstacle } from "../core/obstacles";
+import { TILE_SIZE } from "../core/geometry";
+
+/** Height of the ceiling of a tiled hall above the deck. */
+export const POOL_CEILING = 5.7;
 
 export class Models {
   private avatars = new Map<string, MinecraftAvatar>();
@@ -37,6 +41,10 @@ export class Models {
     this.slab("rainforest", 0);
     this.materials.grass();
     this.materials.soil(new THREE.DataTexture(new Uint8Array(4), 1, 1), [0, 0, 1, 1]);
+    // The same for the tiled hall.
+    this.wall("poolrooms", "pillar");
+    this.poolSlab();
+    this.materials.standard("pool-floor", "#ffffff", "ceramic", "pool-mosaic");
   }
   async preload(players: readonly Player[], includeDrops: boolean) {
     for (const p of players)
@@ -279,11 +287,42 @@ export class Models {
         : this.materials.standard("floor", shade ? "#b1b3ae" : "#bdbdb5", "ceramic");
     return this.box(2.37, 0.18, 2.37, material, 0.03);
   }
+  /** White glazed tile, or the same tile in the hall's accent colour. */
+  poolTile(accent = false) {
+    return this.materials.standard("pool-tile", accent ? "#4fbfc4" : "#f6f9f7", "ceramic", "pool-tile");
+  }
+  /** The deck of one cell of a tiled hall. Cells without one show the pool lining and its water. */
+  poolSlab() {
+    // Full cell width and square edges: the tiling carries on across cells without a joint.
+    return this.box(
+      TILE_SIZE,
+      0.18,
+      TILE_SIZE,
+      this.materials.standard("pool-deck", "#f6f9f7", "ceramic", "pool-tile"),
+      0.003,
+    );
+  }
   /**
    * A permanent wall. The rainforest also has `tree` and `rock` variants; its plain block is
-   * ruined masonry, which is what the closing zone raises.
+   * ruined masonry, which is what the closing zone raises. A tiled hall has `pillar`, a column
+   * that carries the ceiling.
    */
-  wall(theme: MapDefinition["theme"], variant: "block" | "broken" | "tree" | "rock" = "block") {
+  wall(theme: MapDefinition["theme"], variant: "block" | "broken" | "tree" | "rock" | "pillar" = "block") {
+    if (theme === "poolrooms") {
+      const g = new THREE.Group(),
+        height = variant === "pillar" ? POOL_CEILING : 2.5;
+      // The body starts below the deck, so a wall standing in a pool reaches the lining.
+      const body = this.box(TILE_SIZE, height + 0.2, TILE_SIZE, this.poolTile(), 0.003);
+      body.position.y = height / 2 - 0.1;
+      // One course of coloured tile at head height, standing a finger proud of the wall.
+      const band = this.box(TILE_SIZE + 0.03, 0.3, TILE_SIZE + 0.03, this.poolTile(true), 0.003);
+      band.position.y = 1.95;
+      // White walls on a white deck are hard to tell apart from overhead, so the top is coloured.
+      const cap = this.box(TILE_SIZE, 0.04, TILE_SIZE, this.poolTile(true), 0.003);
+      cap.position.y = height + 0.02;
+      g.add(body, band, cap);
+      return g;
+    }
     if (theme === "rainforest") {
       if (variant === "tree" || variant === "rock")
         return this.scenery(variant === "tree" ? "jungle-tree" : "jungle-rock");
