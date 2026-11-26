@@ -3,3 +3,4 @@ dist
 .pages-build
 .guard
 docs/.vitepress/cache
+.desktop-build
