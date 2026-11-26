@@ -179,7 +179,7 @@ The footsteps and the ambience loop are built by `scripts/make-jungle-sounds.py`
 | `public/assets/footstep-water-{0,1,2}.ogg` | Synthesised for this project (splash, plop and bubbles) by `scripts/make-pool-sounds.py` | Project | CC0 1.0 | — |
 | `public/assets/environment/poolrooms.ogg` | Synthesised for this project (light ballast hum, ventilation, lapping water, drips; 24 s seamless loop) by `scripts/make-pool-sounds.py` | Project | CC0 1.0 | — |
 | `src/modules/maps/poolrooms/bgm.mp3` | [Dreamy Flashback](https://incompetech.com/music/royalty-free/music.html), incompetech.com | Kevin MacLeod | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Re-encoded from 320 to 160 kbit/s MP3 |
-| `src/modules/maps/poolrooms/briefing.webp`, `backdrop.webp` | Placeholder rendered from the game's own Poolrooms scene; to be replaced by generated key art | Project | CC0 1.0 | — |
+| `src/modules/maps/poolrooms/briefing.webp`, `backdrop.webp` | AI-generated key art, made by the project owner from a prompt written for this map (a flooded hall of white tile, teal band, columns, light panels and a deck island with pool props) | Project | CC0 1.0 | Scaled to 720 × 405 for the briefing |
 
 The water, its caustics and the continuous tiling are procedural shaders and use no further image files.
 
