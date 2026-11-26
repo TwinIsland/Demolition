@@ -7,7 +7,7 @@
 <tr><th>Price</th><td>35</td></tr>
 <tr><th>Cooldown</th><td>30 s</td></tr>
 <tr><th>Duration</th><td>6 s</td></tr>
-<tr><th>Default key</th><td>X</td></tr>
+<tr><th>Default key</th><td>Q</td></tr>
 </table>
 
 **Optical Camo** is a skill in Demolition Front. In the game it is described as:

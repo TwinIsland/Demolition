@@ -27,7 +27,7 @@ Every key can be rebound in the in-game manual.
 | Next / previous gear | Mouse wheel |
 | Gear wheel | V (hold) |
 | Equip shield | X |
-| Skills | E Remote Detonator, F Med Injector, C Threat Scan, Z Blind Fuse, X Optical Camo |
+| Skills | E Remote Detonator, F Med Injector, C Threat Scan, Z Blind Fuse, Q Optical Camo |
 | Pick perk 1 / 2 / 3 | 1, 2, 3 |
 | Expand perk cards | Tab |
 | Trigger the selected active perk | T |
@@ -40,7 +40,7 @@ Every key can be rebound in the in-game manual.
 
 ## Views
 
-The game is first person. Classic mode, and the Dimensional Collapse perk when someone else triggers it, put you in a top-down view that plays like the classic genre: four-way movement, Space plants a charge on your own tile.
+The game is first person. Classic mode, and the Dimensional Collapse perk when someone else triggers it, put you in a top-down view that plays like the classic genre: four-way movement, Space plants a charge on your own tile, and jumping and gear are off; crates, skills and perks still work.
 
 ![Top-down view](media/top-down.jpg)
 

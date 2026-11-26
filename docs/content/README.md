@@ -15,7 +15,7 @@ Bought before the match with starting coins (115 in standard modes), up to 4 ski
 | [Threat Scan](skills/scan.md) | C | 25 | 25 s | 7 s | See operators and zombies through cover as night-vision silhouettes for 7 seconds. |
 | [Remote Detonator](skills/detonator.md) | E | 30 | 10 s | – | Set off all of your planted charges after a 0.35 second delay. |
 | [Blind Fuse](skills/veil.md) | Z | 30 | 22 s | 7 s | For 7 seconds your charges hide their blast path from everyone else. You see it as a violet dashed trail. |
-| [Optical Camo](skills/cloak.md) | X | 35 | 30 s | 6 s | Turn invisible for 6 seconds. Opponents, bots and zombies lose sight of you; Threat Scan still reveals you. |
+| [Optical Camo](skills/cloak.md) | Q | 35 | 30 s | 6 s | Turn invisible for 6 seconds. Opponents, bots and zombies lose sight of you; Threat Scan still reveals you. |
 
 ## Items
 

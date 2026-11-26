@@ -24,7 +24,7 @@ You are dropped into a grid arena with up to three AI opponents. Plant charges, 
 | ![Match lobby with three AI opponents](docs/media/lobby.jpg) | ![Skill shop](docs/media/skill-shop.jpg) |
 
 - **Bombs.** Charges explode in a cross. Blow up cover to open paths and find gear, and try not to stand in your own blast.
-- **Perk drafts.** Score points to level up, then pick one of three perks. Perks come in Silver, Gold, Diamond and Mythic tiers and stack for the rest of the match, so every run plays differently.
+- **Perk drafts.** Score points to level up. Each level adds a fixed boost (more charges, health, range or power) and lets you pick one of three perks. Perks come in Silver, Gold, Diamond and Mythic tiers and stack for the rest of the match, so every run plays differently.
 - **Skills.** Before each match you spend a budget on up to four skills: Remote Detonator, Med Injector, Threat Scan, Blind Fuse, Optical Camo, and Slide Kick, which sends charges sliding down a lane.
 - **Gear.** Grenades, Molotovs, shields and bandages drop from cover and zombies.
 - **AI opponents.** One to three bots, each with its own difficulty and skin.
@@ -40,11 +40,12 @@ You are dropped into a grid arena with up to three AI opponents. Plant charges, 
 | Move, look | WASD, mouse |
 | Sprint | Hold Shift |
 | Jump | Space |
-| Plant a charge, use gear | Left click |
-| Aim a lobbed throw | Hold right click |
-| Skills | Q, E, R, F, C |
+| Plant a charge, use or throw gear | Left click |
+| Build a wooden crate | Right click |
+| Skills | E, F, C, Z, Q |
 | Pick a perk | 1, 2, 3 |
-| Gear wheel | Hold V |
+| Trigger an active perk / switch to the next | T / G |
+| Gear wheel, supply wheel | Hold V, hold B |
 | Pause | Esc |
 
 Every key can be rebound in the in-game manual.
@@ -65,6 +66,7 @@ Maps, skins, bomb finishes, skills, items, perks and mutations are all self-cont
 - [Wiki](docs/README.md): game rules, drop rates, and a page for every skill, item, perk and mutation.
 - [Modding guide](docs/modding/README.md): make your own maps and content packs.
 - [Developer guide](docs/developer-guide.md): working on the game itself.
+- [Desktop build](docs/desktop.md): Windows and macOS apps built with Tauri, released from GitHub Actions.
 
 ## Credits
 

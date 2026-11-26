@@ -37,10 +37,13 @@ interface PlayerInput {
   aimTarget?: Vec2; // 炸药部署格或投掷落点
   throwMode?: ThrowMode;
   meleeYaw?: number;
-  plantAtFeet?: boolean; // 俯视期间在脚下放置炸药
+  plantHere?: boolean; // 俯视期间在脚下放置炸药
+  build?: boolean; // 右键在面前建造木箱
+  buyItem?: ItemId; // 对局内补给商店
   activateSkill?: SkillId;
   choosePerk?: PerkId; // 从当前候选中领取一张强化
   usePerk?: PerkId; // 发动已持有的主动强化
+  perkTarget?: Vec2; // 需要选点的主动强化（战术导弹）的落点
   resetTerrain?: boolean;
   buySkill?: SkillId; // 开局商店
   refundSkill?: SkillId;
@@ -100,7 +103,7 @@ interface PlayerAgent {
 }
 ```
 
-`KeyboardAgent` 只负责把设备输入转成世界方向与动作；`BotAgent` 只负责策略。AI 当前采用“躲避危险 → 捡道具 → 靠近目标 → 炸开障碍”的优先级，放炸药前搜索退路。雷达干扰期间 AI 不使用对手坐标选目标，但仍保留近处危险预测，避免完全失去行动能力。
+`KeyboardAgent` 只负责把设备输入转成世界方向与动作；`BotAgent` 只负责策略。AI 当前采用“躲避危险 → 捡道具 → 靠近目标 → 炸开障碍”的优先级，放炸药前搜索退路。对手开启光学迷彩时 AI 看不到其位置（威胁扫描除外），对手开启暗线引信时 AI 只能按 1 格范围猜测其炸药的爆炸路径。
 
 将来增加智能 AI 时，实现新策略并在 `session/create-session.ts` 替换对应的 `BotAgent` 即可。若模型推理是异步的，应在策略内部缓存最近有效决策，`decide` 返回缓存值；不要阻塞模拟循环。
 
