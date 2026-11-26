@@ -18,6 +18,7 @@
     "build:game": "tsc --noEmit && vite build",
     "dev:wiki": "vitepress dev docs",
     "build:wiki": "vitepress build docs --outDir dist/wiki",
+    "tauri": "tauri",
     "dev:desktop": "tauri dev",
     "build:desktop": "tauri build"
   },
