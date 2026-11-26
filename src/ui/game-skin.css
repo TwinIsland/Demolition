@@ -268,17 +268,6 @@
   background: #141c1e;
   color: var(--skin-ink);
 }
-#app #lobby .outfit-controls :is(select, button) {
-  height: 34px;
-}
-#app #lobby .outfit-controls select {
-  padding: 4px 30px 4px 10px;
-  background:
-    var(--skin-chevron) right 10px center / 11px 7px no-repeat,
-    linear-gradient(90deg, #0000 calc(100% - 27px), #00000059 calc(100% - 27px)),
-    linear-gradient(180deg, #ffffff0f, #0000 45%, #0000002e),
-    #1a2426 var(--skin-plate) center / 240px;
-}
 #app .room-modal select {
   max-width: 72%;
   padding: 3px 28px 3px 8px;
@@ -502,19 +491,6 @@
 }
 
 /* ---------- Lobby touches ---------- */
-#app #lobby .map-option {
-  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
-  transition:
-    filter 0.16s,
-    translate 0.16s var(--skin-ease);
-}
-#app #lobby .map-option:hover {
-  filter: brightness(1.12);
-  translate: -3px 0;
-}
-#app .mode-list {
-  background: #101819e6 var(--skin-plate) center / 260px;
-}
 #app .top-actions .icon-btn:active {
   transform: translateY(1px);
 }
@@ -859,36 +835,9 @@
   opacity: 0.96;
 }
 
-/* ---------- English typography ----------
- * The lobby title was tracked at -.045em for Chinese display type. On the
- * semi-condensed Latin face at weight 900 that makes glyphs collide, so Latin
- * copy gets its own weight, tracking and case. */
-#app:lang(en) #lobby .hero h1,
-:lang(en) #app #lobby .hero h1 {
-  font-family: var(--font-hud);
-  font-weight: 800;
-  letter-spacing: 0.035em;
-  word-spacing: 0.04em;
-  line-height: 1.08;
-  text-transform: uppercase;
-  font-size: clamp(30px, 3.5vw, 58px);
-}
+/* ---------- English typography ---------- */
 :lang(en) #app .brand span {
   letter-spacing: 0.12em;
-}
-:lang(en) #app .mode-list button {
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  font-weight: 700;
-}
-:lang(en) #app #lobby .outfit-controls label,
-:lang(en) #app #lobby .section-caption > span {
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-:lang(en) #app #lobby .map-option b {
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
 }
 :lang(en) #app .room-heading h2 {
   letter-spacing: 0.05em;

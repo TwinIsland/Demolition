@@ -161,6 +161,7 @@ export class GameApp {
     this.sound.reset();
     this.sound.setMusic(MENU_MUSIC);
     this.ui.setInGame(false);
+    this.ui.enterLobby();
     this.sound.menu("back");
   }
 
@@ -191,7 +192,9 @@ export class GameApp {
     if (this.screens.is("graphics")) this.closeGraphics();
     else if (this.screens.is("credits")) this.closeCredits();
     else if (this.screens.is("room")) this.goHome();
-    else if (this.screens.is("playing")) this.pause();
+    else if (this.screens.is("lobby")) {
+      if (this.ui.lobbyBack()) this.sound.menu("back");
+    } else if (this.screens.is("playing")) this.pause();
     else if (this.screens.is("paused", "help")) this.resume();
   }
 
@@ -469,6 +472,7 @@ export class GameApp {
     this.renderer.renderPreview(now);
     this.screens.transition("lobby");
     loading.hide();
+    this.ui.enterLobby();
   }
 
   /** Builds the match behind the loading screen, then opens the skill shop. */

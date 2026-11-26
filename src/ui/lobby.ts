@@ -1,64 +1,125 @@
 import { version } from "../../package.json";
 import { MAPS, generateMap, seededRandom } from "../core/maps";
 import { DEFAULT_MODE, MATCH_MODES, type MatchMode } from "../core/match-modes";
-import { BOMB_STYLES, SKINS, type Appearance } from "../core/room";
+import { BOMB_STYLES, DEFAULT_FINISH, DEFAULT_SKIN, SKINS, type Appearance } from "../core/room";
 import { field, t } from "../i18n";
 import type { SkinModel } from "../render/minecraft-skins";
 import type { UIActions } from "./actions";
 import { creditsLabel } from "./credits";
 import { query } from "./dom";
 import { icon } from "./icons";
+import { rise, rowsIn, rowsOut, settle, slideIn, wipe } from "./lobby-motion";
+
+/** The menu shows one panel at a time; `home` is the main menu, the others are its sub-menus. */
+type View = "home" | "mode" | "map" | "outfit";
+type SubView = Exclude<View, "home">;
 
 const MODE_IDS = Object.keys(MATCH_MODES) as MatchMode[];
+const VIEW_TITLES: Record<SubView, string> = { mode: "对局模式", map: "作战区域", outfit: "干员外观" };
+const MODE_NOTES: Record<MatchMode, string> = {
+  freeForAll: "标准规则。第一人称放置炸药，最后存活的干员获胜。",
+  classic: "标准数值，全程俯视视角进行整场对局。",
+  practice: "没有时间压力，可以不带 AI 对手单独进场，熟悉地图与技能。",
+  carnival: "全员强化开局：生命、攻击与爆炸范围大幅提高，强化来得更快，脱战自动回血。",
+};
+const ARM_MODELS: readonly [SkinModel, string][] = [
+  ["auto", "自动识别"],
+  ["default", "标准 · Steve"],
+  ["slim", "纤细 · Alex"],
+];
 /** Tile colours of the map thumbnails, indexed by tile kind. */
 const MINIATURE_COLORS = ["#303a33", "#b2baa6", "#737e64"];
 /** Fixed seed so a map's thumbnail looks the same on every visit. */
 const MINIATURE_SEED = 74691;
 
-const options = (packs: Record<string, { name: string }>) =>
-  Object.entries(packs)
-    .map(([id, pack]) => `<option value="${id}">${pack.name}</option>`)
-    .join("");
+const openRow = (view: SubView) =>
+  `<button type="button" class="menu-row" data-open="${view}"><span class="row-label">${VIEW_TITLES[view]}</span><span class="row-value" data-value="${view}"></span><i class="row-arrow"></i></button>`;
 
-const modeButton = (id: MatchMode) => {
-  const { available, name } = MATCH_MODES[id];
-  return `<button type="button" data-mode="${id}" aria-pressed="${id === DEFAULT_MODE}" ${available ? "" : 'disabled title="尚未开放"'}>${available ? "" : icon("lock")}${name}</button>`;
+const modeRow = (id: MatchMode) => {
+  const { available } = MATCH_MODES[id];
+  return `<button type="button" class="menu-row menu-choice" data-mode="${id}" aria-pressed="false" ${available ? "" : 'disabled title="尚未开放"'}>${available ? "" : icon("lock")}<span class="row-label"></span><i class="row-check"></i></button>`;
 };
+
+const tile = (attribute: string, id: string) =>
+  `<button type="button" class="menu-row menu-tile menu-choice" data-${attribute}="${id}" aria-pressed="false"><span class="row-label"></span></button>`;
 
 const lobbyMarkup = () => `
         <div class="lobby-scrim"></div>
-        <div class="deployment-layout">
-        <section class="hero">
-          <div class="mode-picker">
-            <div class="mode-list" role="group" aria-label="对局模式" style="--mode-count:${MODE_IDS.length}">
-              ${MODE_IDS.map(modeButton).join("")}
-            </div>
-            <h1 aria-label="${MATCH_MODES[DEFAULT_MODE].name}">${MODE_IDS.map((id) => `<span data-mode-title="${id}" aria-hidden="true" class="${id === DEFAULT_MODE ? "current" : ""}">${MATCH_MODES[id].name}</span>`).join("")}</h1>
+        <div class="menu-wipe" aria-hidden="true"></div>
+        <section class="menu-nav">
+          <header class="menu-head">
+            <div class="menu-crumb"><button type="button" class="menu-back" data-back hidden><i class="row-arrow"></i><span>返回</span><kbd>ESC</kbd></button><small class="menu-kicker"></small></div>
+            <h1 class="menu-title"></h1>
+          </header>
+          <div class="menu-panels">
+            <nav class="menu-panel" data-panel="home" aria-label="主菜单">
+              ${openRow("mode")}${openRow("map")}${openRow("outfit")}
+              <button class="start-btn menu-play" id="start">${icon("play")}<span>开始对局</span><kbd>ENTER</kbd></button>
+            </nav>
+            <nav class="menu-panel" data-panel="mode" aria-label="对局模式" hidden>
+              ${MODE_IDS.map(modeRow).join("")}
+            </nav>
+            <nav class="menu-panel" data-panel="map" aria-label="作战区域" hidden>
+              ${MAPS.map((map) => `<button type="button" class="menu-row menu-choice" data-map="${map.id}" aria-pressed="false"><span class="row-label"></span><span class="row-value">${map.size} × ${map.size}</span><i class="row-check"></i></button>`).join("")}
+            </nav>
+            <nav class="menu-panel" data-panel="outfit" aria-label="干员外观" hidden>
+              <div class="menu-caption">角色皮肤</div>
+              <div class="menu-grid">${Object.keys(SKINS)
+                .map((id) => tile("skin", id))
+                .join("")}${tile("skin", "custom")}</div>
+              <button type="button" class="menu-row menu-tile" id="skin-import"><span class="row-label">导入 PNG</span><i class="row-arrow"></i></button><input id="skin-file" type="file" accept="image/png" hidden/>
+              <div class="arm-setting" hidden><div class="menu-caption">自定义手臂</div><div class="menu-grid three">${ARM_MODELS.map(([id]) => tile("arm", id)).join("")}</div></div>
+              <small id="skin-status" role="status"></small>
+              <div class="menu-caption">炸药涂装</div>
+              <div class="menu-grid three">${Object.keys(BOMB_STYLES)
+                .map((id) => tile("finish", id))
+                .join("")}</div>
+            </nav>
           </div>
-          <div class="skin-controls outfit-controls">
-            <label for="avatar-preset">角色皮肤</label><select id="avatar-preset">${options(SKINS)}<option value="custom" disabled>自定义 PNG</option></select>
-            <button id="skin-import">导入 PNG</button><input id="skin-file" type="file" accept="image/png" hidden/>
-            <div class="arm-setting" hidden><label for="skin-model">自定义手臂</label><select id="skin-model"><option value="auto">自动识别</option><option value="default">标准 · Steve</option><option value="slim">纤细 · Alex</option></select></div>
-            <label for="bomb-style">炸药涂装</label><select id="bomb-style">${options(BOMB_STYLES)}</select>
-            <small id="skin-status" role="status"></small>
-          </div>
-          <button class="start-btn" id="start">${icon("play")} 开始对局 <kbd>ENTER</kbd></button>
         </section>
         <div id="lobby-avatar" tabindex="0" role="group" aria-label="角色预览，可拖动或按方向键旋转"></div>
-        <section class="map-selection" aria-label="作战区域"><div class="section-caption"><span>作战区域</span><button id="terrain-preview" aria-pressed="false">战场预览</button></div><div class="map-options">${MAPS.map((map, i) => `<button class="map-option ${i === 0 ? "selected" : ""}" data-map="${map.id}" aria-pressed="${i === 0}"><canvas class="map-miniature" width="${map.size}" height="${map.size}" aria-hidden="true"></canvas><span><b>${map.name}</b><small>${map.size} × ${map.size}</small></span><i class="selection-dot"></i></button>`).join("")}</div></section>
-        </div>
-        <footer class="design-credit"><span class="credit-line" lang="en">Game Design by <a href="https://tianyihuang.com" target="_blank" rel="noopener noreferrer">TwinIsland</a></span><button type="button" id="credits" class="credit-open">${creditsLabel()}</button><span>v${version}</span></footer>
+        <aside class="menu-detail">
+          <button type="button" class="detail-art" data-open="map" aria-label="作战区域">${MAPS.map(
+            (map) =>
+              `${map.artwork ? `<img data-art="${map.id}" src="${map.artwork}" alt="">` : ""}<canvas class="detail-miniature" data-miniature="${map.id}" width="${map.size}" height="${map.size}" aria-hidden="true"></canvas>`,
+          ).join("")}</button>
+          <div class="detail-body">
+            <small class="detail-kicker"></small>
+            <h2 class="detail-title"></h2>
+            <p class="detail-text"></p>
+            <dl class="detail-stats"></dl>
+          </div>
+          <button type="button" id="terrain-preview" aria-pressed="false">战场预览</button>
+        </aside>
+        <footer class="menu-footer">
+          <div class="menu-hints"><span><kbd>ENTER</kbd><span>开始对局</span></span><span class="hint-back"><kbd>ESC</kbd><span>返回</span></span></div>
+          <div class="design-credit"><span class="credit-line" lang="en">Game Design by <a href="https://tianyihuang.com" target="_blank" rel="noopener noreferrer">TwinIsland</a></span><button type="button" id="credits" class="credit-open">${creditsLabel()}</button><span>v${version}</span></div>
+        </footer>
       `;
 
-/** Deployment screen: mode, outfit and map selection around the avatar preview. */
+/**
+ * Main menu: a list on the left that swaps between the home panel and its sub-menus (mode, map,
+ * operator), the avatar preview in the middle and a detail card on the right. Sizes come from the
+ * `--u` design unit (see styles/lobby.css), so the layout scales as one piece with the window.
+ */
 export class LobbyView {
-  private readonly skinPreset: HTMLSelectElement;
-  private readonly customSkinOption: HTMLOptionElement;
+  private view: View = "home";
+  private mode: MatchMode = DEFAULT_MODE;
+  private mapId = MAPS[0].id;
+  private look: Appearance = { skin: DEFAULT_SKIN.id, bombStyle: DEFAULT_FINISH.id };
+  private armModel: SkinModel = "auto";
+  /** Row under the pointer or focus in a sub-menu; the detail card shows it before it is chosen. */
+  private hovered?: string;
+  /** What the detail card last showed, so it only animates when its subject changes. */
+  private detailKey = "";
+
+  private readonly title: HTMLElement;
+  private readonly kicker: HTMLElement;
+  private readonly backButton: HTMLButtonElement;
+  private readonly detail: HTMLElement;
   private readonly skinFile: HTMLInputElement;
-  private readonly skinModel: HTMLSelectElement;
-  private readonly armSetting: HTMLElement;
   private readonly skinStatus: HTMLElement;
-  private readonly bombStyle: HTMLSelectElement;
+  private readonly armSetting: HTMLElement;
   private readonly terrainButton: HTMLButtonElement;
   private readonly listeners = new AbortController();
 
@@ -67,36 +128,40 @@ export class LobbyView {
     private readonly actions: Pick<UIActions, "changeOutfit" | "importSkin">,
   ) {
     root.innerHTML = lobbyMarkup();
-    this.skinPreset = query<HTMLSelectElement>(root, "#avatar-preset");
-    this.customSkinOption = query<HTMLOptionElement>(this.skinPreset, '[value="custom"]');
+    root.dataset.view = this.view;
+    this.title = query(root, ".menu-title");
+    this.kicker = query(root, ".menu-kicker");
+    this.backButton = query<HTMLButtonElement>(root, ".menu-back");
+    this.detail = query(root, ".menu-detail");
     this.skinFile = query<HTMLInputElement>(root, "#skin-file");
-    this.skinModel = query<HTMLSelectElement>(root, "#skin-model");
-    this.armSetting = query(root, ".arm-setting");
     this.skinStatus = query(root, "#skin-status");
-    this.bombStyle = query<HTMLSelectElement>(root, "#bomb-style");
+    this.armSetting = query(root, ".arm-setting");
     this.terrainButton = query<HTMLButtonElement>(root, "#terrain-preview");
     this.drawMiniatures();
-    root.addEventListener("change", (event) => void this.onChange(event.target), {
-      signal: this.listeners.signal,
-    });
+    this.render();
+
+    const { signal } = this.listeners;
+    root.addEventListener("click", (event) => this.onClick(event.target as HTMLElement), { signal });
+    root.addEventListener("change", (event) => void this.onChange(event.target), { signal });
+    root.addEventListener("pointerover", (event) => this.onHover(event.target as HTMLElement), { signal });
+    root.addEventListener("focusin", (event) => this.onHover(event.target as HTMLElement), { signal });
+    root.addEventListener("keydown", (event) => this.onKeyDown(event), { signal });
+    for (const panel of root.querySelectorAll<HTMLElement>(".menu-panel"))
+      panel.addEventListener("pointerleave", () => this.setHovered(undefined), { signal });
   }
 
   /** `customSkin` reports whether a PNG has been imported and with which arm model. */
   setAppearance(value: Appearance, customSkin: { imported: boolean; model?: SkinModel }) {
-    if (value.skin === "custom" || customSkin.imported) this.customSkinOption.disabled = false;
-    if (customSkin.model) this.skinModel.value = customSkin.model;
-    this.skinPreset.value = value.skin;
-    this.armSetting.hidden = value.skin !== "custom";
-    this.bombStyle.value = value.bombStyle;
+    this.look = { ...value };
+    if (customSkin.model) this.armModel = customSkin.model;
+    if (value.skin === "custom" || customSkin.imported)
+      query<HTMLButtonElement>(this.root, '[data-skin="custom"]').disabled = false;
+    this.render();
   }
 
   setMatchMode(mode: MatchMode) {
-    query(this.root, ".mode-list").style.setProperty("--selected", String(MODE_IDS.indexOf(mode)));
-    query(this.root, ".mode-picker h1").setAttribute("aria-label", t(MATCH_MODES[mode].name));
-    for (const title of this.root.querySelectorAll<HTMLElement>("[data-mode-title]"))
-      title.classList.toggle("current", title.dataset.modeTitle === mode);
-    for (const button of this.root.querySelectorAll<HTMLElement>("[data-mode]"))
-      button.setAttribute("aria-pressed", String(button.dataset.mode === mode));
+    this.mode = mode;
+    this.render();
   }
 
   setTerrainPreview(active: boolean) {
@@ -105,41 +170,233 @@ export class LobbyView {
   }
 
   setMap(id: string) {
-    for (const button of this.root.querySelectorAll<HTMLElement>("[data-map]")) {
-      button.classList.toggle("selected", button.dataset.map === id);
-      button.setAttribute("aria-pressed", String(button.dataset.map === id));
-    }
+    if (id !== this.mapId) wipe(query(this.root, ".menu-wipe"));
+    this.mapId = id;
+    this.render();
   }
 
   openSkinPicker() {
     this.skinFile.click();
   }
 
+  /** Steps out of a sub-menu. Returns false on the home panel, where there is nothing to leave. */
+  back(): boolean {
+    if (this.view === "home") return false;
+    this.show("home");
+    return true;
+  }
+
+  /** Returns to the home panel without animating, for when the lobby is not on screen. */
+  reset() {
+    for (const panel of this.root.querySelectorAll<HTMLElement>(".menu-panel")) {
+      panel.hidden = panel.dataset.panel !== "home";
+      settle(this.rows(panel));
+    }
+    this.view = this.root.dataset.view = "home";
+    this.hovered = undefined;
+    this.render();
+  }
+
+  /** Plays the arrival of the whole menu: list from the left, card from the right. */
+  enter() {
+    this.reset();
+    rise([query(this.root, ".menu-crumb"), this.title]);
+    rowsIn(this.rows(this.panel("home")), -1, 0.08);
+    slideIn(this.detail, 0.12);
+    rise([query(this.root, ".menu-footer")], 0.3, 10);
+  }
+
   /** Re-renders pack-provided names, which the static shell copy table does not cover. */
   refreshLanguage() {
-    for (const option of this.skinPreset.options)
-      if (SKINS[option.value]) option.textContent = field(SKINS[option.value], "name");
-    for (const option of this.bombStyle.options)
-      option.textContent = field(BOMB_STYLES[option.value], "name");
-    for (const map of MAPS) query(this.root, `[data-map="${map.id}"] b`).textContent = field(map, "name");
     query(this.root, "#credits").textContent = creditsLabel();
+    this.setTerrainPreview(this.terrainButton.getAttribute("aria-pressed") === "true");
+    this.render();
   }
 
   dispose() {
     this.listeners.abort();
   }
 
+  // --- Navigation ---
+
+  private panel(view: View) {
+    return query(this.root, `[data-panel="${view}"]`);
+  }
+
+  private rows(panel: HTMLElement) {
+    return [...panel.children].filter(
+      (child): child is HTMLElement =>
+        child instanceof HTMLElement && !child.hidden && child.tagName !== "INPUT",
+    );
+  }
+
+  private show(view: View) {
+    if (view === this.view) return;
+    const leaving = this.panel(this.view);
+    const arriving = this.panel(view);
+    // Going deeper moves the list leftwards; coming back reverses it.
+    const direction = view === "home" ? -1 : 1;
+    this.view = this.root.dataset.view = view;
+    this.hovered = undefined;
+    this.render();
+    rise([this.title], 0.06, 10);
+    void rowsOut(this.rows(leaving), direction).then(() => {
+      // A quick second click may already have brought the leaving panel back.
+      if (this.panel(this.view) !== leaving) leaving.hidden = true;
+      if (this.panel(this.view) !== arriving) return;
+      arriving.hidden = false;
+      rowsIn(this.rows(arriving), direction);
+      const focus =
+        arriving.querySelector<HTMLElement>('[aria-pressed="true"]:not(:disabled)') ??
+        arriving.querySelector<HTMLElement>("#start") ??
+        arriving.querySelector<HTMLElement>("button:not(:disabled)");
+      focus?.focus({ preventScroll: true });
+    });
+  }
+
+  private onClick(target: HTMLElement) {
+    const button = target.closest<HTMLButtonElement>("button");
+    if (!button || button.disabled) return;
+    const { open, skin, finish, arm, mode, map } = button.dataset;
+    if (open) this.show(open as View);
+    else if ("back" in button.dataset) this.show("home");
+    // GameUI routes the choice itself; picking one closes the sub-menu.
+    else if (mode || map) this.show("home");
+    else if (skin) {
+      this.look.skin = skin;
+      this.skinStatus.textContent = "";
+      this.actions.changeOutfit({ skin });
+      this.render();
+    } else if (finish) {
+      this.look.bombStyle = finish;
+      this.actions.changeOutfit({ bombStyle: finish });
+      this.render();
+    } else if (arm) {
+      this.armModel = arm as SkinModel;
+      this.render();
+      // Changing the arm model re-imports the stored PNG, so no file is passed.
+      void this.importSkin(undefined);
+    }
+  }
+
+  private onHover(target: HTMLElement) {
+    const row = target.closest<HTMLElement>("[data-mode], [data-map]");
+    if (row && !row.matches(":disabled")) this.setHovered(row.dataset.mode ?? row.dataset.map);
+  }
+
+  private setHovered(id: string | undefined) {
+    if (id === this.hovered) return;
+    this.hovered = id;
+    this.renderDetail();
+  }
+
+  /** Up and Down walk the buttons of the open panel, like a console menu. */
+  private onKeyDown(event: KeyboardEvent) {
+    if (event.code !== "ArrowDown" && event.code !== "ArrowUp") return;
+    const buttons = [...this.panel(this.view).querySelectorAll<HTMLElement>("button:not(:disabled)")].filter(
+      (button) => button.offsetParent,
+    );
+    if (!buttons.length) return;
+    event.preventDefault();
+    const index = buttons.indexOf(document.activeElement as HTMLElement);
+    const step = event.code === "ArrowDown" ? 1 : -1;
+    buttons[index < 0 ? 0 : (index + step + buttons.length) % buttons.length].focus();
+  }
+
+  // --- Rendering ---
+
+  private skinName(id: string) {
+    return SKINS[id] ? field(SKINS[id], "name") : t("自定义 PNG");
+  }
+
+  /** Writes every label that depends on the selection or the language. */
+  private render() {
+    const home = this.view === "home";
+    const map = MAPS.find((entry) => entry.id === this.mapId) ?? MAPS[0];
+    this.backButton.hidden = home;
+    this.kicker.textContent = home ? t("当前模式") : t("主菜单");
+    this.title.textContent = t(home ? MATCH_MODES[this.mode].name : VIEW_TITLES[this.view as SubView]);
+    query(this.root, '[data-value="mode"]').textContent = t(MATCH_MODES[this.mode].name);
+    query(this.root, '[data-value="map"]').textContent = field(map, "name");
+    query(this.root, '[data-value="outfit"]').textContent = this.skinName(this.look.skin);
+
+    const label = (row: HTMLElement, text: string, pressed: boolean) => {
+      query(row, ".row-label").textContent = text;
+      row.setAttribute("aria-pressed", String(pressed));
+    };
+    for (const row of this.root.querySelectorAll<HTMLElement>("[data-mode]"))
+      label(row, t(MATCH_MODES[row.dataset.mode as MatchMode].name), row.dataset.mode === this.mode);
+    for (const row of this.root.querySelectorAll<HTMLElement>("[data-map]"))
+      label(
+        row,
+        field(
+          MAPS.find((m) => m.id === row.dataset.map)!,
+          "name",
+        ),
+        row.dataset.map === this.mapId,
+      );
+    for (const row of this.root.querySelectorAll<HTMLElement>("[data-skin]"))
+      label(row, this.skinName(row.dataset.skin!), row.dataset.skin === this.look.skin);
+    for (const row of this.root.querySelectorAll<HTMLElement>("[data-finish]"))
+      label(row, field(BOMB_STYLES[row.dataset.finish!], "name"), row.dataset.finish === this.look.bombStyle);
+    for (const row of this.root.querySelectorAll<HTMLElement>("[data-arm]"))
+      label(row, t(ARM_MODELS.find(([id]) => id === row.dataset.arm)![1]), row.dataset.arm === this.armModel);
+    this.armSetting.hidden = this.look.skin !== "custom";
+    this.renderDetail();
+  }
+
+  /** The card describes the hovered row of a sub-menu, or else the current selection. */
+  private renderDetail() {
+    const showsMode = this.view === "mode";
+    const modeId = showsMode && this.hovered ? (this.hovered as MatchMode) : this.mode;
+    const mapId = this.view === "map" && this.hovered ? this.hovered : this.mapId;
+    const map = MAPS.find((entry) => entry.id === mapId) ?? MAPS[0];
+    for (const layer of this.detail.querySelectorAll<HTMLElement>("[data-art], [data-miniature]"))
+      layer.classList.toggle("current", (layer.dataset.art ?? layer.dataset.miniature) === map.id);
+
+    const rules = MATCH_MODES[modeId].rules;
+    const stats: [string, string | number][] = showsMode
+      ? [
+          [t("生命"), rules.health],
+          [t("攻击力"), rules.attack],
+          [t("爆炸范围"), rules.range],
+          [t("炸药容量"), rules.capacity],
+          [t("初始金币"), rules.credits],
+          [t("视角"), t(rules.overhead ? "俯视" : "第一人称")],
+        ]
+      : [
+          [t("对局模式"), t(MATCH_MODES[this.mode].name)],
+          [t("角色皮肤"), this.skinName(this.look.skin)],
+        ];
+    query(this.detail, ".detail-kicker").textContent = t(showsMode ? "对局模式" : "作战区域");
+    query(this.detail, ".detail-title").textContent = showsMode
+      ? t(MATCH_MODES[modeId].name)
+      : field(map, "name");
+    query(this.detail, ".detail-text").textContent = showsMode
+      ? t(MODE_NOTES[modeId])
+      : field(map, "subtitle");
+    query(this.detail, ".detail-stats").replaceChildren(
+      ...stats.map(([name, value]) => {
+        const item = document.createElement("div");
+        const term = document.createElement("dt");
+        const data = document.createElement("dd");
+        term.textContent = name;
+        data.textContent = String(value);
+        item.append(term, data);
+        return item;
+      }),
+    );
+    this.detail.dataset.kind = showsMode ? "mode" : "map";
+
+    const key = showsMode ? `mode:${modeId}` : `map:${map.id}`;
+    if (key !== this.detailKey && this.detailKey) rise([query(this.detail, ".detail-body")], 0, 8);
+    this.detailKey = key;
+  }
+
   private drawMiniatures() {
-    for (const button of this.root.querySelectorAll<HTMLElement>("[data-map]")) {
-      const map = MAPS.find((m) => m.id === button.dataset.map)!;
-      if (map.artwork) {
-        const art = document.createElement("img");
-        art.className = "map-art";
-        art.alt = "";
-        art.src = map.artwork;
-        button.prepend(art);
-      }
-      const context = query<HTMLCanvasElement>(button, "canvas").getContext("2d")!;
+    for (const canvas of this.root.querySelectorAll<HTMLCanvasElement>("[data-miniature]")) {
+      const map = MAPS.find((m) => m.id === canvas.dataset.miniature)!;
+      const context = canvas.getContext("2d")!;
       generateMap(map, seededRandom(MINIATURE_SEED)).forEach((row, z) =>
         row.forEach((cell, x) => {
           context.fillStyle = MINIATURE_COLORS[cell];
@@ -149,24 +406,21 @@ export class LobbyView {
     }
   }
 
+  // --- Skin import ---
+
   private async onChange(target: EventTarget | null) {
-    if (target === this.skinPreset) {
-      this.actions.changeOutfit({ skin: this.skinPreset.value });
-      this.armSetting.hidden = this.skinPreset.value !== "custom";
-      this.skinStatus.textContent = "";
-    } else if (target === this.bombStyle) {
-      this.actions.changeOutfit({ bombStyle: this.bombStyle.value });
-    } else if (target === this.skinFile || target === this.skinModel) {
-      // Changing the arm model re-imports the stored PNG, so no file is passed.
-      const file = target === this.skinFile ? this.skinFile.files?.[0] : undefined;
-      this.skinStatus.textContent = t("加载中");
-      try {
-        await this.actions.importSkin(file, this.skinModel.value as SkinModel);
-        this.skinStatus.textContent = file ? file.name : t("模型已更新");
-      } catch (error) {
-        this.skinStatus.textContent = error instanceof Error ? error.message : t("皮肤加载失败");
-      }
-      if (target === this.skinFile) this.skinFile.value = "";
+    if (target !== this.skinFile) return;
+    await this.importSkin(this.skinFile.files?.[0]);
+    this.skinFile.value = "";
+  }
+
+  private async importSkin(file: File | undefined) {
+    this.skinStatus.textContent = t("加载中");
+    try {
+      await this.actions.importSkin(file, this.armModel);
+      this.skinStatus.textContent = file ? file.name : t("模型已更新");
+    } catch (error) {
+      this.skinStatus.textContent = error instanceof Error ? error.message : t("皮肤加载失败");
     }
   }
 }

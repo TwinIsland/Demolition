@@ -165,6 +165,7 @@ export class GameUI {
     this.mutationNotice.clear();
     document.body.classList.toggle("in-game", inGame);
     this.lobby.root.hidden = inGame;
+    this.lobby.reset();
     this.hud.hidden = !inGame;
     this.hideOverlay();
     this.clearPerks();
@@ -173,6 +174,16 @@ export class GameUI {
     this.feed.clear();
     this.eventCursor = 0;
     this.effects.clearDamageFlash();
+  }
+
+  /** Plays the main menu's arrival. Call when the lobby comes into view. */
+  enterLobby() {
+    this.lobby.enter();
+  }
+
+  /** Leaves an open lobby sub-menu. Returns false when the main menu itself is showing. */
+  lobbyBack(): boolean {
+    return this.lobby.back();
   }
 
   setAppearance(value: Appearance, customSkin: { imported: boolean; model?: SkinModel }) {

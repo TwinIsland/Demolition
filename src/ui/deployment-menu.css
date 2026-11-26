@@ -36,17 +36,13 @@
   gap: var(--space-3);
 }
 #app .top-actions .icon-btn,
-.graphics-modal select,
-#lobby .outfit-controls :is(select, button),
-#terrain-preview {
+.graphics-modal select {
   color: var(--text);
   border: 1px solid var(--line);
   border-radius: var(--radius-xs);
   background: var(--surface-3) var(--selector-surface) center / 100% 100%;
 }
-#app .top-actions .icon-btn:hover,
-#lobby .outfit-controls :is(select, button):hover,
-#terrain-preview:hover {
+#app .top-actions .icon-btn:hover {
   border-color: var(--menu-gold);
 }
 #app .top-actions .graphics-btn {
@@ -99,57 +95,9 @@ body.in-game #app .top-actions .icon {
   margin-right: 2px;
   color: var(--gold-100);
 }
-#lobby .lobby-scrim {
-  background:
-    linear-gradient(90deg, #091012e0, #0c15158a 22%, transparent 44%, transparent 68%, #0a121471),
-    linear-gradient(0deg, #07101193, transparent 23%);
-}
-#lobby .hero {
-  border-left: 0;
-  padding-left: 0;
-}
-#lobby .hero h1 {
-  position: relative;
-  padding-top: 17px;
-  margin-bottom: clamp(15px, 3.2vh, 33px);
-  font-size: clamp(41px, 4.9vw, 80px);
-  font-weight: 900;
-  line-height: 1.05;
-  letter-spacing: -0.045em;
-  color: var(--text-strong);
-  text-shadow: 0 3px 14px #111a1d77;
-}
-#lobby .hero h1::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 2px;
-  height: 3px;
-  width: 43px;
-  background: var(--menu-gold);
-}
-#lobby .outfit-controls {
-  align-items: center;
-  column-gap: var(--space-4);
-  row-gap: 9px;
-  color: var(--text-soft);
-}
-#lobby .outfit-controls label {
-  font-size: var(--text-md);
-  white-space: nowrap;
-}
-#lobby .outfit-controls select,
-#lobby .outfit-controls button {
-  height: 33px;
-  padding: 4px 7px;
-}
-#lobby .outfit-controls option,
 .graphics-modal option {
   color: var(--text);
   background: var(--surface-1);
-}
-#lobby #bomb-style {
-  grid-column: 2/-1;
 }
 #lobby .start-btn,
 #app .graphics-modal .primary {
@@ -168,91 +116,6 @@ body.in-game #app .top-actions .icon {
 #lobby .start-btn kbd {
   color: var(--text-on-accent);
   border-color: #3e3a2c68;
-}
-#lobby .section-caption {
-  justify-content: space-between;
-  gap: var(--space-2);
-  padding: 0 0 var(--space-4);
-  margin-bottom: 4px;
-  border-bottom: 1px solid #b2aa8e82;
-}
-#lobby .section-caption > span {
-  color: var(--text);
-  font-size: var(--text-lg);
-  font-weight: 650;
-  letter-spacing: 0.11em;
-}
-#terrain-preview {
-  padding: 3px 8px;
-  font: inherit;
-  font-size: var(--text-xs);
-  letter-spacing: 0;
-}
-#lobby .map-option {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  min-height: clamp(83px, 13vh, 164px);
-  align-items: flex-end;
-  padding: var(--space-6);
-  border: 1px solid #9bada66e;
-  background: var(--surface-1) var(--panel-surface) center / cover;
-}
-#lobby .map-option::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: linear-gradient(0deg, #081012e8, transparent 86%);
-}
-#lobby .map-option .map-art {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  z-index: -2;
-  transition: transform var(--duration-moderate);
-}
-#lobby .map-option:hover .map-art {
-  transform: scale(1.035);
-}
-#lobby .map-option.selected {
-  border-color: var(--gold-400);
-  box-shadow: inset 3px 0 var(--gold-400);
-}
-#lobby .map-option span {
-  display: grid;
-  gap: var(--space-1);
-}
-#lobby .map-option b {
-  color: var(--text-strong);
-  font-size: clamp(15px, 1.35vw, 22px);
-  font-weight: 780;
-  letter-spacing: 0.05em;
-}
-#lobby .map-option small {
-  margin: 0;
-  font: 11px var(--font-hud);
-  color: var(--text-soft);
-}
-#lobby .map-option .map-miniature {
-  position: absolute;
-  right: 8px;
-  top: 8px;
-  width: 26px;
-  opacity: 0.8;
-  outline: 1px solid #d7d4b966;
-}
-#lobby .map-option .selection-dot {
-  width: 8px;
-  height: 8px;
-  border: 1px solid #e9ddc3;
-  border-radius: 0;
-  transform: rotate(45deg);
-}
-#lobby .map-option.selected .selection-dot {
-  background: var(--gold-400);
 }
 #app .graphics-modal {
   width: min(430px, 100%);
@@ -303,9 +166,6 @@ body.in-game #app .top-actions .icon {
   border: 1px solid var(--line-bright);
   font: inherit;
 }
-:lang(en) #lobby .mode-picker h1 {
-  font-size: clamp(32px, 4vw, 64px);
-}
 :lang(en) .brand small {
   display: none;
 }
@@ -331,104 +191,6 @@ body.in-game #app .top-actions .icon {
   padding: 9px 14px;
   margin: 0;
 }
-.mode-picker {
-  position: relative;
-  pointer-events: auto;
-  z-index: 2;
-}
-#lobby .mode-picker h1 {
-  display: grid;
-  padding-top: 12px;
-}
-#lobby .mode-picker h1::before {
-  content: none;
-}
-.mode-picker h1 span {
-  grid-area: 1/1;
-  opacity: 0;
-  transform: translateY(4px);
-  transition:
-    opacity var(--duration-base),
-    transform var(--duration-moderate) ease-out;
-}
-.mode-picker h1 .current {
-  opacity: 1;
-  transform: none;
-}
-.mode-list {
-  position: relative;
-  isolation: isolate;
-  display: grid;
-  grid-template-columns: repeat(var(--mode-count), minmax(0, 1fr));
-  width: min(100%, 340px);
-  border: 1px solid #91856a80;
-  background: #101819e6;
-}
-.mode-list::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: calc(100% / var(--mode-count));
-  background: linear-gradient(0deg, #d8a5483d, #cfb57e16);
-  border-bottom: 2px solid var(--menu-gold);
-  transform: translateX(calc(var(--selected, 0) * 100%));
-  transition: transform var(--duration-moderate) var(--ease-emphasized);
-  z-index: -1;
-}
-.mode-list button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 3px;
-  min-width: 0;
-  min-height: 32px;
-  padding: 3px;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  color: var(--text-muted);
-  font-size: clamp(10px, 0.94vw, 13px);
-  font-weight: 650;
-  white-space: nowrap;
-  transition: color var(--duration-base);
-}
-.mode-list button[aria-pressed="true"],
-.mode-list button:not(:disabled):hover {
-  color: var(--gold-200);
-}
-.mode-list button:focus-visible {
-  outline: 1px solid var(--menu-gold);
-  outline-offset: -3px;
-}
-.mode-list .icon {
-  width: 11px;
-  height: 11px;
-}
-.mode-list button:disabled {
-  color: var(--text-faint);
-  cursor: default;
-}
-@media (prefers-reduced-motion: reduce) {
-  .mode-list::before,
-  .mode-list button,
-  .mode-picker h1 span {
-    transition: none;
-  }
-}
-@media (min-width: 851px) {
-  #lobby .deployment-layout {
-    grid-template-columns: clamp(250px, 24vw, 365px) minmax(0, 1fr) clamp(185px, 18vw, 295px);
-  }
-}
-@media (max-width: 850px) {
-  #lobby .map-option {
-    min-height: 77px;
-    min-width: 137px;
-  }
-  #lobby .map-selection .section-caption {
-    margin-bottom: 5px;
-  }
-}
 @media (max-width: 560px) {
   #app .top-actions .graphics-btn {
     width: 34px;
@@ -445,25 +207,5 @@ body.in-game #app .top-actions .icon {
   #app .brand-mark {
     width: 37px;
     height: 35px;
-  }
-  #lobby .hero h1 {
-    font-size: clamp(30px, 7.5vw, 41px);
-  }
-  #lobby .outfit-controls label {
-    font-size: var(--text-xs);
-  }
-}
-@media (max-height: 520px) {
-  #lobby .hero h1 {
-    font-size: 32px;
-    margin-bottom: 9px;
-    padding-top: 9px;
-  }
-  #lobby .outfit-controls {
-    row-gap: var(--space-2);
-    margin-bottom: 6px;
-  }
-  #lobby .map-option {
-    min-height: 57px;
   }
 }

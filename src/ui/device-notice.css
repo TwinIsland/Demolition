@@ -1,0 +1,68 @@
+/* Advice shown over everything on phones, tablets and very small windows (ui/device-notice.ts). */
+#device-notice {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-loading) + 10);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #080d0df2;
+  backdrop-filter: blur(10px);
+  color: var(--text);
+  font-family: var(--font-ui);
+  text-align: center;
+  animation: device-notice-in var(--duration-slow) var(--ease-emphasized);
+}
+#device-notice[hidden] {
+  display: none;
+}
+.device-notice-card {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  width: min(420px, 100%);
+  padding: 28px 24px 24px;
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--gold-400);
+  background: linear-gradient(180deg, #172023, #0f1617);
+  box-shadow: var(--shadow-lg);
+}
+.device-notice-card img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+}
+.device-notice-card h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+  color: var(--text-strong);
+}
+.device-notice-card p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+.device-notice-card button {
+  margin-top: 6px;
+  padding: 10px 20px;
+  border: 1px solid var(--line-bright);
+  background: var(--surface-3);
+  color: var(--text-soft);
+  font: 600 13px/1 var(--font-ui);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.device-notice-card button:is(:hover, :focus-visible) {
+  border-color: var(--gold-400);
+  color: var(--gold-200);
+}
+@keyframes device-notice-in {
+  from {
+    opacity: 0;
+  }
+}

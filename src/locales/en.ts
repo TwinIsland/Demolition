@@ -28,6 +28,27 @@ export const EN_MESSAGES: Readonly<Record<string, string>> = {
   "纤细 · Alex": "Slim · Alex",
   炸药涂装: "Charge finish",
   开始对局: "Play",
+  干员外观: "Operator",
+  主菜单: "Main menu",
+  当前模式: "Game mode",
+  生命: "Health",
+  炸药容量: "Charges",
+  初始金币: "Starting coins",
+  视角: "View",
+  俯视: "Overhead",
+  第一人称: "First person",
+  "标准规则。第一人称放置炸药，最后存活的干员获胜。":
+    "Standard rules. Plant charges in first person; the last operator standing wins.",
+  "标准数值，全程俯视视角进行整场对局。":
+    "Standard balance, with the whole match played from the overhead view.",
+  "没有时间压力，可以不带 AI 对手单独进场，熟悉地图与技能。":
+    "No clock. Enter alone or with AI opponents to learn the maps and skills.",
+  "全员强化开局：生命、攻击与爆炸范围大幅提高，强化来得更快，脱战自动回血。":
+    "Everyone starts oversized: far more health, power and blast range, faster upgrades, and health that regenerates out of combat.",
+  "为获得最佳体验，请在电脑上游玩": "For the best experience, play on a computer",
+  "爆破前线需要键盘和鼠标，并且在更大的窗口里效果最好。":
+    "Demolition Front needs a keyboard and mouse, and looks best in a larger window.",
+  仍然继续: "Continue anyway",
   "角色预览，可拖动或按方向键旋转": "Operator preview. Drag or use the arrow keys to rotate.",
   作战区域: "Maps",
   战场预览: "Preview map",
