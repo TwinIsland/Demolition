@@ -10,6 +10,8 @@ interface Surface {
   metalness?: number;
   normal?: number;
   maplessNormal?: boolean;
+  /** Thin geometry seen from both faces, such as leaves. */
+  doubleSided?: boolean;
 }
 const paint = (color: string): Surface => ({
   maps: "paint",
@@ -55,7 +57,17 @@ const PALETTE: Record<string, Surface> = {
   ground: { maps: "ground", color: "#b9ad98" },
   "foliage-oak": { maps: "ground", color: "#8fa565", normal: 1.6 },
   "foliage-pine": { maps: "ground", color: "#5d7f6c", normal: 1.6 },
+  // Rainforest
+  "foliage-jungle": { maps: "ground", color: "#527d48", normal: 1.6 },
+  "jungle-bark": { maps: "jungle-bark", color: "#d2ccba" },
+  "moss-rock": { maps: "moss-rock" },
+  "ruin-stone": { maps: "ruin-stone", color: "#e6e0cf" },
+  moss: { maps: "ground", color: "#7f9a45", normal: 1.4 },
+  leaf: { maps: "leaf", color: "#a9bd94", doubleSided: true, normal: 0.8 },
+  "leaf-dark": { maps: "leaf", color: "#74906a", doubleSided: true, normal: 0.8 },
 };
+/** Texture sets that `standard` can use in place of the default concrete. */
+type SurfaceSet = "ruin-stone";
 export const PALETTE_PREFIX = "df:";
 
 /** Downloaded PBR texture sets; color maps use sRGB, data maps stay linear. */
@@ -63,10 +75,10 @@ export class MaterialLibrary {
   constructor(private manager = THREE.DefaultLoadingManager) {}
   private materials = new Map<string, THREE.Material>();
   private textures: THREE.Texture[] = [];
-  standard(name: string, color: string, surface: "ceramic" | "metal" | "plain" = "plain") {
-    const key = `${name}:${color}`;
+  standard(name: string, color: string, surface: "ceramic" | "metal" | "plain" = "plain", set?: SurfaceSet) {
+    const key = `${name}:${color}${set ? ":" + set : ""}`;
     if (this.materials.has(key)) return this.materials.get(key) as THREE.MeshStandardMaterial;
-    const maps = surface === "plain" || surface === "metal" ? {} : this.surface(name);
+    const maps = surface === "plain" || surface === "metal" ? {} : this.surface(name, set);
     const mat = new THREE.MeshStandardMaterial({
       color,
       roughness: surface === "metal" ? 0.4 : name === "floor" ? 0.55 : 0.88,
@@ -112,6 +124,7 @@ export class MaterialLibrary {
       color: surface.color ?? "#ffffff",
       roughness: surface.roughness ?? 1,
       metalness: surface.metalness ?? 0,
+      side: surface.doubleSided ? THREE.DoubleSide : THREE.FrontSide,
     });
     const diff = surface.diff ?? surface.maps;
     if (diff) mat.map = this.texture(path(diff, "diff"), true);
@@ -247,7 +260,83 @@ export class MaterialLibrary {
     this.materials.set(`label:${text}`, mat);
     return mat;
   }
-  private surface(name: string) {
+  private soilMaterial?: THREE.MeshStandardMaterial;
+  /**
+   * Natural ground: grass that gives way to mud where `mask` is bright. The mask covers `area`
+   * (world x, world z of its corner, then width and depth). The surface weathering module reads
+   * the extra uniforms from `userData.wxUniforms` and does the blending.
+   */
+  soil(mask: THREE.Texture, area: readonly [number, number, number, number]) {
+    const load = (file: string, color = false) => {
+      const texture = this.texture(`./assets/surfaces/${file}.webp`, color);
+      return texture;
+    };
+    if (!this.soilMaterial) {
+      const mat = new THREE.MeshStandardMaterial({
+        name: "soil",
+        color: "#ffffff",
+        roughness: 1,
+        map: load("jungle-grass_diff", true),
+        normalMap: load("jungle-grass_nor"),
+        roughnessMap: load("jungle-grass_rough"),
+      });
+      mat.normalScale.setScalar(1.1);
+      mat.userData.wxUniforms = {
+        wxSoilMask: { value: null },
+        wxSoilArea: { value: new THREE.Vector4() },
+        wxMudMap: { value: load("jungle-mud_diff", true) },
+        wxMudNormal: { value: load("jungle-mud_nor") },
+        wxMudRough: { value: load("jungle-mud_rough") },
+      };
+      this.materials.set("soil", mat);
+      this.soilMaterial = mat;
+    }
+    const uniforms = this.soilMaterial.userData.wxUniforms as {
+      wxSoilMask: { value: THREE.Texture | null };
+      wxSoilArea: { value: THREE.Vector4 };
+    };
+    if (uniforms.wxSoilMask.value !== mask) uniforms.wxSoilMask.value?.dispose();
+    uniforms.wxSoilMask.value = mask;
+    uniforms.wxSoilArea.value.set(area[0], area[1], 1 / area[2], 1 / area[3]);
+    return this.soilMaterial;
+  }
+  private grassMaterial?: THREE.MeshStandardMaterial;
+  /** Simulation time for the grass sway; the arena advances it. */
+  readonly grassTime = { value: 0 };
+  /** Grass tufts: vertex-coloured blades that sway, and flatten with distance so far ones cost little. */
+  grass() {
+    if (this.grassMaterial) return this.grassMaterial;
+    const mat = new THREE.MeshStandardMaterial({
+      name: "grass-blades",
+      color: "#8fb35a",
+      roughness: 0.78,
+      vertexColors: true,
+    });
+    mat.onBeforeCompile = (shader) => {
+      shader.uniforms.jgTime = this.grassTime;
+      shader.vertexShader = shader.vertexShader
+        .replace("#include <common>", "#include <common>\nuniform float jgTime;")
+        .replace(
+          "#include <begin_vertex>",
+          /* glsl */ `#include <begin_vertex>
+          #ifdef USE_INSTANCING
+          {
+            vec4 jgOrigin = modelMatrix * (instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0));
+            float jgPhase = jgOrigin.x * 0.73 + jgOrigin.z * 0.91;
+            float jgBend = position.y * position.y * 2.2;
+            transformed.x += (sin(jgTime * 1.9 + jgPhase) + 0.5 * sin(jgTime * 3.1 + jgPhase * 1.7)) * jgBend;
+            transformed.z += cos(jgTime * 1.6 + jgPhase * 1.3) * jgBend * 0.7;
+            // Level of detail: blades shrink into the ground between 24 and 34 metres.
+            transformed.y *= 1.0 - smoothstep(24.0, 34.0, distance(jgOrigin.xyz, cameraPosition));
+          }
+          #endif`,
+        );
+    };
+    this.materials.set("grass-blades", mat);
+    this.grassMaterial = mat;
+    return mat;
+  }
+  private surface(name: string, override?: SurfaceSet) {
     const loader = new THREE.TextureLoader(this.manager);
     const load = (path: string, color = false, repeat = 1) => {
       const texture = loader.load(path);
@@ -258,6 +347,13 @@ export class MaterialLibrary {
       this.textures.push(texture);
       return texture;
     };
+    if (override)
+      return {
+        map: load(`./assets/surfaces/${override}_diff.webp`, true, 2),
+        roughnessMap: load(`./assets/surfaces/${override}_rough.webp`, false, 2),
+        normalMap: load(`./assets/surfaces/${override}_nor.webp`, false, 2),
+        normalScale: new THREE.Vector2(0.9, 0.9),
+      };
     const floor = name === "floor" || name === "terrain";
     const set = floor ? "concrete_floor_02" : "concrete_wall_003";
     const repeat = name === "terrain" ? 90 : 1;

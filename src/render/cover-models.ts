@@ -7,6 +7,20 @@ import { BUILT_CRATE, resolveObstacles, type Obstacle } from "../core/obstacles"
 import type { MaterialLibrary } from "./materials";
 
 /**
+ * Models that are not destructible obstacles: permanent-wall variants, fitted to a tile like an
+ * obstacle, and scenery that stands outside the grid at its authored size.
+ */
+const SCENERY = {
+  "jungle-tree": { footprint: 0.96, height: 4.3 },
+  "jungle-rock": { footprint: 0.96, height: 2.6 },
+  "canopy-tree": undefined,
+  "canopy-tree-far": undefined,
+  "palm-tree": undefined,
+  undergrowth: undefined,
+} satisfies Record<string, { footprint: number; height: number } | undefined>;
+export type SceneryId = keyof typeof SCENERY;
+
+/**
  * Obstacle models for every map, loaded once before the arena combines
  * identical meshes into instance batches. Built-in presets and models shipped
  * by a map go through the same fit and the same surface palette.
@@ -23,29 +37,36 @@ export class CoverModels {
     const wanted = new Map<string, Obstacle>();
     wanted.set(BUILT_CRATE, this.builtCrate);
     for (const map of MAPS) for (const obstacle of mapObstacles(map)) wanted.set(obstacle.id, obstacle);
+    const load = async (id: string, url: string, fit?: { footprint: number; height: number }) => {
+      const { scene } = await loader.loadAsync(url);
+      materials.applyPalette(scene);
+      const model = new THREE.Group();
+      model.add(scene);
+      if (fit) {
+        const bounds = new THREE.Box3().setFromObject(scene);
+        const size = bounds.getSize(new THREE.Vector3());
+        const center = bounds.getCenter(new THREE.Vector3());
+        const scale = Math.min((fit.footprint * TILE_SIZE) / Math.max(size.x, size.z), fit.height / size.y);
+        scene.scale.multiplyScalar(scale);
+        scene.position.set(-center.x * scale, -bounds.min.y * scale, -center.z * scale);
+      }
+      scene.traverse((part) => {
+        if (part instanceof THREE.Mesh) part.castShadow = part.receiveShadow = true;
+      });
+      this.templates.set(id, model);
+    };
     this.ready = Promise.all(
-      [...wanted.values()]
-        .map(async (obstacle) => {
-          const { scene } = await loader.loadAsync(obstacle.model);
-          materials.applyPalette(scene);
-          const bounds = new THREE.Box3().setFromObject(scene);
-          const size = bounds.getSize(new THREE.Vector3());
-          const center = bounds.getCenter(new THREE.Vector3());
-          const scale = Math.min(
-            (obstacle.footprint * TILE_SIZE) / Math.max(size.x, size.z),
-            obstacle.height / size.y,
-          );
-          const model = new THREE.Group();
-          model.add(scene);
-          scene.scale.multiplyScalar(scale);
-          scene.position.set(-center.x * scale, -bounds.min.y * scale, -center.z * scale);
-          scene.traverse((part) => {
-            if (part instanceof THREE.Mesh) part.castShadow = part.receiveShadow = true;
-          });
-          this.templates.set(obstacle.id, model);
-        })
-        .map((task) => task.catch((error) => console.error("Obstacle model failed to load", error))),
+      [
+        ...[...wanted.values()].map((obstacle) => load(obstacle.id, obstacle.model, obstacle)),
+        ...Object.entries(SCENERY).map(([id, fit]) =>
+          load(`scenery:${id}`, `./assets/scenery/${id}.glb`, fit),
+        ),
+      ].map((task) => task.catch((error) => console.error("Obstacle model failed to load", error))),
     );
+  }
+  /** A wall variant or a piece of scenery; an empty group stands in when its model failed to load. */
+  scenery(id: SceneryId) {
+    return this.templates.get(`scenery:${id}`)?.clone(true) ?? new THREE.Group();
   }
   instance(obstacle: Obstacle) {
     return this.templates.get(obstacle.id)?.clone(true);

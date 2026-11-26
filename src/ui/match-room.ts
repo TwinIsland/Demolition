@@ -55,6 +55,7 @@ export function updateRoom(
   draw: (canvas: HTMLElement, skin: string, seat: number) => Promise<void>,
   mode: MatchMode,
   zoneDuration: number = ZONE.defaultDuration,
+  zoneScale = 1,
 ) {
   const count = 1 + slots.filter((s) => s.enabled).length;
   room.querySelector("[data-occupancy]")!.textContent = `${count} / 4`;
@@ -74,6 +75,9 @@ export function updateRoom(
     Object.fromEntries(ZONE.durations.map((seconds) => [String(seconds), t("{0} 秒", seconds)])),
     String(zoneDuration),
   );
+  // A large map stretches every choice, so the list shows the seconds that will actually be played.
+  for (const option of room.querySelector<HTMLSelectElement>("#zone-duration")!.options)
+    option.text = t("{0} 秒", Math.round(Number(option.value) * zoneScale));
   const confirm = room.querySelector<HTMLButtonElement>("#room-confirm")!;
   confirm.disabled = mode !== "practice" && count < 2;
   confirm.title = confirm.disabled ? t("至少启用一名 AI 对手") : "";

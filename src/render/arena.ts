@@ -5,6 +5,8 @@ import { TILE_SIZE } from "../core/geometry";
 import type { GameSnapshot } from "../core/types";
 import type { Models } from "./models";
 import { StaticBatches } from "./static-batches";
+import { groundAt } from "../core/pack-api";
+import { buildJungle } from "./jungle-scenery";
 export { TILE_SIZE };
 export const world = (value: number, size: number) => (value - (size - 1) / 2) * TILE_SIZE;
 
@@ -55,29 +57,49 @@ export class Arena {
     const size = state.size,
       width = size * TILE_SIZE,
       map = MAPS.find((m) => m.id === state.mapId)!,
-      midnight = map.theme === "midnight";
+      jungle = map.theme === "rainforest";
     const m = models.materials;
+    // Which permanent walls of a natural map are trees or rock instead of masonry.
+    const wallVariant = (x: number, z: number, scattered: boolean) => {
+      if (!jungle) return "block" as const;
+      const roll = ((Math.imul(x * 73856093 + z * 19349663, 83492791) >>> 0) % 100) / 100;
+      // Walls the map fixes are masonry: the temple. The scattered ones are mostly forest.
+      if (!scattered) return roll < 0.45 ? ("broken" as const) : ("block" as const);
+      if (roll < 0.56) return "tree" as const;
+      if (roll < 0.82) return "rock" as const;
+      return roll < 0.92 ? ("broken" as const) : ("block" as const);
+    };
     const coverAt = coverLayout(map, state.seed);
     const playerBuilt = new Set(builtCrates(state).map((crate) => crate.z * size + crate.x));
     this.coverRevision = state.coverRevision ?? 0;
-    const base = models.box(width + 0.55, 1.5, width + 0.55, m.standard("platform", "#282c2b", "metal"), 0.3);
-    base.position.y = -0.95;
-    this.root.add(base);
+    if (!jungle) {
+      const base = models.box(
+        width + 0.55,
+        1.5,
+        width + 0.55,
+        m.standard("platform", "#282c2b", "metal"),
+        0.3,
+      );
+      base.position.y = -0.95;
+      this.root.add(base);
+    }
     for (let z = 0; z < size; z++)
       for (let x = 0; x < size; x++) {
         const px = world(x, size),
           pz = world(z, size);
-        const tile = models.box(
-          2.37,
-          0.18,
-          2.37,
-          m.standard("floor", (x + z) % 2 ? "#b1b3ae" : "#bdbdb5", "ceramic"),
-          0.03,
-        );
-        tile.position.set(px, -0.1, pz);
-        this.root.add(tile);
+        // A natural map has one continuous ground and is only paved where it says stone.
+        if (!jungle || groundAt(map, x, z) === "stone") {
+          const tile = models.slab(map.theme, (x + z) % 2);
+          tile.position.set(px, -0.1, pz);
+          this.root.add(tile);
+        }
         if (state.tiles[z][x] === 1) {
-          const wall = models.wall(midnight);
+          const border = !x || !z || x === size - 1 || z === size - 1;
+          const wall = models.wall(
+            map.theme,
+            wallVariant(x, z, border || state.wallOrigins?.[z * size + x] !== undefined),
+          );
+          if (jungle) wall.rotation.y = (((x * 7 + z * 13) % 4) * Math.PI) / 2;
           wall.position.set(px, 0, pz);
           this.root.add(wall);
           const id = state.wallOrigins?.[z * size + x];
@@ -109,11 +131,14 @@ export class Arena {
           this.crates.set(origin, cell);
         }
       }
-    const terrain = models.box(240, 0.3, 240, m.standard("terrain", "#8e9287", "ceramic"), 0.01);
-    terrain.position.y = -1.6;
-    this.root.add(terrain);
+    if (jungle) buildJungle(this.root, models, map, state);
+    else {
+      const terrain = models.box(240, 0.3, 240, m.standard("terrain", "#8e9287", "ceramic"), 0.01);
+      terrain.position.y = -1.6;
+      this.root.add(terrain);
+    }
     // Distant industrial silhouettes sit outside the playable collision grid.
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < (jungle ? 0 : 12); i++) {
       const angle = (i * Math.PI) / 6,
         distance = 48 + (i % 3) * 11,
         height = 5 + (i % 4) * 3;
@@ -127,7 +152,8 @@ export class Arena {
       building.position.set(Math.sin(angle) * distance, height / 2 - 1.5, Math.cos(angle) * distance);
       this.root.add(building);
     }
-    this.batches = new StaticBatches(this.root);
+    // A large arena is batched in a 3 x 3 grid of chunks, so the view frustum can cull most of it.
+    this.batches = new StaticBatches(this.root, size > 21 ? Math.ceil(size / 3) * TILE_SIZE : 0);
     this.syncBuilt(state);
   }
   dispose() {
@@ -212,6 +238,7 @@ export class Arena {
     return true;
   }
   sync(state: Readonly<GameSnapshot>) {
+    this.models.materials.grassTime.value = state.time;
     const size = state.size,
       revision = state.coverRevision ?? 0;
     let changed = revision !== this.coverRevision;

@@ -35,7 +35,7 @@ export function planWalls(s: GameSnapshot, map: MapDefinition, random: () => num
   const sinking = shuffle(standing, random).slice(0, Math.round(standing.length * Math.min(1, ratio!)));
   const tiles = s.tiles.map((row) => row.map((tile) => (tile === 2 ? 0 : tile)));
   for (const cell of sinking) tiles[Math.floor(cell / size)][cell % size] = 0;
-  const spawns = spawnPoints(size),
+  const spawns = spawnPoints(map),
     built = new Set((s.builtCrates ?? []).map((crate) => crate.z * size + crate.x)),
     fresh: number[] = [];
   for (let z = 1; z < size - 1; z++)
@@ -113,7 +113,7 @@ export function rearrangeCover(
   for (const p of [...s.players.filter((p) => p.alive), ...s.zombies])
     for (let dz = -1; dz <= 1; dz++)
       for (let dx = -1; dx <= 1; dx++) crowded.add((Math.round(p.z) + dz) * s.size + Math.round(p.x) + dx);
-  const spawns = spawnPoints(s.size);
+  const spawns = spawnPoints(map);
   const origins: Record<number, number> = {};
   const moving: number[] = [],
     open: number[] = [],

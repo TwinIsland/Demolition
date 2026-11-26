@@ -11,7 +11,8 @@ import type { ItemId, Player } from "../core/types";
 import { ITEMS } from "../core/content";
 import { MaterialLibrary } from "./materials";
 import { BombFinishes } from "./bomb-finishes";
-import { CoverModels } from "./cover-models";
+import { CoverModels, type SceneryId } from "./cover-models";
+import type { MapDefinition } from "../core/pack-api";
 import type { Obstacle } from "../core/obstacles";
 
 export class Models {
@@ -31,6 +32,11 @@ export class Models {
     this.chargeAsset = new GLTFLoader(manager).loadAsync("./assets/dynamite.glb");
     this.finishes = new BombFinishes(manager);
     this.covers = new CoverModels(manager, this.materials);
+    // Request the rainforest's own surfaces now, so they load with everything else at startup.
+    this.wall("rainforest");
+    this.slab("rainforest", 0);
+    this.materials.grass();
+    this.materials.soil(new THREE.DataTexture(new Uint8Array(4), 1, 1), [0, 0, 1, 1]);
   }
   async preload(players: readonly Player[], includeDrops: boolean) {
     for (const p of players)
@@ -261,7 +267,53 @@ export class Models {
     }
     return crate;
   }
-  wall(midnight: boolean) {
+  /** Scenery placed by a map theme: wall variants and what stands outside the grid. */
+  scenery(id: SceneryId) {
+    return this.covers.scenery(id);
+  }
+  /** One floor slab. Natural maps only pave where the map asks for stone. */
+  slab(theme: MapDefinition["theme"], shade: number) {
+    const material =
+      theme === "rainforest"
+        ? this.materials.standard("floor", shade ? "#cfcbbd" : "#dedacb", "ceramic", "ruin-stone")
+        : this.materials.standard("floor", shade ? "#b1b3ae" : "#bdbdb5", "ceramic");
+    return this.box(2.37, 0.18, 2.37, material, 0.03);
+  }
+  /**
+   * A permanent wall. The rainforest also has `tree` and `rock` variants; its plain block is
+   * ruined masonry, which is what the closing zone raises.
+   */
+  wall(theme: MapDefinition["theme"], variant: "block" | "broken" | "tree" | "rock" = "block") {
+    if (theme === "rainforest") {
+      if (variant === "tree" || variant === "rock")
+        return this.scenery(variant === "tree" ? "jungle-tree" : "jungle-rock");
+      const g = new THREE.Group();
+      const stone = (name: string, color: string) =>
+        this.materials.standard(name, color, "ceramic", "ruin-stone");
+      const mossy = this.materials.palette("df:moss")!;
+      if (variant === "broken") {
+        // A wall that lost its upper courses: a low base, one surviving block and fallen rubble.
+        const lower = this.box(2.3, 1.6, 2.3, stone("enamel", "#e4dfd0"), 0.13);
+        lower.position.y = 0.8;
+        const upper = this.box(1.3, 0.9, 1.5, stone("enamel", "#d6d1c1"), 0.13);
+        upper.position.set(-0.45, 2.05, 0.35);
+        const ledge = this.box(0.9, 0.1, 2.1, mossy);
+        ledge.position.set(0.66, 1.62, 0);
+        const top = this.box(1.2, 0.1, 1.4, mossy);
+        top.position.set(-0.45, 2.52, 0.35);
+        g.add(lower, upper, ledge, top);
+        return g;
+      }
+      const body = this.box(2.3, 2.46, 2.3, stone("enamel", "#e4dfd0"), 0.13);
+      body.position.y = 1.23;
+      g.add(body);
+      // Moss has taken the top of every block.
+      const moss = this.box(2.2, 0.1, 2.2, mossy);
+      moss.position.y = 2.48;
+      g.add(moss);
+      return g;
+    }
+    const midnight = theme === "midnight";
     const g = new THREE.Group(),
       color = midnight ? "#a3a8a6" : "#bcb8ab";
     const body = this.box(2.28, 2.38, 2.28, this.materials.standard("enamel", color, "ceramic"), 0.13);

@@ -32,3 +32,11 @@ export const OVERCAST_RAIN_SKY: SkyLook = {
   fill: { sky: "#9fb0bf", ground: "#3f3d38", intensity: 0.5 },
   fog: { color: "#6f7b83", density: 0.0075 },
 };
+export const JUNGLE_RAIN_SKY: SkyLook = {
+  sky: "./assets/environment/overcast-sky.hdr",
+  backgroundIntensity: 0.5,
+  environmentIntensity: 0.7,
+  sun: { color: "#dfe6cf", intensity: 0.85 },
+  fill: { sky: "#a9bfae", ground: "#3d4631", intensity: 0.55 },
+  fog: { color: "#7d8f84", density: 0.0085 },
+};

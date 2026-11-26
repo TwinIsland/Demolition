@@ -48,9 +48,21 @@ export interface MapDefinition extends Pack {
   bgm?: string;
   artwork?: string;
   backdrop?: string;
-  theme: "garden" | "midnight";
+  theme: "garden" | "midnight" | "rainforest";
+  /** Cells between the boundary wall and each corner spawn. Defaults to 1, the corner itself. */
+  spawnInset?: number;
+  /**
+   * Multiplier on the match length chosen in the room, for maps with many more rings to close.
+   * Defaults to 1.
+   */
+  zoneScale?: number;
+  /**
+   * What the ground is made of at a cell: selects footsteps and, on natural maps, the ground
+   * texture. Presentation only. Defaults to the theme's own floor.
+   */
+  groundAt?(x: number, z: number, size: number): GroundKind | undefined;
   /** Sky, fog and surface wetness. Presentation only; the simulation never reads it. Defaults to clear. */
-  weather?: "clear" | "rain";
+  weather?: "clear" | "rain" | "monsoon";
   /** Return a tile to override the default interior layout. Borders and spawns stay protected. */
   tileAt?(x: number, z: number, size: number, random: () => number): Tile | undefined;
   /** Supply layout preferences for moving surviving cover. Borders, walls and occupied cells stay protected. */
@@ -60,11 +72,16 @@ export interface MapDefinition extends Pack {
   ): Partial<Pick<MapDefinition, "density" | "wallDensity" | "tileAt">>;
 }
 
+export type GroundKind = "slab" | "grass" | "mud" | "stone";
+/** The ground under a cell of a map, with the theme's default where the map does not say. */
+export const groundAt = (map: MapDefinition, x: number, z: number): GroundKind =>
+  map.groundAt?.(Math.round(x), Math.round(z), map.size) ?? (map.theme === "rainforest" ? "grass" : "slab");
+
 export const defineSkin = (config: SkinPack) => config;
 export const defineFinish = (config: BombFinish) => config;
 export const defineMap = (
   config: MapDefinition,
-  layout: Pick<MapDefinition, "tileAt" | "randomizeTerrain"> = {},
+  layout: Pick<MapDefinition, "tileAt" | "randomizeTerrain" | "groundAt"> = {},
 ) => ({ ...config, ...layout });
 
 export function indexPacks<T extends Pack>(packs: T[], category: string) {

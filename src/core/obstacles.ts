@@ -81,6 +81,14 @@ preset("oak", "wood", 3.3, ["woodland", "outpost"]);
 preset("pine", "wood", 3.6, ["woodland", "outpost"]);
 preset("logs", "wood", 1.6, ["woodland", "outpost"]);
 
+// Rainforest
+preset("fern", "soft", 1.6, ["rainforest"], 0.9);
+preset("banana", "soft", 3, ["rainforest"], 0.92);
+preset("boulder", "metal", 1.5, ["rainforest"], 0.9);
+preset("fallen-log", "wood", 1.3, ["rainforest"], 0.92);
+preset("ruin-pillar", "metal", 2.3, ["rainforest", "ruins"]);
+preset("idol", "metal", 2.1, ["rainforest", "ruins"], 0.9);
+
 /** IDs accepted by maps written for earlier releases. */
 const LEGACY_IDS: Readonly<Record<string, string>> = { "low-bags": "bags" };
 const FALLBACK: readonly MapObstacle[] = [{ use: "set:storage", weight: 1 }];

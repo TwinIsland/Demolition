@@ -43,6 +43,13 @@ const PREVIEW: Record<string, string> = {
   ground: "#5f5a40",
   "foliage-oak": "#55683a",
   "foliage-pine": "#3d5446",
+  "foliage-jungle": "#33552f",
+  "jungle-bark": "#6f6a55",
+  "moss-rock": "#7b8068",
+  "ruin-stone": "#4f4a40",
+  moss: "#4c6a2c",
+  leaf: "#3f7a2c",
+  "leaf-dark": "#2f5a2a",
 };
 
 export function seeded(seed: number) {

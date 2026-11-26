@@ -24,9 +24,11 @@ import { supplyPrice, supplyRefusal } from "../core/systems/supply";
 import { ZONE, zoneIgnitesIn } from "../core/zone";
 import { BombForecast } from "./bomb-forecast";
 import {
+  approachField,
   DEFAULT_PERSONALITY,
   humanAdvantage,
   huntTokens,
+  LARGE_ARENA,
   likelyCharges,
   mayHuntHuman,
   PERSONALITIES,
@@ -241,11 +243,17 @@ export class BotAgent implements PlayerAgent {
       const threat = threatField(s, p, enemies),
         frailty = 1 - p.hp / p.maxHp,
         mood = this.personality;
+      // On a large arena the fight can be far outside the route search: follow walking distance.
+      const approach =
+        s.size >= LARGE_ARENA && navigationContacts.length ? approachField(s, navigationContacts) : undefined;
+      const reach = Math.max(15, approach ? s.size * 1.5 : 0);
       const value = (c: Vec2) => {
         const item = s.items.find((i) => same(i, c));
         const loot = item ? (ITEMS[item.kind].aiPickupValue?.(p) ?? 19) : 0;
         const cover = DIRECTIONS.filter((d) => s.tiles[c.z + d.z]?.[c.x + d.x] === 2).length;
-        const nearest = Math.min(15, ...navigationContacts.map((e) => dist(e, c)));
+        const nearest = approach
+          ? Math.min(reach, approach[c.z * s.size + c.x])
+          : Math.min(15, ...navigationContacts.map((e) => dist(e, c)));
         const undead = Math.min(6, ...s.zombies.map((z) => dist(z, c)));
         // The zone pulls everyone inward well before a ring ignites.
         const ignites = s.zone ? zoneIgnitesIn(s.size, c, s.time, s.duration) : Infinity;

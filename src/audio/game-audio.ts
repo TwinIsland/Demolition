@@ -4,13 +4,31 @@ import type { GameEvent, GameSnapshot, Player, Vec2 } from "../core/types";
 import { AudioEngine } from "./audio-engine";
 import type { PlayOptions } from "./audio-engine";
 import { BassPulse } from "./bass-pulse";
-import { BANK_CUES, FIRE_LOOP, MENU_MUSIC, MUSIC_VOLUME, RAIN_LOOP, THUNDER, cue } from "./sound-bank";
+import { MAPS } from "../core/maps";
+import { groundAt, type GroundKind } from "../core/pack-api";
+import {
+  BANK_CUES,
+  FIRE_LOOP,
+  JUNGLE_LOOP,
+  MENU_MUSIC,
+  MUSIC_VOLUME,
+  RAIN_LOOP,
+  THUNDER,
+  cue,
+} from "./sound-bank";
 import { distanceTo, falloff, panTo } from "./spatial";
 import type { Listener } from "./spatial";
 
 const MENU_CUES = { click: "ui-click", accept: "ui-accept", back: "ui-back" } as const;
 const STRIDE_LENGTH = 0.85;
 const BLAST_RING_COOLDOWN = 1.45;
+/** Footstep cue family for each kind of ground; paving and slabs share the hard step. */
+const STEP_FAMILY: Record<GroundKind, string> = {
+  slab: "footstep",
+  stone: "footstep",
+  grass: "footstep-grass",
+  mud: "footstep-mud",
+};
 
 /** Levels for cues whose file is chosen by a content module, by the role they play. */
 const LEVEL = {
@@ -37,6 +55,7 @@ export class GameAudio {
   private readonly fuseBeats = new Map<number, number>();
   private fireLevel = 0;
   private rainLevel = 0;
+  private wildlifeLevel = 0;
   private lastResetId?: number;
   private lastResetSecond?: number;
   private countdownBeat?: string;
@@ -50,6 +69,7 @@ export class GameAudio {
     this.engine.preload(Object.values(THUNDER));
     this.engine.setLoopLevel(FIRE_LOOP, 0);
     this.engine.setLoopLevel(RAIN_LOOP, 0);
+    this.engine.setLoopLevel(JUNGLE_LOOP, 0);
     this.engine.playMusic(MENU_MUSIC, { volume: MUSIC_VOLUME });
   }
 
@@ -184,6 +204,14 @@ export class GameAudio {
     this.engine.setLoopLevel(RAIN_LOOP, level);
   }
 
+  /** Forest wildlife bed for the map being played; maps without a forest pass nothing. */
+  wildlife(mapId?: string) {
+    const level = MAPS.find((map) => map.id === mapId)?.theme === "rainforest" ? 1 : 0;
+    if (level === this.wildlifeLevel) return;
+    this.wildlifeLevel = level;
+    this.engine.setLoopLevel(JUNGLE_LOOP, level);
+  }
+
   /** Thunder after a lightning flash; closer strokes are louder and use the sharper sound. */
   thunder(strength: number) {
     this.engine.play(strength > 0.7 ? THUNDER.near : THUNDER.far, { gain: 0.45 + 0.55 * strength });
@@ -192,6 +220,7 @@ export class GameAudio {
   reset() {
     this.battleFire(0);
     this.rain(0);
+    this.wildlife();
     this.lastResetId = this.lastResetSecond = undefined;
     this.lastEventId = 0;
     this.nextBlastRing = 0;
@@ -205,7 +234,7 @@ export class GameAudio {
 
   update(state: Readonly<GameSnapshot>, localId: string) {
     const self = state.players.find((p) => p.id === localId)!;
-    if (state.phase === "playing") this.footsteps(state.players, self);
+    if (state.phase === "playing") this.footsteps(state, self);
     for (const event of state.events) {
       if (event.id <= this.lastEventId) continue;
       this.lastEventId = event.id;
@@ -223,8 +252,9 @@ export class GameAudio {
     this.engine.play(cue(ref), options);
   }
 
-  private footsteps(players: readonly Player[], self: Player) {
-    for (const p of players) {
+  private footsteps(state: Readonly<GameSnapshot>, self: Player) {
+    const map = MAPS.find((candidate) => candidate.id === state.mapId);
+    for (const p of state.players) {
       if (!p.alive) continue;
       const stride = this.strides.get(p.id) ?? { x: p.x, z: p.z, travel: 0, index: p.id.length % 3 };
       if (p.verticalSpeed === 0) stride.travel += Math.hypot(p.x - stride.x, p.z - stride.z);
@@ -233,7 +263,7 @@ export class GameAudio {
       this.strides.set(p.id, stride);
       if (stride.travel < STRIDE_LENGTH) continue;
       stride.travel %= STRIDE_LENGTH;
-      const step = `footstep-${stride.index}`;
+      const step = `${map ? STEP_FAMILY[groundAt(map, p.x, p.z)] : "footstep"}-${stride.index}`;
       stride.index = (stride.index + 1) % 3;
       if (p.id === self.id) this.play(step);
       else this.play(step, { gain: 0.62 * falloff(distanceTo(self, p), 6), pan: panTo(self, p) });

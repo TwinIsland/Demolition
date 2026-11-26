@@ -1,6 +1,12 @@
 # Map mods
 
-A map is one `defineMap` call in `maps/<id>/index.js`. Types are in `src/core/pack-api.ts`, generation in `src/core/maps.ts`, obstacle presets in `src/core/obstacles.ts`. The two built-in maps, `dream-garden` (Outpost) and `night-lab` (Warehouse), are complete examples.
+A map is one `defineMap` call in `maps/<id>/index.js`. Types are in `src/core/pack-api.ts`, generation in `src/core/maps.ts`, obstacle presets in `src/core/obstacles.ts`. The three built-in maps are complete examples:
+
+| Map | ID | Size | Notes |
+| --- | --- | --- | --- |
+| Outpost | `dream-garden` | 19 × 19 | Rain, concrete outpost |
+| Rainforest | `rainforest` | 31 × 31 | Grass and mud ground, temple ruins in the centre, inset spawns, longer zone timer |
+| Warehouse | `night-lab` | 17 × 17 | Night, close quarters |
 
 ## Setup
 
@@ -37,7 +43,10 @@ export default defineMap(
 | `density` | 0 to 1. Chance that an open interior tile starts with destructible cover |
 | `wallDensity` | 0 to 1. Share of interior tiles turned into permanent walls. Omit for the classic pillar grid |
 | `wallShuffle` | 0 to 1. Share of generated walls that move on a terrain reshuffle. Needs `wallDensity`. Default 0 |
-| `theme` | `"garden"` (daylight, outdoor) or `"midnight"` (night, industrial) |
+| `theme` | `"garden"` (daylight, outdoor), `"midnight"` (night, industrial) or `"rainforest"` (grass ground, forest scenery, tree and rock walls) |
+| `weather` | `"clear"` (default), `"rain"` or `"monsoon"` (rain with thicker, greener mist). Presentation only |
+| `spawnInset` | Cells between the boundary wall and each of the four spawns, measured along the diagonal. Default 1, the corners. Use a larger value on big maps so operators meet sooner |
+| `zoneScale` | Multiplier on the match length chosen in the room. Default 1. A map with many rings needs more time per match |
 | `obstacles` | Weighted pool of cover models. Defaults to the `storage` set |
 | `bgm` | Music URL for this map |
 | `artwork`, `backdrop` | Card image on the map picker and full-screen background. `backdrop` falls back to `artwork`, and with neither the live 3D map is shown |
@@ -58,6 +67,31 @@ During a match the boundary wall closes in ring by ring, so the centre of your m
 Without `wallDensity`, every tile with even `x` and even `z` is a wall (the classic grid) and step 5 applies to the rest.
 
 Use `random()` inside `tileAt`, never `Math.random()`.
+
+## Large maps
+
+`size` has to be odd, because the zone ends on the centre 3 × 3. Rainforest is 31 × 31: 29 × 29 playable cells, 2.7 times the area of Outpost. Three settings keep a map of that size playable:
+
+- `spawnInset: 7` starts the operators about 16 cells apart instead of 28. The outer rings are left for looting.
+- `zoneScale: 5 / 3` gives 13 rings about 22 s each at the default duration, close to the pace of Outpost.
+- Fixed lanes from `tileAt` (two trails, a creek and the temple gates) guarantee routes to the centre.
+
+Bots steer by walking distance to the nearest known opponent on maps of 23 cells or more, because the fight is often outside their local route search. Smaller maps keep the straight-line estimate.
+
+The renderer batches a map larger than 21 cells in a 3 × 3 grid of chunks, so the camera only draws the chunks in view, and stretches the sun's shadow map over the whole grid.
+
+## Ground
+
+`groundAt(x, z, size)` in the layout object tells the engine what each cell's ground is: `"slab"`, `"stone"`, `"grass"` or `"mud"`. It selects the footstep sound (hard, grass or mud). On a `rainforest` map it also drives the look: grass and mud are blended into one continuous ground, and `"stone"` cells are paved. Without it, a `rainforest` map is all grass and the other themes are all slab.
+
+```js
+groundAt(x, z, size) {
+  if (z === (size - 1) / 2) return "mud"; // a muddy trail through the middle
+  return "grass";
+},
+```
+
+`groundAt` must be a pure function of the cell: it is called by the renderer and the audio layer, not by the simulation.
 
 ## Obstacles
 
@@ -89,6 +123,12 @@ Presets are defined in `src/core/obstacles.ts`:
 | `oak` | wood | 3.3 | woodland, outpost |
 | `pine` | wood | 3.6 | woodland, outpost |
 | `logs` | wood | 1.6 | woodland, outpost |
+| `fern` | soft | 1.6 | rainforest |
+| `banana` | soft | 3 | rainforest |
+| `boulder` | metal | 1.5 | rainforest |
+| `fallen-log` | wood | 1.3 | rainforest |
+| `ruin-pillar` | metal | 2.3 | rainforest, ruins |
+| `idol` | metal | 2.1 | rainforest, ruins |
 
 `built-crate` is reserved for crates built by players and is never drawn from a pool.
 
@@ -98,11 +138,11 @@ Rules for your own model:
 - It is scaled uniformly to fit `footprint × 2.4` world units wide (default 0.86, clamped to 0.5–0.95) and `height` units tall (default 2). A wall is 2.5 tall.
 - `surface` is `wood`, `metal` or `soft` and selects the knife impact sound. It defaults to `metal`.
 - Fill most of the tile, so players can see at a glance that it is blocked.
-- A material named `df:<name>` is replaced with the engine's shared material of that name, so your model matches the built-in ones. The names are listed in `PALETTE` in `src/render/materials.ts`, for example `df:planks`, `df:steel`, `df:paint-olive`, `df:concrete`.
+- A material named `df:<name>` is replaced with the engine's shared material of that name, so your model matches the built-in ones. The names are listed in `PALETTE` in `src/render/materials.ts`, for example `df:planks`, `df:steel`, `df:paint-olive`, `df:concrete`, `df:moss-rock`, `df:ruin-stone`, `df:leaf`.
 
 An unknown preset or set logs a warning and is skipped. An empty pool falls back to `set:storage`. The older `covers: [{ kind, weight }]` field still works and is read as preset IDs.
 
-To add a preset for every map, call `defineObstacle({ id, model, surface, height, footprint, tags })` in `src/core/obstacles.ts`. Built-in models are generated by `tools/model-forge`.
+To add a preset for every map, call `defineObstacle({ id, model, surface, height, footprint, tags })` in `src/core/obstacles.ts`. Built-in models are generated by `tools/model-forge`. Stone obstacles use the `metal` surface, which is the hard-impact knife sound.
 
 ## Terrain reshuffle
 

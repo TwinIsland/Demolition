@@ -222,9 +222,10 @@ export class GameUI {
     rate: ZombieRate,
     mode: MatchMode,
     zoneDuration: number,
+    zoneScale = 1,
   ) {
     const room = this.overlay.dialog("room-modal") ?? this.overlay.show(roomMarkup(slots), "room-modal");
-    updateRoom(room, slots, look, mapName, rate, this.actions.drawPortrait, mode, zoneDuration);
+    updateRoom(room, slots, look, mapName, rate, this.actions.drawPortrait, mode, zoneDuration, zoneScale);
   }
 
   showShop(player: Player) {

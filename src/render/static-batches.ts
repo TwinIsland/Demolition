@@ -11,15 +11,22 @@ export class StaticBatches {
   private cells = new Map<string, Slot[]>();
   private moved = new Set<THREE.InstancedMesh>();
   private matrix = new THREE.Matrix4();
-  constructor(root: THREE.Group) {
+  /**
+   * @param chunk Side of a culling chunk in world units. With a chunk size, meshes are batched
+   * per chunk of the floor plan, so the camera frustum can drop the parts of a large arena that
+   * are out of view. 0 keeps one batch per geometry and material.
+   */
+  constructor(root: THREE.Group, chunk = 0) {
     root.updateMatrixWorld(true);
     const groups = new Map<string, THREE.Mesh[]>();
     root.traverse((object) => {
       if (!(object instanceof THREE.Mesh)) return;
+      const where = object.matrixWorld.elements;
+      const region = chunk ? `${Math.floor(where[12] / chunk)},${Math.floor(where[14] / chunk)}:` : "";
       const materials = Array.isArray(object.material)
         ? object.material.map((m) => m.uuid).join(",")
         : object.material.uuid;
-      const key = `${object.geometry.uuid}:${materials}:${object.castShadow}:${object.receiveShadow}`;
+      const key = `${region}${object.geometry.uuid}:${materials}:${object.castShadow}:${object.receiveShadow}`;
       const list = groups.get(key) ?? [];
       list.push(object);
       groups.set(key, list);

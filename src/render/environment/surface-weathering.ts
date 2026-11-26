@@ -8,7 +8,7 @@ import { NOISE_GLSL } from "./noise.glsl";
  * instance's world position, and every mask is procedural noise in world space, so static
  * batches keep their draw calls.
  */
-export type SurfaceProfile = "structure" | "ground" | "terrain" | "metal" | "prop";
+export type SurfaceProfile = "structure" | "ground" | "terrain" | "soil" | "metal" | "prop";
 /**
  * 0: instance variation and plain wetness. 1: adds raindrop ripples and rivulets.
  * 2: adds grime, streaks, moss, cracks and a second ripple layer.
@@ -55,6 +55,7 @@ export function profileFor(material: THREE.Material): SurfaceProfile | undefined
   if (name === "enamel" || name === "wall-cap" || name === "exterior-building") return "structure";
   if (name === "floor") return "ground";
   if (name === "terrain") return "terrain";
+  if (name === "soil") return "soil";
   if (name === "wall-base" || name === "platform") return "metal";
   if (name.startsWith("df:")) return name === "df:glass" ? undefined : "prop";
   return undefined;
@@ -137,6 +138,15 @@ uniform float wxTile;
   uniform float wxReflectionOn;
   varying vec4 vWxReflUv;
 #endif
+#ifdef WX_SOIL
+  // Natural ground: the base maps are grass, and these take over where the mask says mud.
+  uniform sampler2D wxSoilMask;
+  uniform vec4 wxSoilArea;
+  uniform sampler2D wxMudMap;
+  uniform sampler2D wxMudNormal;
+  uniform sampler2D wxMudRough;
+  float wxMud = 0.0;
+#endif
 ${NOISE_GLSL}
 vec3 wxBump(vec3 surfacePosition, vec3 surfaceNormal, float height) {
   vec2 dH = vec2(dFdx(height), dFdy(height));
@@ -207,7 +217,18 @@ vec2 wxRipples(vec2 p) {
 `;
 
 const FRAGMENT_MAP = /* glsl */ `
-#if defined(USE_MAP) && defined(WX_HEX)
+#if defined(USE_MAP) && defined(WX_SOIL)
+  {
+    vec2 wxMaskUv = (vWxPos.xz - wxSoilArea.xy) * wxSoilArea.zw;
+    vec2 wxWarp = vec2(wxNoise(vWxPos.xz * 0.9), wxNoise(vWxPos.xz * 0.9 + 7.7)) - 0.5;
+    float wxMask = texture2D(wxSoilMask, wxMaskUv + wxWarp * wxSoilArea.zw * 1.2).r;
+    wxMud = smoothstep(0.3, 0.72, wxMask + (wxFbm(vWxPos.xz * 1.1) - 0.5) * 0.7);
+    vec4 wxGrass = wxStochastic(map, vMapUv);
+    // Broad patches of lusher and drier growth, so the lawn does not read as one flat colour.
+    wxGrass.rgb *= mix(vec3(0.62, 0.86, 0.5), vec3(0.95, 1.12, 0.7), wxFbm(vWxPos.xz * 0.13 + 3.0));
+    diffuseColor *= mix(wxGrass, texture2D(wxMudMap, vMapUv * 1.3) * vec4(1.5, 1.3, 1.1, 1.0), wxMud);
+  }
+#elif defined(USE_MAP) && defined(WX_HEX)
   diffuseColor *= wxStochastic(map, vMapUv);
 #elif defined(USE_MAP)
   diffuseColor *= texture2D(map, vMapUv);
@@ -216,7 +237,10 @@ const FRAGMENT_MAP = /* glsl */ `
 
 const FRAGMENT_ROUGHNESS = /* glsl */ `
 float roughnessFactor = roughness;
-#if defined(USE_ROUGHNESSMAP) && defined(WX_HEX)
+#if defined(USE_ROUGHNESSMAP) && defined(WX_SOIL)
+  roughnessFactor *= mix(texture2D(roughnessMap, vRoughnessMapUv).g,
+    max(0.8, texture2D(wxMudRough, vRoughnessMapUv * 1.3).g), wxMud);
+#elif defined(USE_ROUGHNESSMAP) && defined(WX_HEX)
   roughnessFactor *= wxStochastic(roughnessMap, vRoughnessMapUv).g;
 #elif defined(USE_ROUGHNESSMAP)
   roughnessFactor *= texture2D(roughnessMap, vRoughnessMapUv).g;
@@ -224,7 +248,12 @@ float roughnessFactor = roughness;
 `;
 
 const FRAGMENT_SURFACE = /* glsl */ `
-#if defined(USE_NORMALMAP_TANGENTSPACE) && defined(WX_HEX)
+#if defined(USE_NORMALMAP_TANGENTSPACE) && defined(WX_SOIL)
+  vec3 mapN = mix(wxStochastic(normalMap, vNormalMapUv).xyz,
+    texture2D(wxMudNormal, vNormalMapUv * 1.3).xyz, wxMud) * 2.0 - 1.0;
+  mapN.xy *= normalScale;
+  normal = normalize(tbn * mapN);
+#elif defined(USE_NORMALMAP_TANGENTSPACE) && defined(WX_HEX)
   vec3 mapN = wxStochastic(normalMap, vNormalMapUv).xyz * 2.0 - 1.0;
   mapN.xy *= normalScale;
   normal = normalize(tbn * mapN);
@@ -324,8 +353,16 @@ vec2 wxWaterSlope = vec2(0.0);
   #ifdef WX_PUDDLES
     if (wxWet > 0.001) {
       float wxPool = wxFbm(wxP.xz * 0.19 + 11.0) + (wxNoise(wxP.xz * 1.7) - 0.5) * 0.06;
+      #ifdef WX_SOIL
+        // Water stands in the mud and soaks away under grass.
+        wxPool = wxFbm(wxP.xz * 0.45 + 11.0) + (wxNoise(wxP.xz * 1.7) - 0.5) * 0.06;
+      #endif
       float wxDamp = smoothstep(wxPuddleLevel - 0.16, wxPuddleLevel, wxPool) * wxFacingUp * wxWet;
       wxPuddle = smoothstep(wxPuddleLevel, wxPuddleLevel + 0.035, wxPool) * wxFacingUp * wxWet;
+      #ifdef WX_SOIL
+        wxDamp *= mix(0.2, 0.6, wxMud);
+        wxPuddle *= wxMud;
+      #endif
       diffuseColor.rgb *= mix(1.0, 0.72, max(wxDamp * 0.6, wxPuddle));
       roughnessFactor = mix(roughnessFactor, roughnessFactor * 0.55, wxDamp);
       roughnessFactor = mix(roughnessFactor, 0.03, wxPuddle);
@@ -397,6 +434,7 @@ const DEFINES: Record<SurfaceProfile, string[]> = {
     "WX_WET_DARKEN 0.6",
     "WX_WET_GLOSS 0.7",
   ],
+  soil: ["WX_HEX", "WX_SOIL", "WX_PUDDLES", "WX_TONE 0.0", "WX_WET_DARKEN 0.85", "WX_WET_GLOSS 0.92"],
   metal: ["WX_TONE 0.12", "WX_WET_DARKEN 0.85", "WX_WET_GLOSS 0.4"],
   prop: ["WX_TONE 0.1", "WX_WET_DARKEN 0.72", "WX_WET_GLOSS 0.45"],
 };
@@ -438,7 +476,8 @@ export class SurfaceWeathering {
     const key = () => `wx:${profile}:${this.level}:${profile === "ground" && this.reflect ? 1 : 0}`;
     material.customProgramCacheKey = key;
     material.onBeforeCompile = (shader) => {
-      Object.assign(shader.uniforms, this.uniforms);
+      // A material may bring uniforms of its own, such as the soil mask.
+      Object.assign(shader.uniforms, this.uniforms, material.userData.wxUniforms);
       const defines = [...DEFINES[profile], `WX_LEVEL ${this.level}`];
       if (profile === "ground" && this.reflect) defines.push("WX_REFLECT");
       const header = defines.map((define) => `#define ${define}`).join("\n") + "\n";
