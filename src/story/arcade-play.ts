@@ -541,6 +541,12 @@ export function playArcade(stage: Stage, scene: ArcadeScene): ScenePlayer {
       stage.goal();
       void stage.talk(scene.lines.chant, { live: true });
     },
+    get paused() {
+      return k.debug.paused;
+    },
+    set paused(value) {
+      k.debug.paused = value;
+    },
     dispose: () => {
       alive = false;
       cutscene?.dispose();

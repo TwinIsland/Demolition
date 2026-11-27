@@ -53,6 +53,8 @@ export interface UIActions {
   /** Credits roll, opened from the lobby. */
   openCredits(): void;
   closeCredits(): void;
+  /** The main menu moved to another top-level tab; each has its own music. */
+  changeLobbyTab(tab: "versus" | "story"): void;
   /** Story mode, opened from the lobby. `act` is an id from `ACTS`; without one the story resumes.
    * `titled` shows the act's title card first, for an act picked from the chapter list.
    */

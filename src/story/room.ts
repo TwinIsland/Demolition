@@ -14,6 +14,8 @@ export interface Room {
   frozen: boolean;
   /** The hotspot in front of the player, if any. */
   readonly facing: Hotspot | undefined;
+  /** Stops the room's clock while set. */
+  paused: boolean;
   dispose(): void;
 }
 
@@ -74,6 +76,12 @@ export function openRoom(
     move: (x, y) => (intent = [x, y]),
     get facing() {
       return facing;
+    },
+    get paused() {
+      return k.debug.paused;
+    },
+    set paused(value) {
+      k.debug.paused = value;
     },
     dispose: () => k.quit(),
   };

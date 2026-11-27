@@ -173,7 +173,7 @@ export class GameApp {
     this.releaseControls();
     this.session.restart(this.setup.lobbyOptions());
     this.sound.reset();
-    this.sound.setMusic(MENU_MUSIC);
+    this.sound.setMusic(this.lobbyMusic());
     this.ui.setInGame(false);
     this.ui.enterLobby();
     this.sound.menu("back");
@@ -205,13 +205,18 @@ export class GameApp {
   back() {
     if (this.screens.is("graphics")) this.closeGraphics();
     else if (this.screens.is("credits")) this.closeCredits();
-    else if (this.screens.is("story")) this.closeStory();
+    else if (this.screens.is("story")) this.ui.toggleStoryExit();
     else if (this.screens.is("room")) this.goHome();
     else if (this.screens.is("lobby")) {
       if (this.ui.lobbyBack()) this.sound.menu("back");
     } else if (this.screens.is("playing")) this.pause();
     else if (this.screens.is("paused", "help")) this.resume();
     else if (this.screens.is("replay")) this.skipReplay();
+  }
+
+  /** Music of the main menu: the story tab plays the story's theme, the rest the menu track. */
+  private lobbyMusic() {
+    return this.ui.lobbyTab === "story" ? STORY_MUSIC.opening : MENU_MUSIC;
   }
 
   /** Enter on the main menu: the open tab's primary action. */
@@ -224,7 +229,7 @@ export class GameApp {
     this.screens.transition("lobby");
     this.ui.hideOverlay();
     this.sound.menu("back");
-    this.sound.setMusic(MENU_MUSIC);
+    this.sound.setMusic(this.lobbyMusic());
   }
 
   /** Leaves the story for the menu. Progress is kept from the last checkpoint reached. */
@@ -235,7 +240,7 @@ export class GameApp {
     this.closeStoryMatch();
     this.ui.refreshStory();
     this.sound.menu("back");
-    this.sound.setMusic(MENU_MUSIC);
+    this.sound.setMusic(this.lobbyMusic());
   }
 
   closeGraphics() {
@@ -447,6 +452,9 @@ export class GameApp {
         this.sound.setMusic(CREDITS_MUSIC);
       },
       closeCredits: () => this.closeCredits(),
+      changeLobbyTab: () => {
+        if (this.screens.is("lobby")) this.sound.setMusic(this.lobbyMusic());
+      },
       openStory: (act, titled) => {
         if (!this.screens.is("lobby")) return;
         this.screens.transition("story");
