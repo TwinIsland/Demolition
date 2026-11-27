@@ -1,8 +1,10 @@
+import { ASCENSION } from "./acts/ascension";
 import { BEDROOM } from "./acts/bedroom";
 import { hasCheckpoint, type StorySave } from "./save";
 import type { Scene } from "./script";
 import { BUBBLE_X } from "./acts/bubble-x";
 import { FLATLAND } from "./acts/flatland";
+import { SHUTDOWN } from "./acts/shutdown";
 
 /** One act of the story, as the menu lists it. */
 export interface Act {
@@ -21,8 +23,8 @@ export const ACTS: readonly Act[] = [
   { id: "act1", title: "第一幕　凡俗的牢笼", completes: "act1-done", scene: BEDROOM },
   { id: "act2", title: "第二幕　泡泡 X", requires: "act1-done", completes: "act2-done", scene: BUBBLE_X },
   { id: "act3", title: "第三幕　平面国", requires: "act2-done", completes: "act3-done", scene: FLATLAND },
-  { id: "act4", title: "第四幕　升维", requires: "act3-done", completes: "act4-done" },
-  { id: "act5", title: "第五幕　关机", requires: "act4-done", completes: "act5-fight" },
+  { id: "act4", title: "第四幕　升维", requires: "act3-done", completes: "act4-done", scene: ASCENSION },
+  { id: "act5", title: "第五幕　关机", requires: "act4-done", completes: "act5-done", scene: SHUTDOWN },
 ];
 
 export const actUnlocked = (act: Act, save: StorySave) => !act.requires || hasCheckpoint(save, act.requires);

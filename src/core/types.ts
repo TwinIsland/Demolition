@@ -250,12 +250,16 @@ export interface Zombie extends Vec2 {
   /** Unit grid direction of the current knockback, away from the attacker. */
   knockback?: Vec2;
   level: 1 | 2 | 3;
+  /** Put there by the story: whoever fells it is certain of its mutation. */
+  gift?: boolean;
   id: number;
   yaw: number;
   destination: Vec2;
 }
 export const inTacticalView = (p: Readonly<Player>, time: number) =>
   (p.forcedViewUntil ?? 0) > time || !!p.tacticalView;
+/** A bystander the story put on the map: nothing ever hurts them (see `StoryActor.passive`). */
+export const isBystander = (p: Readonly<Player>) => p.invulnerableUntil >= Number.MAX_SAFE_INTEGER;
 export const isCloaked = (p: Readonly<Player>, time: number) => (p.cloakUntil ?? 0) > time;
 /** Whether `viewer` is denied the blast path of this charge. */
 export const trailHidden = (bomb: Pick<Bomb, "concealed" | "ownerId">, viewerId: string) =>
@@ -283,6 +287,8 @@ export interface GameSnapshot {
   mode?: MatchMode;
   /** Staged by story mode: see `StorySetup`. */
   story?: boolean;
+  /** A staged match that still closes its zone and drops supplies: see `StorySetup.brawl`. */
+  storyBrawl?: boolean;
   canResetTerrain?: boolean;
   /** Simulation time at which a map with `terrainShift` announces its next rearrangement. */
   terrainShiftAt?: number;
@@ -355,6 +361,11 @@ export interface StorySetup {
   cast: StoryActor[];
   /** Everyone starts in the overhead view. */
   overhead?: boolean;
+  /**
+   * The story's last fight is a real match in all but its ending: the zone closes over
+   * `zoneDuration` seconds and field supplies drop. Who has won is still the story's to decide.
+   */
+  brawl?: { zoneDuration: number };
 }
 export interface MatchOptions {
   story?: StorySetup;

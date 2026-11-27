@@ -1,0 +1,57 @@
+/* Act 4: the flash at the hit, the letterbox of the shot, and the shop laid over the scene. */
+.ascend-fx {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  /* Two black bars close in for the shot and open again when the hero has his eyes. */
+  box-shadow:
+    inset 0 0 0 #000,
+    inset 0 0 0 #000;
+  transition: box-shadow 0.8s ease;
+}
+.ascend-bars .ascend-fx {
+  box-shadow:
+    inset 0 9vh 0 #000,
+    inset 0 -9vh 0 #000;
+}
+.ascend-fx::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+}
+.ascend-fx.flash::after {
+  animation: ascend-flash 0.7s ease-out;
+}
+@keyframes ascend-flash {
+  from {
+    opacity: 0.95;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* The panel at the hit pushes in slowly, so the still picture is not dead. */
+.story-art.ascend-push {
+  animation: ascend-push 2.6s ease-out both;
+}
+@keyframes ascend-push {
+  from {
+    transform: scale(1.08);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.story-stage > .shop-modal {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  font-size: 1rem;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  z-index: 6;
+}

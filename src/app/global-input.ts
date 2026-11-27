@@ -60,6 +60,9 @@ export function attachGlobalInput(app: GameApp, root: HTMLElement, canvas: HTMLC
     if (app.screen === "story") {
       // The story reads its own keys; only the way out is handled here.
       if (event.code === "Escape" && !event.repeat) app.back();
+      // A scene that has handed over the hero plays like a match: gear, wheel and reward keys.
+      if (app.storyControlled && !event.repeat && !event.altKey && !event.ctrlKey && !event.metaKey)
+        onPlayKey(event, bindings.action(event.code));
       return;
     }
     if (event.altKey || event.ctrlKey || event.metaKey || event.isComposing) return;
@@ -107,7 +110,18 @@ export function attachGlobalInput(app: GameApp, root: HTMLElement, canvas: HTMLC
       app.back();
     }
     if (!app.controllingPlayer || event.repeat) return;
-    if (action === "gearWheel") {
+    onPlayKey(event, action);
+  }
+
+  /** Keys that only mean something while the keyboard drives a player. */
+  function onPlayKey(event: KeyboardEvent, action: ReturnType<typeof bindings.action>) {
+    if (action === "expand") {
+      // In a match the handler above has taken this key already.
+      if (app.screen === "story") {
+        event.preventDefault();
+        app.togglePerks();
+      }
+    } else if (action === "gearWheel") {
       event.preventDefault();
       if (!editable(event.target)) app.equipment.beginWheel(event.code);
     } else if (action?.startsWith("equip:") && !app.topDown && !editable(event.target)) {
@@ -131,7 +145,8 @@ export function attachGlobalInput(app: GameApp, root: HTMLElement, canvas: HTMLC
   function onPointerLockChange() {
     pointerX = pointerY = undefined;
     // Losing the lock while playing means Esc or a focus change: pause, silently if the tab is away.
-    if (!document.pointerLockElement && app.controllingPlayer)
+    if (!document.pointerLockElement && app.storyControlled && !app.topDown) app.back();
+    else if (!document.pointerLockElement && app.controllingPlayer)
       app.pause(document.hasFocus() && !document.hidden);
   }
 

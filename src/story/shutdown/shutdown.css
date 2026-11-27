@@ -1,0 +1,196 @@
+/* Act 5 and its endings. Sizes follow the stage's --px (one 320th of its width). */
+
+/* The last choice: two ways, named under the gates the 3D shot draws. */
+.shutdown-choice {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: end;
+  padding: 0 calc(var(--px) * 26) calc(var(--px) * 16);
+  pointer-events: none;
+  transition: opacity 0.5s;
+}
+.shutdown-choice.leaving {
+  opacity: 0;
+}
+.shutdown-choice button {
+  all: unset;
+  justify-self: center;
+  pointer-events: auto;
+  cursor: pointer;
+  padding: calc(var(--px) * 4) calc(var(--px) * 12);
+  font-size: calc(var(--px) * 16);
+  color: #b9b4d0;
+  background: #0b0a14cc;
+  border: calc(var(--px) * 1) solid #55518f;
+  transition:
+    color 0.2s,
+    border-color 0.2s,
+    translate 0.2s,
+    box-shadow 0.2s;
+}
+.shutdown-choice button.leaning {
+  color: #fff;
+  translate: 0 calc(var(--px) * -3);
+}
+.shutdown-choice button[data-ending="home"].leaning {
+  border-color: #ffd68a;
+  box-shadow: 0 0 calc(var(--px) * 14) #ffd68a88;
+}
+.shutdown-choice button[data-ending="stay"].leaning {
+  border-color: #63e6ff;
+  box-shadow: 0 0 calc(var(--px) * 14) #63e6ff88;
+}
+.shutdown-choice small {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--px) * 4);
+  translate: -50% 0;
+  font-size: calc(var(--px) * 8);
+  color: #8f8aa8;
+  white-space: nowrap;
+}
+
+/* "The text box cannot hold it": the box of the story, with one row that refuses to wrap. */
+.shutdown-overflow {
+  position: absolute;
+  left: calc(var(--px) * 8);
+  right: calc(var(--px) * 8);
+  bottom: calc(var(--px) * 6);
+  min-height: calc(var(--px) * 40);
+  padding: calc(var(--px) * 5);
+  background: #0b0a14f2;
+  border: calc(var(--px) * 2) solid #e9e6f5;
+  box-shadow: 0 0 0 calc(var(--px) * 1) #0b0a14;
+}
+/* The words sit in the box painted into the panel: dark ink on its white, no box of their own. */
+.shutdown-overflow.painted {
+  left: 11%;
+  right: 8%;
+  top: 82.5%;
+  bottom: 5%;
+  min-height: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  color: #1a1024;
+}
+.shutdown-overflow.painted .story-name {
+  color: #7b3fd0;
+}
+.shutdown-overflow p {
+  margin: 0;
+  white-space: nowrap;
+}
+.shutdown-overflow.spilling {
+  animation: shutdown-strain 0.12s steps(2) infinite;
+  border-right-color: #e8b45a;
+  cursor: pointer;
+}
+@keyframes shutdown-strain {
+  50% {
+    translate: calc(var(--px) * 1) 0;
+  }
+}
+
+/* The story's credits, over the ending's last picture. */
+.shutdown-credits {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #0b0a14;
+  animation: shutdown-fade 1.2s steps(8) both;
+}
+@keyframes shutdown-fade {
+  from {
+    opacity: 0;
+  }
+}
+.shutdown-credits img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.credits-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #0b0a1400 30%, #0b0a14d9 62%);
+}
+.credits-column {
+  position: absolute;
+  top: 0;
+  right: calc(var(--px) * 12);
+  width: calc(var(--px) * 124);
+  display: grid;
+  gap: calc(var(--px) * 16);
+  text-align: left;
+  font-size: calc(var(--px) * 8);
+  color: #e9e6f5;
+}
+.credits-column[hidden],
+.credits-reward[hidden] {
+  display: none;
+}
+.credits-column header small {
+  color: #e8b45a;
+}
+.credits-column h2 {
+  margin: calc(var(--px) * 3) 0 0;
+  font: inherit;
+  font-size: calc(var(--px) * 14);
+  white-space: nowrap;
+}
+.credits-column h3 {
+  margin: 0 0 calc(var(--px) * 3);
+  font: inherit;
+  color: #e8b45a;
+}
+.credits-column p {
+  margin: calc(var(--px) * 2) 0 0;
+  display: grid;
+}
+.credits-column b {
+  font-weight: 400;
+}
+.credits-column span,
+.credits-note {
+  color: #8f8aa8;
+}
+.credits-column footer {
+  padding: calc(var(--px) * 30) 0 calc(var(--px) * 10);
+  font-size: calc(var(--px) * 12);
+}
+.credits-reward {
+  position: absolute;
+  right: calc(var(--px) * 12);
+  top: 50%;
+  translate: 0 -50%;
+  width: calc(var(--px) * 124);
+  display: grid;
+  gap: calc(var(--px) * 4);
+  padding: calc(var(--px) * 8);
+  background: #0b0a14e6;
+  border: calc(var(--px) * 1) solid #e8b45a;
+  animation: shutdown-fade 0.6s steps(6) both;
+}
+.credits-reward small {
+  font-size: calc(var(--px) * 8);
+  color: #e8b45a;
+}
+.credits-reward b {
+  font-weight: 400;
+  font-size: calc(var(--px) * 16);
+}
+.credits-reward span,
+.credits-reward i {
+  font-style: normal;
+  font-size: calc(var(--px) * 8);
+  color: #8f8aa8;
+}
+.credits-reward i {
+  margin-top: calc(var(--px) * 6);
+}

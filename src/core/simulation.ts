@@ -127,7 +127,7 @@ export class Simulation {
 
     // 7. World: zombies, then the field supply timer.
     stepZombies(ctx, dt);
-    if (!s.story) spawnFieldSupply(ctx);
+    if (!s.story || s.storyBrawl) spawnFieldSupply(ctx);
 
     // 8. Match end and event log upkeep.
     finishIfDecided(s);
@@ -197,6 +197,7 @@ function initialState(
   return {
     mode,
     story: story ? true : undefined,
+    storyBrawl: story?.brawl ? true : undefined,
     canResetTerrain: mode === "practice" && !!map.randomizeTerrain,
     seed: options.seed,
     mapId: map.id,
@@ -206,7 +207,7 @@ function initialState(
     tiles,
     wallOrigins: movableWalls(map, tiles),
     time: 0,
-    duration: zoneDuration(options.zoneDuration) * (map.zoneScale ?? 1),
+    duration: zoneDuration(story?.brawl?.zoneDuration ?? options.zoneDuration) * (map.zoneScale ?? 1),
     countdown: story ? 0 : RULES.countdown,
     phase: story ? "playing" : "countdown",
     winnerId: null,

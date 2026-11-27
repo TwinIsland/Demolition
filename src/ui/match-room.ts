@@ -1,3 +1,4 @@
+import { skinLocked } from "../story/shutdown/unlocks";
 import { t, field } from "../i18n";
 import {
   SKINS,
@@ -90,7 +91,11 @@ export function updateRoom(
       const select = card.querySelector<HTMLSelectElement>('[data-setting="skin"]')!;
       selectValue(
         select,
-        Object.fromEntries(Object.values(SKINS).map((s) => [s.id, field(s, "name")])),
+        Object.fromEntries(
+          Object.values(SKINS)
+            .filter((s) => !skinLocked(s) || s.id === slot.skin)
+            .map((s) => [s.id, field(s, "name")]),
+        ),
         slot.skin,
       );
       const difficulty = card.querySelector<HTMLSelectElement>('[data-setting="difficulty"]')!;

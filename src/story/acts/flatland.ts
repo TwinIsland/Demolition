@@ -302,7 +302,7 @@ async function script(d: Director) {
   await cutscene(playRelicDrop);
   stage.host.music("opening");
   if (!(await say(LINES.relic))) return;
-  stage.art(STORY_ART.comic4);
+  stage.art(STORY_ART.comic3b);
   if (!(await say(LINES.press))) return;
   stage.end("act3-done");
 }

@@ -1,4 +1,5 @@
 import type { GameSnapshot, PlayerAgent, PlayerInput, StorySetup } from "../core/types";
+import type { Camera, Object3D } from "three";
 import type { GameRenderer } from "../render/game-renderer";
 import type { Line } from "./script";
 
@@ -6,7 +7,7 @@ import type { Line } from "./script";
 export type StoryCue = "place" | "blast" | "pickup" | "down" | "power" | "pull";
 
 /** Music the story can ask for, by the part it plays under. */
-export type StoryTrack = "opening" | "duel" | "ascension" | "lesson";
+export type StoryTrack = "opening" | "duel" | "ascension" | "lesson" | "shutdown" | "home";
 
 /**
  * A real match running under the story: the game's own simulation and renderer, with the story
@@ -16,6 +17,14 @@ export interface StoryMatch {
   /** The live state. Read it at any time; change it only through `mutate`. */
   readonly state: Readonly<GameSnapshot>;
   readonly renderer: GameRenderer;
+  /**
+   * A group in the match's own 3D scene, emptied when the match closes: a script hangs its props
+   * here (writing in the sky, a wall of light) and they are drawn with the world. Positions are
+   * world units, see `world` in render/arena.ts.
+   */
+  readonly scene: Object3D;
+  /** The camera the match is drawn with. Read it; the game moves it every frame. */
+  readonly camera: Camera;
   /** Edits the world between ticks: move people, add cover, hand out items, revive. */
   mutate(change: (state: GameSnapshot) => void): void;
   /** Hands one of the cast to an agent, or leaves them standing. */
@@ -30,6 +39,18 @@ export interface StoryMatch {
   onFrame?: (state: Readonly<GameSnapshot>, dt: number) => void;
   /** Shows the match's own HUD (health, coins, equipment). Off by default. */
   hud: boolean;
+  /**
+   * The match answers the hero the way a real one does: combat feed, hit markers, the perk offer
+   * after a level and its banner. Off by default, for scenes that only stage people.
+   */
+  live: boolean;
+  /** Where the first-person camera looks, in radians. Set it to hand the view over from a cutscene. */
+  look: { yaw: number; pitch: number };
+  /**
+   * Opens the game's own skill shop over the scene and resolves once the hero deploys from it,
+   * false if the story was closed first. The world stands still meanwhile.
+   */
+  shop(): Promise<boolean>;
 }
 export interface StoryMatchOptions {
   mapId: string;

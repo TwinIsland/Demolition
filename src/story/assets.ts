@@ -1,5 +1,11 @@
+import { shutdownImages } from "./shutdown/art";
+
+import { ASCENSION_ART } from "./ascend/assets";
+
 /** Story art, bundled with the game and decoded on the loading screen like every other image. */
 const url = (file: string) => new URL(`./assets/${file}`, import.meta.url).href;
+/** The bundler resolves such a pattern one folder deep, so the skins folder has its own. */
+const skin = (file: string) => new URL(`./assets/skins/${file}`, import.meta.url).href;
 
 export const STORY_ART = {
   bedroom: url("bedroom.png"),
@@ -7,7 +13,7 @@ export const STORY_ART = {
   comic2: url("comic-2.webp"),
   /** Act 3: waking up in Flatland, and the moment before the button is pressed. */
   comic3: url("comic-3.webp"),
-  comic4: url("comic-4.webp"),
+  comic3b: url("comic-3b.webp"),
   /** The Ascension Striker, as an item. */
   relic: url("relic.png"),
   /** The old monitor, with a hole where its screen is: laid over the act 2 mini-game. */
@@ -44,11 +50,13 @@ export type Mood =
 
 /** Skins of the story's cast, by the id the game's renderer knows them under. */
 // The bundler resolves these patterns one folder deep, so the skins folder needs a pattern of its own.
-const skin = (file: string) => new URL(`./assets/skins/${file}`, import.meta.url).href;
 export const STORY_SKINS = {
   "story-zero": skin("zero.png"),
   "story-lulu": skin("lulu.png"),
   "story-zhangsan": skin("zhang-san.png"),
+  "story-bluescreen": skin("blue-screen.png"),
+  "story-popup": skin("popup.png"),
+  "story-antivirus": skin("antivirus.png"),
 } as const;
 
 export const storyImages = (): string[] => [
@@ -57,4 +65,6 @@ export const storyImages = (): string[] => [
   ...Object.values(LULU_PORTRAITS),
   ...Object.values(ZHANGSAN_PORTRAITS),
   ...Object.values(STORY_SKINS),
+  ...Object.values(ASCENSION_ART),
+  ...shutdownImages(),
 ];

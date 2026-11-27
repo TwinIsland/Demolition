@@ -1,3 +1,4 @@
+import { skinLocked } from "../story/shutdown/unlocks";
 import { version } from "../../package.json";
 import { MAPS, ROOM_MAPS, generateMap, seededRandom } from "../core/maps";
 import { DEFAULT_MODE, MATCH_MODES, type MatchMode } from "../core/match-modes";
@@ -429,8 +430,11 @@ export class LobbyView {
         ),
         row.dataset.map === this.mapId,
       );
-    for (const row of this.root.querySelectorAll<HTMLElement>("[data-skin]"))
+    for (const row of this.root.querySelectorAll<HTMLElement>("[data-skin]")) {
       label(row, this.skinName(row.dataset.skin!), row.dataset.skin === this.look.skin);
+      // A skin the story hands out shows up once its ending has been reached.
+      row.hidden = skinLocked(SKINS[row.dataset.skin!]);
+    }
     for (const row of this.root.querySelectorAll<HTMLElement>("[data-finish]"))
       label(row, field(BOMB_STYLES[row.dataset.finish!], "name"), row.dataset.finish === this.look.bombStyle);
     for (const row of this.root.querySelectorAll<HTMLElement>("[data-knife]")) {

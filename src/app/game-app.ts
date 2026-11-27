@@ -78,6 +78,8 @@ export class GameApp {
   private helpFromLobby = true;
   /** The match story mode is staging, while there is one. */
   private storyMatch?: StoryMatch;
+  /** The skill shop a story scene has open, and what to do once the hero deploys from it. */
+  private storyShop?: { dialog: HTMLElement; done: (deployed: boolean) => void };
   private deathShown = false;
   private readonly feedback: FeedbackHud;
   private displayedLevel = 1;
@@ -145,7 +147,12 @@ export class GameApp {
 
   /** True while key presses drive the player rather than a menu or the chat box. */
   get controllingPlayer(): boolean {
-    return this.screens.is("playing") && this.keyboard.enabled;
+    return (this.screens.is("playing") || this.storyControlled) && this.keyboard.enabled;
+  }
+
+  /** True while a story scene has handed the hero of its match to the keyboard. */
+  get storyControlled(): boolean {
+    return this.screens.is("story") && !!this.storyMatch && this.keyboard.enabled;
   }
 
   get topDown(): boolean {
@@ -342,7 +349,7 @@ export class GameApp {
 
   /** Re-locks the pointer after the browser released it without pausing (for example a canvas click). */
   recapturePointer() {
-    if (this.keyboard.topDown || this.keyboard.selectingWheel) return;
+    if (this.keyboard.topDown || this.keyboard.selectingWheel || this.storyShop) return;
     if (this.controllingPlayer && !document.pointerLockElement) void this.keyboard.lockPointer();
   }
 
@@ -591,7 +598,7 @@ export class GameApp {
   }
 
   private tradeSkill(id: SkillId, refund: boolean) {
-    if (!this.screens.is("shop")) return;
+    if (!this.screens.is("shop") && !this.storyShop) return;
     this.session.submit(LOCAL_PLAYER_ID, {
       ...idleInput(this.keyboard.yaw),
       ...(refund ? { refundSkill: id } : { buySkill: id }),
@@ -606,6 +613,11 @@ export class GameApp {
   }
 
   private deploy() {
+    if (this.storyShop) {
+      this.sound.shop("close");
+      this.endStoryShop(true);
+      return;
+    }
     if (!this.screens.is("shop")) return;
     this.sound.shop("close");
     this.screens.transition("playing");
@@ -616,7 +628,7 @@ export class GameApp {
   }
 
   private choosePerk(id: PerkId) {
-    if (!this.screens.is("playing")) return;
+    if (!this.screens.is("playing") && !this.storyMatch?.live) return;
     if (this.ui.feed.editing) this.ui.feed.close();
     this.session.submit(LOCAL_PLAYER_ID, { ...idleInput(this.keyboard.yaw), choosePerk: id });
     this.session.advance(0);
@@ -667,13 +679,17 @@ export class GameApp {
       story: setup,
     });
     await this.renderer.prepare(this.session.getSnapshot(), true, () => {});
-    const { session, renderer, keyboard } = this;
+    const { session, renderer, keyboard, ui } = this;
     let hud = false;
+    ui.setStoryMatch(true);
+    const viewer = () => this.viewer();
     const match: StoryMatch = {
       get state() {
         return session.getSnapshot();
       },
       renderer,
+      scene: renderer.storyProps,
+      camera: renderer.camera,
       mutate: (change) => session.mutate?.(change),
       setAgent: (id, agent) => session.setAgent?.(id, agent),
       paused: true,
@@ -684,15 +700,29 @@ export class GameApp {
         if (value === keyboard.enabled) return;
         keyboard.clear();
         keyboard.enabled = value;
+        // First person steers with the mouse; the overhead view leaves the pointer free.
+        const state = session.getSnapshot();
+        if (value && !inTacticalView(viewer(), state.time)) void keyboard.lockPointer();
+        else if (!value && document.pointerLockElement) document.exitPointerLock();
       },
       get hud() {
         return hud;
       },
       set hud(value) {
         hud = value;
+        ui.setStoryHud(value);
       },
+      live: false,
+      get look() {
+        return { yaw: keyboard.yaw, pitch: keyboard.pitch };
+      },
+      set look({ yaw, pitch }) {
+        keyboard.yaw = yaw;
+        keyboard.pitch = pitch;
+      },
+      shop: () => this.openStoryShop(match),
     };
-    this.displayedLevel = Infinity;
+    this.displayedLevel = this.viewer().level;
     this.feedback.clear();
     this.loop.resetClock();
     return (this.storyMatch = match);
@@ -700,10 +730,57 @@ export class GameApp {
 
   private closeStoryMatch(restore = true) {
     if (!this.storyMatch) return;
+    this.endStoryShop(false);
     this.storyMatch = undefined;
+    this.renderer.storyProps.clear();
     this.releaseControls();
+    this.renderer.stagedShot = undefined;
+    this.renderer.dimension = undefined;
+    this.renderer.paintSky();
+    this.ui.setStoryMatch(false);
     this.sound.reset();
     if (restore) this.session.restart(this.setup.lobbyOptions());
+  }
+
+  /** The game's own skill shop, laid over a story scene. The match stands still while it is open. */
+  private openStoryShop(match: StoryMatch): Promise<boolean> {
+    this.endStoryShop(false);
+    const stage = document.querySelector<HTMLElement>(".story-stage");
+    if (!stage || this.storyMatch !== match) return Promise.resolve(false);
+    const held = { paused: match.paused, control: match.control };
+    match.control = false;
+    match.paused = true;
+    this.session.advance(0);
+    this.sound.shop("open");
+    return new Promise((resolve) => {
+      this.storyShop = {
+        dialog: this.ui.mountShop(stage, this.viewer()),
+        done: (deployed) => {
+          if (this.storyMatch === match) {
+            match.paused = held.paused;
+            match.control = held.control;
+          }
+          resolve(deployed);
+        },
+      };
+    });
+  }
+
+  private endStoryShop(deployed: boolean) {
+    const shop = this.storyShop;
+    if (!shop) return;
+    this.storyShop = undefined;
+    shop.dialog.remove();
+    shop.done(deployed);
+  }
+
+  /** What a live story match shows of itself: the feed, hit feedback, perk offers and level-ups. */
+  private followStory(state: Readonly<GameSnapshot>, viewer: Player, now: number) {
+    this.sound.matchClock(state);
+    this.ui.showEvents(state, viewer);
+    this.feedback.update(state, viewer, this.keyboard.yaw, now);
+    if (this.ui.mutationNotice.update(state.time)) this.sound.mutationReady();
+    if (viewer.alive) this.announceProgress(state, viewer, now);
   }
 
   // --- Frame ---
@@ -741,6 +818,7 @@ export class GameApp {
     this.ui.setTopDown(topDown);
     this.sound.update(state, LOCAL_PLAYER_ID);
     if (this.screens.is("playing")) this.followMatch(state, viewer, now);
+    else if (story?.live && storyRuns) this.followStory(state, viewer, now);
     this.renderScene(state, viewer, now);
     this.presentBattle(state, viewer, now);
     this.renderer.finishFrame();
@@ -782,21 +860,23 @@ export class GameApp {
     } else if (!viewer.alive && !this.deathShown) {
       this.deathShown = true;
       if (!this.beginReplay(state, viewer, "eliminated")) this.showOutcome("eliminated");
-    } else {
-      if (this.ui.offerPerks(viewer)) this.sound.perkReady();
-      if (viewer.level > this.displayedLevel) {
-        // The fixed gains of every level crossed since the banner last showed.
-        const gains = state.events
-          .flatMap((e) => (e.type === "level" && e.playerId === viewer.id ? [e.gains] : []))
-          .slice(this.displayedLevel - viewer.level)
-          .flat()
-          .map((gain) => LEVEL_GAIN_TEXT[gain]);
-        const { banner, cards } = this.ui.showPromotion(this.displayedLevel, viewer.level, gains);
-        this.renderer.promotion(now, banner, cards);
-        this.sound.levelUp();
-        this.displayedLevel = viewer.level;
-      }
-    }
+    } else this.announceProgress(state, viewer, now);
+  }
+
+  /** The perk offer when one arrives, and the banner for every level reached since the last one. */
+  private announceProgress(state: Readonly<GameSnapshot>, viewer: Player, now: number) {
+    if (this.ui.offerPerks(viewer)) this.sound.perkReady();
+    if (viewer.level <= this.displayedLevel) return;
+    // The fixed gains of every level crossed since the banner last showed.
+    const gains = state.events
+      .flatMap((e) => (e.type === "level" && e.playerId === viewer.id ? [e.gains] : []))
+      .slice(this.displayedLevel - viewer.level)
+      .flat()
+      .map((gain) => LEVEL_GAIN_TEXT[gain]);
+    const { banner, cards } = this.ui.showPromotion(this.displayedLevel, viewer.level, gains);
+    this.renderer.promotion(now, banner, cards);
+    this.sound.levelUp();
+    this.displayedLevel = viewer.level;
   }
 
   /** The after-action screen: the decided match, or the viewer's own elimination. */

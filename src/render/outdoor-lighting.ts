@@ -18,6 +18,8 @@ export class OutdoorLighting implements SkyRig {
   private fill = new THREE.HemisphereLight("#c6dcf0", "#645c4b", 0.45);
   private fog = new THREE.FogExp2("#b5bfc1", 0.004);
   private look = CLEAR_SKY;
+  /** A painted sky shown in place of the look's own image, while a story scene asks for one. */
+  private painting?: THREE.Texture;
   private disposed = false;
   constructor(
     private renderer: THREE.WebGLRenderer,
@@ -94,11 +96,33 @@ export class OutdoorLighting implements SkyRig {
     this.scene.backgroundIntensity = look.backgroundIntensity * (1 + amount * 1.6);
     this.scene.environmentIntensity = look.environmentIntensity * (1 + amount * 1.2);
   }
+  /**
+   * Shows `texture`, an equirectangular painting, as the visible sky; reflections and light stay
+   * the weather's. `turn` rotates it about the vertical, to bring its sun round to the scene's.
+   * Undefined gives the sky back to the weather.
+   */
+  paint(texture?: THREE.Texture, turn = 0) {
+    this.painting = texture;
+    this.scene.backgroundRotation.set(0, texture ? turn : 0, 0);
+    if (texture) {
+      this.scene.background = texture;
+      this.scene.backgroundBlurriness = 0;
+      this.scene.remove(this.fallback);
+      return;
+    }
+    const loaded = this.skies.get(this.look.sky);
+    if (loaded && loaded !== "loading") this.show(loaded);
+    else {
+      this.scene.background = new THREE.Color("#aebec6");
+      this.scene.add(this.fallback);
+    }
+  }
   private show(sky: LoadedSky) {
-    this.scene.background = sky.texture;
-    this.scene.backgroundBlurriness = 0;
     this.scene.environment = sky.reflection.texture;
     this.scene.remove(this.fallback);
+    if (this.painting) return;
+    this.scene.background = sky.texture;
+    this.scene.backgroundBlurriness = 0;
   }
   /** Stretch the sun's shadow frustum over an arena `half` world units from centre to edge. */
   shadowCoverage(half: number) {
