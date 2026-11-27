@@ -2,13 +2,13 @@ import { MAPS } from "../core/maps";
 import { field, language } from "../i18n";
 import {
   ASSET_GROUPS,
-  FULL_CREDITS_URL,
   STAFF,
   type AssetCredit,
   type Bilingual,
   type StaffCredit,
 } from "./credits-data";
 import { query } from "./dom";
+import { mountCreditsSpectrum, type SpectrumReader } from "./credits-spectrum";
 
 /** Roll speed in CSS pixels per second, and the multiplier while the pointer is held down. */
 const ROLL_SPEED = 62;
@@ -45,9 +45,11 @@ export function creditsMarkup() {
         "其余模型、音效、着色器与像素皮肤均为本项目原创。Minecraft 是 Mojang 的商标，本项目与其无关联。",
         "All other models, sounds, shaders and pixel skins are original to this project. Minecraft is a trademark of Mojang; this project is not affiliated.",
       ])}</p>
-      <footer class="credits-end"><p class="credits-thanks">${say(["感谢游玩", "Thanks for playing"])}</p><p>TwinIsland</p><a href="${FULL_CREDITS_URL}" target="_blank" rel="noopener noreferrer">${say(["查看完整素材来源", "Full asset sources"])}</a></footer>
+      <footer class="credits-end"><p class="credits-thanks">${say(["感谢游玩", "Thanks for playing"])}</p><p>TwinIsland</p>
+      </footer>
     </div>
   </div>
+  <canvas class="credits-spectrum" aria-hidden="true"></canvas>
   <div class="credits-bar"><span>${say(["按住画面加速", "Hold to fast-forward"])}</span><button type="button" id="credits-close">${say(["返回", "Back"])} <kbd>ESC</kbd></button></div>`;
 }
 
@@ -55,11 +57,20 @@ export function creditsMarkup() {
  * Starts the roll in an opened credits dialog. It stops with the closing card centred. With reduced
  * motion the strip is a plain scrollable page instead.
  */
-export function mountCredits(dialog: HTMLElement) {
+export function mountCredits(dialog: HTMLElement, readSpectrum: SpectrumReader) {
+  const stopSpectrum = mountCreditsSpectrum(query<HTMLCanvasElement>(dialog, ".credits-spectrum"), readSpectrum);
   const viewport = query(dialog, ".credits-viewport");
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
     viewport.classList.add("credits-static");
-    return;
+    const revealSpectrum = () => {
+      dialog.classList.toggle("credits-finished", viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 2);
+    };
+    viewport.addEventListener("scroll", revealSpectrum);
+    revealSpectrum();
+    return () => {
+      viewport.removeEventListener("scroll", revealSpectrum);
+      stopSpectrum();
+    };
   }
   const track = query(dialog, ".credits-track");
   const end = query(dialog, ".credits-end");
@@ -70,6 +81,7 @@ export function mountCredits(dialog: HTMLElement) {
     easing: "linear",
     fill: "forwards",
   });
+  roll.onfinish = () => dialog.classList.add("credits-finished");
   // The listeners live on the dialog, so they go away with it when the overlay closes.
   const setRate = (rate: number) => () => roll.updatePlaybackRate(rate);
   viewport.addEventListener("pointerdown", (event) => {
@@ -77,4 +89,8 @@ export function mountCredits(dialog: HTMLElement) {
   });
   for (const type of ["pointerup", "pointercancel", "pointerleave"])
     viewport.addEventListener(type, setRate(1));
+  return () => {
+    stopSpectrum();
+    roll.cancel();
+  };
 }

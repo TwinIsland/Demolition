@@ -420,7 +420,7 @@ export class GameApp {
       openCredits: () => {
         if (!this.screens.is("lobby")) return;
         this.screens.transition("credits");
-        this.ui.showCredits();
+        this.ui.showCredits(() => this.sound.creditsSpectrum());
         this.sound.menu("accept");
         this.sound.setMusic(CREDITS_MUSIC);
       },

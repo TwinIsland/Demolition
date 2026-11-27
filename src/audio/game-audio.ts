@@ -9,6 +9,7 @@ import { MAPS } from "../core/maps";
 import { groundAt, type GroundKind } from "../core/pack-api";
 import {
   BANK_CUES,
+  CREDITS_MUSIC,
   FIRE_LOOP,
   JUNGLE_LOOP,
   POOL_LOOP,
@@ -149,16 +150,28 @@ export class GameAudio {
    * nothing is requested mid-match. Returns one promise per sound for the loading screen.
    */
   preloadAll(fieldTracks: Iterable<string>): Promise<void>[] {
-    for (const url of fieldTracks) if (url) this.engine.preloadMusic(url, true);
+    for (const url of fieldTracks) if (url) this.engine.preloadMusic(url, url !== CREDITS_MUSIC);
     return this.engine.loading();
   }
 
-  /** Menu music resumes where it left off; field tracks stream and start from the top. */
+  /** Menu music resumes; credits decode like the menu, while field tracks stream. */
   setMusic(path: string) {
     const menu = path === MENU_MUSIC;
     // A map may ask for its own track to sit higher or lower in the mix.
     const gain = menu ? 1 : (MAPS.find((map) => map.bgm === path)?.bgmGain ?? 1);
-    this.engine.playMusic(path, { volume: Math.min(1, MUSIC_VOLUME * gain), stream: !menu, restart: !menu });
+    this.engine.playMusic(path, {
+      volume: Math.min(1, MUSIC_VOLUME * gain),
+      stream: !menu && path !== CREDITS_MUSIC,
+      restart: !menu,
+    });
+  }
+
+  /** Reuses the mixer tap for the live spectrum on the closing credits card. */
+  creditsSpectrum() {
+    if (!this.engine.isMusicAudible(CREDITS_MUSIC)) return undefined;
+    const analyser = this.engine.spectrumTap();
+    const gain = this.engine.musicGain() * this.engine.masterVolume;
+    return analyser && gain > 0 ? { analyser, gain } : undefined;
   }
 
   /** Bass-onset pulse (0..1) of the menu track for the lobby backdrop; `time` in seconds. */

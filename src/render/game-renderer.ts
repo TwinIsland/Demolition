@@ -723,6 +723,7 @@ export class GameRenderer {
       if (this.seed !== state.seed || this.mapId !== state.mapId) this.rebuild(state);
       this.groundFire.warm(this.renderer);
       await this.assets.ready();
+      this.assets.phase("Shaders");
       await this.warmUp(state);
     } finally {
       stop();
@@ -734,6 +735,7 @@ export class GameRenderer {
       await this.models.preload(state.players, includeDrops);
       if (this.seed !== state.seed || this.mapId !== state.mapId) this.rebuild(state);
       await this.assets.ready();
+      this.assets.phase("Shaders");
       await this.warmUp(state);
     } finally {
       stop();

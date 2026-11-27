@@ -21,6 +21,7 @@ import { BuffPanelView } from "./buff-panel";
 import { CombatFeed } from "./combat-feed";
 import { mountControls } from "./control-settings";
 import { creditsMarkup, mountCredits } from "./credits";
+import type { SpectrumReader } from "./credits-spectrum";
 import { query } from "./dom";
 import { EquipmentWheel } from "./equipment-wheel";
 import { graphicsChange, graphicsForm, syncGraphics, syncVolumeRow } from "./graphics-options";
@@ -270,8 +271,14 @@ export class GameUI {
     syncGraphics(query<HTMLFormElement>(dialog, "#graphics-form"), value);
   }
 
-  showCredits() {
-    mountCredits(this.overlay.show(creditsMarkup(), "credits-modal", "#credits-close"));
+  private stopCredits?: () => void;
+
+  showCredits(readSpectrum: SpectrumReader) {
+    this.stopCredits?.();
+    this.stopCredits = mountCredits(
+      this.overlay.show(creditsMarkup(), "credits-modal", "#credits-close"),
+      readSpectrum,
+    );
   }
 
   /**
@@ -292,6 +299,8 @@ export class GameUI {
   }
 
   hideOverlay() {
+    this.stopCredits?.();
+    this.stopCredits = undefined;
     this.overlay.hide();
   }
 
@@ -356,6 +365,7 @@ export class GameUI {
   }
 
   dispose() {
+    this.stopCredits?.();
     this.listeners.abort();
     this.topBar.dispose();
     this.lobby.dispose();

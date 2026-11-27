@@ -216,15 +216,21 @@
   letter-spacing: 0.14em;
   color: #f6efdc;
 }
-.credits-end a {
-  margin-top: 18px;
-  font-size: var(--text-lg);
-  letter-spacing: 0.08em;
-  color: var(--gold-300);
-  text-underline-offset: 4px;
+.credits-spectrum {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: block;
+  width: 100%;
+  height: 25%;
+  margin: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--duration-slow) var(--ease-out);
 }
-.credits-end a:is(:hover, :focus-visible) {
-  color: var(--gold-100);
+.credits-finished .credits-spectrum {
+  opacity: 1;
 }
 
 .credits-bar {

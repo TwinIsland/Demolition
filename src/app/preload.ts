@@ -25,16 +25,24 @@ class ProgressGroup {
   private total = 0;
   private sceneDone = 0;
   private sceneTotal = 0;
+  private sceneItem = "Models";
+  private scenePending = true;
+  private readonly groups = new Map<symbol, string>();
   constructor(private readonly report: LoadProgress) {}
 
   /** Counts each promise as one unit; a failure still counts, since optional assets must not block. */
-  track<T>(tasks: Iterable<Promise<T>>): Promise<void> {
-    const pending = [...tasks].map((task) => {
+  track<T>(tasks: Iterable<Promise<T>>, label: string): Promise<void> {
+    const entries = [...tasks];
+    const group = Symbol(label);
+    if (entries.length) this.groups.set(group, label);
+    let remaining = entries.length;
+    const pending = entries.map((task) => {
       this.total++;
       return Promise.race([task, timeout(ASSET_TIMEOUT_MS)])
         .catch((error) => console.warn("Preload failed", error))
         .then(() => {
           this.done++;
+          if (--remaining === 0) this.groups.delete(group);
           this.emit();
         });
     });
@@ -42,13 +50,19 @@ class ProgressGroup {
     return Promise.all(pending).then(() => undefined);
   }
   /** Progress callback for the Three.js loading manager, which counts its own queue. */
-  readonly scene: LoadProgress = (done, total) => {
+  readonly scene: LoadProgress = (done, total, item) => {
     this.sceneDone = done;
     this.sceneTotal = total;
+    if (item) this.sceneItem = item;
     this.emit();
   };
+  finishScene() {
+    this.scenePending = false;
+    this.emit();
+  }
   private emit() {
-    this.report(this.done + this.sceneDone, this.total + this.sceneTotal);
+    const item = this.scenePending ? this.sceneItem : (this.groups.values().next().value ?? "");
+    this.report(this.done + this.sceneDone, this.total + this.sceneTotal, item);
   }
 }
 
@@ -124,11 +138,11 @@ export async function preloadEverything(
 ) {
   const progress = new ProgressGroup(report);
   await Promise.all([
-    renderer.prepareAll(state, MAPS, progress.scene),
-    progress.track(sound.preloadAll([...MAPS.map((map) => map.bgm ?? ""), CREDITS_MUSIC])),
-    progress.track([...stylesheetImages(), ...contentImages()].map(decodeImage)),
-    progress.track(loadFonts()),
-    progress.track([preloadSkinAssets()]),
-    progress.track(preloadMinimapArt()),
+    renderer.prepareAll(state, MAPS, progress.scene).then(() => progress.finishScene()),
+    progress.track(sound.preloadAll([...MAPS.map((map) => map.bgm ?? ""), CREDITS_MUSIC]), "Audio"),
+    progress.track([...stylesheetImages(), ...contentImages()].map(decodeImage), "Images"),
+    progress.track(loadFonts(), "Fonts"),
+    progress.track([preloadSkinAssets()], "Interface assets"),
+    progress.track(preloadMinimapArt(), "Minimap artwork"),
   ]);
 }

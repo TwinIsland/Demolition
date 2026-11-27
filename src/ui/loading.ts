@@ -7,6 +7,24 @@ const title = screen.querySelector("h1")!;
 const status = screen.querySelector<HTMLElement>(".loading-status span")!;
 const output = screen.querySelector("output")!;
 const meter = screen.querySelector("progress")!;
+const item = screen.querySelector<HTMLElement>(".loading-item")!;
+const itemNames: Record<string, string> = {
+  Modules: "模组",
+  Resources: "资源",
+  Models: "模型",
+  Map: "地图",
+  Shaders: "着色器",
+  Audio: "音频",
+  Images: "图片",
+  Fonts: "字体",
+  "Interface assets": "界面素材",
+  "Minimap artwork": "小地图素材",
+};
+
+function showItem(name: string) {
+  const label = language === "zh" ? (itemNames[name] ?? name) : name;
+  item.textContent = name ? `${language === "zh" ? "正在加载" : "Loading"} ${label}…` : "";
+}
 const chart = screen.querySelector("canvas")!;
 const retry = screen.querySelector<HTMLButtonElement>("button")!;
 retry.addEventListener("click", () => location.reload());
@@ -25,6 +43,7 @@ export function localizeDocument() {
   }
 }
 localizeDocument();
+showItem("Modules");
 
 export const loading = {
   show(mapName?: string) {
@@ -36,6 +55,7 @@ export const loading = {
     meter.removeAttribute("value");
     meter.hidden = false;
     retry.hidden = true;
+    showItem(mapName ? "Map" : "Resources");
     app.inert = true;
     screen.hidden = false;
   },
@@ -50,7 +70,8 @@ export const loading = {
     );
     chart.hidden = false;
   },
-  progress(done: number, total: number) {
+  progress(done: number, total: number, name?: string) {
+    if (name !== undefined) showItem(name);
     if (total <= 0) return;
     meter.max = total;
     meter.value = done;
@@ -68,6 +89,7 @@ export const loading = {
       error instanceof Error && /WebGL|mod|Mod/.test(error.message) ? error.message : t("载入失败");
     output.value = "";
     meter.hidden = true;
+    showItem("");
     retry.hidden = false;
     retry.focus();
   },

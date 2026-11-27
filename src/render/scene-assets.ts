@@ -1,6 +1,6 @@
 import { LoadingManager } from "three";
 
-export type LoadProgress = (done: number, total: number) => void;
+export type LoadProgress = (done: number, total: number, item?: string) => void;
 
 /** Tracks the real loader queue, including nested GLTF requests and skin decoding. */
 export class SceneAssets {
@@ -12,10 +12,10 @@ export class SceneAssets {
   private report?: LoadProgress;
 
   constructor() {
-    const progress = (_url: string, done: number, total: number) => {
+    const progress = (url: string, done: number, total: number) => {
       this.done = done;
       this.total = total;
-      this.report?.(done, total);
+      this.report?.(done, total, url.split(/[?#]/)[0].split("/").pop() || "Models");
     };
     this.manager.onStart = (url, done, total) => {
       this.idle = new Promise((resolve) => {
@@ -28,13 +28,16 @@ export class SceneAssets {
   }
   watch(report: LoadProgress) {
     const baseline = this.done;
-    this.report = (done, total) => report(done - baseline, total - baseline);
-    this.report(this.done, this.total);
+    this.report = (done, total, item) => report(done - baseline, total - baseline, item);
+    this.phase("Models");
     return () => {
       this.report = undefined;
     };
   }
   ready() {
     return this.idle;
+  }
+  phase(item: string) {
+    this.report?.(this.done, this.total, item);
   }
 }
