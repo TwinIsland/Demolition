@@ -45,6 +45,6 @@ export default defineSkin({
 | `roughness`, `metalness` | Optional material values, 0 to 1 |
 | `capColor` | Optional end-cap colour |
 | `model` | Optional GLB that replaces the standard charge: a bundle lying along X, base at y = 0. It shows no power tiers or owner collar |
-| `aura` | Optional particles around a placed charge: `color`, `color2`, `glow` (0 smoke to 1 light), `count`, `size`, `radius`, `spread`, `rise`, `swirl`, `speed`, `opacity`, `twinkle` |
+| `glow` | Optional `{ color, intensity }` for a modelled finish: the bright parts of its texture shine in that tint |
 
-Copy `bomb-finishes/olive/` as a starting point, or `bomb-finishes/frost/` for a modelled finish with an aura.
+Copy `bomb-finishes/olive/` as a starting point, or `bomb-finishes/frost/` for a modelled finish with a glow.

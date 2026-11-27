@@ -28,31 +28,11 @@ export interface BombFinish extends Pack {
    * finish shows no power tiers or owner collar; `colors` still tint the interface.
    */
   model?: string;
-  /** Particles drifting around a placed charge. */
-  aura?: BombAura;
-}
-export interface BombAura {
-  color: string;
-  /** Every other particle takes this colour instead. */
-  color2?: string;
-  /** 0 = smoke that covers what is behind it, 1 = light that adds to it. */
-  glow: number;
-  /** Particles per charge. */
-  count: number;
-  /** Particle diameter, world units. */
-  size: number;
-  /** Distance from the charge where particles appear, and how far they drift outwards. */
-  radius: number;
-  spread: number;
-  /** Height gained over a particle's life; negative sinks to the floor. */
-  rise: number;
-  /** Turns around the charge, radians per second. */
-  swirl: number;
-  /** Lives per second. */
-  speed: number;
-  opacity: number;
-  /** 0..1, how strongly particles flicker. */
-  twinkle?: number;
+  /**
+   * Makes the lit parts of a modelled finish shine: the colour texture doubles as the emissive
+   * mask, tinted by `color`. `intensity` is around 0.3 (faint) to 1 (strong).
+   */
+  glow?: { color: string; intensity: number };
 }
 /** @deprecated Use {@link ObstacleSurface}. */
 export type CoverSurface = ObstacleSurface;

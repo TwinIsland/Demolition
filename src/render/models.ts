@@ -642,6 +642,11 @@ export class Models {
           if (!(o instanceof THREE.Mesh)) return;
           o.castShadow = true;
           o.receiveShadow = true;
+          if (finish.glow && o.material instanceof THREE.MeshStandardMaterial) {
+            o.material.emissive.set(finish.glow.color);
+            o.material.emissiveMap = o.material.map;
+            o.material.emissiveIntensity = finish.glow.intensity;
+          }
         });
         // One more level, so that a clone can be turned without losing the centring above.
         const root = new THREE.Group();
