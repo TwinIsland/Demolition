@@ -1,13 +1,17 @@
 import kaplay from "kaplay";
-import { FACINGS, tileArt, zeroSheet, type Facing } from "./placeholder-art";
-import { CELL, VIEW, type Hotspot, type RoomScene } from "./script";
+import { STORY_ART } from "./assets";
+import { VIEW, type Hotspot, type RoomScene } from "./script";
 
 /** Pixels per second. */
-const WALK_SPEED = 62;
+const WALK_SPEED = 58;
 /** The feet: what collides with furniture. Positions are the bottom centre of the sprite. */
-const FEET = { halfWidth: 4, height: 6 };
+const FEET = { halfWidth: 4, height: 4 };
 /** How far in front of the feet the player can examine. */
-const REACH = 9;
+const REACH = 7;
+/** Rows of the walk sheet, top to bottom; each holds four 16 x 32 frames. */
+const FACINGS = ["down", "up", "left", "right"] as const;
+type Facing = (typeof FACINGS)[number];
+const FRAMES = 4;
 const HEADING: Record<Facing, readonly [number, number]> = {
   down: [0, 1],
   up: [0, -1],
@@ -25,9 +29,9 @@ export interface Room {
 }
 
 /**
- * Runs a walkable 8-bit room on `canvas` with Kaplay. Kaplay draws and animates; the room is a
- * grid, so collision is a lookup in the scene's layout. `onFacing` reports the hotspot in reach
- * whenever it changes.
+ * Runs a walkable 8-bit room on `canvas` with Kaplay. Kaplay draws and animates; where the player
+ * can stand is a lookup in the scene's layout. `onFacing` reports the hotspot in reach whenever
+ * it changes.
  */
 export function openRoom(
   canvas: HTMLCanvasElement,
@@ -47,10 +51,11 @@ export function openRoom(
     focus: false,
   });
   const rows = scene.layout,
-    top = Math.floor((VIEW.height - rows.length * CELL) / 2),
-    left = Math.floor((VIEW.width - rows[0].length * CELL) / 2);
+    cell = scene.cell,
+    top = Math.floor((VIEW.height - rows.length * cell) / 2),
+    left = Math.floor((VIEW.width - rows[0].length * cell) / 2);
   const symbolAt = (x: number, y: number) =>
-    rows[Math.floor((y - top) / CELL)]?.[Math.floor((x - left) / CELL)] ?? "#";
+    rows[Math.floor((y - top) / cell)]?.[Math.floor((x - left) / cell)] ?? "#";
   const walkable = (x: number, y: number) => ".@".includes(symbolAt(x, y));
   const fits = (x: number, y: number) =>
     walkable(x - FEET.halfWidth, y) &&
@@ -59,36 +64,22 @@ export function openRoom(
     walkable(x + FEET.halfWidth, y - FEET.height);
   const hotspots = new Map(scene.hotspots.map((hotspot) => [hotspot.symbol, hotspot]));
 
-  // Scenery: one painting, or a tile per cell with the floor under the furniture.
-  if (scene.background) {
-    k.loadSprite("room", scene.background);
-    k.add([k.sprite("room"), k.pos(0, 0)]);
-  } else {
-    for (const symbol of new Set(rows.join("").replace("@", ".")))
-      k.loadSprite(`tile-${symbol}`, tileArt(symbol));
-    rows.forEach((row, cz) =>
-      [...row].forEach((symbol, cx) => {
-        const at = k.pos(left + cx * CELL, top + cz * CELL);
-        k.add([k.sprite("tile-."), at]);
-        if (!".@".includes(symbol)) k.add([k.sprite(`tile-${symbol}`), at]);
-      }),
-    );
-  }
-
-  k.loadSprite("zero", zeroSheet(), {
-    sliceX: 2,
+  k.loadSprite("room", scene.background);
+  k.add([k.sprite("room"), k.pos(0, 0)]);
+  k.loadSprite("zero", STORY_ART.zeroWalk, {
+    sliceX: FRAMES,
     sliceY: FACINGS.length,
     anims: Object.fromEntries(
       FACINGS.flatMap((facing, row) => [
-        [`idle-${facing}`, row * 2],
-        [`walk-${facing}`, { from: row * 2, to: row * 2 + 1, loop: true, speed: 6 }],
+        [`idle-${facing}`, row * FRAMES],
+        [`walk-${facing}`, { from: row * FRAMES, to: row * FRAMES + FRAMES - 1, loop: true, speed: 8 }],
       ]),
     ),
   });
   const spawnRow = rows.findIndex((row) => row.includes("@"));
   const zero = k.add([
     k.sprite("zero", { anim: "idle-down" }),
-    k.pos(left + (rows[spawnRow].indexOf("@") + 0.5) * CELL, top + (spawnRow + 1) * CELL - 2),
+    k.pos(left + (rows[spawnRow].indexOf("@") + 0.5) * cell, top + (spawnRow + 1) * cell - 1),
     k.anchor("bot"),
     k.z(10),
   ]);
@@ -121,7 +112,11 @@ export function openRoom(
     walking = !!length;
 
     const [hx, hz] = HEADING[heading];
-    const ahead = hotspots.get(symbolAt(zero.pos.x + hx * REACH, zero.pos.y - FEET.height / 2 + hz * REACH));
+    // Sideways the feet are wider than they are deep, so the reach starts from their edge.
+    const reach = REACH + (hx ? FEET.halfWidth : 0);
+    const ahead = hotspots.get(
+      symbolAt(zero.pos.x + hx * reach, zero.pos.y - FEET.height / 2 + hz * (reach + FEET.height / 2)),
+    );
     if (ahead !== facing) onFacing((facing = ahead));
   });
   return room;

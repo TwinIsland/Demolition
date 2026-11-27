@@ -284,9 +284,9 @@ export class GameUI {
 
   private stopStory?: () => void;
 
-  showStory(host: StoryHost) {
+  showStory(host: StoryHost, act?: string) {
     this.stopStory?.();
-    this.stopStory = mountStory(this.overlay.screen(storyMarkup(), "story-screen"), host);
+    this.stopStory = mountStory(this.overlay.screen(storyMarkup(), "story-screen"), host, act);
   }
 
   /**

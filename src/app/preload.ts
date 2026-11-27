@@ -8,6 +8,7 @@ import type { GameRenderer } from "../render/game-renderer";
 import type { LoadProgress } from "../render/scene-assets";
 import { iconArt } from "../ui/icons";
 import { resultArt } from "../ui/match-result";
+import { storyImages } from "../story/assets";
 import { preloadSkinAssets } from "../ui/skin-assets";
 import { preloadMinimapArt } from "../ui/tactical-map";
 
@@ -109,6 +110,7 @@ function contentImages(): string[] {
       ...icons,
       ...iconArt(),
       ...resultArt(),
+      ...storyImages(),
       ...MAPS.flatMap((map) => (map.artwork ? [map.artwork] : [])),
     ]),
   ];

@@ -53,8 +53,8 @@ export interface UIActions {
   /** Credits roll, opened from the lobby. */
   openCredits(): void;
   closeCredits(): void;
-  /** Story mode, opened from the lobby. */
-  openStory(): void;
+  /** Story mode, opened from the lobby. `act` is an id from `ACTS`; without one the story resumes. */
+  openStory(act?: string): void;
   closeStory(): void;
   setLanguage(value: Language): void;
   toggleSound(): void;

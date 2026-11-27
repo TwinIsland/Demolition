@@ -1,3 +1,4 @@
+import type { Mood } from "./assets";
 import { SPEAKER_NAMES, type Line, type Speaker } from "./script";
 
 /** Characters revealed per second. */
@@ -33,10 +34,12 @@ export class DialogueBox {
   private selected = 0;
   private proceed?: (pick: number) => void;
   private playing = false;
+  private readonly moods = new Map<Speaker, Mood>();
 
   constructor(
     root: HTMLElement,
-    private readonly portraits: Partial<Record<Speaker, string>>,
+    /** Portraits by speaker and mood; a speaker without an entry has none. */
+    private readonly portraits: Partial<Record<Speaker, Record<Mood, string>>>,
     private readonly sounds: { tick(): void; move(): void; accept(): void },
   ) {
     this.box = root.querySelector<HTMLElement>(".story-dialogue")!;
@@ -62,7 +65,7 @@ export class DialogueBox {
       if ("choice" in line) {
         const pick = await this.ask(line.choice);
         if (line.flag) picks[line.flag] = pick;
-      } else await this.say(line.who, line.text);
+      } else await this.say(line.who, line.text, line.mood);
     }
     this.box.hidden = true;
     this.playing = false;
@@ -101,8 +104,9 @@ export class DialogueBox {
     proceed?.(pick);
   }
 
-  private say(who: Speaker, text: string) {
-    const portrait = this.portraits[who];
+  private say(who: Speaker, text: string, mood?: Mood) {
+    if (mood) this.moods.set(who, mood);
+    const portrait = this.portraits[who]?.[this.moods.get(who) ?? "smug"];
     this.portrait.hidden = !portrait;
     if (portrait) this.portrait.src = portrait;
     this.box.dataset.who = who;

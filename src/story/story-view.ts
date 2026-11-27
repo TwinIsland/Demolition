@@ -1,7 +1,7 @@
 import "./story.css";
-import { BEDROOM } from "./acts/bedroom";
+import { ZERO_PORTRAITS } from "./assets";
+import { ACTS } from "./chapters";
 import { DialogueBox, dialogueMarkup } from "./dialogue";
-import { zeroPortrait } from "./placeholder-art";
 import { openRoom } from "./room";
 import { reachCheckpoint } from "./save";
 import type { Hotspot } from "./script";
@@ -17,6 +17,7 @@ export interface StoryHost {
 export const storyMarkup = () => `
   <div class="story-stage">
     <canvas class="story-canvas"></canvas>
+    <img class="story-art" alt="" hidden />
     <div class="story-goal" hidden></div>
     <div class="story-prompt" hidden><kbd>E</kbd><span></span></div>
     ${dialogueMarkup}
@@ -37,20 +38,21 @@ const MOVES: Record<string, readonly [number, number]> = {
 const CONFIRM = new Set(["KeyE", "Space", "Enter"]);
 
 /**
- * Plays act 1 inside `screen` (the element holding `storyMarkup`) and returns the function that
- * stops it. The room, the text box and the keys live here; the app only supplies sound and the
+ * Plays an act inside `screen` (the element holding `storyMarkup`) and returns the function that
+ * stops it. An act that is not built yet falls back to the first one. The room, the text box and the keys live here; the app only supplies sound and the
  * way back to the menu.
  */
-export function mountStory(screen: HTMLElement, host: StoryHost): () => void {
-  const scene = BEDROOM;
+export function mountStory(screen: HTMLElement, host: StoryHost, actId?: string): () => void {
+  const scene = (ACTS.find((act) => act.id === actId && act.scene) ?? ACTS[0]).scene!;
   const find = <T extends HTMLElement>(selector: string) => screen.querySelector<T>(selector)!;
   const stage = find(".story-stage"),
     goal = find(".story-goal"),
     prompt = find(".story-prompt"),
-    card = find(".story-card");
+    card = find(".story-card"),
+    art = find<HTMLImageElement>(".story-art");
   const dialogue = new DialogueBox(
     stage,
-    { zero: zeroPortrait().toDataURL() },
+    { zero: ZERO_PORTRAITS },
     { tick: () => host.typeTick(), move: () => host.menu("click"), accept: () => host.menu("accept") },
   );
   const showPrompt = (hotspot: Hotspot | undefined) => {
@@ -128,12 +130,20 @@ export function mountStory(screen: HTMLElement, host: StoryHost): () => void {
   window.addEventListener("blur", onBlur);
   stage.addEventListener("click", onClick);
 
-  void talk(scene.intro).then((open) => {
-    if (!open) return;
+  const begin = async () => {
+    if (scene.opening) {
+      art.src = scene.opening.art;
+      art.hidden = false;
+      if (!(await talk(scene.opening.lines))) return;
+      art.classList.add("leaving");
+      art.addEventListener("animationend", () => (art.hidden = true), { once: true });
+    }
+    if (!(await talk(scene.intro))) return;
     goal.textContent = `目标：${scene.goal}`;
     goal.hidden = false;
     release();
-  });
+  };
+  void begin();
 
   return () => {
     alive = false;

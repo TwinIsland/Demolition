@@ -2,6 +2,8 @@ import { LEVEL_GAIN_TEXT } from "../core/level-rewards";
 import { preloadEverything } from "./preload";
 import { KeyboardAgent } from "../agents/keyboard-agent";
 import { CREDITS_MUSIC, MENU_MUSIC, Sound, STORY_MUSIC } from "../audio/sound";
+import { nextAct } from "../story/chapters";
+import { loadStory } from "../story/save";
 import { perkById } from "../core/content";
 import { MAPS } from "../core/maps";
 import { MATCH_MODES } from "../core/match-modes";
@@ -435,14 +437,17 @@ export class GameApp {
         this.sound.setMusic(CREDITS_MUSIC);
       },
       closeCredits: () => this.closeCredits(),
-      openStory: () => {
+      openStory: (act) => {
         if (!this.screens.is("lobby")) return;
         this.screens.transition("story");
-        this.ui.showStory({
-          typeTick: () => this.sound.typeTick(),
-          menu: (name) => this.sound.menu(name),
-          finish: () => this.closeStory(),
-        });
+        this.ui.showStory(
+          {
+            typeTick: () => this.sound.typeTick(),
+            menu: (name) => this.sound.menu(name),
+            finish: () => this.closeStory(),
+          },
+          act ?? nextAct(loadStory())?.id,
+        );
         this.sound.menu("accept");
         this.sound.setMusic(STORY_MUSIC.opening);
       },

@@ -32,6 +32,21 @@
   image-rendering: pixelated;
   outline: none;
 }
+.story-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.story-art.leaving {
+  animation: story-art-out 0.7s steps(6) forwards;
+}
+@keyframes story-art-out {
+  to {
+    opacity: 0;
+  }
+}
 .story-stage.booting .story-canvas {
   animation: story-boot 1.4s steps(7) forwards;
 }
@@ -106,13 +121,14 @@
 .story-goal[hidden],
 .story-prompt[hidden],
 .story-choices[hidden],
-.story-portrait[hidden] {
+.story-portrait[hidden],
+.story-art[hidden] {
   display: none;
 }
 .story-portrait {
   flex: none;
-  width: calc(var(--px) * 36);
-  height: calc(var(--px) * 36);
+  width: calc(var(--px) * 40);
+  height: calc(var(--px) * 40);
   border: calc(var(--px) * 1) solid #55518f;
   image-rendering: pixelated;
 }

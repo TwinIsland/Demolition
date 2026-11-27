@@ -1,9 +1,12 @@
+import type { Mood } from "./assets";
+
 /** Who a line belongs to. `narrator` and `system` have no portrait; `door` is a voice from off screen. */
 export type Speaker = "zero" | "door" | "narrator" | "system";
 
 /** One step of a conversation: a spoken line, or a choice between replies. */
 export type Line =
-  | { who: Speaker; text: string }
+  /** `mood` picks the portrait of a speaker who has several; it stays until the next one given. */
+  | { who: Speaker; text: string; mood?: Mood }
   /**
    * A false branch: every option leads to the same next line. `flag` records the pick in the save,
    * for later scenes that want to quote it back.
@@ -23,18 +26,20 @@ export interface Hotspot {
 }
 
 /**
- * A walkable room of the 8-bit chapters. `layout` is one string per row and one character per
- * 16-pixel cell: "." is floor, "@" the spawn, any other symbol is solid and names its tile art.
+ * A walkable room of the 8-bit chapters: a 320 x 180 painting, and a grid laid over it that says
+ * where the player can stand. `layout` is one string per row and one character per cell: "." is
+ * floor, "@" the spawn, anything else is solid; a hotspot claims the cells of its symbol.
  */
 export interface RoomScene {
   id: string;
+  /** Painting of the whole room. The grid is centred on it. */
+  background: string;
+  /** Pixels per layout cell. */
+  cell: number;
   layout: readonly string[];
-  /**
-   * Painting of the whole room, 320 x 180. With one, tiles are not drawn and the layout only
-   * supplies collision and hotspots.
-   */
-  background?: string;
-  /** Played before the player may move. */
+  /** A full-screen illustration with lines read over it, before the room appears. */
+  opening?: { art: string; lines: readonly Line[] };
+  /** Played in the room before the player may move. */
   intro: readonly Line[];
   /** Objective shown once the intro is over. */
   goal: string;
@@ -54,6 +59,5 @@ export const SPEAKER_NAMES: Record<Speaker, string> = {
   system: "系统",
 };
 
-/** Pixels per layout cell, and the size of the 8-bit canvas. */
-export const CELL = 16;
+/** Size of the 8-bit canvas. */
 export const VIEW = { width: 320, height: 180 } as const;

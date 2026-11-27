@@ -14,6 +14,8 @@ export interface StorySave {
   stories: Record<string, { checkpoints: string[] }>;
   /** Choices and collectibles that later scenes may read. */
   flags: Record<string, FlagValue>;
+  /** When a checkpoint was last reached, in milliseconds since the epoch. */
+  playedAt?: number;
 }
 
 const isFlag = (value: unknown): value is FlagValue =>
@@ -29,7 +31,9 @@ function validate(raw: unknown): StorySave | undefined {
   const flags: StorySave["flags"] = {};
   if (isRecord(raw.flags))
     for (const [id, value] of Object.entries(raw.flags)) if (isFlag(value)) flags[id] = value;
-  return { stories, flags };
+  const playedAt =
+    typeof raw.playedAt === "number" && Number.isFinite(raw.playedAt) ? raw.playedAt : undefined;
+  return { stories, flags, playedAt };
 }
 
 const setting = new Setting<StorySave>({ key: "demolition-story-v1", codec: jsonCodec(validate) });
@@ -45,6 +49,14 @@ export function reachCheckpoint(checkpoint: string, flags: StorySave["flags"] = 
   const entry = (save.stories[story] ??= { checkpoints: [] });
   if (!entry.checkpoints.includes(checkpoint)) entry.checkpoints.push(checkpoint);
   Object.assign(save.flags, flags);
+  save.playedAt = Date.now();
   setting.save(save);
   return save;
+}
+
+/** Forgets one story's progress and every flag, for a new game. Other stories keep theirs. */
+export function resetStory(story = MAIN_STORY) {
+  const save = loadStory();
+  delete save.stories[story];
+  setting.save({ stories: save.stories, flags: {} });
 }
