@@ -84,16 +84,22 @@ const BUNDLED = Object.fromEntries(
   ).map(([path, url]) => [path.split("/").at(-2)!, url]),
 );
 const art = new Map<string, HTMLImageElement>();
+/** Shared ground for maps without their own painting; tinted to the map's theme when drawn. */
+const SHARED_GROUND = "assets/ui/minimap-ground.webp";
+let sharedGround: HTMLImageElement | undefined;
 
-/** Decodes every map's minimap art behind the loading screen. A map without art uses the drawn backdrop. */
+/** Decodes the minimap art behind the loading screen. A map without its own uses the shared ground. */
 export function preloadMinimapArt(maps: readonly MapDefinition[] = MAPS): Promise<void>[] {
-  return maps.flatMap((map) => {
+  const shared = new Image();
+  shared.src = new URL(SHARED_GROUND, new URL(import.meta.env.BASE_URL, document.baseURI)).href;
+  const own = maps.flatMap((map) => {
     const url = map.minimap ?? BUNDLED[map.id];
     if (!url) return [];
     const image = new Image();
     image.src = url;
     return [image.decode().then(() => void art.set(map.id, image))];
   });
+  return [...own, shared.decode().then(() => void (sharedGround = shared))];
 }
 
 /** Deterministic noise, so the drawn backdrop of a map looks the same every match. */
@@ -122,13 +128,23 @@ export function mapBackdrop(mapId: string, size: number, pixels: number, pad: nu
   const ctx = canvas.getContext("2d")!;
   const palette = mapPalette(mapId);
   const map = mapOf(mapId);
-  const image = art.get(mapId);
+  const own = art.get(mapId);
+  const image = own ?? sharedGround;
   const cell = (pixels - pad * 2) / size;
 
   ctx.fillStyle = palette.ground;
   ctx.fillRect(0, 0, pixels, pixels);
   if (image) {
     ctx.drawImage(image, 0, 0, pixels, pixels);
+    if (!own) {
+      // Keep the painting's light and dark, take hue and saturation from the theme.
+      ctx.globalCompositeOperation = "color";
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = palette.groundLift;
+      ctx.fillRect(0, 0, pixels, pixels);
+      ctx.globalCompositeOperation = "source-over";
+      ctx.globalAlpha = 1;
+    }
     // Painted art is kept under the markers: pull it down so contacts stay the brightest thing.
     ctx.fillStyle = "#05080a59";
     ctx.fillRect(0, 0, pixels, pixels);
