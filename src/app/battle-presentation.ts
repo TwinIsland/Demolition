@@ -12,6 +12,8 @@ export interface BattlePresentation {
   /** Whole seconds until the terrain reset, 0 once it has happened, undefined when none is scheduled. */
   resetSeconds?: number;
   resetId?: number;
+  /** The reset is the map rearranging itself, not a Cataclysm: no fire, different wording and sound. */
+  resetShift: boolean;
   fireLayer: BattleFireLayer;
   /** The viewer's health from 0 to 1; 1 whenever the wounded veil should stay off. */
   healthFraction: number;
@@ -35,13 +37,14 @@ export function battlePresentation(
       ? Math.max(1, Math.ceil(reset.at - state.time))
       : 0
     : undefined;
-  const fireLayer: BattleFireLayer = reset
-    ? resetSeconds === 0
-      ? "eruption"
-      : "warning"
-    : inBattle && viewer.alive && viewer.offers.length
-      ? "offer"
-      : "";
+  const fireLayer: BattleFireLayer =
+    reset && !reset.shift
+      ? resetSeconds === 0
+        ? "eruption"
+        : "warning"
+      : inBattle && viewer.alive && viewer.offers.length
+        ? "offer"
+        : "";
 
   return {
     collapseSeconds,
@@ -49,6 +52,7 @@ export function battlePresentation(
     collapseWarning: collapse ? (collapsePending ? collapseSeconds : 0) : undefined,
     resetSeconds,
     resetId: reset?.id,
+    resetShift: !!reset?.shift,
     fireLayer,
     healthFraction: inBattle && viewer.alive ? viewer.hp / viewer.maxHp : 1,
   };

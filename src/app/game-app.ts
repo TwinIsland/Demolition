@@ -690,9 +690,14 @@ export class GameApp {
     const battle = battlePresentation(state, viewer, inBattle);
     this.ui.setCollapse(battle.collapseSeconds, battle.collapsePending);
     if (inBattle) this.sound.collapseClock(battle.collapseWarning);
-    this.ui.setBattleFire(battle.fireLayer, battle.resetSeconds);
+    this.ui.setBattleFire(battle.fireLayer, battle.resetSeconds, battle.resetShift);
     this.ui.setHealthDanger(battle.healthFraction);
-    this.sound.battleFire(FIRE_VOLUME[battle.fireLayer], battle.resetId, battle.resetSeconds);
+    this.sound.battleFire(
+      FIRE_VOLUME[battle.fireLayer],
+      battle.resetId,
+      battle.resetSeconds,
+      battle.resetShift,
+    );
     this.sound.rain(playing ? this.renderer.rainLevel : 0);
     this.sound.wildlife(playing ? state.mapId : undefined);
     if (playing)

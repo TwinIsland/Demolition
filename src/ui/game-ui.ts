@@ -333,8 +333,8 @@ export class GameUI {
     return { banner: showRankBanner(this.hud, from, to, gains), cards: this.perkTray.cards };
   }
 
-  setBattleFire(layer: BattleFireLayer, seconds?: number) {
-    this.effects.setBattleFire(layer, seconds);
+  setBattleFire(layer: BattleFireLayer, seconds?: number, shift = false) {
+    this.effects.setBattleFire(layer, seconds, shift);
   }
 
   setCollapse(seconds: number, pending: boolean) {

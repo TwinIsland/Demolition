@@ -46,7 +46,10 @@ export default defineMap(
     order: 4,
     size: 21,
     density: 0.62,
-    wallDensity: 0.05,
+    wallDensity: 0.09,
+    // Every stray wall moves when the rooms shift; the partitions and doorways never do.
+    wallShuffle: 1,
+    terrainShift: { every: 32, warning: 4 },
     theme: "backrooms",
     weather: "office",
     bgm: new URL("./bgm.mp3", import.meta.url).href,

@@ -64,6 +64,7 @@ export const EN_MESSAGES: Readonly<Record<string, string>> = {
   战术雷达: "Tactical radar",
   "2D 战术地图，显示玩家、炸药和道具位置": "Tactical map showing operators, charges and items",
   "灭世 · 地形重置": "Cataclysm · Cover shift",
+  "后室 · 房间即将移位": "Backrooms · The rooms are shifting",
   "暂停 · {0}": "Pause · {0}",
   在线: "LIVE",
   本机玩家: "Local player",

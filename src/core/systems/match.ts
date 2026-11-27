@@ -13,6 +13,8 @@ import type { SimContext } from "./context";
 const TERRAIN_RESET_LINGER = 1.25;
 /** Seconds before a scheduled reset at which the cells of moving walls are published. */
 const WALL_WARNING = 1;
+/** Seconds between a map's own rearrangement being announced and carried out, unless the map says. */
+const SHIFT_WARNING = 4;
 
 export function tickCountdown(s: GameSnapshot, dt: number) {
   s.countdown = Math.max(0, s.countdown - dt);
@@ -42,6 +44,11 @@ function flatten(s: GameSnapshot, view: NonNullable<GameSnapshot["arenaView"]>) 
 export function updateTerrainReset(ctx: SimContext, inputs: ReadonlyMap<string, PlayerInput>) {
   const s = ctx.state,
     reset = s.terrainReset;
+  // A map that rearranges itself. The interval has to be a real one, or it would never stop.
+  const shift =
+    ctx.map.randomizeTerrain && ctx.map.terrainShift && ctx.map.terrainShift.every >= 5
+      ? ctx.map.terrainShift
+      : undefined;
   const practiceReset =
     !reset && s.canResetTerrain && s.players.some((p) => !p.bot && p.alive && inputs.get(p.id)?.resetTerrain);
   if (practiceReset || (reset && reset.completedAt === undefined && s.time >= reset.at)) {
@@ -51,7 +58,15 @@ export function updateTerrainReset(ctx: SimContext, inputs: ReadonlyMap<string, 
       reset.completedAt = s.time;
       if (reset.scorch) scorchOthers(ctx, reset.ownerId, reset.scorch);
     }
+    // Any rearrangement, whoever called it, restarts the map's own clock.
+    if (shift) s.terrainShiftAt = s.time + shift.every;
     return true;
+  }
+  if (shift && !reset && s.time >= (s.terrainShiftAt ?? shift.every)) {
+    const warning = shift.warning ?? SHIFT_WARNING;
+    s.terrainReset = { id: ctx.nextId(), ownerId: "", shift: true, at: s.time + warning };
+    s.terrainShiftAt = s.time + warning + shift.every;
+    return false;
   }
   if (reset && reset.completedAt === undefined && !reset.wallPlan && s.time >= reset.at - WALL_WARNING)
     reset.wallPlan = planWalls(s, ctx.map, ctx.random);

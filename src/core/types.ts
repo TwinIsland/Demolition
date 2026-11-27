@@ -268,9 +268,14 @@ export interface FireCell extends Vec2 {
 export interface GameSnapshot {
   mode?: MatchMode;
   canResetTerrain?: boolean;
+  /** Simulation time at which a map with `terrainShift` announces its next rearrangement. */
+  terrainShiftAt?: number;
   terrainReset?: {
     id: number;
+    /** Empty when the map itself called the reset. */
     ownerId: string;
+    /** The map's own periodic rearrangement: no fire, and the lights stutter instead. */
+    shift?: boolean;
     at: number;
     completedAt?: number;
     /** Health the fire sweep takes from everyone but the owner when the reset lands. */

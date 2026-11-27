@@ -122,6 +122,11 @@ export class SceneEnvironment {
     return this.weather.rain;
   }
 
+  /** Brightness of an office floor's ceiling panels, 0 to 1, for when they stutter. */
+  set lampLevel(level: number) {
+    this.uniforms.wxLampLevel.value = level;
+  }
+
   /** Call when permanent walls moved, so rain keeps landing on their tops. */
   updateField(tiles: readonly (readonly number[])[]) {
     this.rain.setField(tiles, TILE_SIZE);

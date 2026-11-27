@@ -30,6 +30,7 @@ import type { MinecraftAvatar } from "./minecraft-avatar";
 import { bombGuideColor, bombWarning, OWN_BOMB_COLOR } from "../core/bomb-warning";
 import { SLIDE_STEP } from "../core/geometry";
 import { OutdoorLighting } from "./outdoor-lighting";
+import { dimPanels, lampLevel } from "./backrooms-hall";
 import { SceneEnvironment, type ThunderCue } from "./environment/scene-environment";
 import { MAPS } from "../core/maps";
 import { ITEMS, RULES } from "../core/content";
@@ -122,6 +123,8 @@ export class GameRenderer {
   private observer: ResizeObserver;
   private environment: OutdoorLighting;
   private weather: SceneEnvironment;
+  /** Brightness of an office floor's ceiling panels as last applied. */
+  private lamps = 1;
   private quality = readGraphics();
   private lastEvent = 0;
   constructor(container: HTMLElement) {
@@ -356,6 +359,12 @@ export class GameRenderer {
     this.post.setOcclusionActive(rig.tacticalBlend < 0.02);
     this.refreshShadows(state, wallTime, mapChanged || zoneShake > 0);
     this.adaptResolution(wallTime);
+    const lamps = lampLevel(state, motionScale());
+    if (lamps !== this.lamps) {
+      this.lamps = lamps;
+      this.weather.lampLevel = lamps;
+      dimPanels(this.models, lamps);
+    }
     // Renders the floor reflection, so the camera must be final here.
     this.weather.update(rig.camera, wallTime, [rig.held]);
     this.post.render();

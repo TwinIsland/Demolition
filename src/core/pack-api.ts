@@ -41,6 +41,12 @@ export interface MapDefinition extends Pack {
    * Needs `wallDensity`; borders and `tileAt` walls never move. Defaults to 0 (walls stay put).
    */
   wallShuffle?: number;
+  /**
+   * The map rearranges itself without anyone asking: every `every` seconds it announces a terrain
+   * reset and carries it out `warning` seconds later (default 4). Needs `randomizeTerrain`; set
+   * `wallShuffle` as well for walls to move.
+   */
+  terrainShift?: { every: number; warning?: number };
   /** Weighted pool of destructible obstacles. Defaults to the `storage` set. */
   obstacles?: readonly MapObstacle[];
   /** @deprecated Use `obstacles`. Read only when `obstacles` is absent. */

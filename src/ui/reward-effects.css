@@ -274,6 +274,14 @@
   font: 800 clamp(32px, 4vw, 52px)/1 var(--font-hud);
   text-shadow: 0 0 14px #fb772a;
 }
+.reset-warning[data-shift] {
+  background: linear-gradient(90deg, transparent, #1f1b0ce8 15% 85%, transparent);
+  border-color: #e6cf6c9c;
+  color: #f6ecb8;
+}
+.reset-warning[data-shift] strong {
+  text-shadow: 0 0 14px #d8b93a;
+}
 .collapse-warning {
   background: linear-gradient(90deg, transparent, #20192ce6 15% 85%, transparent);
   border-color: #bc91de98;

@@ -202,8 +202,11 @@ export class GameAudio {
     this.collapseBeat = warningSeconds;
   }
 
-  /** Fire bed level, plus the terrain-reset countdown identified by `resetId` / `seconds`. */
-  battleFire(volume: number, resetId?: number, seconds?: number) {
+  /**
+   * Fire bed level, plus the terrain-reset countdown identified by `resetId` / `seconds`. `shift`
+   * marks a map rearranging itself, which lands with a heavy thud instead of a blast.
+   */
+  battleFire(volume: number, resetId?: number, seconds?: number, shift = false) {
     if (volume !== this.fireLevel) {
       this.fireLevel = volume;
       this.engine.setLoopLevel(FIRE_LOOP, volume);
@@ -216,7 +219,8 @@ export class GameAudio {
       return;
     this.lastResetId = resetId;
     this.lastResetSecond = seconds;
-    if (seconds === 0) {
+    if (seconds === 0 && shift) this.play("room-shift", { priority: true });
+    else if (seconds === 0) {
       this.play("blast", { level: 0.72, priority: true });
       this.engine.duckMusic();
     } else this.play("reset-signal", { priority: true });

@@ -26,11 +26,45 @@ function square() {
   return unit;
 }
 
-/** A light panel hangs over every cell whose column and row are both odd. */
-export const hasPanel = (x: number, z: number) => x % 2 !== 0 && z % 2 !== 0;
-
 const hash = (x: number, z: number) =>
   ((Math.imul(x * 73856093 + z * 19349663, 83492791) >>> 0) % 1000) / 1000;
+
+const PANEL_COLOR = "#fff0c0",
+  PANEL_GAIN = 1.55;
+/** Seconds the floor stays dark after the rooms have moved, and seconds the tubes take to restrike. */
+const BLACKOUT = 0.3,
+  RESTRIKE = 0.5;
+
+/**
+ * How bright the ceiling panels are, 0 to 1. They stutter while the map counts down to moving its
+ * rooms, more often as the moment comes, go out when it happens and restrike just after.
+ * `motion` is the player's motion setting: at 0 the lights stay steady.
+ */
+export function lampLevel(state: Readonly<GameSnapshot>, motion: number) {
+  const reset = state.terrainReset;
+  if (!reset?.shift || motion <= 0) return 1;
+  if (reset.completedAt !== undefined) {
+    const age = state.time - reset.completedAt;
+    return age < BLACKOUT ? 0.1 : Math.min(1, 0.1 + (0.9 * (age - BLACKOUT)) / RESTRIKE);
+  }
+  const left = reset.at - state.time,
+    urgency = 1 - Math.min(1, Math.max(0, left / 4));
+  // Six steps a second, so at most three dips a second: a stutter, not a strobe.
+  const step = Math.floor(state.time * 6);
+  if (step % 2 || hash(step, reset.id) > 0.3 + 0.5 * urgency) return 1;
+  return 1 - (0.3 + 0.25 * urgency) * motion;
+}
+
+/** Set the brightness of every ceiling panel at once; they share one material. */
+export function dimPanels(models: Models, level: number) {
+  models.materials
+    .lamp(PANEL_COLOR, PANEL_GAIN)
+    .color.set(PANEL_COLOR)
+    .multiplyScalar(PANEL_GAIN * level);
+}
+
+/** A light panel hangs over every cell whose column and row are both odd. */
+export const hasPanel = (x: number, z: number) => x % 2 !== 0 && z % 2 !== 0;
 
 export function buildBackrooms(root: THREE.Group, models: Models, state: Readonly<GameSnapshot>) {
   const size = state.size,
@@ -52,7 +86,7 @@ export function buildBackrooms(root: THREE.Group, models: Models, state: Readonl
 
   // The ceiling faces down only, so the overhead view looks straight through it.
   sheet(models.backroomsCeiling(), BACKROOMS_CEILING, width, width).rotation.x = Math.PI;
-  const panel = models.materials.lamp("#fff0c0", 1.55);
+  const panel = models.materials.lamp(PANEL_COLOR, PANEL_GAIN);
   for (let z = 1; z < size - 1; z++)
     for (let x = 1; x < size - 1; x++)
       if (hasPanel(x, z))

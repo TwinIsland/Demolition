@@ -44,6 +44,8 @@ export interface WeatherUniforms {
   /** Ground mist: x extinction per metre at ground level, y falloff per metre of height. */
   wxFog: { value: THREE.Vector2 };
   wxTile: { value: number };
+  /** Ceiling panels of an office floor: 1 lit, 0 out. */
+  wxLampLevel: { value: number };
   wxReflection: { value: THREE.Texture | null };
   wxReflectionMatrix: { value: THREE.Matrix4 };
   wxReflectionOn: { value: number };
@@ -58,6 +60,7 @@ export function createWeatherUniforms(): WeatherUniforms {
     wxPuddleLevel: { value: 0.56 },
     wxFog: { value: new THREE.Vector2(0, 0.5) },
     wxTile: { value: 2.4 },
+    wxLampLevel: { value: 1 },
     wxReflection: { value: null },
     wxReflectionMatrix: { value: new THREE.Matrix4() },
     wxReflectionOn: { value: 0 },
@@ -172,6 +175,7 @@ uniform vec4 wxAmount;
 uniform float wxPuddleLevel;
 uniform vec2 wxFog;
 uniform float wxTile;
+uniform float wxLampLevel;
 #ifdef WX_REFLECT
   uniform sampler2D wxReflection;
   uniform float wxReflectionOn;
@@ -480,7 +484,8 @@ vec2 wxWaterSlope = vec2(0.0);
     // painted here, which costs nothing and keeps the room from being evenly lit.
     vec2 wxLamp = mod(wxP.xz, wxTile * 2.0) - wxTile;
     float wxGlow = exp(-dot(wxLamp, wxLamp) / (wxTile * wxTile * 0.75));
-    diffuseColor.rgb *= mix(0.66, 1.16, wxGlow);
+    // With the panels out only what leaks in from the next rooms is left.
+    diffuseColor.rgb *= mix(0.4, mix(0.66, 1.16, wxGlow), wxLampLevel);
   }
   #endif
 }

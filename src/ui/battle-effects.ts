@@ -33,6 +33,8 @@ export class BattleEffectsView implements HudView {
   private readonly criticalVeil: HTMLElement;
   private readonly resetWarning: HTMLElement;
   private readonly resetSeconds: HTMLElement;
+  private readonly resetLabel: HTMLElement;
+  private resetShift = false;
   private readonly collapseWarning: HTMLElement;
   private readonly collapseSeconds: HTMLElement;
   private danger = 0;
@@ -45,6 +47,7 @@ export class BattleEffectsView implements HudView {
     this.criticalVeil = query(root, ".critical-veil");
     this.resetWarning = query(root, ".reset-warning");
     this.resetSeconds = query(this.resetWarning, "strong");
+    this.resetLabel = query(this.resetWarning, "span");
     this.collapseWarning = query(root, ".collapse-warning");
     this.collapseSeconds = query(this.collapseWarning, "strong");
   }
@@ -65,9 +68,14 @@ export class BattleEffectsView implements HudView {
   }
 
   /** `seconds` is the time left before a terrain reset; the warning shows while it is positive. */
-  setBattleFire(layer: BattleFireLayer, seconds?: number) {
+  setBattleFire(layer: BattleFireLayer, seconds?: number, shift = false) {
     if (this.heat.dataset.layer !== layer) this.heat.dataset.layer = layer;
     const visible = seconds !== undefined && seconds > 0;
+    if (visible && shift !== this.resetShift) {
+      this.resetShift = shift;
+      this.resetLabel.textContent = t(shift ? "后室 · 房间即将移位" : "灭世 · 地形重置");
+      this.resetWarning.toggleAttribute("data-shift", shift);
+    }
     if (this.resetWarning.hidden === visible) this.resetWarning.hidden = !visible;
     if (visible && this.resetSeconds.textContent !== String(seconds))
       this.resetSeconds.textContent = String(seconds);

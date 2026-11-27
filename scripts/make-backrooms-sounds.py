@@ -2,6 +2,8 @@
 
 - footstep-carpet-{0,1,2}.ogg: Kenney's CC0 Impact Sounds footstep_carpet_000..002, trimmed to
   the step, faded and level-matched.
+- room-shift.ogg: the rooms moving: a deep thud through the floor, partitions grinding, the
+  lights dropping out and the tubes restriking. Synthesised.
 - environment/backrooms.ogg: a seamless 24 s bed of fluorescent tubes (mains hum, ballast buzz
   that wavers and now and then stutters), air handling far off and the dull room tone of a
   carpeted floor. Synthesised.
@@ -104,3 +106,19 @@ bed = np.stack([
     norm(right, 1) * 0.5 + norm(np.roll(fizz, SR), 1) * 0.035 + room_r * 0.5,
 ], axis=1)
 encode(norm(bed, 0.6), "public/assets/environment/backrooms.ogg", "3")
+
+# --- The rooms shift ----------------------------------------------------------------------------
+m = int(SR * 1.6)
+u = np.arange(m) / SR
+thud = np.sin(2 * np.pi * (38 * u + 30 * (1 - np.exp(-u * 9)) / 9)) * np.exp(-u * 4.2)
+grind = band(rng.standard_normal(m), 60, 420) * np.exp(-((u - 0.28) / 0.3) ** 2)
+clunk = band(rng.standard_normal(m), 700, 3200) * np.exp(-u * 38)
+restrike = np.zeros(m)
+for at in (0.62, 0.74, 0.8, 0.97):
+    a, k = int(at * SR), int(SR * 0.03)
+    restrike[a:a + k] += rng.standard_normal(k) * np.exp(-np.arange(k) / (SR * 0.004))
+restrike = band(restrike, 1800, 9000)
+buzz = sum(np.sin(2 * np.pi * 120 * h * u) / h for h in range(1, 12)) * np.clip((u - 0.8) * 3, 0, 1) * np.exp(-(u - 0.8).clip(0) * 3)
+shift = thud * 1.0 + norm(grind, 1) * 0.55 + norm(clunk, 1) * 0.4 + norm(restrike, 1) * 0.22 + norm(buzz, 1) * 0.12
+shift[-int(SR * 0.2):] *= np.linspace(1, 0, int(SR * 0.2))
+encode(norm(shift, 0.9), "public/assets/room-shift.ogg")
