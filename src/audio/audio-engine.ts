@@ -189,6 +189,13 @@ export class AudioEngine {
     track.voice.fadeIn(this.musicGain(), CROSSFADE_MS, restart);
   }
 
+  /** Fades the current track out and leaves silence until the next `playMusic`. */
+  stopMusic() {
+    clearTimeout(this.duckTimer);
+    this.currentTrack()?.voice.fadeOut(CROSSFADE_MS);
+    this.musicUrl = undefined;
+  }
+
   /** True while `url` is the current track and is producing sound. */
   isMusicAudible(url: string) {
     return !this.isMuted && url === this.musicUrl && !!this.currentTrack()?.voice.audible;

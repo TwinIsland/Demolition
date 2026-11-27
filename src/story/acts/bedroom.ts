@@ -11,6 +11,7 @@ import type { RoomScene } from "../script";
  * c crisps, a alarm clock.
  */
 export const BEDROOM: RoomScene = {
+  kind: "room",
   id: "bedroom",
   background: STORY_ART.bedroom,
   cell: 8,

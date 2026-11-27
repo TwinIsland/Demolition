@@ -450,6 +450,8 @@ export class GameApp {
           {
             typeTick: () => this.sound.typeTick(),
             menu: (name) => this.sound.menu(name),
+            cue: (name) => this.sound.storyCue(name),
+            silence: () => this.sound.stopMusic(),
             finish: () => this.closeStory(),
           },
           act ?? nextAct(loadStory())?.id,

@@ -1,6 +1,6 @@
 import kaplay from "kaplay";
-import { STORY_ART } from "./assets";
 import { VIEW, type Hotspot, type RoomScene } from "./script";
+import { facingOf, HEADING, loadZeroSprite, type Facing } from "./zero-sprite";
 
 /** Pixels per second. */
 const WALK_SPEED = 58;
@@ -8,17 +8,6 @@ const WALK_SPEED = 58;
 const FEET = { halfWidth: 4, height: 4 };
 /** How far in front of the feet the player can examine. */
 const REACH = 7;
-/** Rows of the walk sheet, top to bottom; each holds four 16 x 32 frames. */
-const FACINGS = ["down", "up", "left", "right"] as const;
-type Facing = (typeof FACINGS)[number];
-const FRAMES = 4;
-const HEADING: Record<Facing, readonly [number, number]> = {
-  down: [0, 1],
-  up: [0, -1],
-  left: [-1, 0],
-  right: [1, 0],
-};
-
 export interface Room {
   /** Walking direction; (0, 0) stands still. Ignored while `frozen`. */
   move(x: number, y: number): void;
@@ -67,16 +56,7 @@ export function openRoom(
 
   k.loadSprite("room", scene.background);
   k.add([k.sprite("room"), k.pos(0, 0)]);
-  k.loadSprite("zero", STORY_ART.zeroWalk, {
-    sliceX: FRAMES,
-    sliceY: FACINGS.length,
-    anims: Object.fromEntries(
-      FACINGS.flatMap((facing, row) => [
-        [`idle-${facing}`, row * FRAMES],
-        [`walk-${facing}`, { from: row * FRAMES, to: row * FRAMES + FRAMES - 1, loop: true, speed: 8 }],
-      ]),
-    ),
-  });
+  loadZeroSprite(k);
   const spawnRow = rows.findIndex((row) => row.includes("@"));
   const zero = k.add([
     k.sprite("zero", { anim: "idle-down" }),
@@ -106,7 +86,7 @@ export function openRoom(
       // Axes move separately, so the player slides along furniture instead of sticking to it.
       if (mx && fits(zero.pos.x + mx * step, zero.pos.y)) zero.pos.x += mx * step;
       if (my && fits(zero.pos.x, zero.pos.y + my * step)) zero.pos.y += my * step;
-      heading = Math.abs(mx) > Math.abs(my) ? (mx < 0 ? "left" : "right") : my < 0 ? "up" : "down";
+      heading = facingOf(mx, my, heading);
     }
     const anim = `${length ? "walk" : "idle"}-${heading}`;
     if (zero.curAnim() !== anim || walking !== !!length) zero.play(anim);

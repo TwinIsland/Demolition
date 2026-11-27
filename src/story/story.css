@@ -97,6 +97,8 @@
   all: unset;
   color: #e8b45a;
 }
+.story-cutscene ~ .story-keys,
+.story-art:not([hidden]) ~ .story-keys,
 .story-dialogue:not([hidden]) ~ .story-keys,
 .story-card:not([hidden]) ~ .story-keys {
   visibility: hidden;
@@ -214,4 +216,57 @@
 .story-card small {
   font-size: calc(var(--px) * 8);
   color: #8f8aa8;
+}
+
+/* Act 2: the mini-game plays inside the old monitor's screen. */
+.story-crt {
+  position: absolute;
+  inset: 0;
+  display: none;
+  background: url("./assets/crt.png") center / 100% 100%;
+  image-rendering: pixelated;
+  pointer-events: none;
+  transition: filter 0.25s steps(3);
+}
+.story-stage[data-kind="arcade"] {
+  background: #000;
+}
+.story-stage[data-kind="arcade"] .story-crt {
+  display: block;
+}
+.story-stage[data-kind="arcade"] .story-canvas {
+  inset: 12.92% auto auto 21.36%;
+  width: 57.27% !important;
+  height: 71.89% !important;
+}
+.story-stage[data-kind="room"] .story-keys[data-for="arcade"],
+.story-stage[data-kind="arcade"] .story-keys[data-for="room"] {
+  display: none;
+}
+/* The power is out: the room goes, the screen stays. */
+.story-stage.blackout .story-crt {
+  filter: brightness(0.07) saturate(0.4);
+}
+.story-stage.blackout .story-canvas {
+  box-shadow: 0 0 calc(var(--px) * 22) calc(var(--px) * 4) #46d8ff66;
+}
+.story-stage.pulling .story-canvas {
+  animation: story-pull 0.9s steps(6) infinite alternate;
+}
+@keyframes story-pull {
+  from {
+    filter: brightness(1.1);
+    scale: 1;
+  }
+  to {
+    filter: brightness(1.9) saturate(1.5) hue-rotate(-12deg);
+    scale: 1.035;
+  }
+}
+.story-cutscene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
 }

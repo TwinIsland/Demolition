@@ -36,6 +36,7 @@ export interface Hotspot {
  * floor, "@" the spawn, anything else is solid; a hotspot claims the cells of its symbol.
  */
 export interface RoomScene {
+  kind: "room";
   id: string;
   /** Painting of the whole room. The grid is centred on it. */
   background: string;
@@ -59,6 +60,49 @@ export interface RoomScene {
   endCard: { title: string; note: string };
 }
 
+/** Moments of the arcade act that carry lines, in the order they happen. */
+export type ArcadeBeat =
+  /** Before the first move. */
+  | "start"
+  /** Spoken while the first bubble's fuse burns; it is cut short by the blast. */
+  | "chant"
+  /** After that first, self-inflicted defeat. */
+  | "chantFailed"
+  | "warmup"
+  /** On picking up the speed shoe. */
+  | "shoe"
+  /** The opponent enters. */
+  | "duel"
+  /** The opponent is beaten: the voice at the door, down to the power cut. */
+  | "curfew"
+  /** In the dark. */
+  | "blackout"
+  /** The screen starts to pull. */
+  | "pulled"
+  /** After the fall into the screen. */
+  | "gone";
+
+/**
+ * A round of the bubble game played on the old computer: "#" pillar, "c" crate, "." floor, "@" the
+ * player's corner and "E" the opponent's. The choreography lives in arcade-play.ts; the scene
+ * supplies the board and every line.
+ */
+export interface ArcadeScene {
+  kind: "arcade";
+  id: string;
+  layout: readonly string[];
+  /** Crates to break before the opponent appears. */
+  crateGoal: number;
+  goals: { first: string; crates: string; duel: string };
+  lines: Record<ArcadeBeat, readonly Line[]>;
+  /** Illustration shown once the player has been pulled in. */
+  goneArt: string;
+  checkpoint: string;
+  endCard: { title: string; note: string };
+}
+
+export type Scene = RoomScene | ArcadeScene;
+
 export const SPEAKER_NAMES: Record<Speaker, string> = {
   zero: "零",
   door: "门外",
@@ -67,6 +111,9 @@ export const SPEAKER_NAMES: Record<Speaker, string> = {
   aqua: "阿库娅",
   cirno: "琪露诺",
 };
+
+/** Size of the mini-game's canvas: the proportions of the old monitor's screen. */
+export const ARCADE_VIEW = { width: 256, height: 180 } as const;
 
 /** Size of the 8-bit canvas. */
 export const VIEW = { width: 320, height: 180 } as const;

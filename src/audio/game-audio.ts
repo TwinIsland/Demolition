@@ -25,8 +25,17 @@ import {
 import { distanceTo, falloff, panTo } from "./spatial";
 import { faderGain, loadVolumes, saveVolumes, type VolumeChannel, type Volumes } from "./volume-settings";
 import type { Listener } from "./spatial";
+import type { StoryCue } from "../story/stage";
 
 const MENU_CUES = { click: "ui-click", accept: "ui-accept", back: "ui-back" } as const;
+const STORY_CUES: Record<StoryCue, string> = {
+  place: "bomb-place",
+  blast: "blast",
+  pickup: "pickup-confirm",
+  down: "body-fall",
+  power: "room-shift",
+  pull: "missile-incoming",
+};
 const STRIDE_LENGTH = 0.85;
 const BLAST_RING_COOLDOWN = 1.45;
 /** Footstep cue family for each kind of ground; paving and slabs share the hard step. */
@@ -169,6 +178,16 @@ export class GameAudio {
       stream: !menu && path !== CREDITS_MUSIC,
       restart: !menu,
     });
+  }
+
+  /** Fades the music out; the next `setMusic` brings a track back. */
+  stopMusic() {
+    this.engine.stopMusic();
+  }
+
+  /** Effects of the story's 8-bit scenes. */
+  storyCue(name: StoryCue) {
+    this.play(STORY_CUES[name], { priority: name === "power" || name === "pull" });
   }
 
   /** Reuses the mixer tap for the live spectrum on the closing credits card. */

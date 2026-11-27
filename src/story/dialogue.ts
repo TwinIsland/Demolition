@@ -34,6 +34,7 @@ export class DialogueBox {
   private selected = 0;
   private proceed?: (pick: number) => void;
   private playing = false;
+  private cancelled = false;
   private readonly moods = new Map<Speaker, Mood>();
 
   constructor(
@@ -61,7 +62,9 @@ export class DialogueBox {
     const picks: Record<string, number> = {};
     this.playing = true;
     this.box.hidden = false;
+    this.cancelled = false;
     for (const line of lines) {
+      if (this.cancelled) break;
       if ("choice" in line) {
         const pick = await this.ask(line.choice);
         if (line.flag) picks[line.flag] = pick;
@@ -91,6 +94,14 @@ export class DialogueBox {
     if (index < 0 || index >= this.options.length) return;
     this.sounds.accept();
     this.advance(index);
+  }
+
+  /** Cuts the conversation in progress short, as an event that does not wait for the reader. */
+  interrupt() {
+    if (!this.playing) return;
+    this.cancelled = true;
+    clearInterval(this.timer);
+    this.advance(0);
   }
 
   dispose() {
