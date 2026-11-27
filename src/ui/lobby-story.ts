@@ -20,6 +20,7 @@ const ACT_NOTES: Record<string, string> = {
  */
 const ACT_COVERS: Partial<Record<string, string>> = {
   act1: STORY_ART.comic1,
+  act2: STORY_ART.comic2,
 };
 const coverOf = (act: Act) => {
   for (let index = ACTS.indexOf(act); index >= 0; index--) {
