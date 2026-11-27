@@ -67,6 +67,21 @@ export class ZombieDirector {
   terrainChanged(time: number) {
     this.nextScan = time;
   }
+  /**
+   * Carries zombies inward with the closing boundary instead of removing them. `inset` is the
+   * wall's inner face; `ring` is the ring being closed, which no zombie may keep heading into.
+   */
+  carry(s: GameSnapshot, ring: number, inset: number) {
+    const body = (v: number) => Math.max(inset + 0.3, Math.min(s.size - 1 - inset - 0.3, v)),
+      cell = (v: number) => Math.max(ring + 1, Math.min(s.size - 2 - ring, v));
+    for (const enemy of s.zombies) {
+      enemy.x = body(enemy.x);
+      enemy.z = body(enemy.z);
+      enemy.destination = { x: cell(enemy.destination.x), z: cell(enemy.destination.z) };
+      const brain = this.tracking.get(enemy.id);
+      if (brain) brain.previous = { x: cell(brain.previous.x), z: cell(brain.previous.z) };
+    }
+  }
 
   private spawn(s: GameSnapshot, random: () => number, nextId: () => number) {
     const cadence = ZOMBIE_RATES[this.rate];

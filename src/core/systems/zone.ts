@@ -13,8 +13,9 @@ const BURN_EVENT_INTERVAL = 0.6;
 
 /**
  * Advances the closing safe zone. The boundary wall moves inward one ring at a time: a ring that
- * closes becomes solid wall. Its route and inner escape lane are cleared before the advance;
- * operators touching its moving face are carried inward unharmed. Once the zone is at its
+ * closes becomes solid wall. Obstacles on its route and inner escape lane are cleared before the
+ * advance; operators and zombies touching its moving face are carried inward unharmed, and loot
+ * is lost only where the wall itself will stand. Once the zone is at its
  * smallest and the hold has passed, the remaining square burns and nobody can gain health back.
  */
 export function stepZone(ctx: SimContext, dt: number) {
@@ -32,6 +33,7 @@ export function stepZone(ctx: SimContext, dt: number) {
     // Keep the lane clear even if a thrown/sliding charge arrived after the initial demolition.
     clearRoute(ctx, zone.clearingRing, cleared !== zone.clearingRing);
     if (zoneAdvance(s.time, zone) > 0) pushPlayers(s, zoneWallInset(s.time, zone));
+    ctx.undead.carry(s, zone.clearingRing, zoneWallInset(s.time, zone));
   }
 
   if (zone.final) {
@@ -49,7 +51,11 @@ export function stepZone(ctx: SimContext, dt: number) {
   }
 }
 
-/** Demolishes the swept ring and its inner escape lane before the boundary moves. No loot or score. */
+/**
+ * Demolishes what would block the swept ring and its inner escape lane before the boundary moves.
+ * No loot or score. Zombies and items block nothing: zombies are carried inward by the wall, and
+ * only items on the ring that turns into wall are lost.
+ */
 function clearRoute(ctx: SimContext, ring: number, notify = false) {
   const s = ctx.state,
     size = s.size;
@@ -72,8 +78,7 @@ function clearRoute(ctx: SimContext, ring: number, notify = false) {
   const swept = (p: Vec2) => ringOf(size, p) <= ring + 1;
   s.bombs = s.bombs.filter((bomb) => !swept(bomb));
   s.thrown = s.thrown.filter((item) => !swept(item));
-  s.items = s.items.filter((item) => !swept(item));
-  s.zombies = s.zombies.filter((zombie) => !swept(zombie) && !swept(zombie.destination));
+  s.items = s.items.filter((item) => ringOf(size, item) > ring);
   if (changed) {
     s.coverRevision = (s.coverRevision ?? 0) + 1;
     ctx.undead.terrainChanged(s.time);
@@ -88,6 +93,7 @@ function closeRing(ctx: SimContext, ring: number) {
     for (let x = 0; x < size; x++) if (ringOf(size, { x, z }) === ring) s.tiles[z][x] = 1;
   reconnect(s, ring);
   pushPlayers(s, ring + 0.5);
+  ctx.undead.carry(s, ring, ring + 0.5);
   s.coverRevision = (s.coverRevision ?? 0) + 1;
   ctx.undead.terrainChanged(s.time);
 }
