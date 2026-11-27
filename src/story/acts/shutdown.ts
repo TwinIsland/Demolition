@@ -1,4 +1,4 @@
-import { SPOTS } from "../../modules/maps/flatland/layout.js";
+import { SPOTS } from "../../modules/maps/flatland-story/layout.js";
 import type { Hotspot, Line, StagedScene } from "../script";
 import { SHUTDOWN_ART } from "../shutdown/art";
 import { playShutdown } from "../shutdown/play";
@@ -27,27 +27,31 @@ export const SHUTDOWN_SCRIPT = {
   /** Checkpoints: before the fight (failing returns here), and the story's end. */
   checkpoints: { fight: "act5-fight", done: "act5-done" },
   /** Seconds for the bar to fill. */
-  zoneDuration: 150,
+  zoneDuration: 130,
+  /**
+   * Cells of the small Flatland (modules/maps/flatland-story/layout.js). The hero stands on the
+   * street south of the fountain plaza and looks north across it, to the gate.
+   */
   spots: {
-    hero: SPOTS.plaza.reveal,
-    lulu: { x: SPOTS.plaza.reveal.x - 1, z: SPOTS.plaza.reveal.z },
-    /** Where the three land, in front of the hero. */
+    hero: { x: SPOTS.plaza.centre.x, z: SPOTS.plaza.centre.z + 3 },
+    lulu: { x: SPOTS.plaza.centre.x - 1, z: SPOTS.plaza.centre.z + 3 },
+    /** Where the three land: the near edge of the plaza, two cells in front of the hero. */
     landing: [
-      { x: 8, z: 9 },
-      { x: 10, z: 9 },
-      { x: 12, z: 9 },
+      { x: 6, z: 8 },
+      { x: 7, z: 8 },
+      { x: 8, z: 8 },
     ],
-    /** The "stay" ending: where the next player comes down, and the two who wait in front of the gate. */
-    newcomer: { x: 10, z: 8 },
+    /** The "stay" ending: where the next player comes down, and the two who wait under the gate. */
+    newcomer: { x: 7, z: 6 },
     guides: [
-      { x: 9.55, z: 6.2 },
-      { x: 10.5, z: 6.35 },
+      { x: 6.75, z: 4.6 },
+      { x: 7.45, z: 4.7 },
     ],
-    /** Where they start the fight: three corners, the hero keeps the middle. */
+    /** Where they start the fight: three of the map's corner spawns, which a match keeps clear. */
     corners: [
-      { x: 18, z: 1 },
-      { x: 1, z: 18 },
-      { x: 18, z: 18 },
+      { x: 13, z: 1 },
+      { x: 1, z: 13 },
+      { x: 13, z: 13 },
     ],
   },
   kings: [
