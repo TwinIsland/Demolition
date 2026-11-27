@@ -71,10 +71,10 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
         license: CC_BY,
       },
       {
-        title: "Comfortable Mystery",
+        title: "Lost in Liminal Dream",
         map: "backrooms",
-        author: "Kevin MacLeod · incompetech.com",
-        license: CC_BY,
+        author: "Lux-aeterna · Pixabay",
+        license: "Pixabay Content License",
       },
       {
         title: "Dark Place (loop)",

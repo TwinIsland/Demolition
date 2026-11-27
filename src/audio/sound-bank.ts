@@ -124,7 +124,7 @@ export const POOL_LOOP: CueSpec = { url: "./assets/environment/poolrooms.ogg", .
 /** Fluorescent tubes and far-off air handling on an office floor. */
 export const OFFICE_LOOP: CueSpec = {
   url: "./assets/environment/backrooms.ogg",
-  ...sfx(0.42, { voices: 1 }),
+  ...sfx(0.62, { voices: 1 }),
 };
 const thunder = (name: string): CueSpec => ({
   url: `./assets/environment/${name}.ogg`,
