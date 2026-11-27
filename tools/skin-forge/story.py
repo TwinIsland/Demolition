@@ -2,7 +2,7 @@
 
 Run from the project root:  python3 tools/skin-forge/story.py
 Writes src/story/assets/skins/<id>.png. These are story-only textures, loaded by path: they are
-not skin packs, so none of them shows up in the lobby picker.
+not skin packs, so none of them shows up in the lobby picker. `lulu` and `zhang-san` are 128x128.
 """
 import os
 
@@ -163,6 +163,25 @@ def lulu():
         s.fill(leg, red, sides=SIDES, rows=(8, 12))
         s.ring(leg, 11, red_dark)
         s.fill(leg, red_dark, sides=("bottom",))
+
+    # Doubled to 128 so the face can carry proper anime eyes, plus strand shading in the hair.
+    image = s.image.resize((128, 128), Image.NEAREST)
+    colors = {"H": hair, "D": hair_dark, ".": tone, "K": ink, "W": white, "G": eye, "g": eye_dark, "P": blush, "M": (200, 92, 96)}
+    rows = [
+        "HHHHHHHHHHHHHHHH", "HHHHHHHHHHHHHHHH", "HHHDHHHHHHHHDHHH", "HHHDHHHDHHHHDHHH",
+        "HHHHHHHDHHHHHHHH", "HH.HH.HHHH.HH.HH", "H..KKKK..KKKK..H", "H.KWGGK..KGGWK.H",
+        "H..WGgK..KgGW..H", "H..GggK..KggG..H", "H...KK....KK...H", ".PP..........PP.",
+        ".......MM.......", "................", "................", "................",
+    ]
+    for y, row in enumerate(rows):
+        for x, mark in enumerate(row):
+            image.putpixel((16 + x, 16 + y), colors[mark] + (255,))
+    for u, v, w, h in ((48, 16, 16, 14), (16, 0, 16, 16)):  # back of the head, crown
+        for x in range(2, w, 4):
+            for y in range(h):
+                if image.getpixel((u + x, v + y))[:3] == hair:
+                    image.putpixel((u + x, v + y), hair_dark + (255,))
+    s.image = image
     return s
 
 
