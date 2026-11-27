@@ -667,7 +667,7 @@ export class GameApp {
       story: setup,
     });
     await this.renderer.prepare(this.session.getSnapshot(), true, () => {});
-    const { session, renderer, keyboard, ui } = this;
+    const { session, renderer, keyboard } = this;
     let hud = false;
     const match: StoryMatch = {
       get state() {
@@ -690,7 +690,6 @@ export class GameApp {
       },
       set hud(value) {
         hud = value;
-        ui.setInGame(value);
       },
     };
     this.displayedLevel = Infinity;
@@ -703,7 +702,6 @@ export class GameApp {
     if (!this.storyMatch) return;
     this.storyMatch = undefined;
     this.releaseControls();
-    this.ui.setInGame(false);
     this.sound.reset();
     if (restore) this.session.restart(this.setup.lobbyOptions());
   }

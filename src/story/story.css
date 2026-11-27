@@ -32,14 +32,14 @@
   image-rendering: pixelated;
   outline: none;
 }
-.story-art {
+.stage-art {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
-.story-art.leaving {
+.stage-art.leaving {
   animation: story-art-out 0.7s steps(6) forwards;
 }
 @keyframes story-art-out {
@@ -98,7 +98,7 @@
   color: #e8b45a;
 }
 .story-cutscene ~ .story-keys,
-.story-art:not([hidden]) ~ .story-keys,
+.stage-art:not([hidden]) ~ .story-keys,
 .story-dialogue:not([hidden]) ~ .story-keys,
 .story-card:not([hidden]) ~ .story-keys {
   visibility: hidden;
@@ -124,7 +124,7 @@
 .story-prompt[hidden],
 .story-choices[hidden],
 .story-portrait[hidden],
-.story-art[hidden] {
+.stage-art[hidden] {
   display: none;
 }
 .story-portrait {
@@ -372,4 +372,12 @@
 }
 .story-stage.veiled::before {
   opacity: 1;
+}
+/* The menu sits between the match and the stage, and the overlay frosts what is under it. */
+body:has(.story-stage[data-kind="staged"]) :is(#lobby, .topbar, .top-actions) {
+  display: none;
+}
+#app #overlay:has(.story-stage[data-kind="staged"]) {
+  background: none;
+  backdrop-filter: none;
 }

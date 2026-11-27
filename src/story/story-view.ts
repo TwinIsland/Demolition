@@ -20,7 +20,7 @@ export const storyMarkup = () => `
   <div class="story-stage">
     <canvas class="story-canvas"></canvas>
     <div class="story-crt" aria-hidden="true"></div>
-    <img class="story-art" alt="" hidden />
+    <img class="stage-art" alt="" hidden />
     <div class="story-goal" hidden></div>
     <div class="story-prompt" hidden><kbd>E</kbd><span></span></div>
     ${dialogueMarkup}
@@ -67,7 +67,7 @@ export function mountStory(
     card = find(".story-card"),
     saved = find(".story-save"),
     title = find(".story-title"),
-    art = find<HTMLImageElement>(".story-art");
+    art = find<HTMLImageElement>(".stage-art");
   const dialogue = new DialogueBox(
     root,
     { zero: ZERO_PORTRAITS, lulu: LULU_PORTRAITS, zhangsan: ZHANGSAN_PORTRAITS },

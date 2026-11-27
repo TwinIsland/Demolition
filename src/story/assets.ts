@@ -5,6 +5,11 @@ export const STORY_ART = {
   bedroom: url("bedroom.png"),
   comic1: url("comic-1.webp"),
   comic2: url("comic-2.webp"),
+  /** Act 3: waking up in Flatland, and the moment before the button is pressed. */
+  comic3: url("comic-3.webp"),
+  comic4: url("comic-4.webp"),
+  /** The Ascension Striker, as an item. */
+  relic: url("relic.png"),
   /** The old monitor, with a hole where its screen is: laid over the act 2 mini-game. */
   crt: url("crt.png"),
   zeroWalk: url("zero-walk.png"),
@@ -27,16 +32,23 @@ export const LULU_PORTRAITS = {
   flustered: url("lulu-flustered.png"),
   impressed: url("lulu-impressed.png"),
 } as const;
-/** The sample opponent has one face, and it is not filled in either. */
-export const ZHANGSAN_PORTRAITS = { blank: url("zhangsan-blank.png") } as const;
+/** The sample opponent: a template nobody filled in. */
+export const ZHANGSAN_PORTRAITS = {
+  blank: url("zhangsan-blank.png"),
+  smile: url("zhangsan-smile.png"),
+  ko: url("zhangsan-ko.png"),
+  puzzled: url("zhangsan-puzzled.png"),
+} as const;
 export type Mood =
   keyof typeof ZERO_PORTRAITS | keyof typeof LULU_PORTRAITS | keyof typeof ZHANGSAN_PORTRAITS;
 
 /** Skins of the story's cast, by the id the game's renderer knows them under. */
+// The bundler resolves these patterns one folder deep, so the skins folder needs a pattern of its own.
+const skin = (file: string) => new URL(`./assets/skins/${file}`, import.meta.url).href;
 export const STORY_SKINS = {
-  "story-zero": url("skins/zero.png"),
-  "story-lulu": url("skins/lulu.png"),
-  "story-zhangsan": url("skins/zhang-san.png"),
+  "story-zero": skin("zero.png"),
+  "story-lulu": skin("lulu.png"),
+  "story-zhangsan": skin("zhang-san.png"),
 } as const;
 
 export const storyImages = (): string[] => [
