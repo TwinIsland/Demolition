@@ -43,10 +43,22 @@ export class SustainedVoice {
     this.target = volume;
     if (this.active && this.id !== undefined) return fadeTo(this.howl, this.id, volume, ms);
     if (restart && this.id !== undefined) this.howl.seek(0, this.id);
-    this.id = this.howl.play(this.id);
+    const id = (this.id = this.howl.play(this.id));
     this.active = true;
-    if (ms > 0) this.howl.fade(0, volume, ms, this.id);
-    else this.howl.volume(volume, this.id);
+    const rise = () => {
+      if (!this.active || this.id !== id) return;
+      if (ms > 0) this.howl.fade(0, this.target, ms, id);
+      else this.howl.volume(this.target, id);
+    };
+    // A streamed (HTML5) sound is locked until the browser has started it. Howler queues a fade
+    // asked for meanwhile and then never runs it, leaving the track silent, so wait for the start.
+    if (this.streamed) this.howl.once("play", rise, id);
+    else rise();
+  }
+
+  /** Whether the sound plays through an audio element instead of a decoded buffer. */
+  private get streamed() {
+    return (this.howl as unknown as { _html5?: boolean })._html5 === true;
   }
 
   /** Retargets the level of a voice that is already playing. */
