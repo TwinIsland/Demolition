@@ -141,3 +141,10 @@ textarea,
     transition: none !important;
   }
 }
+
+/* Painted equipment icons: raster art cannot take `currentColor`, so states are done with filters. */
+.icon-art {
+  object-fit: contain;
+  user-select: none;
+  filter: drop-shadow(0 1px 2px #000a);
+}

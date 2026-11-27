@@ -179,6 +179,10 @@
   height: 18px;
   color: var(--entry-color);
 }
+.guide-section li .icon-art {
+  width: 34px;
+  height: 34px;
+}
 .guide-section li b {
   font-size: var(--text-xl);
 }

@@ -177,6 +177,11 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
         use: ["标志、主视觉、地图插图、界面材质", "Art directed by TwinIsland"],
         author: "OpenAI ImageGen",
       },
+      {
+        title: "Equipment, skill, perk and mutation icons",
+        use: ["装备、技能、增益与基因图标", "Art directed by TwinIsland"],
+        author: "Google Gemini",
+      },
     ],
   },
 ];

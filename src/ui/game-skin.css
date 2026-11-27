@@ -1234,6 +1234,13 @@
   width: calc(var(--wheel) * 0.12);
   height: calc(var(--wheel) * 0.12);
 }
+#app #hud .supply-slot .icon-art {
+  width: calc(var(--wheel) * 0.16);
+  height: calc(var(--wheel) * 0.16);
+}
+#app #hud .supply-sector[data-refusal]:not([data-refusal=""]) .icon-art {
+  filter: grayscale(1) brightness(0.6);
+}
 #app #hud .supply-slot b {
   font-size: clamp(13px, 1.5vw, 18px);
   font-weight: 800;

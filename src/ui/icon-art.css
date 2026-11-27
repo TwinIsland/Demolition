@@ -1,0 +1,41 @@
+/*
+ * Sizes for painted icons (img.icon-art). Line glyphs sit small inside a bordered box and take
+ * the box colour; painted art carries its own colour, so it fills the box instead.
+ */
+#app .skill-visual > .icon-art {
+  width: 100%;
+  height: 100%;
+  padding: 3px;
+}
+#app .shop-card .icon-art {
+  width: 44px;
+  height: 44px;
+}
+#app .perk-icon > .icon-art,
+#app #perk-tray .perk-icon > .icon-art,
+#app #perk-tray.expanded .perk-icon > .icon-art,
+#app .buff-icon > .icon-art,
+#app #hud .radar .buff-icon > .icon-art {
+  width: 100%;
+  height: 100%;
+  padding: 1px;
+}
+#app .active-perk > .icon-art {
+  width: 30px;
+  height: 30px;
+}
+#app .active-perk:disabled > .icon-art,
+#app .shop-card:disabled .icon-art {
+  filter: grayscale(1) brightness(0.65);
+}
+#app .gene-emblem:has(> .icon-art) {
+  border-color: transparent;
+}
+#app .gene-emblem > .icon-art {
+  width: 46px;
+  height: 46px;
+}
+#app .strike-title .icon-art {
+  width: 28px;
+  height: 28px;
+}

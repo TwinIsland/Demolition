@@ -1,7 +1,7 @@
 import { MUTATIONS } from "../core/mutations";
 import type { MutationId } from "../core/types";
 import { field, t } from "../i18n";
-import { icon } from "./icons";
+import { artIcon, icon } from "./icons";
 import "./mutation-notice.css";
 
 export class MutationNotice {
@@ -31,7 +31,7 @@ export class MutationNotice {
   refresh() {
     if (!this.active) return;
     const m = MUTATIONS[this.active];
-    this.panel.innerHTML = `<div class="gene-scan"></div><div class="gene-emblem">${icon(m.icon)}</div>
+    this.panel.innerHTML = `<div class="gene-scan"></div><div class="gene-emblem">${artIcon("mutations", m.id, m.icon)}</div>
       <div class="gene-result"><small>${icon("dna")}${t("基因改造")}</small><strong>${field(m, "name")}</strong>
       <span>${field(m, "description")}</span></div>`;
   }

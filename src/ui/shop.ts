@@ -2,7 +2,7 @@ import { SHOP_SKILLS, SKILLS, SLOT_LIMIT } from "../core/content";
 import type { Player, SkillId } from "../core/types";
 import { field, t } from "../i18n";
 import { query } from "./dom";
-import { icon } from "./icons";
+import { artIcon } from "./icons";
 import { skillKeyHint } from "./skill-bar";
 
 const owns = (player: Player, id: SkillId) => player.skills.includes(id);
@@ -16,7 +16,7 @@ export function shopMarkup(player: Player) {
   const cards = SHOP_SKILLS.map((id) => {
     const skill = SKILLS[id];
     return `<button class="shop-card ${owns(player, id) ? "purchased" : ""}" data-trade="${id}" data-refund="${owns(player, id)}" ${unaffordable(player, id) ? "disabled" : ""}>
-        ${icon(skill.icon)}<strong>${field(skill, "name")}</strong>${skillKeyHint(id)}
+        ${artIcon("skills", id, skill.icon)}<strong>${field(skill, "name")}</strong>${skillKeyHint(id)}
         <small>${field(skill, "description")}</small><b>${tradeLabel(player, id)}</b></button>`;
   }).join("");
   // The full-width space keeps the two counters apart without extra markup.

@@ -5,7 +5,7 @@ import type { ItemId } from "../core/types";
 import { field, t } from "../i18n";
 import { bindings } from "../input/bindings";
 import { HtmlSlot, replayAnimation, setText } from "./dom";
-import { icon } from "./icons";
+import { equipmentIcon, icon } from "./icons";
 import type { HudFrame, HudView } from "./view";
 
 export type ShopCue = "open" | "close" | "buy" | "deny";
@@ -76,7 +76,7 @@ export class SupplyShopView implements HudView {
     const slice = (2 * Math.PI) / SLOTS.length;
     root.innerHTML = `<div class="supply-ring" role="list">${SLOTS.map((id, i) => {
       const [x, y] = polar(i * slice, 38.5);
-      return `<div class="supply-sector" role="listitem" data-supply="${id}" style="clip-path:${sector((i - 0.5) * slice + 0.014, (i + 0.5) * slice - 0.014)}"><span class="supply-slot" style="left:${x}%;top:${y}%">${icon(id === CANCEL ? "close" : ITEMS[id].icon)}<b></b><small></small></span></div>`;
+      return `<div class="supply-sector" role="listitem" data-supply="${id}" style="clip-path:${sector((i - 0.5) * slice + 0.014, (i + 0.5) * slice - 0.014)}"><span class="supply-slot" style="left:${x}%;top:${y}%">${id === CANCEL ? icon("close") : equipmentIcon(id, ITEMS[id].icon)}<b></b><small></small></span></div>`;
     }).join(
       "",
     )}<div class="supply-hub"></div><i class="supply-pointer" aria-hidden="true"></i></div><div class="supply-caption"><span class="supply-balance">${icon("coin")}<b></b></span><span class="supply-hint"></span></div>`;

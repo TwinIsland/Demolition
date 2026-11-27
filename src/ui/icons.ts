@@ -50,7 +50,46 @@ const ICON_PATHS: Record<string, string> = {
   missile:
     '<path d="M14 3c4 0 7 3 7 7l-9 9-7-7z"/><path d="m8 9-5 1 3 3m9 3-1 5-3-3M3 21l4-4m-2 0-2-2m6 4-2-2"/><circle cx="15.5" cy="8.5" r="1.5"/>',
 };
-export const icon = (name: string, cls = "") =>
-  /^(?:\/|https?:\/\/|data:image\/)/i.test(name)
-    ? `<img class="icon ${cls}" src="${name.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;")}" alt=""/>`
-    : `<svg class="icon ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name] ?? ICON_PATHS.bomb}</svg>`;
+const escapeUrl = (url: string) =>
+  url.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;");
+
+export type ArtGroup = "equipment" | "skills" | "perks" | "mutations";
+
+/**
+ * Painted icons: `icon-art/<group>/<id>.webp` (or .png). Found at build time, so dropping a file
+ * in is all it takes; anything without one keeps its line glyph. `glyphs/<name>` replaces a line
+ * glyph of that name wherever it is drawn (used for the coin).
+ */
+const ART = Object.fromEntries(
+  Object.entries(
+    import.meta.glob<string>("./icon-art/*/*.{webp,png}", {
+      eager: true,
+      query: "?url",
+      import: "default",
+    }),
+  ).map(([path, url]) => [
+    path
+      .split("/")
+      .slice(-2)
+      .join("/")
+      .replace(/\.\w+$/, ""),
+    url,
+  ]),
+);
+/** Every painted icon, for the loading screen. */
+export const iconArt = () => Object.values(ART);
+
+const artImage = (url: string, cls: string) =>
+  `<img class="icon icon-art ${cls}" src="${escapeUrl(url)}" alt="" draggable="false"/>`;
+
+/** Icon for a content entry: its painted art when there is one, else the `glyph` line icon. */
+export const artIcon = (group: ArtGroup, id: string, glyph: string, cls = "") =>
+  ART[`${group}/${id}`] ? artImage(ART[`${group}/${id}`], cls) : icon(glyph, cls);
+export const equipmentIcon = (id: string, glyph: string, cls = "") => artIcon("equipment", id, glyph, cls);
+
+export const icon = (name: string, cls = ""): string =>
+  ART[`glyphs/${name}`]
+    ? artImage(ART[`glyphs/${name}`], cls)
+    : /^(?:\/|https?:\/\/|data:image\/)/i.test(name)
+      ? `<img class="icon ${cls}" src="${escapeUrl(name)}" alt=""/>`
+      : `<svg class="icon ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name] ?? ICON_PATHS.bomb}</svg>`;

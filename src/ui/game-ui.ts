@@ -5,6 +5,7 @@ import "./feedback-hud.css";
 import "./strike-panel.css";
 import "./credits.css";
 // The visual skin overrides every surface, so it must stay the last stylesheet.
+import "./icon-art.css";
 import "./game-skin.css";
 import { MATCH_MODES, type MatchMode } from "../core/match-modes";
 import type { Appearance, AvatarSkin, BotSlot, ZombieRate } from "../core/room";

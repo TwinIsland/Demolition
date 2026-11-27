@@ -170,3 +170,15 @@
   padding: 4px 11px;
   font-size: 15px;
 }
+
+.gear-slot .icon-art {
+  width: calc(var(--wheel-size) * 0.19);
+  height: calc(var(--wheel-size) * 0.19);
+}
+.gear-hub .icon-art {
+  width: 64%;
+  height: 64%;
+}
+.gear-sector.unavailable .icon-art {
+  filter: grayscale(1) brightness(0.6);
+}
