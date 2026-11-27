@@ -102,6 +102,9 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
       { title: "Battle Sound Effects", author: "Ogrebane · OpenGameArt", license: CC0 },
       { title: "Fire Crackling", author: "AntumDeluge · OpenGameArt", license: CC0 },
       { title: "Tinnitus", author: "Joseph Sardin · BigSoundBank", license: CC0 },
+      { title: "UI Button Press Deep", author: "Qvantor · Freesound", license: CC0 },
+      { title: "Click Button (Flashlight)", author: "sweet_niche · Freesound", license: CC0 },
+      { title: "Setting Electronic Timer 1 Beep", author: "Rudmer_Rotteveel · Freesound", license: CC0 },
       {
         title: "Water footsteps",
         map: "poolrooms",
@@ -109,7 +112,7 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
         license: "CC BY 3.0",
       },
       {
-        title: "Zombie and player voices, level-up, pickup, crate, fuse, Hijack, footstep, skill-shop and countdown sounds",
+        title: "Zombie and player voices, level-up, pickup, crate, fuse, Hijack and footstep sounds",
         author: "Mojang Studios · Minecraft: Java Edition",
         license: "© Mojang Studios",
       },
