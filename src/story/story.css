@@ -381,3 +381,14 @@ body:has(.story-stage[data-kind="staged"]) :is(#lobby, .topbar, .top-actions) {
   background: none;
   backdrop-filter: none;
 }
+
+/* Over a real match the whole screen is the board: the goal keeps to a corner, small. */
+.story-stage[data-kind="staged"] .story-goal {
+  top: auto;
+  bottom: calc(var(--px) * 4);
+  left: calc(var(--px) * 4);
+  max-width: calc(var(--px) * 96);
+  padding: calc(var(--px) * 1) calc(var(--px) * 3);
+  font-size: calc(var(--px) * 8);
+  pointer-events: none;
+}

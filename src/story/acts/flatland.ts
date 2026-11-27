@@ -171,6 +171,15 @@ async function script(d: Director) {
   };
   void lives();
 
+  // The lessons are about charges and nothing else: no crates of his own, no other equipment.
+  match.gate = (input) => ({
+    ...input,
+    build: false,
+    buildTarget: undefined,
+    useEquipment: false,
+    equip: undefined,
+    resetTerrain: false,
+  });
   stage.host.music("opening");
   await cutscene(playLanding);
   stage.art(STORY_ART.comic3);

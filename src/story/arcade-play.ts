@@ -507,8 +507,8 @@ export function playArcade(stage: Stage, scene: ArcadeScene): ScenePlayer {
       who.obj.pos.x = px(who.x);
       who.obj.pos.y = py(who.y) + FEET_Y;
       who.obj.z = 10 + who.y;
-      who.obj.opacity = who.shield && Math.floor(clock * 12) % 2 ? 0.3 : 1;
-      // A fallen player sits trapped in a bubble; the one left standing cheers.
+      // A fallen player is simply gone; the one left standing cheers.
+      who.obj.opacity = !who.alive ? 0 : who.shield && Math.floor(clock * 12) % 2 ? 0.3 : 1;
       const pose = !who.alive
         ? "ko"
         : cpu && !cpu.alive
