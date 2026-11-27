@@ -31,7 +31,7 @@ const solo = (zh: string, en: string): StaffCredit => ({ role: [zh, en], names: 
 
 export const STAFF: readonly StaffCredit[] = [
   solo("游戏设计与制作", "Game Design & Production"),
-  solo("故事模式编剧与导演", "Story Written & Directed by"),
+  solo("剧情总监", "Narrative Director"),
   { role: ["程序", "Programming"], names: [OWNER, "Claude Code", "Codex"] },
   solo("美术与音效", "Art & Audio"),
 ];
