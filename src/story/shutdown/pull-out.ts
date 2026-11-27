@@ -60,7 +60,7 @@ export function playPullOut(canvas: HTMLCanvasElement): Film {
     scene.add(patch);
 
     const ambient = new THREE.AmbientLight("#5a4a9a", 0.9);
-    const fill = new THREE.DirectionalLight("#8a6cff", 0.5);
+    const fill = new THREE.DirectionalLight("#8a6cff", 1.1);
     fill.position.set(3, 4, 4);
     const sun = new THREE.DirectionalLight(DAWN, 0);
     sun.position.set(-6, 4, -1);
@@ -156,7 +156,7 @@ export function playPullOut(canvas: HTMLCanvasElement): Film {
       sun.intensity = 2.2 * dawn;
       ambient.color.set("#5a4a9a").lerp(tint.set("#ffe2b8"), dawn);
       ambient.intensity = 0.9 + 0.3 * dawn;
-      fill.intensity = 0.5 * (1 - dawn);
+      fill.intensity = 1.1 - 0.8 * dawn;
 
       flashMaterial.opacity = 1 - ramp(0, 0.8, t);
       const dolly = ramp(0.3, 5.5, t);

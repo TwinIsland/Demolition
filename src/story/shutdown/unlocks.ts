@@ -8,8 +8,8 @@ export type Ending = "home" | "stay";
  * Zero's. Kept apart from the story save, so that a new game does not take a reward back.
  */
 export const ENDING_SKINS: Record<Ending, { skin: string; name: string }> = {
-  home: { skin: "story-lulu", name: "露露" },
-  stay: { skin: "story-zero", name: "零" },
+  home: { skin: "lulu", name: "露露" },
+  stay: { skin: "zero", name: "零" },
 };
 
 const setting = new Setting<Ending[]>({
@@ -22,8 +22,9 @@ const setting = new Setting<Ending[]>({
 /** Endings seen so far, in the order they were reached. */
 export const endingsSeen = (): Ending[] => setting.load() ?? [];
 
-/** Skins the story has handed out, by the id the renderer knows them under. */
-export const unlockedSkins = () => endingsSeen().map((ending) => ENDING_SKINS[ending]);
+/** Whether a skin pack is a reward (see `SkinPack.reward`) that has not been earned yet. */
+export const skinLocked = (pack: { reward?: string } | undefined) =>
+  !!pack?.reward && !endingsSeen().includes(pack.reward as Ending);
 
 /** Records an ending. Returns true the first time it is reached. */
 export function reachEnding(ending: Ending) {

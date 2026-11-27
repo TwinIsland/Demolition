@@ -151,7 +151,7 @@ export function playWelcome(canvas: HTMLCanvasElement): Film {
       camera.position.set(Math.sin(t * 29) * 0.03 * (1 - arrive), height - thud, 1.2);
       // Looking down the shaft at first, then up at who is standing there.
       camera.lookAt(
-        look.set(0, THREE.MathUtils.lerp(height - 30, 1.35, ramp(FALL * 0.45, FALL + 0.6, t)), -3.3),
+        look.set(0, THREE.MathUtils.lerp(height - 30, 1.35, ramp(FALL * 0.45, FALL + 0.6, t)), -2.0),
       );
       shaftMaterial.opacity = 0.2 * (1 - ramp(FALL + 0.2, FALL + 1.6, t));
       for (let i = 0; i < PIXELS; i++) {
