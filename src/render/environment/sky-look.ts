@@ -72,3 +72,15 @@ export const JUNGLE_RAIN_SKY: SkyLook = {
   // Thin, so the board stays clear from above; the mist near the ground is the weather's.
   fog: { color: "#6f8b77", density: 0.0062 },
 };
+/**
+ * A spring morning over a village: a clear sky and a sun low enough in the south-east that every
+ * roof, lantern and fence lays a long shadow, which is what tells height apart from a drawing.
+ */
+export const SPRING_MORNING: SkyLook = {
+  sky: "./assets/sky.hdr",
+  backgroundIntensity: 0.85,
+  environmentIntensity: 0.7,
+  sun: { color: "#fff0d6", intensity: 2.9, from: [34, 40, 30] },
+  fill: { sky: "#cfe2f4", ground: "#6f7a52", intensity: 0.5 },
+  fog: { color: "#c3d2dc", density: 0.0036 },
+};

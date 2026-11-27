@@ -25,6 +25,23 @@ const SCENERY = {
   "rock-b": undefined,
   "rock-c": undefined,
   "rock-d": undefined,
+  // The village: buildings come cut into one piece per tile (see `part`), the rest are single tiles.
+  "village-farmhouse": undefined,
+  "village-dojo": undefined,
+  "village-shop": undefined,
+  "village-cottage": undefined,
+  "village-shrine": undefined,
+  "village-torii": undefined,
+  "village-lantern": undefined,
+  "village-fountain": undefined,
+  "village-well": undefined,
+  "village-notice": undefined,
+  "village-grave": undefined,
+  "village-low-wall": undefined,
+  "village-wall": undefined,
+  "village-block": undefined,
+  "village-gate": undefined,
+  "village-cherry": undefined,
 } satisfies Record<string, { footprint: number; height: number } | undefined>;
 export type SceneryId = keyof typeof SCENERY;
 
@@ -50,7 +67,9 @@ export class CoverModels {
       materials.applyPalette(scene);
       const model = new THREE.Group();
       model.add(scene);
-      if (!fit && id.startsWith("scenery:")) {
+      // Village pieces are authored in place: a wall off the centre of its tile, a building around
+      // the middle of its footprint.
+      if (!fit && id.startsWith("scenery:") && !id.startsWith("scenery:village-")) {
         // Scans come half buried and off centre; stand them on the origin.
         const bounds = new THREE.Box3().setFromObject(scene);
         const center = bounds.getCenter(new THREE.Vector3());
@@ -81,6 +100,13 @@ export class CoverModels {
   /** A wall variant or a piece of scenery; an empty group stands in when its model failed to load. */
   scenery(id: SceneryId) {
     return this.templates.get(`scenery:${id}`)?.clone(true) ?? new THREE.Group();
+  }
+  /** One named piece of a model that was exported cut up, such as one tile of a building. */
+  part(id: SceneryId, name: string) {
+    const piece = this.templates.get(`scenery:${id}`)?.getObjectByName(name)?.clone(true);
+    const group = new THREE.Group();
+    if (piece) group.add(piece);
+    return group;
   }
   instance(obstacle: Obstacle) {
     return this.templates.get(obstacle.id)?.clone(true);

@@ -55,6 +55,15 @@ const PALETTES: Record<MapDefinition["theme"], MapPalette> = {
     coverEdge: "#f0d9a6",
     water: "#49b6d6",
   },
+  village: {
+    ground: "#22301c",
+    groundLift: "#3f5a31",
+    wall: "#b9b4a6",
+    wallEdge: "#f0ead9",
+    cover: "#b98a55",
+    coverEdge: "#e8c592",
+    water: "#4a9aa6",
+  },
   backrooms: {
     ground: "#28240f",
     groundLift: "#4a4220",

@@ -15,6 +15,9 @@ for (const map of MAPS) {
     throw new Error(`Invalid map dimensions or density: ${map.id}`);
 }
 
+/** The maps a room can be set up on. */
+export const ROOM_MAPS = MAPS.filter((map) => !map.hidden);
+
 export function seededRandom(seed: number) {
   let n = seed >>> 0;
   return () => {

@@ -26,6 +26,9 @@ export function coverLayout(map: MapDefinition, seed: number) {
   const pool = mapObstacles(map);
   const total = pool.reduce((sum, obstacle) => sum + obstacle.weight, 0);
   return (x: number, z: number) => {
+    const fixed = map.obstacleAt?.(x, z, map.size),
+      chosen = fixed && pool.find((obstacle) => obstacle.id === fixed.use);
+    if (chosen) return { cover: chosen, rotation: ((fixed.turn ?? 0) * Math.PI) / 2 };
     const random = seededRandom(seed ^ Math.imul(x + z * map.size, 0x9e3779b1));
     let roll = random() * total;
     const cover = pool.find((obstacle) => (roll -= obstacle.weight) < 0) ?? pool[0];
