@@ -136,6 +136,9 @@ const DUEL = { hero: { x: 13, z: 5 }, guide: { x: 11, z: 5 }, opponent: SPOTS.do
 /** Out of sight until she makes her entrance. */
 const OFFSTAGE: Vec2 = { x: 19, z: 19 };
 const RESPAWN_SECONDS = 1.2;
+/** Less than his own blast costs him, until the duel. */
+const FRAGILE_HP = 10;
+const DUEL_HP = 100;
 const open = (state: Readonly<GameSnapshot>, cell: Vec2) => state.tiles[cell.z][cell.x] === 0;
 
 async function script(d: Director) {
@@ -188,6 +191,14 @@ async function script(d: Director) {
   d.face("you", SPOTS.guide);
   if (!(await say(LINES.meet))) return;
   stage.mark("act3-arrive");
+
+  // A newcomer is fragile: one mistake with his own charge is the lesson on dying.
+  const toughness = (hp: number) =>
+    match.mutate((state) => {
+      const hero = state.players[0];
+      hero.hp = hero.maxHp = hp;
+    });
+  toughness(FRAGILE_HP);
 
   // 3.1 Walls hold, crates do not.
   if (!(await say(LINES.walls))) return;
@@ -243,6 +254,7 @@ async function script(d: Director) {
   // 3.4 The sample opponent.
   if (!(await say(LINES.duelCall))) return;
   home = DUEL.hero;
+  toughness(DUEL_HP);
   if (
     !(await d.cut(() => {
       d.put("you", DUEL.hero, Math.PI / 2);
