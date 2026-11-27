@@ -309,7 +309,12 @@ def antivirus():
 
 CAST = {"zero": zero, "lulu": lulu, "zhang-san": zhang_san, "blue-screen": blue_screen, "popup": popup, "antivirus": antivirus}
 
+# Lulu wears a skin Tianyi picked, kept as lulu.png beside the generated ones; `lulu()` above is the
+# earlier drawn version and is no longer written out.
+PICKED = ("lulu",)
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     for name, draw in CAST.items():
-        draw().save(f"{OUT}/{name}", glow=False)
+        if name not in PICKED:
+            draw().save(f"{OUT}/{name}", glow=False)
