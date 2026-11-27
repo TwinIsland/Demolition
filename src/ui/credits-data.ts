@@ -103,7 +103,7 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
         license: "CC BY 3.0",
       },
       {
-        title: "Zombie and player voices, level-up, pickup, crate, fuse and Hijack sounds",
+        title: "Zombie and player voices, level-up, pickup, crate, fuse, Hijack and mud step sounds",
         author: "Mojang Studios · Minecraft: Java Edition",
         license: "© Mojang Studios",
       },
