@@ -64,6 +64,11 @@ export class CameraFeel {
     this.trauma += amount;
   }
 
+  /** Holds the shake at `level` or above for this frame; call it every frame an earthquake lasts. */
+  quake(level: number) {
+    this.trauma = Math.max(this.trauma, level);
+  }
+
   private recoil(you: Vec2, viewYaw: number, source: Vec2 | undefined, strength: number) {
     if (!source) {
       this.pitch.impulse(strength * 0.7);

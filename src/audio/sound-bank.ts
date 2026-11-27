@@ -49,7 +49,7 @@ const CUES = {
   "perk-diamond": ui(0.46),
   "mutation-award": ui(0.58),
   "reset-signal": sfx(0.56, { voices: 2 }),
-  "room-shift": sfx(0.7, { voices: 1 }),
+  "room-shift": sfx(0.9, { voices: 1 }),
   "footstep-0": sfx(0.22, { pitchJitter: 0.04 }),
   "footstep-1": sfx(0.22, { pitchJitter: 0.04 }),
   "footstep-2": sfx(0.22, { pitchJitter: 0.04 }),

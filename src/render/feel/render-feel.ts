@@ -24,6 +24,9 @@ const HURT_SHOVE = 0.14;
  * Renderer-side game feel. The renderer calls `begin` once per frame, then the per-object hooks.
  * Everything here reads snapshots and writes only to scene objects.
  */
+/** How long the floor shakes after a map has moved its own rooms; the shake then fades by itself. */
+const QUAKE_SECONDS = 1.2;
+
 export class RenderFeel {
   private marker = new SelfMarker();
   private telegraph = new WallTelegraph();
@@ -140,9 +143,14 @@ export class RenderFeel {
    * is still moving after a terrain reset.
    */
   walls(state: Readonly<GameSnapshot>, landing: ReadonlySet<number>) {
-    // A map that moves its own rooms does it quietly: no jolt for those.
-    if (this.telegraph.update(state, landing, motionScale()) && !state.terrainReset?.shift)
-      this.camera.rumble(0.3);
+    if (this.telegraph.update(state, landing, motionScale())) this.camera.rumble(0.3);
+    // A map moving its own rooms shakes like an earthquake: held hard, then dying away.
+    const reset = state.terrainReset;
+    if (reset?.shift && reset.completedAt !== undefined) {
+      const age = state.time - reset.completedAt;
+      if (age < QUAKE_SECONDS)
+        this.camera.quake(0.92 - (0.45 * Math.max(0, age / QUAKE_SECONDS - 0.55)) / 0.45);
+    }
   }
 
   /** Undirected camera shake for world events such as a zone wall slamming into place. */

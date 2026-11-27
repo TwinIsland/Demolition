@@ -2,8 +2,8 @@
 
 - footstep-carpet-{0,1,2}.ogg: Kenney's CC0 Impact Sounds footstep_carpet_000..002, trimmed to
   the step, faded and level-matched.
-- room-shift.ogg: the rooms moving: a deep thud through the floor, partitions grinding, the
-  lights dropping out and the tubes restriking. Synthesised.
+- room-shift.ogg: the rooms moving, as an earthquake heard indoors: ground roar, a jolt, the
+  building rattling and creaking, the tubes restriking. Synthesised.
 - environment/backrooms.ogg: a seamless 24 s bed of fluorescent tubes (mains hum, ballast buzz
   that wavers and now and then stutters), air handling far off and the dull room tone of a
   carpeted floor. Synthesised.
@@ -108,17 +108,29 @@ bed = np.stack([
 encode(norm(bed, 0.6), "public/assets/environment/backrooms.ogg", "3")
 
 # --- The rooms shift ----------------------------------------------------------------------------
-m = int(SR * 1.6)
+# An earthquake heard from indoors: ground roar that swells and dies, a jolt at the start, the
+# building rattling and creaking, and the tubes restriking near the end.
+m = int(SR * 3.0)
 u = np.arange(m) / SR
-thud = np.sin(2 * np.pi * (38 * u + 30 * (1 - np.exp(-u * 9)) / 9)) * np.exp(-u * 4.2)
-grind = band(rng.standard_normal(m), 60, 420) * np.exp(-((u - 0.28) / 0.3) ** 2)
-clunk = band(rng.standard_normal(m), 700, 3200) * np.exp(-u * 38)
+swell = np.minimum(1, u / 0.12) * np.exp(-np.clip(u - 1.1, 0, None) * 2.3)
+roar = norm(band(rng.standard_normal(m), 22, 95), 1) * swell * (1 + 0.35 * np.sin(2 * np.pi * 5.3 * u))
+body = norm(band(rng.standard_normal(m), 95, 330), 1) * swell * (0.75 + 0.25 * np.sin(2 * np.pi * 8.7 * u + 1))
+jolt = np.sin(2 * np.pi * (34 * u + 26 * (1 - np.exp(-u * 8)) / 8)) * np.exp(-u * 3.4)
+rattle = np.zeros(m)
+for _ in range(46):
+    at = rng.uniform(0.05, 1.9)
+    a, k = int(at * SR), int(SR * rng.uniform(0.012, 0.035))
+    rattle[a:a + k] += rng.standard_normal(k) * np.exp(-np.arange(k) / (k * 0.3)) * rng.uniform(0.3, 1) * np.exp(-max(0, at - 1.1) * 2)
+rattle = band(rattle, 500, 4200)
+creak = sum(
+    np.sin(2 * np.pi * (f0 * u + 18 * np.sin(2 * np.pi * 1.7 * u + p))) * np.exp(-((u - at) / 0.22) ** 2)
+    for f0, at, p in ((190, 0.5, 0.0), (240, 1.15, 1.4), (150, 1.6, 2.2))
+)
 restrike = np.zeros(m)
-for at in (0.62, 0.74, 0.8, 0.97):
+for at in (1.75, 1.88, 1.95, 2.12):
     a, k = int(at * SR), int(SR * 0.03)
     restrike[a:a + k] += rng.standard_normal(k) * np.exp(-np.arange(k) / (SR * 0.004))
 restrike = band(restrike, 1800, 9000)
-buzz = sum(np.sin(2 * np.pi * 120 * h * u) / h for h in range(1, 12)) * np.clip((u - 0.8) * 3, 0, 1) * np.exp(-(u - 0.8).clip(0) * 3)
-shift = thud * 1.0 + norm(grind, 1) * 0.55 + norm(clunk, 1) * 0.4 + norm(restrike, 1) * 0.22 + norm(buzz, 1) * 0.12
-shift[-int(SR * 0.2):] *= np.linspace(1, 0, int(SR * 0.2))
-encode(norm(shift, 0.9), "public/assets/room-shift.ogg")
+shift = roar * 1.0 + body * 0.6 + jolt * 0.9 + norm(rattle, 1) * 0.3 + norm(creak, 1) * 0.07 + norm(restrike, 1) * 0.12
+shift[-int(SR * 0.4):] *= np.linspace(1, 0, int(SR * 0.4))
+encode(norm(shift, 0.95), "public/assets/room-shift.ogg")
