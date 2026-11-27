@@ -9,7 +9,8 @@ const config = {
   },
   id: "crate",
   name: "木箱",
-  description: "右键在瞄准的格子瞬间搭建木箱，不花金币：按等级携带固定数量，每次升级补满，摧毁别人的木箱还能给自己加一个。范围和放炸药一样。",
+  description:
+    "右键在瞄准的格子瞬间搭建木箱，不花金币：按等级携带固定数量，每次升级补满，摧毁别人的木箱还能给自己加一个。范围和放炸药一样。",
   icon: "crate",
   color: "#c9a26b",
   model: new URL("./model.glb", import.meta.url).href,
