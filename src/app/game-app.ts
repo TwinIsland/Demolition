@@ -674,6 +674,8 @@ export class GameApp {
         return session.getSnapshot();
       },
       renderer,
+      scene: renderer.storyProps,
+      camera: renderer.camera,
       mutate: (change) => session.mutate?.(change),
       setAgent: (id, agent) => session.setAgent?.(id, agent),
       paused: true,
@@ -702,6 +704,7 @@ export class GameApp {
   private closeStoryMatch(restore = true) {
     if (!this.storyMatch) return;
     this.storyMatch = undefined;
+    this.renderer.storyProps.clear();
     this.releaseControls();
     this.ui.setInGame(false);
     this.sound.reset();

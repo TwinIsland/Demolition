@@ -93,6 +93,8 @@ export class GameRenderer {
   readonly canvas: HTMLCanvasElement;
   readonly renderer: THREE.WebGLRenderer;
   private scene = new THREE.Scene();
+  /** Props a story script adds to the world; the story empties it when its match closes. */
+  readonly storyProps = new THREE.Group();
   private rig = new CameraRig();
   private assets = new SceneAssets();
   private models = new Models(this.assets.manager);
@@ -181,7 +183,7 @@ export class GameRenderer {
     this.hand = this.models.firstPersonArm();
     this.hand.hold(this.models.explosive(), "bomb");
     this.rig.held.add(this.hand);
-    this.scene.add(this.feel.root, this.wading.root);
+    this.scene.add(this.feel.root, this.wading.root, this.storyProps);
     this.post = new PostPipeline(
       this.renderer,
       this.scene,
@@ -200,6 +202,10 @@ export class GameRenderer {
   /** Lightning notifies the audio layer so thunder can follow the flash. */
   set onThunder(listener: ((cue: ThunderCue) => void) | undefined) {
     this.weather.onThunder = listener;
+  }
+  /** The camera the world is drawn with. */
+  get camera(): THREE.Camera {
+    return this.rig.camera;
   }
   get graphics() {
     return { ...this.quality };

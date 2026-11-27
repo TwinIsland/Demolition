@@ -283,6 +283,8 @@ export interface GameSnapshot {
   mode?: MatchMode;
   /** Staged by story mode: see `StorySetup`. */
   story?: boolean;
+  /** A staged match that still closes its zone and drops supplies: see `StorySetup.brawl`. */
+  storyBrawl?: boolean;
   canResetTerrain?: boolean;
   /** Simulation time at which a map with `terrainShift` announces its next rearrangement. */
   terrainShiftAt?: number;
@@ -355,6 +357,11 @@ export interface StorySetup {
   cast: StoryActor[];
   /** Everyone starts in the overhead view. */
   overhead?: boolean;
+  /**
+   * The story's last fight is a real match in all but its ending: the zone closes over
+   * `zoneDuration` seconds and field supplies drop. Who has won is still the story's to decide.
+   */
+  brawl?: { zoneDuration: number };
 }
 export interface MatchOptions {
   story?: StorySetup;
