@@ -65,6 +65,27 @@ export const idleInput = (yaw = 0): PlayerInput => ({
   moveZ: 0,
   yaw,
 });
+/** Per-match tallies for the after-action screen. They never feed back into the simulation. */
+export interface MatchStats {
+  /** Health taken off other operators. */
+  damageDealt: number;
+  damageTaken: number;
+  /** Map cover opened; crates built by players do not count. */
+  coverDestroyed: number;
+  zombieKills: number;
+  bombsPlaced: number;
+  /** Simulation time of elimination. Absent while alive. */
+  diedAt?: number;
+}
+export const emptyMatchStats = (): MatchStats => ({
+  damageDealt: 0,
+  damageTaken: 0,
+  coverDestroyed: 0,
+  zombieKills: 0,
+  bombsPlaced: 0,
+});
+/** The player's tallies, created on first use so snapshots from before they existed still work. */
+export const matchStats = (p: Player): MatchStats => (p.stats ??= emptyMatchStats());
 export interface Player extends Vec2 {
   /** Feet above the arena floor in world units; x and z are measured in cells. */
   elevation: number;
@@ -104,6 +125,7 @@ export interface Player extends Vec2 {
   range: number;
   capacity: number;
   kills: number;
+  stats?: MatchStats;
   xp: number;
   level: number;
   nextLevel: number;

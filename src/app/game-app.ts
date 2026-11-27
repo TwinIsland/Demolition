@@ -644,7 +644,7 @@ export class GameApp {
       this.screens.transition("eliminated");
       this.releaseControls();
       this.ui.clearPerks();
-      this.ui.showEliminated(state, viewer, this.typeTick);
+      this.ui.showResult(state, viewer, this.typeTick);
       this.sound.eliminated();
     } else {
       if (this.ui.offerPerks(viewer)) this.sound.perkReady();

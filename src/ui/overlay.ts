@@ -17,6 +17,13 @@ export class Overlay {
     return this.root.firstElementChild as HTMLElement;
   }
 
+  /** Opens a full-screen view in place of a dialog; it brings its own chrome and focus handling. */
+  screen(html: string, className: string): HTMLElement {
+    this.root.innerHTML = `<section class="${className}" role="dialog" aria-modal="true" aria-label="${t("战场结算")}">${html}</section>`;
+    this.root.hidden = false;
+    return this.root.firstElementChild as HTMLElement;
+  }
+
   hide() {
     this.root.hidden = true;
     this.root.innerHTML = "";

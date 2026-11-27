@@ -7,6 +7,7 @@ import type { Sound } from "../audio/sound";
 import type { GameRenderer } from "../render/game-renderer";
 import type { LoadProgress } from "../render/scene-assets";
 import { iconArt } from "../ui/icons";
+import { resultArt } from "../ui/match-result";
 import { preloadSkinAssets } from "../ui/skin-assets";
 import { preloadMinimapArt } from "../ui/tactical-map";
 
@@ -89,7 +90,14 @@ function contentImages(): string[] {
     ...Object.values(MUTATIONS),
   ];
   const icons = definitions.map((definition) => definition.icon).filter((icon) => IMAGE_URL.test(icon));
-  return [...new Set([...icons, ...iconArt(), ...MAPS.flatMap((map) => (map.artwork ? [map.artwork] : []))])];
+  return [
+    ...new Set([
+      ...icons,
+      ...iconArt(),
+      ...resultArt(),
+      ...MAPS.flatMap((map) => (map.artwork ? [map.artwork] : [])),
+    ]),
+  ];
 }
 
 /**

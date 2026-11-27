@@ -6,6 +6,7 @@ import "./strike-panel.css";
 import "./credits.css";
 // The visual skin overrides every surface, so it must stay the last stylesheet.
 import "./icon-art.css";
+import "./match-result.css";
 import "./game-skin.css";
 import { MATCH_MODES, type MatchMode } from "../core/match-modes";
 import type { Appearance, AvatarSkin, BotSlot, ZombieRate } from "../core/room";
@@ -26,8 +27,10 @@ import { graphicsChange, graphicsForm, syncGraphics } from "./graphics-options";
 import { icon } from "./icons";
 import { LobbyView } from "./lobby";
 import { manualMarkup } from "./manual";
-import { eliminatedMarkup, pauseMarkup, resultMarkup, outcomeOf } from "./match-menus";
-import { typeDebrief, placement } from "./debrief";
+import { pauseMarkup } from "./match-menus";
+import { placement, resultKind, resultMarkup } from "./match-result";
+import { paintSkinHeads } from "./skin-heads";
+import { playResult } from "./match-result-motion";
 import { roomMarkup, updateRoom } from "./match-room";
 import { MutationNotice } from "./mutation-notice";
 import { Overlay } from "./overlay";
@@ -265,21 +268,20 @@ export class GameUI {
     mountCredits(this.overlay.show(creditsMarkup(), "credits-modal", "#credits-close"));
   }
 
-  /** `typeTick` sounds each character of the typed after-action report. */
-  showResult(snapshot: Readonly<GameSnapshot>, viewer: Player, typeTick: () => void) {
-    const dialog = this.overlay.show(
-      resultMarkup(snapshot, viewer),
-      `outcome-modal outcome-${outcomeOf(snapshot, viewer)}`,
+  /**
+   * The after-action screen: the match result once it is decided, otherwise the viewer's own
+   * elimination. `tick` sounds the counters of the reveal.
+   */
+  showResult(snapshot: Readonly<GameSnapshot>, viewer: Player, tick: () => void) {
+    const kind = resultKind(snapshot, viewer);
+    const screen = this.overlay.screen(resultMarkup(snapshot, viewer, kind), `result-screen outcome-${kind}`);
+    paintSkinHeads(screen);
+    this.badge.show(
+      query(screen, ".outcome-badge-slot"),
+      kind === "eliminated" ? "defeat" : kind,
+      placement(snapshot, viewer),
     );
-    const outcome = outcomeOf(snapshot, viewer);
-    this.badge.show(query(dialog, ".outcome-badge-slot"), outcome, placement(snapshot, viewer));
-    typeDebrief(dialog, typeTick);
-  }
-
-  showEliminated(snapshot: Readonly<GameSnapshot>, viewer: Player, typeTick: () => void) {
-    const dialog = this.overlay.show(eliminatedMarkup(snapshot, viewer), "outcome-modal outcome-eliminated");
-    this.badge.show(query(dialog, ".outcome-badge-slot"), "defeat", placement(snapshot, viewer));
-    typeDebrief(dialog, typeTick);
+    playResult(screen, tick);
   }
 
   hideOverlay() {

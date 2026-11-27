@@ -23,7 +23,7 @@ import { collectItems, spawnFieldSupply } from "./systems/loot";
 import { finishIfDecided, tickCountdown, updateArenaView, updateTerrainReset } from "./systems/match";
 import { move } from "./systems/movement";
 import { applyShopCommand, activateSkill, choosePerk, usePerk } from "./systems/progression";
-import { idleInput, inTacticalView } from "./types";
+import { emptyMatchStats, idleInput, inTacticalView } from "./types";
 import type { GameSnapshot, MatchOptions, Player, PlayerInput, Tile } from "./types";
 import { ZombieDirector } from "./zombies";
 
@@ -225,6 +225,7 @@ function initialState(
       range: rules.range,
       capacity: rules.capacity,
       kills: 0,
+      stats: emptyMatchStats(),
       xp: 0,
       level: 1,
       nextLevel: Math.round(COMBAT.firstUpgradeScore * rules.upgradePace),

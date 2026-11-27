@@ -3,7 +3,7 @@ import { combatMessage } from "../combat-message";
 import { ITEMS, modifiedStat, RULES } from "../content";
 import { blastCells, blastContact, linkedBombs, slideBlocked, SLIDE_STEP } from "../geometry";
 import { canPlace } from "../placement";
-import type { Blast, Bomb, Player, Vec2 } from "../types";
+import { matchStats, type Blast, type Bomb, type Player, type Vec2 } from "../types";
 import { slidingZombieContact } from "../zombies";
 import type { SimContext } from "./context";
 import { emit } from "./events";
@@ -38,6 +38,7 @@ export function placeBomb(
       .filter((a) => Math.abs(a.x - x) < PLANT_OVERLAP && Math.abs(a.z - z) < PLANT_OVERLAP)
       .map((a) => a.id),
   });
+  matchStats(p).bombsPlaced++;
   emit(ctx, p, "放置炸药", { type: "bomb" });
 }
 

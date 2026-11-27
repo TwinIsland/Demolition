@@ -3,7 +3,7 @@ import { combatMessage } from "../combat-message";
 import { eachOwned } from "../content";
 import { ZOMBIE_STATS } from "../loot";
 import { grantMutation } from "../mutations";
-import type { Blast, GameSnapshot, ItemId, Player, Zombie } from "../types";
+import { matchStats, type Blast, type GameSnapshot, type ItemId, type Player, type Zombie } from "../types";
 import { COINS } from "../economy";
 import { gainCredits } from "./building";
 import type { SimContext } from "./context";
@@ -64,7 +64,9 @@ export function hurt(
   p.invulnerableUntil = s.time + immunity;
   const damage = Math.min(p.hp, amount);
   p.hp = Math.max(0, p.hp - damage);
+  matchStats(p).damageTaken += damage;
   const attacker = s.players.find((a) => a.id === attackerId);
+  if (attacker && attacker.id !== p.id) matchStats(attacker).damageDealt += damage;
   if (attacker && attacker.id !== p.id && attacker.alive) {
     const points = Math.max(1, Math.round(damage * DAMAGE_SCORE_RATE));
     eachOwned(attacker, (m, n) => m.onDamageDealt?.(attacker, damage, n));
@@ -81,6 +83,7 @@ export function hurt(
   emit(ctx, p, combatMessage("受到 {0} 点{1}伤害", damage, source), { type: "hurt", blocked: false });
   if (p.hp <= 0) {
     p.alive = false;
+    matchStats(p).diedAt = s.time;
     p.offers = [];
     const killer = s.players.find((a) => a.id === attackerId)!;
     if (killer.id !== p.id) {
@@ -143,6 +146,7 @@ export function resolveBlastDamage(ctx: SimContext, p: Player) {
 export function rewardZombie(ctx: SimContext, zombie: Zombie, owner: Player, item?: ItemId) {
   const { score, mutationChance } = ZOMBIE_STATS[zombie.level];
   gainScore(ctx, owner, score);
+  matchStats(owner).zombieKills++;
   gainCredits(owner, COINS.zombieKill[zombie.level]);
   emit(
     ctx,
@@ -164,10 +168,12 @@ function zombieAttack(ctx: SimContext, p: Player, damage: number) {
   if (p.invulnerableUntil > s.time || (s.mode === "practice" && !p.bot)) return;
   if (shieldBlocks(ctx, p)) return;
   p.invulnerableUntil = s.time + COMBAT.hitImmunity;
+  matchStats(p).damageTaken += Math.min(p.hp, damage);
   p.hp = Math.max(0, p.hp - damage);
   emit(ctx, p, combatMessage("僵尸攻击 · -{0} HP", damage), { type: "hurt", blocked: false });
   if (!p.hp) {
     p.alive = false;
+    matchStats(p).diedAt = s.time;
     p.offers = [];
     emit(ctx, p, combatMessage("{0} 被僵尸淘汰", p), { type: "kill" });
   }

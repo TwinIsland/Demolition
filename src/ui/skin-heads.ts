@@ -81,6 +81,11 @@ export function preloadSkinHeads(): Promise<void> {
   return Promise.all(jobs).then(() => undefined);
 }
 
+/** Paints the head portraits of markup that is rendered once, such as the result screen. */
+export function paintSkinHeads(root: ParentNode) {
+  root.querySelectorAll<HTMLElement>(".avatar[data-player]").forEach(paint);
+}
+
 /** Keeps head portraits applied as the HUD re-renders its player rows. */
 export function mountSkinHeads(root: HTMLElement): () => void {
   const refresh = () => root.querySelectorAll<HTMLElement>(".avatar[data-player]").forEach(paint);

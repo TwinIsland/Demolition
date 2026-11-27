@@ -4,7 +4,7 @@ import { eachOwned, isEquipment, ITEMS, modifiedStat } from "../content";
 import { fieldSupply, supplyInterval } from "../field-supplies";
 import { CRATE_CHANCES, dropChance, lootContext, supplyDrop, zombieDrops } from "../loot";
 import { DIRECTIONS } from "../maps";
-import type { Player, Zombie } from "../types";
+import { matchStats, type Player, type Zombie } from "../types";
 import { COINS } from "../economy";
 import { destroyBuiltCrate, gainCredits } from "./building";
 import type { SimContext } from "./context";
@@ -38,6 +38,7 @@ export function destroyCover(ctx: SimContext, owner: Player, x: number, z: numbe
     eachOwned(owner, (m, n) => m.onCoverDestroyed?.(owner, n));
     score = modifiedStat(owner, "crateScore", COMBAT.crateScore, s.time);
     gainScore(ctx, owner, score);
+    matchStats(owner).coverDestroyed++;
     gainCredits(owner, COINS.coverDestroyed);
   }
   const misses = ctx.crateMisses.get(owner.id) ?? 0;

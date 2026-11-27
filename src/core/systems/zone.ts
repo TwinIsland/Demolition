@@ -2,7 +2,7 @@ import { combatMessage } from "../combat-message";
 import { RULES } from "../content";
 import { DIRECTIONS } from "../maps";
 import { ringOf, zoneAdvance, zoneAt, zoneWallInset } from "../zone";
-import type { GameSnapshot, Player, Vec2 } from "../types";
+import { matchStats, type GameSnapshot, type Player, type Vec2 } from "../types";
 import { removeBuiltCrate } from "./building";
 import { explode } from "./bombs";
 import type { SimContext } from "./context";
@@ -162,6 +162,7 @@ function burn(ctx: SimContext, p: Player, amount: number) {
   ctx.zoneBurn.set(p.id, owed - Math.floor(owed));
   if (!damage) return;
   p.hp -= damage;
+  matchStats(p).damageTaken += damage;
   if (ctx.healthCaps.has(p.id)) ctx.healthCaps.set(p.id, p.hp);
   const last = ctx.zoneBurnEventAt.get(p.id) ?? -Infinity;
   if (p.hp > 0 && s.time - last >= BURN_EVENT_INTERVAL) {
@@ -170,6 +171,7 @@ function burn(ctx: SimContext, p: Player, amount: number) {
   }
   if (p.hp <= 0) {
     p.alive = false;
+    matchStats(p).diedAt = s.time;
     p.offers = [];
     emit(ctx, p, combatMessage("{0} 被火场吞没", p), { type: "kill" });
   }
