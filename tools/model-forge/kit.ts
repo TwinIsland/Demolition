@@ -52,6 +52,18 @@ const PREVIEW: Record<string, string> = {
   "leaf-dark": "#2f5a2a",
   "pool-tile": "#eef2f0",
   cardboard: "#a98554",
+  "village-stone": "#8b8d8c",
+  "village-roof": "#4b5157",
+  "village-thatch": "#a08a5c",
+  "village-plaster": "#e9e3d3",
+  "village-cedar": "#5b4334",
+  "village-vermilion": "#c2402a",
+  "village-clay": "#7a4a30",
+  "village-water": "#3f8f9c",
+  "village-flame": "#ffcf8a",
+  "village-writing": "#c4a070",
+  "village-shoji": "#f4e8cc",
+  "sakura-bark": "#6b5a55",
 };
 
 export function seeded(seed: number) {
@@ -307,6 +319,37 @@ export class Forge {
     return this.add(material, geometry, place);
   }
 
+  /**
+   * Like `build`, but cut along vertical planes into named pieces, one child group each. The game
+   * draws a building that covers several tiles one tile at a time, so that a tile can be removed
+   * without the rest. A region without a bound on one side takes everything out to that side.
+   */
+  split(regions: readonly Region[]) {
+    const group = new THREE.Group();
+    group.name = this.name;
+    let triangles = 0;
+    for (const region of regions) {
+      const piece = new THREE.Group();
+      piece.name = region.name;
+      for (const [material, parts] of this.parts) {
+        const cut = clip(mergeGeometries(parts), region);
+        if (!cut) continue;
+        const merged = mergeVertices(cut, 1e-4);
+        triangles += merged.index!.count / 3;
+        const mesh = new THREE.Mesh(
+          merged,
+          new THREE.MeshStandardMaterial({ name: `df:${material}`, color: PREVIEW[material] ?? "#888" }),
+        );
+        mesh.name = `${region.name}:${material}`;
+        piece.add(mesh);
+      }
+      group.add(piece);
+    }
+    const size = new THREE.Box3().setFromObject(group).getSize(new THREE.Vector3());
+    group.userData = { triangles, size: size.toArray().map((v) => +v.toFixed(3)) };
+    return group;
+  }
+
   build() {
     const group = new THREE.Group();
     group.name = this.name;
@@ -333,4 +376,69 @@ export class Forge {
     };
     return group;
   }
+}
+
+/** A slab of space between vertical planes; a missing bound leaves that side open. */
+export interface Region {
+  name: string;
+  minX?: number;
+  maxX?: number;
+  minZ?: number;
+  maxZ?: number;
+}
+
+/** The part of a triangle soup inside `region`, with positions, normals and UVs interpolated on the cuts. */
+function clip(source: THREE.BufferGeometry, region: Region) {
+  const position = source.attributes.position,
+    normal = source.attributes.normal,
+    uv = source.attributes.uv;
+  // One vertex is x y z, nx ny nz, u v.
+  type Vertex = number[];
+  const planes: [axis: number, bound: number, keepAbove: boolean][] = [];
+  if (region.minX !== undefined) planes.push([0, region.minX, true]);
+  if (region.maxX !== undefined) planes.push([0, region.maxX, false]);
+  if (region.minZ !== undefined) planes.push([2, region.minZ, true]);
+  if (region.maxZ !== undefined) planes.push([2, region.maxZ, false]);
+  const out: number[] = [];
+  for (let i = 0; i < position.count; i += 3) {
+    let polygon: Vertex[] = [0, 1, 2].map((k) => [
+      position.getX(i + k),
+      position.getY(i + k),
+      position.getZ(i + k),
+      normal.getX(i + k),
+      normal.getY(i + k),
+      normal.getZ(i + k),
+      uv.getX(i + k),
+      uv.getY(i + k),
+    ]);
+    for (const [axis, bound, keepAbove] of planes) {
+      const inside = (v: Vertex) => (keepAbove ? v[axis] >= bound : v[axis] <= bound);
+      const next: Vertex[] = [];
+      polygon.forEach((a, index) => {
+        const b = polygon[(index + 1) % polygon.length];
+        if (inside(a)) next.push(a);
+        if (inside(a) !== inside(b)) {
+          const t = (bound - a[axis]) / (b[axis] - a[axis]);
+          next.push(a.map((value, k) => value + (b[k] - value) * t));
+        }
+      });
+      polygon = next;
+      if (polygon.length < 3) break;
+    }
+    for (let k = 1; k + 1 < polygon.length; k++) out.push(...polygon[0], ...polygon[k], ...polygon[k + 1]);
+  }
+  if (!out.length) return undefined;
+  const data = new Float32Array(out),
+    count = data.length / 8,
+    pick = (offset: number, width: number) => {
+      const values = new Float32Array(count * width);
+      for (let i = 0; i < count; i++)
+        for (let k = 0; k < width; k++) values[i * width + k] = data[i * 8 + offset + k];
+      return new THREE.BufferAttribute(values, width);
+    };
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", pick(0, 3));
+  geometry.setAttribute("normal", pick(3, 3));
+  geometry.setAttribute("uv", pick(6, 2));
+  return geometry;
 }

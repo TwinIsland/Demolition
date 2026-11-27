@@ -17,6 +17,8 @@ interface Surface {
   cutout?: boolean;
   /** The geometry brings a colour per vertex that tints the surface. */
   tinted?: boolean;
+  /** Lit from within: the colour map doubles as the mask, tinted by a colour at a strength. */
+  glow?: readonly [color: string, intensity: number];
 }
 /** A scanned plant: leaves cut out of their cards, seen from both sides. */
 const plant = (maps: string, color = "#ffffff"): Surface => ({
@@ -91,6 +93,24 @@ const PALETTE: Record<string, Surface> = {
   "pool-tile": { maps: "pool-tile", color: "#f4f7f5", normal: 0.9 },
   // Backrooms
   cardboard: { maps: "paint", diff: "paint-neutral", color: "#b08d5c", normal: 0.5 },
+  // Village
+  "village-stone": { maps: "village-stone" },
+  "village-roof": { maps: "village-roof" },
+  "village-thatch": { maps: "village-thatch" },
+  "village-plaster": { maps: "village-plaster", color: "#f6f1e6", normal: 0.6 },
+  "village-cedar": { maps: "village-cedar" },
+  "village-vermilion": { maps: "paint", diff: "paint-neutral", color: "#d0432a", normal: 0.5 },
+  "village-clay": { maps: "paint", diff: "paint-neutral", color: "#8a5536", roughness: 0.38, normal: 0.3 },
+  "village-water": { color: "#4a9aa6", roughness: 0.06, metalness: 0.1 },
+  "village-flame": { color: "#ffd9a0", roughness: 0.9, glow: ["#ffb866", 1.6] },
+  "village-writing": { diff: "village-writing", roughness: 0.82 },
+  "village-shoji": { diff: "village-shoji", roughness: 0.9, glow: ["#ffdcae", 0.22] },
+  // Paving is laid in world space by the `paving` surface profile, so it runs on across tiles.
+  "village-path": { maps: "village-path" },
+  "village-cobble": { maps: "village-cobble" },
+  "sakura-bark": { maps: "sakura-bark" },
+  // Blossom over the board stays in the overhead views: a cherry is small enough not to hide its neighbours.
+  "sakura-crown": { diff: "sakura-crown", color: "#ffc9dc", roughness: 0.8, cutout: true, tinted: true },
 };
 /** Texture sets that `standard` can use in place of the default concrete. */
 type SurfaceSet =
@@ -157,6 +177,11 @@ export class MaterialLibrary {
     });
     const diff = surface.diff ?? surface.maps;
     if (diff) mat.map = this.texture(path(diff, "diff"), true);
+    if (surface.glow) {
+      mat.emissive.set(surface.glow[0]);
+      mat.emissiveIntensity = surface.glow[1];
+      mat.emissiveMap = mat.map;
+    }
     if (surface.maps) {
       mat.normalMap = this.texture(path(surface.maps, "nor"), false);
       mat.normalScale.setScalar(surface.normal ?? 1);
@@ -332,7 +357,12 @@ export class MaterialLibrary {
    * (world x, world z of its corner, then width and depth). The surface weathering module reads
    * the extra uniforms from `userData.wxUniforms` and does the blending.
    */
-  soil(mask: THREE.Texture, area: readonly [number, number, number, number]) {
+  soil(
+    mask: THREE.Texture,
+    area: readonly [number, number, number, number],
+    /** `litter` 0 to 1: how much of the grass lies under fallen leaves. `gain` brightens the grass. */
+    look: { litter: number; gain: number } = { litter: 1, gain: 1 },
+  ) {
     const load = (file: string, color = false) => {
       const texture = this.texture(`./assets/surfaces/${file}.webp`, color);
       return texture;
@@ -350,6 +380,7 @@ export class MaterialLibrary {
       mat.userData.wxUniforms = {
         wxSoilMask: { value: null },
         wxSoilArea: { value: new THREE.Vector4() },
+        wxSoilLook: { value: new THREE.Vector2(1, 1) },
         wxMudMap: { value: load("jungle-mud_diff", true) },
         wxMudNormal: { value: load("jungle-mud_nor") },
         wxMudRough: { value: load("jungle-mud_rough") },
@@ -362,7 +393,9 @@ export class MaterialLibrary {
     const uniforms = this.soilMaterial.userData.wxUniforms as {
       wxSoilMask: { value: THREE.Texture | null };
       wxSoilArea: { value: THREE.Vector4 };
+      wxSoilLook: { value: THREE.Vector2 };
     };
+    uniforms.wxSoilLook.value.set(look.litter, look.gain);
     if (uniforms.wxSoilMask.value !== mask) uniforms.wxSoilMask.value?.dispose();
     uniforms.wxSoilMask.value = mask;
     uniforms.wxSoilArea.value.set(area[0], area[1], 1 / area[2], 1 / area[3]);

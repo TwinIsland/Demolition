@@ -9,6 +9,7 @@ import { groundAt } from "../core/pack-api";
 import { buildJungle } from "./jungle-scenery";
 import { COLUMN_PITCH, buildPoolHall } from "./pool-hall";
 import { buildBackrooms } from "./backrooms-hall";
+import { buildVillage, villageWall } from "./village-scenery";
 export { TILE_SIZE };
 export const world = (value: number, size: number) => (value - (size - 1) / 2) * TILE_SIZE;
 
@@ -107,8 +108,9 @@ export class Arena {
       jungle = map.theme === "rainforest",
       pool = map.theme === "poolrooms",
       office = map.theme === "backrooms",
+      village = map.theme === "village",
       // These themes lay their own ground and close off or fill what lies outside the grid.
-      enclosed = jungle || pool || office;
+      enclosed = jungle || pool || office || village;
     const m = models.materials;
     // Which permanent walls of a natural map are trees or rock instead of masonry.
     const wallVariant = (x: number, z: number, scattered: boolean) => {
@@ -154,8 +156,8 @@ export class Arena {
             deck.position.set(px, -0.1, pz);
             this.root.add(deck);
           }
-        } else if (office) {
-          // One carpet covers the whole floor.
+        } else if (office || village) {
+          // One carpet covers the whole floor; a village paves its own streets.
         } else if (!jungle || groundAt(map, x, z) === "stone") {
           const tile = models.slab(map.theme, (x + z) % 2);
           tile.position.set(px, -0.1, pz);
@@ -163,11 +165,13 @@ export class Arena {
         }
         if (state.tiles[z][x] === 1) {
           const border = !x || !z || x === size - 1 || z === size - 1;
-          const wall = models.wall(
-            map.theme,
-            wallVariant(x, z, border || state.wallOrigins?.[z * size + x] !== undefined),
-            (Math.imul(x * 31 + z * 131, 40503) >>> 0) % 997,
-          );
+          const wall = village
+            ? villageWall(models, map, size, x, z)
+            : models.wall(
+                map.theme,
+                wallVariant(x, z, border || state.wallOrigins?.[z * size + x] !== undefined),
+                (Math.imul(x * 31 + z * 131, 40503) >>> 0) % 997,
+              );
           if (jungle) this.mountLamp(wall, x, z, size);
           if (jungle) wall.rotation.y = this.turnOf(x, z);
           wall.position.set(px, 0, pz);
@@ -204,6 +208,7 @@ export class Arena {
     if (jungle) buildJungle(this.root, models, map, state);
     else if (pool) buildPoolHall(this.root, models, state);
     else if (office) buildBackrooms(this.root, models, state);
+    else if (village) buildVillage(this.root, models, map, state);
     else {
       const terrain = models.box(240, 0.3, 240, m.standard("terrain", "#8e9287", "ceramic"), 0.01);
       terrain.position.y = -1.6;
