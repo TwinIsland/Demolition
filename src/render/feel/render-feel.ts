@@ -140,7 +140,9 @@ export class RenderFeel {
    * is still moving after a terrain reset.
    */
   walls(state: Readonly<GameSnapshot>, landing: ReadonlySet<number>) {
-    if (this.telegraph.update(state, landing, motionScale())) this.camera.rumble(0.3);
+    // A map that moves its own rooms does it quietly: no jolt for those.
+    if (this.telegraph.update(state, landing, motionScale()) && !state.terrainReset?.shift)
+      this.camera.rumble(0.3);
   }
 
   /** Undirected camera shake for world events such as a zone wall slamming into place. */
