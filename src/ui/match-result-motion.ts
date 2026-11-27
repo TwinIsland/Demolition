@@ -106,7 +106,7 @@ export function playResult(root: HTMLElement, tick: () => void): () => void {
     );
     animate(all(root, ".rs-ghost"), { opacity: [0, 1], x: ["8%", "0%"] }, { duration: 1.8, ease: "easeOut" });
     animate(
-      all(root, ".rs-kicker, .rs-sub"),
+      all(root, ".rs-kicker, .rs-emblem, .rs-sub"),
       { opacity: [0, 1], y: [14, 0] },
       { duration: 0.4, ease: EASE, delay: stagger(0.12, { startDelay: 0.55 }) },
     );

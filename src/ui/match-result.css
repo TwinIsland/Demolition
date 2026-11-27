@@ -658,39 +658,90 @@
   color: #1a1408;
 }
 
+/* ---------- Painted medals and headline emblems (optional art) ---------- */
+.rs-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 44);
+}
+.rs-emblem {
+  flex: none;
+  width: calc(var(--u) * 104);
+  height: calc(var(--u) * 104);
+  object-fit: contain;
+  filter: drop-shadow(0 calc(var(--u) * 6) calc(var(--u) * 12) #000b);
+  user-select: none;
+}
+.rs-medal[data-art] {
+  width: calc(var(--u) * 40);
+  height: calc(var(--u) * 40);
+  background: center / contain no-repeat;
+  clip-path: none;
+  filter: drop-shadow(0 calc(var(--u) * 2) calc(var(--u) * 4) #000a);
+}
+.rs-card .rs-medal[data-art] {
+  width: calc(var(--u) * 72);
+  height: calc(var(--u) * 72);
+  margin: calc(var(--u) * -8) 0;
+}
+
 /* ---------- Painted frames (optional art, see ui/match-result.ts) ---------- */
 .result-screen[data-frames~="plate"] .rs-band {
+  opacity: 0.86;
   background:
-    linear-gradient(90deg, #0000, color-mix(in srgb, var(--outcome) 26%, #0000) 30% 70%, #0000),
+    linear-gradient(90deg, #0000, color-mix(in srgb, var(--outcome) 30%, #0000) 30% 70%, #0000),
     var(--rs-frame-plate) center / 100% 100% no-repeat;
 }
 .result-screen[data-frames~="panel"] .rs-operator {
-  padding: calc(var(--u) * 30) calc(var(--u) * 34) calc(var(--u) * 34);
+  gap: calc(var(--u) * 10);
+  padding: calc(var(--u) * 30) calc(var(--u) * 40) calc(var(--u) * 46);
   border: 1px solid #0000;
-  border-image: var(--rs-frame-panel) 128 fill / calc(var(--u) * 64) stretch;
+  border-image: var(--rs-frame-panel) 190 fill / calc(var(--u) * 52) stretch;
   background: none;
   clip-path: none;
 }
+.result-screen[data-frames~="panel"] .outcome-badge-slot {
+  width: calc(var(--u) * 156);
+}
+/* The row art has a steel cap on its leading edge; the columns start after it. */
+.result-screen[data-frames~="row"] :is(.rs-board-head, .rs-row) {
+  padding-left: calc(var(--u) * 30);
+}
 .result-screen[data-frames~="row"] .rs-row {
   border: 1px solid #0000;
-  border-image: var(--rs-frame-row) 0 160 fill / 0 calc(var(--u) * 62) stretch;
+  border-image: var(--rs-frame-row) 0 90 fill / 0 calc(var(--u) * 35) stretch;
   background: none;
   box-shadow: none;
 }
-/* The player's colour, which the drawn row carries as its tint. */
+/* The player's colour glows in the slot of the cap. */
 .result-screen[data-frames~="row"] .rs-row::before {
   content: "";
   position: absolute;
-  inset: 22% auto 22% calc(var(--u) * 6);
-  width: calc(var(--u) * 5);
+  inset: 34% auto 34% calc(var(--u) * 17);
+  width: calc(var(--u) * 6);
+  border-radius: calc(var(--u) * 3);
   background: var(--player-color);
   box-shadow: 0 0 calc(var(--u) * 10) var(--player-color);
 }
+.result-screen[data-frames~="row"] .rs-row[data-self] {
+  outline: 0;
+  filter: drop-shadow(0 0 calc(var(--u) * 5) color-mix(in srgb, var(--outcome) 85%, #0000));
+}
 .result-screen[data-frames~="card"] .rs-card {
+  position: relative;
+  padding-bottom: calc(var(--u) * 24);
   border: 1px solid #0000;
-  border-image: var(--rs-frame-card) 64 fill / calc(var(--u) * 32) stretch;
+  border-image: var(--rs-frame-card) 70 fill / calc(var(--u) * 32) stretch;
   background: none;
-  box-shadow: inset 0 calc(var(--u) * -3) 0 var(--player-color);
+}
+.result-screen[data-frames~="card"] .rs-card::after {
+  content: "";
+  position: absolute;
+  inset: auto 14% calc(var(--u) * 6) 14%;
+  height: calc(var(--u) * 3);
+  background: var(--player-color);
+  box-shadow: 0 0 calc(var(--u) * 8) var(--player-color);
 }
 
 /* ---------- Reveal stages ---------- */

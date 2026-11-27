@@ -27,9 +27,10 @@ const ART = Object.fromEntries(
 );
 /**
  * Optional painted chrome: `result-art/frames/<panel|row|card|plate>.<webp|png>` with transparency.
- * `panel` (operator panel, 9-slice, 128 px corners of 1024), `row` (scoreboard row, 160 px end caps
- * of 1600 x 160), `card` (highlight card, 9-slice, 64 px corners of 768 x 256) and `plate` (the band
- * behind the headline, stretched). Each one replaces the drawn version of that element only.
+ * `panel` (operator panel, 9-slice, 190 px corners of 1024), `row` (scoreboard row, 90 px end caps
+ * at 160 px tall), `card` (highlight card, 9-slice, 70 px corners at 256 px tall) and `plate` (the
+ * band behind the headline, stretched). Each one replaces the drawn version of that element only;
+ * the slice sizes live in match-result.css.
  */
 const FRAMES = Object.fromEntries(
   Object.entries(
@@ -40,8 +41,22 @@ const FRAMES = Object.fromEntries(
     }),
   ).map(([path, url]) => [path.replace(/^.*\/|\.\w+$/g, ""), url]),
 );
-/** Every result backdrop and frame, for the loading screen. */
-export const resultArt = () => [...Object.values(ART), ...Object.values(FRAMES)];
+/**
+ * Optional painted badges: `result-art/medals/<id>.<webp|png>`, one per accolade id, plus
+ * `victory`, `defeat` and `draw` emblems that flank the headline. An accolade without one keeps
+ * its drawn chip.
+ */
+const MEDALS = Object.fromEntries(
+  Object.entries(
+    import.meta.glob<string>("./result-art/medals/*.{webp,png}", {
+      eager: true,
+      query: "?url",
+      import: "default",
+    }),
+  ).map(([path, url]) => [path.replace(/^.*\/|\.\w+$/g, ""), url]),
+);
+/** Every result backdrop, frame and medal, for the loading screen. */
+export const resultArt = () => [...Object.values(ART), ...Object.values(FRAMES), ...Object.values(MEDALS)];
 
 /** Hands the painted frames to the stylesheet: `--rs-frame-<name>` and `data-frames`. */
 export function applyResultFrames(screen: HTMLElement) {
@@ -138,8 +153,12 @@ const clock = (seconds: number) =>
 const count = (value: number) => `<b data-count="${Math.round(value)}">${Math.round(value)}</b>`;
 const head = (p: Player) =>
   `<span class="avatar rs-head" data-player="${p.id}" data-skin="${p.skin ?? ""}" style="--player-color:${p.color}"><i></i><i></i></span>`;
-const medal = ({ accolade }: Awarded) =>
-  `<i class="rs-medal" data-medal="${accolade.id}" title="${t(accolade.name)}">${icon(accolade.glyph)}</i>`;
+const medal = ({ accolade }: Awarded) => {
+  const art = MEDALS[accolade.id];
+  return art
+    ? `<i class="rs-medal" data-medal="${accolade.id}" data-art title="${t(accolade.name)}" style="background-image:url('${art}')"></i>`
+    : `<i class="rs-medal" data-medal="${accolade.id}" title="${t(accolade.name)}">${icon(accolade.glyph)}</i>`;
+};
 
 const HEADLINES: Record<ResultKind, { kicker: string; headline: string; ghost: string }> = {
   victory: { kicker: "任务完成", headline: "胜利", ghost: "VICTORY" },
@@ -165,11 +184,13 @@ function bannerMarkup(snapshot: Readonly<GameSnapshot>, kind: ResultKind) {
     t(MATCH_MODES[snapshot.mode ?? DEFAULT_MODE].name),
     clock(snapshot.time),
   ];
+  const emblemArt = MEDALS[kind === "eliminated" ? "defeat" : kind];
+  const emblem = emblemArt ? `<img class="rs-emblem" src="${emblemArt}" alt="" draggable="false" />` : "";
   return `<header class="rs-banner">
       <i class="rs-ghost" aria-hidden="true"><span>${ghost}</span></i>
       <i class="rs-band" aria-hidden="true"></i>
       <small class="rs-kicker">${t(kicker)}</small>
-      <h2 data-text="${t(headline)}">${t(headline)}</h2>
+      <div class="rs-title">${emblem}<h2 data-text="${t(headline)}">${t(headline)}</h2>${emblem}</div>
       <p class="rs-sub"><span>${detail}</span>${meta.map((part) => `<span>${escapeHtml(part)}</span>`).join("")}</p>
     </header>`;
 }
