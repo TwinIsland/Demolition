@@ -9,7 +9,7 @@ import {
   SKINS,
   type Appearance,
 } from "../core/room";
-import { KNIFE_RARITIES, KNIFE_STYLES } from "../core/knife-styles";
+import { KNIFE_STYLES } from "../core/knife-styles";
 import { field, t } from "../i18n";
 import type { SkinModel } from "../render/minecraft-skins";
 import type { UIActions } from "./actions";
@@ -86,7 +86,7 @@ const lobbyMarkup = () => `
               <div class="menu-grid three">${Object.values(KNIFE_STYLES)
                 .map(
                   (knife) =>
-                    `<button type="button" class="menu-row menu-tile menu-choice knife-tile" data-knife="${knife.id}" data-rarity="${knife.rarity}" style="--rarity:${KNIFE_RARITIES[knife.rarity].color}" aria-pressed="false"><span class="row-label"></span><small class="tile-tag"></small></button>`,
+                    `<button type="button" class="menu-row menu-tile menu-choice knife-tile" data-knife="${knife.id}" aria-pressed="false"><span class="row-label"></span></button>`,
                 )
                 .join("")}</div>
             </nav>
@@ -365,7 +365,6 @@ export class LobbyView {
     for (const row of this.root.querySelectorAll<HTMLElement>("[data-knife]")) {
       const knife = KNIFE_STYLES[row.dataset.knife!];
       label(row, field(knife, "name"), knife.id === this.look.knifeStyle);
-      query(row, ".tile-tag").textContent = t(KNIFE_RARITIES[knife.rarity].name);
     }
     for (const row of this.root.querySelectorAll<HTMLElement>("[data-arm]"))
       label(row, t(ARM_MODELS.find(([id]) => id === row.dataset.arm)![1]), row.dataset.arm === this.armModel);

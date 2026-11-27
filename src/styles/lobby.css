@@ -578,18 +578,7 @@ body:not(.in-game) #app .top-actions .graphics-btn {
   font-size: var(--menu-small);
 }
 
-/* Knife skins: the rarity colours a bar on the left and the tag under the name. */
+/* Knife skins. */
 .knife-tile {
   min-height: calc(var(--u) * 64);
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: calc(var(--u) * 3);
-  box-shadow: inset calc(var(--u) * 4) 0 var(--rarity);
-}
-.knife-tile .tile-tag {
-  color: var(--rarity);
-  font-size: max(10px, calc(var(--u) * 14));
-  font-weight: 700;
-  letter-spacing: 0.08em;
 }

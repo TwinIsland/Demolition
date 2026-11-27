@@ -63,6 +63,9 @@ interface CloakUniforms {
   hurt: { value: number };
 }
 
+/** How a carried bomb or item leans in the hand, in the arm's frame. */
+const GRIP_TILT = [0.77, 0.22, 0.24] as const;
+
 /** Minecraft's six rigid body parts retain their original UVs and joint pivots. */
 export class MinecraftAvatar extends THREE.Group {
   readonly rig = new PlayerObject();
@@ -92,20 +95,23 @@ export class MinecraftAvatar extends THREE.Group {
           }
       }
     });
-    this.grip.rotation.set(0.77, 0.22, 0.24);
+    this.grip.rotation.set(...GRIP_TILT);
     this.grip.scale.setScalar(8);
     this.rig.skin.rightArm.add(this.grip);
     this.add(this.rig);
   }
   hold(model: THREE.Object3D, kind: "bomb" | "item" | "melee") {
     this.grip.clear();
+    this.grip.rotation.set(...GRIP_TILT);
     // The bomb mesh starts at its base. Seat that end inside the palm.
     if (kind === "bomb") this.grip.position.set(-0.65, -9.25, 1.15);
     else if (kind === "melee") {
-      this.grip.position.set(-0.75, -9.3, 1.3);
-      model.position.y -= 0.45;
-      model.rotation.y = 0.7;
-      model.rotation.x = -0.28;
+      // A knife runs through the fist at the end of the arm, blade out in front of the knuckles
+      // and across the forearm, turned a little so its flat catches the first-person view.
+      this.grip.position.set(0, -9.5, 0);
+      this.grip.rotation.set(1.7, 0, 0);
+      model.position.y -= 0.3;
+      model.rotation.y = -1.3;
     } else this.grip.position.set(-1.9, -9.1, 3.65);
     this.grip.add(model);
   }

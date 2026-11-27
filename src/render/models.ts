@@ -580,7 +580,7 @@ export class Models {
     power = 70,
     style: BombStyle = "standard",
     signalColor: string = OWN_BOMB_COLOR,
-    /** In a hand rather than on the floor: a modelled finish is stood on end to fit the grip. */
+    /** In a hand rather than on the floor: a modelled finish hides its warning lamp. */
     held = false,
   ) {
     const tier = powerTier(power);
@@ -598,11 +598,10 @@ export class Models {
         .then((asset) => {
           const model = asset.clone();
           const { length, height } = asset.userData as { length: number; height: number };
-          if (held) {
-            model.rotation.z = Math.PI / 2;
-            model.position.y = length / 2;
-          }
-          lamp.position.set(0, height + 0.05, 0);
+          // The GLB lies along X. Stand it on end, like the standard charge, centred on its cell.
+          model.rotation.z = Math.PI / 2;
+          model.position.set(height / 2, length / 2, 0);
+          lamp.position.set(0, length + 0.05, 0);
           group.add(model);
         })
         .catch((error) => console.error("Cannot load bomb finish model", error));
