@@ -1,8 +1,9 @@
 import * as THREE from "three";
 import type { GameSnapshot, Player } from "../core/types";
+import type { ReplayShot } from "../replay/killcam";
 import { TILE_SIZE, world } from "./arena";
 
-export type CameraMode = "lobby" | "first-person" | "spectator";
+export type CameraMode = "lobby" | "first-person" | "spectator" | "replay";
 
 export interface CameraFrame {
   mode: CameraMode;
@@ -16,6 +17,10 @@ export interface CameraFrame {
   swing: number;
   /** How far the local player stands below the deck, wading in a pool. */
   sink?: number;
+  /** The killcam's camera; required in the replay mode. */
+  shot?: ReplayShot;
+  /** 0..1 scale for camera shake, from the player's motion setting. */
+  motion?: number;
   /**
    * Called once the first-person eye is placed. Poses the held-item anchor, may offset the camera
    * (shake, recoil) and returns a field-of-view offset in degrees.
@@ -38,6 +43,8 @@ export class CameraRig {
   readonly camera = new THREE.PerspectiveCamera(BASE_FOV, 1, 0.04, 220);
   /** Anchor for the first-person arm; posed each frame by the feel layer. */
   readonly held = new THREE.Group();
+  /** Distance to what the replay camera looks at, for its depth of field. */
+  focusDistance = 5;
   /** 0 in the perspective view, 1 once the tactical board fills the screen. */
   tacticalBlend = 0;
   private board = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.04, 220);
@@ -76,6 +83,22 @@ export class CameraRig {
       camera.rotation.set(frame.pitch, frame.yaw, 0);
       held.visible = you.alive;
       camera.fov = BASE_FOV + frame.feel({ moving: moved > 0.0001, travel: this.travel, swing: frame.swing });
+    } else if (mode === "replay" && frame.shot) {
+      held.visible = false;
+      const { shot } = frame;
+      const x = world(shot.focus.x, state.size),
+        z = world(shot.focus.z, state.size);
+      // Two detuned sines per axis: cheap, smooth, and never the same twice in a row.
+      const shake = shot.shake * (frame.motion ?? 1) * 0.11;
+      camera.position.set(
+        x + Math.sin(shot.azimuth) * shot.distance + Math.sin(wallTime * 47) * shake,
+        shot.height + Math.sin(wallTime * 61 + 1.3) * shake,
+        z + Math.cos(shot.azimuth) * shot.distance + Math.sin(wallTime * 53 + 2.1) * shake,
+      );
+      camera.lookAt(x, shot.focusHeight, z);
+      camera.rotateZ(shot.roll + Math.sin(wallTime * 39) * shake * 0.12);
+      camera.fov = shot.fov;
+      this.focusDistance = Math.hypot(shot.distance, shot.height - shot.focusHeight);
     } else {
       held.visible = false;
       const angle = mode === "lobby" ? 0.62 + Math.sin(wallTime * 0.035) * 0.1 : wallTime * 0.035;

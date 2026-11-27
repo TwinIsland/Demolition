@@ -22,6 +22,9 @@ import { saveGraphics } from "../render/graphics-settings";
 import { createSession } from "../session/create-session";
 import type { BattleFireLayer } from "../ui/battle-effects";
 import { FeedbackHud } from "../ui/feedback-hud";
+import { motionScale } from "../feel/settings";
+import { Killcam, lastFallen } from "../replay/killcam";
+import { ReplayRecorder } from "../replay/recorder";
 import { GameUI, type UIActions } from "../ui/game-ui";
 import { mountUiFeedback } from "../ui/ui-feedback";
 import { afterPaint, loading, localizeDocument } from "../ui/loading";
@@ -63,6 +66,10 @@ export class GameApp {
 
   private readonly setup = new MatchSetup(LOCAL_PLAYER_ID);
 
+  /** The last seconds of the match, kept for the killcam. */
+  private readonly recorder = new ReplayRecorder();
+  /** The replay that is playing, and the screen that reports the kill once it is over. */
+  private killcam?: { director: Killcam; then: "eliminated" | "result" };
   private closed = false;
   /** Where "back" leads from the manual: the lobby, or the match it was opened over. */
   private helpFromLobby = true;
@@ -143,6 +150,7 @@ export class GameApp {
   // --- Screen transitions ---
 
   openRoom() {
+    this.dropReplay();
     this.releaseControls();
     this.sound.setMusic(MENU_MUSIC);
     this.screens.transition("room");
@@ -153,6 +161,7 @@ export class GameApp {
   }
 
   goHome() {
+    this.dropReplay();
     this.screens.transition("lobby");
     this.previewTerrain = false;
     this.ui.setTerrainPreview(false);
@@ -196,6 +205,7 @@ export class GameApp {
       if (this.ui.lobbyBack()) this.sound.menu("back");
     } else if (this.screens.is("playing")) this.pause();
     else if (this.screens.is("paused", "help")) this.resume();
+    else if (this.screens.is("replay")) this.skipReplay();
   }
 
   closeCredits() {
@@ -419,6 +429,7 @@ export class GameApp {
         this.sound.menu();
       },
       playClick: () => this.playClick(),
+      skipReplay: () => this.skipReplay(),
     };
   }
 
@@ -510,6 +521,7 @@ export class GameApp {
       );
       const viewer = this.viewer(state);
       this.deathShown = false;
+      this.recorder.clear();
       this.feedback.clear();
       this.displayedLevel = viewer.level;
       this.ui.setSound(this.sound.enabled);
@@ -591,6 +603,10 @@ export class GameApp {
       this.renderRoom(now);
       return;
     }
+    if (this.screens.is("replay")) {
+      this.replayFrame(now, dt);
+      return;
+    }
     if (this.screens.is("playing")) {
       const observation = this.session.getSnapshot();
       const input = this.keyboard.decide({ self: this.viewer(observation), state: observation, dt });
@@ -598,6 +614,7 @@ export class GameApp {
       const simStarted = performance.now();
       this.session.advance(dt);
       this.renderer.profile("sim", performance.now() - simStarted);
+      this.recorder.capture(this.session.getSnapshot());
     }
     const state = this.session.getSnapshot();
     const viewer = this.viewer(state);
@@ -639,19 +656,12 @@ export class GameApp {
     this.feedback.update(state, viewer, this.keyboard.yaw, now);
     if (this.ui.mutationNotice.update(state.time)) this.sound.mutationReady();
     if (state.phase === "finished") {
-      this.screens.transition("result");
-      this.releaseControls();
-      this.ui.clearPerks();
-      this.ui.showResult(state, viewer, this.typeTick);
-      if (state.winnerId === viewer.id) this.sound.victory();
-      else if (viewer.alive) this.sound.eliminated();
+      // The final kill, whoever made it; a draw by timeout has none.
+      const fallen = lastFallen(state);
+      if (!fallen || !this.beginReplay(state, fallen, "result")) this.showOutcome("result");
     } else if (!viewer.alive && !this.deathShown) {
       this.deathShown = true;
-      this.screens.transition("eliminated");
-      this.releaseControls();
-      this.ui.clearPerks();
-      this.ui.showResult(state, viewer, this.typeTick);
-      this.sound.eliminated();
+      if (!this.beginReplay(state, viewer, "eliminated")) this.showOutcome("eliminated");
     } else {
       if (this.ui.offerPerks(viewer)) this.sound.perkReady();
       if (viewer.level > this.displayedLevel) {
@@ -667,6 +677,73 @@ export class GameApp {
         this.displayedLevel = viewer.level;
       }
     }
+  }
+
+  /** The after-action screen: the decided match, or the viewer's own elimination. */
+  private showOutcome(screen: "eliminated" | "result") {
+    const state = this.session.getSnapshot(),
+      viewer = this.viewer(state);
+    this.screens.transition(screen);
+    this.releaseControls();
+    this.ui.clearPerks();
+    this.ui.showResult(state, viewer, this.typeTick);
+    if (screen === "eliminated") this.sound.eliminated();
+    else if (state.winnerId === viewer.id) this.sound.victory();
+    else if (viewer.alive) this.sound.eliminated();
+  }
+
+  // --- Killcam ---
+
+  /**
+   * Plays the last moments of `victim` back in slow motion before `then` is shown. The match
+   * stands still meanwhile. Returns false when there is nothing to play, or motion is switched off.
+   */
+  private beginReplay(state: Readonly<GameSnapshot>, victim: Player, then: "eliminated" | "result") {
+    const diedAt = victim.stats?.diedAt;
+    if (diedAt === undefined || motionScale() === 0 || this.reducedMotion.matches) return false;
+    // The frame of the kill itself is the one the replay ends on.
+    this.recorder.capture(state, true);
+    const director = Killcam.plan(this.recorder.clip(diedAt - 3), victim.id);
+    if (!director) return false;
+    this.killcam = { director, then };
+    this.screens.transition("replay");
+    this.releaseControls();
+    this.ui.clearPerks();
+    this.feedback.clear();
+    const killer = state.players.find((p) => p.id === director.killerId);
+    this.ui.killcam.show({ final: then === "result", victim, killer });
+    this.renderer.beginReplay(director.terrainChanges);
+    this.sound.beginReplay(director.duration);
+    return true;
+  }
+
+  private replayFrame(now: number, dt: number) {
+    const { director } = this.killcam!;
+    const finished = director.advance(dt);
+    const { state, shot, rate, progress, cues } = director.frame();
+    this.sound.replayCues(cues, shot.focus, rate);
+    this.renderer.replayShot = shot;
+    this.renderer.render(state, "replay", LOCAL_PLAYER_ID, 0, now, 0, false, 0, false);
+    this.renderer.finishFrame();
+    this.ui.killcam.progress(progress);
+    if (finished) this.skipReplay();
+  }
+
+  /** Ends the replay, on its last frame or on the player's key, and moves on to the result. */
+  skipReplay() {
+    const then = this.killcam?.then;
+    if (!then) return;
+    this.dropReplay();
+    this.showOutcome(then);
+  }
+
+  /** Puts the replay away without moving on, for the ways out that skip the result as well. */
+  private dropReplay() {
+    if (!this.killcam) return;
+    this.killcam = undefined;
+    this.renderer.endReplay();
+    this.ui.killcam.hide();
+    this.sound.endReplay();
   }
 
   private renderScene(state: Readonly<GameSnapshot>, viewer: Player, now: number) {

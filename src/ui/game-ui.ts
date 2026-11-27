@@ -26,6 +26,7 @@ import { EquipmentWheel } from "./equipment-wheel";
 import { graphicsChange, graphicsForm, syncGraphics, syncVolumeRow } from "./graphics-options";
 import type { VolumeChannel, Volumes } from "../audio/sound";
 import { icon } from "./icons";
+import { KillcamView } from "./killcam";
 import { LobbyView } from "./lobby";
 import { manualMarkup } from "./manual";
 import { pauseMarkup } from "./match-menus";
@@ -83,6 +84,8 @@ export class GameUI {
   readonly mutationNotice: MutationNotice;
   /** Targeting tablet for perks that need a cell. */
   readonly strike: StrikePanel;
+  /** Chrome of the slow-motion replay. */
+  readonly killcam: KillcamView;
   private readonly hud: HTMLElement;
   private readonly topBar: TopBar;
   private readonly lobby: LobbyView;
@@ -147,6 +150,7 @@ export class GameUI {
     this.feed = new CombatFeed(this.hud);
     this.overlay = new Overlay(query(root, "#overlay"));
     this.perkTray = new PerkTray(root);
+    this.killcam = new KillcamView(root, () => actions.skipReplay());
 
     const { signal } = this.listeners;
     this.syncKeyHints();

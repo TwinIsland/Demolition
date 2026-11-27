@@ -299,6 +299,33 @@ export class GameAudio {
     this.engine.play(strength > 0.7 ? THUNDER.near : THUNDER.far, { gain: 0.45 + 0.55 * strength });
   }
 
+  /** Killcam: the music steps back for the `seconds` the replay runs. */
+  beginReplay(seconds: number) {
+    this.engine.duckMusic(0.4, seconds * 1000, 900);
+  }
+
+  /**
+   * Killcam: sounds what the slowed picture is showing, pitched down with it. `rate` is the
+   * playback rate of the replay and `focus` the cell its camera looks at, which is where it listens.
+   */
+  replayCues(events: readonly GameEvent[], focus: Vec2, rate: number) {
+    if (!this.enabled) return;
+    // Half the slow-down reaches the pitch: a blast at a fifth of its speed would be a rumble.
+    const pitch = 0.5 + 0.5 * rate;
+    for (const event of events) {
+      const near = falloff(distanceTo(focus, event), 12, 0.15);
+      if (event.type === "blast") this.play("blast", { gain: near, rate: pitch, priority: true });
+      else if (event.type === "cover") this.play(`cover-break-${event.id % 2}`, { gain: near, rate: pitch });
+      else if (event.type === "bomb") this.play("bomb-place", { gain: near, rate: pitch });
+      else if (event.type === "kill") this.play("body-fall", { gain: near, rate: pitch, priority: true });
+    }
+  }
+
+  /** Killcam over, or skipped: the music comes back up. */
+  endReplay() {
+    this.engine.duckMusic(1, 0, 400);
+  }
+
   reset() {
     this.battleFire(0);
     this.rain(0);

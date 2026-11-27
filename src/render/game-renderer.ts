@@ -46,6 +46,11 @@ import { syncEntities } from "./entity-sync";
 import { PostPipeline, postQuality } from "./post/post-pipeline";
 import { DynamicResolution } from "./dynamic-resolution";
 import { disposeStandIns, texturesUnder, uploadTextures } from "./gpu-warmup";
+import type { ReplayShot } from "../replay/killcam";
+
+/** Seconds a fallen operator stays on the floor in a replay, and how long the fall takes. */
+const BODY_SHOWN = 4;
+const BODY_FALL = 0.5;
 
 /** Retina panels report 2 or 3; shading every one of those pixels buys little over 1.5. */
 const MAX_PIXEL_RATIO = 1.5;
@@ -66,6 +71,10 @@ interface FrameView {
 
 export class GameRenderer {
   landingPreview?: { x: number; z: number; valid: boolean };
+  /** The killcam's camera for the next frame drawn in the replay mode. */
+  replayShot?: ReplayShot;
+  /** A replay is about to show terrain from before the present: the arena has to be rebuilt for it. */
+  private terrainStale = false;
   private preview?: LobbyPreview;
   private portraits?: PlayerPortraits;
   private disposed = false;
@@ -220,6 +229,21 @@ export class GameRenderer {
     this.post.setSize(w, h);
     this.rig.setAspect(w / h);
   }
+  /**
+   * Call before the first frame of a killcam. Replayed snapshots run a few seconds behind the
+   * scene: effects must see their events again, and cover that has since been destroyed has to
+   * stand again, which only a rebuilt arena can show.
+   */
+  beginReplay(terrainChanges: boolean) {
+    this.lastEvent = 0;
+    this.terrainStale = terrainChanges;
+  }
+  /** Call after the last replay frame, before the present is drawn again. */
+  endReplay() {
+    this.replayShot = undefined;
+    this.terrainStale = false;
+    this.post.setReplay(0);
+  }
   private rebuild(state: Readonly<GameSnapshot>, terrainOnly = false) {
     if (this.arena) {
       this.scene.remove(this.arena.root);
@@ -288,6 +312,8 @@ export class GameRenderer {
         state,
         this.mapId === state.mapId && state.mode === "practice" && state.phase === "playing",
       );
+    else if (this.terrainStale) this.rebuild(state, true);
+    this.terrainStale = false;
     const syncStarted = performance.now();
     this.feel.begin(state, localId, wallTime);
     const mapChanged = this.arena!.sync(state);
@@ -342,6 +368,8 @@ export class GameRenderer {
       tactical: topDown,
       swing: this.models.swingAmount(you, state.time),
       sink: this.wading.sink(localId),
+      shot: this.replayShot,
+      motion: motionScale(),
       feel: (motion) =>
         this.feel.firstPerson(
           rig.camera,
@@ -386,6 +414,11 @@ export class GameRenderer {
     }
     // Renders the floor reflection, so the camera must be final here.
     this.weather.update(rig.camera, wallTime, [rig.held]);
+    // Held just above zero through the wide view, so the pass does not join the chain mid-shot.
+    this.post.setReplay(
+      mode === "replay" ? Math.max(0.002, this.replayShot?.grade ?? 0) : 0,
+      rig.focusDistance,
+    );
     this.post.render();
     if (scanning) {
       const players = state.players
@@ -536,7 +569,16 @@ export class GameRenderer {
       );
       avatar.rotation.y = p.yaw;
       this.feel.actor(avatar as MinecraftAvatar, p, state.time);
-      if (p.invulnerableUntil > state.time && state.phase === "playing")
+      // Live, the fallen simply leave the field. A replay is about the fall, so it shows one.
+      const fallen = mode === "replay" && !p.alive ? state.time - (p.stats?.diedAt ?? NaN) : NaN;
+      if (fallen >= 0 && fallen < BODY_SHOWN) {
+        const u = Math.min(1, fallen / BODY_FALL);
+        avatar.visible = true;
+        avatar.rotation.order = "YXZ";
+        avatar.rotation.x = -1.5 * u * u;
+        avatar.position.y = p.elevation + 0.42 * Math.sin(Math.PI * u) + 0.14 * u * u;
+      }
+      if (p.alive && p.invulnerableUntil > state.time && state.phase === "playing")
         avatar.visible &&= Math.sin(wallTime * 30) > -0.25;
       // Optical camo: the owner (and anyone scanning) sees a rippling body, everyone else nothing.
       const cloaked = p.alive && isCloaked(p, state.time);
@@ -768,6 +810,8 @@ export class GameRenderer {
     this.nextShadow = 0;
     renderer.shadowMap.needsUpdate = renderer.shadowMap.enabled;
     // These draw straight to the canvas after the post pipeline, from scenes of their own.
+    // The killcam lens is one more program; one frame through it now saves a hitch at the kill.
+    this.post.warmReplay();
     this.nightVision.warm(renderer, camera);
     this.offerFire.warm(renderer);
     this.upgradeFx.warm(renderer);

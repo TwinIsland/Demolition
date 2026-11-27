@@ -15,6 +15,7 @@ import {
 } from "postprocessing";
 import { N8AOPostPass } from "n8ao";
 import type { GraphicsSettings } from "../graphics-settings";
+import { ReplayGradeEffect } from "./replay-grade";
 
 /** The post-processing features derived from the player's graphics settings. */
 export interface PostQuality {
@@ -66,6 +67,11 @@ export class PostPipeline {
   private occlusion?: N8AOPostPass;
   private effects?: EffectPass;
   private occlusionActive = true;
+  /** The killcam's lens. Its pass joins the chain only while a replay runs, so play pays nothing. */
+  private replayGrade!: ReplayGradeEffect;
+  private replayPass!: EffectPass;
+  private replaying = false;
+  private replayWarm = false;
 
   constructor(
     private renderer: THREE.WebGLRenderer,
@@ -84,6 +90,28 @@ export class PostPipeline {
     this.build();
   }
 
+  /**
+   * Strength (0..1) and focus distance of the killcam lens; 0 takes its pass out of the chain.
+   * It works on the scene-linear image, ahead of the pass that tone-maps to the screen.
+   */
+  setReplay(strength: number, focus = 5) {
+    this.replayGrade.set(strength, focus);
+    const wanted = strength > 0.001;
+    if (wanted === this.replaying) return;
+    this.replaying = wanted;
+    if (wanted) this.composer.addPass(this.replayPass, this.composer.passes.indexOf(this.effects!));
+    else this.composer.removePass(this.replayPass);
+  }
+
+  /** Compiles the killcam lens behind the loading screen with one frame drawn through it. */
+  warmReplay() {
+    if (this.replayWarm) return;
+    this.replayWarm = true;
+    this.setReplay(1);
+    this.render();
+    this.setReplay(0);
+  }
+
   setQuality(quality: PostQuality) {
     const before = this.quality;
     this.quality = quality;
@@ -96,12 +124,14 @@ export class PostPipeline {
     )
       return;
     // The merged shader is compiled per effect set, so a settings change rebuilds the tail.
+    this.setReplay(0);
     for (const pass of [this.effects, this.occlusion])
       if (pass) {
         this.composer.removePass(pass);
         pass.dispose();
       }
     this.occlusion = this.effects = undefined;
+    this.replayPass.dispose();
     this.composer.multisampling = quality.multisampling;
     this.build();
   }
@@ -133,11 +163,17 @@ export class PostPipeline {
   }
 
   dispose() {
+    this.setReplay(0);
+    this.replayPass.dispose();
     this.composer.dispose();
   }
 
   private build() {
     const { quality } = this;
+    // Scene depth reaches the effects only from buffers that are not multisampled.
+    this.replayGrade = new ReplayGradeEffect(quality.multisampling === 0);
+    this.replayPass = new EffectPass(this.camera, this.replayGrade);
+    this.replayWarm = false;
     if (quality.occlusion !== "off") {
       const pass = new N8AOPostPass(this.scene, this.camera);
       pass.configuration.aoRadius = AO_RADIUS;

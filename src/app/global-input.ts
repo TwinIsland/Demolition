@@ -58,6 +58,13 @@ export function attachGlobalInput(app: GameApp, root: HTMLElement, canvas: HTMLC
       return;
     }
     if (event.altKey || event.ctrlKey || event.metaKey || event.isComposing) return;
+    if (app.screen === "replay") {
+      // The killcam takes no input except the keys that cut it short.
+      event.preventDefault();
+      if (!event.repeat && (event.code === "Space" || event.code === "Enter" || event.code === "Escape"))
+        app.skipReplay();
+      return;
+    }
     const action = bindings.action(event.code);
     if (app.targeting) {
       // The targeting tablet owns the keyboard: steer the cursor, fire, or put it away.

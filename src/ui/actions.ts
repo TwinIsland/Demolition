@@ -57,4 +57,6 @@ export interface UIActions {
   toggleSound(): void;
   /** Feedback for a click that triggers nothing with its own sound. */
   playClick(): void;
+  /** Cuts the slow-motion replay short. */
+  skipReplay(): void;
 }

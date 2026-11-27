@@ -399,4 +399,8 @@ export const EN_MESSAGES: Readonly<Record<string, string>> = {
   淘汰数: "Kills",
   炸药数: "Charges planted",
   存活至: "Survived",
+  击杀回放: "Killcam",
+  最终击杀: "Final kill",
+  跳过: "Skip",
+  "{0} 被淘汰": "{0} eliminated",
 };
