@@ -269,6 +269,40 @@ export class GameUI {
     updateRoom(room, slots, look, mapName, rate, this.actions.drawPortrait, mode, zoneDuration, zoneScale);
   }
 
+  /**
+   * A match under the story: the lobby gets out of the way and comes back, without touching the
+   * overlay, which is where the story itself is mounted.
+   */
+  setStoryMatch(on: boolean) {
+    this.lobby.root.hidden = on;
+    if (!on) this.setStoryHud(false);
+  }
+
+  /** The match HUD under a story scene. */
+  setStoryHud(on: boolean) {
+    document.body.classList.toggle("in-game", on);
+    this.hud.hidden = !on;
+    if (on) return;
+    this.mutationNotice.clear();
+    this.clearPerks();
+    this.strike.close();
+    clearRankBanner(this.hud);
+    this.feed.clear();
+    this.eventCursor = 0;
+    this.effects.clearDamageFlash();
+  }
+
+  /** The skill shop as a dialog inside `parent`, for a scene that keeps the overlay to itself. */
+  mountShop(parent: HTMLElement, player: Player) {
+    const shop = document.createElement("section");
+    shop.className = "modal shop-modal";
+    shop.setAttribute("role", "dialog");
+    shop.innerHTML = shopMarkup(player);
+    parent.append(shop);
+    queueMicrotask(() => shop.querySelector<HTMLElement>("button")?.focus());
+    return shop;
+  }
+
   showShop(player: Player) {
     const shop = this.overlay.dialog("shop-modal");
     if (shop) updateShop(shop, player);

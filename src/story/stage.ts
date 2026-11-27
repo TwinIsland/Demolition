@@ -39,6 +39,18 @@ export interface StoryMatch {
   onFrame?: (state: Readonly<GameSnapshot>, dt: number) => void;
   /** Shows the match's own HUD (health, coins, equipment). Off by default. */
   hud: boolean;
+  /**
+   * The match answers the hero the way a real one does: combat feed, hit markers, the perk offer
+   * after a level and its banner. Off by default, for scenes that only stage people.
+   */
+  live: boolean;
+  /** Where the first-person camera looks, in radians. Set it to hand the view over from a cutscene. */
+  look: { yaw: number; pitch: number };
+  /**
+   * Opens the game's own skill shop over the scene and resolves once the hero deploys from it,
+   * false if the story was closed first. The world stands still meanwhile.
+   */
+  shop(): Promise<boolean>;
 }
 export interface StoryMatchOptions {
   mapId: string;

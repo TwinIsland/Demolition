@@ -1,3 +1,4 @@
+import { ASCENSION } from "./acts/ascension";
 import { BEDROOM } from "./acts/bedroom";
 import { hasCheckpoint, type StorySave } from "./save";
 import type { Scene } from "./script";
@@ -21,7 +22,7 @@ export const ACTS: readonly Act[] = [
   { id: "act1", title: "第一幕　凡俗的牢笼", completes: "act1-done", scene: BEDROOM },
   { id: "act2", title: "第二幕　泡泡 X", requires: "act1-done", completes: "act2-done", scene: BUBBLE_X },
   { id: "act3", title: "第三幕　平面国", requires: "act2-done", completes: "act3-done" },
-  { id: "act4", title: "第四幕　升维", requires: "act3-done", completes: "act4-done" },
+  { id: "act4", title: "第四幕　升维", requires: "act3-done", completes: "act4-done", scene: ASCENSION },
   { id: "act5", title: "第五幕　关机", requires: "act4-done", completes: "act5-done", scene: SHUTDOWN },
 ];
 

@@ -155,7 +155,7 @@ export function rewardZombie(ctx: SimContext, zombie: Zombie, owner: Player, ite
     { type: "hit", item, zombie: { id: zombie.id, level: zombie.level, outcome: "killed" } },
     zombie,
   );
-  if (owner.alive && ctx.random() < mutationChance) {
+  if (owner.alive && (zombie.gift || ctx.random() < mutationChance)) {
     const mutation = grantMutation(owner, ctx.random);
     emit(ctx, owner, combatMessage("获得{0}", mutation), { type: "mutation", mutation: mutation.id });
   }

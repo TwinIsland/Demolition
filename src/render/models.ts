@@ -8,6 +8,7 @@ import { MinecraftAvatar } from "./minecraft-avatar";
 import { MinecraftSkins, type SkinModel } from "./minecraft-skins";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import type { ItemId, Player } from "../core/types";
+import { isBystander } from "../core/types";
 import { ITEMS } from "../core/content";
 import { KNIFE_STYLES } from "../core/knife-styles";
 import { MaterialLibrary } from "./materials";
@@ -131,6 +132,8 @@ export class Models {
   updateCharacter(player: Player, time: number, signalColor: string) {
     const bar = this.healthBars.get(player.id);
     const fraction = player.hp / player.maxHp;
+    // Someone who cannot be hurt has no health to show.
+    if (bar) bar.sprite.visible = !isBystander(player);
     if (bar && bar.fraction !== fraction) {
       const ctx = (bar.texture.image as HTMLCanvasElement).getContext("2d")!;
       ctx.fillStyle = "#17201d";

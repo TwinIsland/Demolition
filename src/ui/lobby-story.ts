@@ -1,3 +1,4 @@
+import { ASCENSION_ART } from "../story/ascend/assets";
 import { SHUTDOWN_ART } from "../story/shutdown/art";
 import { language, t } from "../i18n";
 import { STORY_ART } from "../story/assets";
@@ -22,6 +23,7 @@ const ACT_NOTES: Record<string, string> = {
 const ACT_COVERS: Partial<Record<string, string>> = {
   act1: STORY_ART.comic1,
   act2: STORY_ART.comic2,
+  act4: ASCENSION_ART.panel,
   act5: SHUTDOWN_ART.wall,
 };
 const coverOf = (act: Act) => {

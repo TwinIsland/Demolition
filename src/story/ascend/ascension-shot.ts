@@ -2,8 +2,12 @@ import * as THREE from "three";
 import type { DimensionLook, StagedShot } from "../../render/game-renderer";
 import type { StagedView } from "../../render/camera-rig";
 
-/** Seconds from the first flicker to the first-person view. */
+/** Seconds from the hit's lead-in to the first-person view. */
 export const ASCENSION_SECONDS = 9;
+/** Seconds before that in which the overhead world breaks into blocks: the shot's clock starts at minus this. */
+export const ASCENSION_LEAD = 0.8;
+/** The front goes on running after the camera has landed, until the horizon stands too. */
+export const ASCENSION_SPREAD = 10.4;
 /** When the saxophone comes in: the world lets go of the page at this moment. */
 export const ASCENSION_HIT = 1;
 
@@ -31,8 +35,8 @@ const mix = (a: number, b: number, u: number) => a + (b - a) * u;
  * up while the camera is still high, and the hills on the horizon rise as it levels out.
  */
 export class AscensionShot implements StagedShot {
-  /** Seconds since the shot began. The owner advances it. */
-  time = 0;
+  /** Seconds on the shot's clock. The owner advances it, starting from `-ASCENSION_LEAD`. */
+  time = -ASCENSION_LEAD;
   private focus = new THREE.Vector3();
   private forward = new THREE.Vector3();
   private euler = new THREE.Euler(0, 0, 0, "YXZ");
@@ -68,22 +72,23 @@ export class AscensionShot implements StagedShot {
 
   /** The flat world this frame; undefined once all of it stands. */
   get look(): DimensionLook | undefined {
-    if (this.done) return undefined;
     const t = this.time;
+    if (t >= ASCENSION_SPREAD) return undefined;
     return {
       x: this.x,
       z: this.z,
-      front: t < 0.6 ? 0 : 1.2 * (Math.exp(0.95 * (t - 0.6)) - 1),
+      front: t < 0.8 ? 0 : 0.9 * (Math.exp(0.72 * (t - 0.8)) - 1),
       block: BLOCK,
-      cover: 1 - ease(span(2.6, 4.6, t)),
-      glow: ease(span(0.15, 0.6, t)) * (1 - ease(span(6, 7.6, t))),
+      // The blocks come in over the lead; the depth-free look goes out as the camera comes down.
+      cover: ease(span(-ASCENSION_LEAD, -0.15, t)) * (1 - ease(span(3, 5, t))),
+      glow: ease(span(0.3, 0.8, t)) * (1 - ease(span(7.5, 9.5, t))),
     };
   }
 
   private distance(start: number) {
     const t = this.time;
-    const down = mix(start, 9.5, glide(span(ASCENSION_HIT, 5.2, t)));
-    const near = mix(down, 6, ease(span(5.2, 7.2, t)));
+    const down = mix(start, 7.5, glide(span(ASCENSION_HIT, 5.4, t)));
+    const near = mix(down, 4.6, ease(span(5.4, 7.2, t)));
     return mix(near, 0, glide(span(7.2, ASCENSION_SECONDS, t)));
   }
 
@@ -95,11 +100,14 @@ export class AscensionShot implements StagedShot {
 
     // What the rig looks at: the middle of the board, then the pair, then straight ahead.
     this.stand.set((this.x + this.companion.x) / 2, 1.25, (this.z + this.companion.z) / 2);
-    this.focus.set(0, 0, 0).lerp(this.stand, glide(span(ASCENSION_HIT, 4.6, t))).lerp(eye, arrive);
+    this.focus
+      .set(0, 0, 0)
+      .lerp(this.stand, glide(span(ASCENSION_HIT, 4.6, t)))
+      .lerp(eye, arrive);
 
-    const heading = mix(this.yaw - Math.PI, this.yaw, glide(span(1.5, 6.4, t)));
-    const settle = mix(boardPitch, -0.3, glide(span(ASCENSION_HIT, 5, t)));
-    const pitch = mix(mix(settle, -0.12, ease(span(5, 7.2, t))), 0, arrive);
+    const heading = mix(this.yaw - Math.PI, this.yaw, glide(span(1.5, 6, t)));
+    const settle = mix(boardPitch, -0.36, glide(span(ASCENSION_HIT, 5.9, t)));
+    const pitch = mix(mix(settle, -0.1, ease(span(5.9, 7.2, t))), 0, arrive);
     this.euler.set(pitch, heading, 0);
     camera.quaternion.setFromEuler(this.euler);
     this.forward.set(0, 0, -1).applyQuaternion(camera.quaternion);

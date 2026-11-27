@@ -35,7 +35,7 @@ import { SceneEnvironment, type ThunderCue } from "./environment/scene-environme
 import { MAPS } from "../core/maps";
 import { ITEMS, RULES } from "../core/content";
 import type { FireCell, GameSnapshot, Player } from "../core/types";
-import { inTacticalView, isCloaked } from "../core/types";
+import { inTacticalView, isBystander, isCloaked } from "../core/types";
 import { StrikeEffect } from "./strike-effect";
 import { Arena, TILE_SIZE, world } from "./arena";
 import { WaterWake } from "./water-wake";
@@ -83,6 +83,10 @@ export class GameRenderer {
    */
   dimension?: DimensionLook;
   private dimensionField = new DimensionField();
+  /** Swaps the visible sky for an equirectangular painting, turned by `turn` radians; undefined undoes it. */
+  paintSky(texture?: THREE.Texture, turn = 0) {
+    this.environment.paint(texture, turn);
+  }
   /** A replay is about to show terrain from before the present: the arena has to be rebuilt for it. */
   private terrainStale = false;
   private preview?: LobbyPreview;
@@ -605,7 +609,7 @@ export class GameRenderer {
         avatar.rotation.x = -1.5 * u * u;
         avatar.position.y = p.elevation + 0.42 * Math.sin(Math.PI * u) + 0.14 * u * u;
       }
-      if (p.alive && p.invulnerableUntil > state.time && state.phase === "playing")
+      if (p.alive && p.invulnerableUntil > state.time && state.phase === "playing" && !isBystander(p))
         avatar.visible &&= Math.sin(wallTime * 30) > -0.25;
       // Optical camo: the owner (and anyone scanning) sees a rippling body, everyone else nothing.
       const cloaked = p.alive && isCloaked(p, state.time);

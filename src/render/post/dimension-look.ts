@@ -70,11 +70,17 @@ void mainImage(const in vec4 inputColor, const in vec2 uv, out vec4 outputColor)
   float held = step(dmFront + (own - 0.15) * band, away);
   float letting = (1.0 - held) * smoothstep(dmFront - band * 0.6, dmFront + band, away);
 
-  vec4 clip = dmProject * vec4(centre.x, point.y, centre.y, 1.0);
-  vec2 at = clamp(clip.xy / clip.w * 0.5 + 0.5, 0.0, 1.0);
+  // Four taps inside the block, so that one bright blade of grass does not colour all of it.
+  vec3 tile = vec3(0.0);
+  for (int i = 0; i < 4; i++) {
+    vec2 corner = centre + (vec2(float(i - 2 * (i / 2)), float(i / 2)) - 0.5) * dmBlock * 0.5;
+    vec4 clip = dmProject * vec4(corner.x, point.y, corner.y, 1.0);
+    tile += texture2D(inputBuffer, clamp(clip.xy / clip.w * 0.5 + 0.5, 0.0, 1.0)).rgb;
+  }
+  tile *= 0.25;
   // Blocks smaller than a screen pixel would only shimmer: far away, keep the palette alone.
   float fine = 1.0 - smoothstep(0.6, 1.6, max(fwidth(point.x), fwidth(point.z)) / dmBlock);
-  vec3 flatColor = dmPalette(mix(inputColor.rgb, texture2D(inputBuffer, at).rgb, fine));
+  vec3 flatColor = dmPalette(mix(inputColor.rgb, tile, fine));
   vec2 inside = fract(point.xz / dmBlock);
   float seam = min(min(inside.x, 1.0 - inside.x), min(inside.y, 1.0 - inside.y));
   flatColor *= 1.0 - 0.14 * fine * (1.0 - smoothstep(0.0, 0.1, seam));

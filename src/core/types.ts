@@ -250,12 +250,16 @@ export interface Zombie extends Vec2 {
   /** Unit grid direction of the current knockback, away from the attacker. */
   knockback?: Vec2;
   level: 1 | 2 | 3;
+  /** Put there by the story: whoever fells it is certain of its mutation. */
+  gift?: boolean;
   id: number;
   yaw: number;
   destination: Vec2;
 }
 export const inTacticalView = (p: Readonly<Player>, time: number) =>
   (p.forcedViewUntil ?? 0) > time || !!p.tacticalView;
+/** A bystander the story put on the map: nothing ever hurts them (see `StoryActor.passive`). */
+export const isBystander = (p: Readonly<Player>) => p.invulnerableUntil >= Number.MAX_SAFE_INTEGER;
 export const isCloaked = (p: Readonly<Player>, time: number) => (p.cloakUntil ?? 0) > time;
 /** Whether `viewer` is denied the blast path of this charge. */
 export const trailHidden = (bomb: Pick<Bomb, "concealed" | "ownerId">, viewerId: string) =>
