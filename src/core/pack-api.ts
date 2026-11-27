@@ -48,6 +48,11 @@ export interface MapDefinition extends Pack {
   bgm?: string;
   artwork?: string;
   backdrop?: string;
+  /**
+   * Square top-down ground painting drawn under the radar's walls and contacts. Bundled maps need
+   * no entry: a `minimap.webp` beside `index.js` is picked up. Defaults to a drawn surface.
+   */
+  minimap?: string;
   theme: "garden" | "midnight" | "rainforest" | "poolrooms" | "backrooms";
   /** Cells between the boundary wall and each corner spawn. Defaults to 1, the corner itself. */
   spawnInset?: number;

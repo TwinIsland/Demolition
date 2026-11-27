@@ -6,6 +6,7 @@ import type { GameSnapshot, Player, Vec2 } from "../core/types";
 import { field, t } from "../i18n";
 import { query, setText } from "./dom";
 import { icon } from "./icons";
+import { drawSelfMarker } from "./tactical-map";
 import type { HudFrame, HudView } from "./view";
 
 export interface StrikePanelActions {
@@ -177,27 +178,36 @@ export class StrikePanel implements HudView {
       ctx.fill();
     }
     for (const p of s.players) {
-      if (!p.alive) continue;
+      if (!p.alive || p.id === viewer.id) continue;
       // Same sensor rules as the radar: optical camo hides a contact, a scan restores it.
-      if (p.id !== viewer.id && viewer.scanUntil <= s.time && isCloaked(p, s.time)) continue;
-      const x = at(p.x + 0.5),
-        y = at(p.z + 0.5);
-      ctx.fillStyle = p.id === viewer.id ? "#ffffff" : p.color;
+      if (viewer.scanUntil <= s.time && isCloaked(p, s.time)) continue;
+      ctx.fillStyle = p.color;
       ctx.strokeStyle = "#06120e";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      if (p.id === viewer.id) {
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(-p.yaw);
-        ctx.moveTo(0, -cell * 0.46);
-        ctx.lineTo(cell * 0.32, cell * 0.34);
-        ctx.lineTo(-cell * 0.32, cell * 0.34);
-        ctx.closePath();
-        ctx.restore();
-      } else ctx.arc(x, y, cell * 0.3, 0, Math.PI * 2);
+      ctx.arc(at(p.x + 0.5), at(p.z + 0.5), cell * 0.3, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
+    }
+    if (viewer.alive) {
+      const x = at(viewer.x + 0.5),
+        y = at(viewer.z + 0.5);
+      // Ticks on the bottom and right edges (the others carry grid references) mark the operator's column and row.
+      ctx.fillStyle = "#ffffff";
+      for (const [tx, ty] of [
+        [x, w - PAD * 0.5],
+        [w - PAD * 0.5, y],
+      ]) {
+        ctx.beginPath();
+        ctx.arc(tx, ty, PAD * 0.28, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      drawSelfMarker(ctx, x, y, {
+        radius: Math.max(9, cell * 0.5),
+        yaw: viewer.yaw,
+        color: viewer.color,
+        label: t("你"),
+      });
     }
     const cursor = this.cursor;
     const radius = this.perk.stats?.radius ?? 0;

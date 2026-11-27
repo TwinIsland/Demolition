@@ -7,6 +7,7 @@ import type { Sound } from "../audio/sound";
 import type { GameRenderer } from "../render/game-renderer";
 import type { LoadProgress } from "../render/scene-assets";
 import { preloadSkinAssets } from "../ui/skin-assets";
+import { preloadMinimapArt } from "../ui/tactical-map";
 
 const IMAGE_URL = /^(?:\.{0,2}\/|https?:\/\/|data:image\/)/i;
 const FONT_FAMILIES = ["Barlow Semi Condensed", "Noto Sans SC"];
@@ -119,5 +120,6 @@ export async function preloadEverything(
     progress.track([...stylesheetImages(), ...contentImages()].map(decodeImage)),
     progress.track(loadFonts()),
     progress.track([preloadSkinAssets()]),
+    progress.track(preloadMinimapArt()),
   ]);
 }

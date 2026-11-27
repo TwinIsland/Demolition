@@ -52,6 +52,7 @@ export default defineMap(
 | `obstacles` | Weighted pool of cover models. Defaults to the `storage` set |
 | `bgm` | Music URL for this map |
 | `artwork`, `backdrop` | Card image on the map picker and full-screen background. `backdrop` falls back to `artwork`, and with neither the live 3D map is shown |
+| `minimap` | Square top-down ground painting drawn under the radar's walls and markers. A built-in map needs no entry: put `minimap.webp` (or `.png`, `.jpg`) next to its `index.js`. Without it the radar draws a surface in the theme's colours |
 | `subtitle` | Line under the map name |
 
 ## Random generation

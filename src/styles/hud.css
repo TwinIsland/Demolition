@@ -141,12 +141,15 @@
   margin: var(--space-5) var(--space-1) 0;
 }
 .radar-footer i {
-  width: 5px;
-  height: 5px;
-  background: var(--gold-200);
+  /* The same white arrow that marks the viewer on the map. */
+  width: 9px;
+  height: 10px;
+  background: #fff;
   display: inline-block;
-  border-radius: var(--radius-round);
-  margin-right: 4px;
+  clip-path: polygon(50% 0, 100% 100%, 50% 72%, 0 100%);
+  filter: drop-shadow(0 0 3px #fff);
+  margin-right: 5px;
+  vertical-align: -1px;
 }
 #crosshair {
   position: absolute;
