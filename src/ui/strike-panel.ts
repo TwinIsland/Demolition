@@ -119,9 +119,11 @@ export class StrikePanel implements HudView {
     const box = this.canvas.getBoundingClientRect();
     const scale = this.canvas.width / box.width;
     const cell = (this.canvas.width - PAD * 2) / size;
+    // The outer wall ring and the margin snap to the nearest legal cell, so a click near the edge still fires.
+    const clamp = (v: number) => Math.max(1, Math.min(size - 2, v));
     const target = {
-      x: Math.floor(((event.clientX - box.left) * scale - PAD) / cell),
-      z: Math.floor(((event.clientY - box.top) * scale - PAD) / cell),
+      x: clamp(Math.floor(((event.clientX - box.left) * scale - PAD) / cell)),
+      z: clamp(Math.floor(((event.clientY - box.top) * scale - PAD) / cell)),
     };
     this.aim(strikeTargetValid(this.view!.snapshot, target) ? target : undefined);
   }

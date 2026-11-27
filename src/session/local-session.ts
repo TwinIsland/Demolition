@@ -34,6 +34,10 @@ export class LocalMatchSession implements MatchSession {
       activateSkill: input.activateSkill ?? prior?.activateSkill,
       choosePerk: input.choosePerk ?? prior?.choosePerk,
       usePerk: input.usePerk ?? prior?.usePerk,
+      // A display faster than the 60 Hz simulation submits several inputs per step: these edges
+      // must survive the later, empty ones or the purchase or the strike is silently dropped.
+      perkTarget: input.usePerk ? input.perkTarget : prior?.perkTarget,
+      buyItem: input.buyItem ?? prior?.buyItem,
     });
   }
   advance(dt: number) {
@@ -81,6 +85,7 @@ export class LocalMatchSession implements MatchSession {
           activateSkill: undefined,
           choosePerk: undefined,
           usePerk: undefined,
+          perkTarget: undefined,
         });
       this.accumulator -= RULES.step;
     }
