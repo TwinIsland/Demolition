@@ -102,9 +102,15 @@
 }
 .story-art {
   inset: -3% !important;
-  /* The image is set inline from STORY_ART. */
+  /* The image is set from ACT_COVERS in ui/lobby-story.ts. */
   background: 50% 40% / cover;
   animation: story-drift 26s ease-in-out infinite alternate;
+  opacity: 0;
+  transition: opacity 0.9s ease-in-out;
+}
+/* Two layers take turns, so a new chapter's panel fades in over the old one. */
+.story-art.current {
+  opacity: 1;
 }
 @keyframes story-drift {
   from {

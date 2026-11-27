@@ -17,6 +17,20 @@ const ACT_NOTES: Record<string, string> = {
   act4: "世界多出了一条轴。这才是吾真正的姿态。呕。",
   act5: "天上传来母亲大人的声音。四天王一共三个，这是传统。",
 };
+/**
+ * Comic panel behind the menu, per act. An act without one yet borrows the nearest earlier
+ * panel, so adding art for an act is one entry here.
+ */
+const ACT_COVERS: Partial<Record<string, string>> = {
+  act1: STORY_ART.comic1,
+};
+const coverOf = (act: Act) => {
+  for (let index = ACTS.indexOf(act); index >= 0; index--) {
+    const cover = ACT_COVERS[ACTS[index].id];
+    if (cover) return cover;
+  }
+  return STORY_ART.comic1;
+};
 const EMPTY_NOTE = "世界平静得令人作呕。至少有一个人是这么认为的。";
 
 const number = (index: number) => String(index + 1).padStart(2, "0");
@@ -40,7 +54,7 @@ export const storyPanels = () => `
 
 /** Everything of the story tab outside the list: backdrop, save card and the overwrite dialog. */
 export const storyChrome = () => `
-        <div class="story-backdrop" aria-hidden="true"><i class="story-art" style="background-image:url('${STORY_ART.comic1}')"></i><i class="story-tone"></i><i class="story-lines"></i></div>
+        <div class="story-backdrop" aria-hidden="true"><i class="story-art"></i><i class="story-art"></i><i class="story-tone"></i><i class="story-lines"></i></div>
         <aside class="story-save">
           <header class="save-head"><small class="detail-kicker"></small><span class="save-act"></span></header>
           <h2 class="detail-title"></h2>
@@ -70,6 +84,8 @@ export class StoryMenu {
   private readonly dialog: HTMLElement;
   /** What the card last showed, so it only animates when its subject changes. */
   private cardKey = "";
+  /** Image the backdrop shows now; its two layers take turns so a change crossfades. */
+  private cover = "";
 
   constructor(
     private readonly root: HTMLElement,
@@ -142,6 +158,17 @@ export class StoryMenu {
       );
     }
     this.renderCard(hovered);
+    // The backdrop follows the story: the furthest act reached, or the one being looked at.
+    this.showCover(coverOf(ACTS.find((act) => act.id === hovered) ?? next ?? ACTS.at(-1)!));
+  }
+
+  private showCover(cover: string) {
+    if (cover === this.cover) return;
+    this.cover = cover;
+    const layers = [...this.root.querySelectorAll<HTMLElement>(".story-art")];
+    const arriving = layers.find((layer) => !layer.classList.contains("current")) ?? layers[0];
+    arriving.style.backgroundImage = `url("${cover}")`;
+    for (const layer of layers) layer.classList.toggle("current", layer === arriving);
   }
 
   private get started() {
