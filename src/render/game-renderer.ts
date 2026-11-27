@@ -41,7 +41,9 @@ import { Arena, TILE_SIZE, world } from "./arena";
 import { WaterWake } from "./water-wake";
 import { Models } from "./models";
 import type { SkinModel } from "./minecraft-skins";
-import { CameraRig, type CameraMode } from "./camera-rig";
+import { CameraRig, type CameraMode, type StagedShot } from "./camera-rig";
+import { DimensionField } from "./story/dimension-field";
+import type { DimensionLook } from "./post/dimension-look";
 import { syncEntities } from "./entity-sync";
 import { PostPipeline, postQuality } from "./post/post-pipeline";
 import { DynamicResolution } from "./dynamic-resolution";
@@ -57,7 +59,7 @@ const MAX_PIXEL_RATIO = 1.5;
 const basePixelRatio = (settings: GraphicsSettings) =>
   Math.min(devicePixelRatio, MAX_PIXEL_RATIO) * settings.scale;
 
-export type { CameraMode };
+export type { CameraMode, StagedShot, DimensionLook };
 
 /** Per-frame view inputs shared by the entity sync steps. */
 interface FrameView {
@@ -73,6 +75,14 @@ export class GameRenderer {
   landingPreview?: { x: number; z: number; valid: boolean };
   /** The killcam's camera for the next frame drawn in the replay mode. */
   replayShot?: ReplayShot;
+  /** A cutscene's camera. While it is set it has the last word on every frame drawn. */
+  stagedShot?: StagedShot;
+  /**
+   * The story's flat world: everything beyond the look's front lies flat and is drawn in blocks.
+   * Undefined is the ordinary world.
+   */
+  dimension?: DimensionLook;
+  private dimensionField = new DimensionField();
   /** A replay is about to show terrain from before the present: the arena has to be rebuilt for it. */
   private terrainStale = false;
   private preview?: LobbyPreview;
@@ -340,7 +350,13 @@ export class GameRenderer {
     this.updateAim(
       state,
       you,
-      { firstPerson, topDown, previewThrows, pitch, yaw: lookYaw ?? you.yaw },
+      {
+        firstPerson: firstPerson && !this.stagedShot,
+        topDown,
+        previewThrows,
+        pitch,
+        yaw: lookYaw ?? you.yaw,
+      },
       mapChanged,
     );
     this.wading.update(
@@ -369,6 +385,7 @@ export class GameRenderer {
       swing: this.models.swingAmount(you, state.time),
       sink: this.wading.sink(localId),
       shot: this.replayShot,
+      staged: this.stagedShot,
       motion: motionScale(),
       feel: (motion) =>
         this.feel.firstPerson(
@@ -392,6 +409,10 @@ export class GameRenderer {
     // Only the placement frame animates in the tactical view.
     this.target.scale.setScalar(topDown && motionScale() > 0 ? 1 + 0.1 * Math.sin(wallTime * 7) : 1);
     if (firstPerson && rig.tacticalBlend > 0) this.avatars.get(localId)!.visible = rig.tacticalBlend > 0.35;
+    if (this.stagedShot?.showSelf) this.avatars.get(localId)!.visible = you.alive;
+    this.dimensionField.set(this.dimension);
+    const reshaped = this.dimensionField.update(this.arena!.root, this.dynamic);
+    this.post.setDimension(this.dimension);
     this.blastEffect.update(state, rig.camera);
     for (const impact of this.strikes.update(state, this.renderer.getPixelRatio(), localId)) {
       // Felt across the whole arena, hardest close to the impact.
@@ -403,8 +424,8 @@ export class GameRenderer {
     this.submitStarted = performance.now();
     this.performance.beginGpu();
     // The blended perspective/orthographic projection breaks AO's depth reconstruction.
-    this.post.setOcclusionActive(rig.tacticalBlend < 0.02);
-    this.refreshShadows(state, wallTime, mapChanged || zoneShake > 0);
+    this.post.setOcclusionActive(rig.tacticalBlend < 0.02 && rig.perspective);
+    this.refreshShadows(state, wallTime, mapChanged || zoneShake > 0 || reshaped);
     this.adaptResolution(wallTime);
     const lamps = lampLevel(state, motionScale());
     if (lamps !== this.lamps) {

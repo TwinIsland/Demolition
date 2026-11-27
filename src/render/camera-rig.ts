@@ -21,11 +21,34 @@ export interface CameraFrame {
   shot?: ReplayShot;
   /** 0..1 scale for camera shake, from the player's motion setting. */
   motion?: number;
+  /** A staged shot: it has the last word on the camera this frame, whatever the mode. */
+  staged?: StagedShot;
   /**
    * Called once the first-person eye is placed. Poses the held-item anchor, may offset the camera
    * (shake, recoil) and returns a field-of-view offset in degrees.
    */
   feel(motion: HeldMotion): number;
+}
+
+/** What a staged shot is given to work from: where the camera would have been without it. */
+export interface StagedView {
+  /** The first-person eye of the local player. */
+  eye: THREE.Vector3;
+  /** The overhead camera of the tactical board, already fitted to the arena. */
+  board: THREE.OrthographicCamera;
+  /** Arena side in cells. */
+  size: number;
+}
+
+/**
+ * A camera move written by a cutscene. `pose` places the camera and may replace its projection
+ * matrix; it returns false when the projection is no longer a plain perspective one, which the
+ * renderer needs to know for effects that rebuild depth.
+ */
+export interface StagedShot {
+  pose(camera: THREE.PerspectiveCamera, view: StagedView): boolean;
+  /** Draw the local player's body, which a first-person frame leaves out. */
+  showSelf?: boolean;
 }
 
 export interface HeldMotion {
@@ -47,6 +70,9 @@ export class CameraRig {
   focusDistance = 5;
   /** 0 in the perspective view, 1 once the tactical board fills the screen. */
   tacticalBlend = 0;
+  /** False while a staged shot has replaced the perspective projection. */
+  perspective = true;
+  private eye = new THREE.Vector3();
   private board = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.04, 220);
   private previous = new THREE.Vector2();
   private travel = 0;
@@ -119,11 +145,24 @@ export class CameraRig {
     this.tacticalBlend += (goal - this.tacticalBlend) * (1 - Math.exp(-delta * 24));
     if (Math.abs(this.tacticalBlend - goal) < 0.001) this.tacticalBlend = goal;
     if (mode === "first-person" && this.tacticalBlend > 0) this.blendToBoard(state.size);
+    this.perspective = true;
+    if (!frame.staged) return;
+    held.visible = false;
+    this.eye.set(
+      world(you.x, state.size),
+      EYE_HEIGHT + you.elevation - (frame.sink ?? 0),
+      world(you.z, state.size),
+    );
+    this.fitBoard(state.size);
+    camera.fov = BASE_FOV;
+    camera.updateProjectionMatrix();
+    this.perspective = frame.staged.pose(camera, { eye: this.eye, board: this.board, size: state.size });
+    camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
   }
 
-  private blendToBoard(size: number) {
+  /** Fits the overhead camera to an arena `size` cells across. */
+  private fitBoard(size: number) {
     const { camera, board } = this;
-    const t = this.tacticalBlend;
     const half = ((size * TILE_SIZE) / 2 + 2) / Math.min(1, camera.aspect);
     board.left = -half * camera.aspect;
     board.right = -board.left;
@@ -132,6 +171,12 @@ export class CameraRig {
     board.position.set(0, size * TILE_SIZE, size * TILE_SIZE * 0.31);
     board.lookAt(0, 0, 0);
     board.updateProjectionMatrix();
+  }
+
+  private blendToBoard(size: number) {
+    const { camera, board } = this;
+    const t = this.tacticalBlend;
+    this.fitBoard(size);
     camera.position.lerp(board.position, t);
     camera.quaternion.slerp(board.quaternion, t);
     // Match clip-space weights at board center during the perspective-to-ortho blend.

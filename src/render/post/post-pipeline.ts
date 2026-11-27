@@ -16,6 +16,7 @@ import {
 import { N8AOPostPass } from "n8ao";
 import type { GraphicsSettings } from "../graphics-settings";
 import { ReplayGradeEffect } from "./replay-grade";
+import { DimensionLookEffect, type DimensionLook } from "./dimension-look";
 
 /** The post-processing features derived from the player's graphics settings. */
 export interface PostQuality {
@@ -72,6 +73,10 @@ export class PostPipeline {
   private replayPass!: EffectPass;
   private replaying = false;
   private replayWarm = false;
+  /** The flat world of the story. Like the lens, its pass is in the chain only while it shows. */
+  private dimensionLook!: DimensionLookEffect;
+  private dimensionPass!: EffectPass;
+  private dimensional = false;
 
   constructor(
     private renderer: THREE.WebGLRenderer,
@@ -103,6 +108,21 @@ export class PostPipeline {
     else this.composer.removePass(this.replayPass);
   }
 
+  /** Draws the flat world beyond the look's front; undefined takes the pass out of the chain. */
+  setDimension(look?: DimensionLook) {
+    if (look) this.dimensionLook.set(look);
+    const wanted = !!look;
+    if (wanted === this.dimensional) return;
+    this.dimensional = wanted;
+    // Ahead of the lens and the tone mapping, on the scene-linear image.
+    if (wanted)
+      this.composer.addPass(
+        this.dimensionPass,
+        this.composer.passes.indexOf(this.replaying ? this.replayPass : this.effects!),
+      );
+    else this.composer.removePass(this.dimensionPass);
+  }
+
   /** Compiles the killcam lens behind the loading screen with one frame drawn through it. */
   warmReplay() {
     if (this.replayWarm) return;
@@ -125,6 +145,7 @@ export class PostPipeline {
       return;
     // The merged shader is compiled per effect set, so a settings change rebuilds the tail.
     this.setReplay(0);
+    this.setDimension();
     for (const pass of [this.effects, this.occlusion])
       if (pass) {
         this.composer.removePass(pass);
@@ -132,6 +153,7 @@ export class PostPipeline {
       }
     this.occlusion = this.effects = undefined;
     this.replayPass.dispose();
+    this.dimensionPass.dispose();
     this.composer.multisampling = quality.multisampling;
     this.build();
   }
@@ -164,7 +186,9 @@ export class PostPipeline {
 
   dispose() {
     this.setReplay(0);
+    this.setDimension();
     this.replayPass.dispose();
+    this.dimensionPass.dispose();
     this.composer.dispose();
   }
 
@@ -174,6 +198,8 @@ export class PostPipeline {
     this.replayGrade = new ReplayGradeEffect(quality.multisampling === 0);
     this.replayPass = new EffectPass(this.camera, this.replayGrade);
     this.replayWarm = false;
+    this.dimensionLook = new DimensionLookEffect(this.camera, quality.multisampling === 0);
+    this.dimensionPass = new EffectPass(this.camera, this.dimensionLook);
     if (quality.occlusion !== "off") {
       const pass = new N8AOPostPass(this.scene, this.camera);
       pass.configuration.aoRadius = AO_RADIUS;
