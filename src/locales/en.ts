@@ -90,6 +90,7 @@ export const EN_MESSAGES: Readonly<Record<string, string>> = {
   "当前进度（{0}，{1}）将被清除，无法恢复。": "Your progress ({0}, {1}) will be erased for good.",
   覆盖并开始: "Overwrite and start",
   再点一次进入: "Click again to enter",
+  完成故事模式后解锁: "Finish the story to unlock",
   "退出到主菜单？": "Quit to the main menu?",
   "进度保存在上一个存档点，下次会从那里继续。":
     "Progress is kept at the last save point, and you will resume from there.",
@@ -106,15 +107,6 @@ export const EN_MESSAGES: Readonly<Record<string, string>> = {
   关机: "Shutdown",
   "世界平静得令人作呕。至少有一个人是这么认为的。":
     "The world is sickeningly calm. At least one person thinks so.",
-  "紧闭的窗帘，三桶泡面，以及一台被封印在床底的魔导器。":
-    "Drawn curtains, three cups of instant noodles, and a grimoire engine sealed under the bed.",
-  "桌面上唯一的图标。咏唱需要十一秒，引信只有三秒。":
-    "The only icon on the desktop. The chant takes eleven seconds. The fuse takes three.",
-  "一个没有「上」的世界，和一位嘴硬的引导精灵。":
-    "A world with no such thing as up, and a guide sprite who would never admit she cares.",
-  "世界多出了一条轴。这才是吾真正的姿态。呕。": "The world gains an axis. Behold my true form. Urp.",
-  "天上传来母亲大人的声音。四天王一共三个，这是传统。":
-    "Mother's voice comes down from the sky. The Four Heavenly Kings number three, as tradition demands.",
   战场预览: "Preview map",
   返回部署界面: "Back to deployment",
   加载中: "Loading",

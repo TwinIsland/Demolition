@@ -18,6 +18,7 @@ import { creditsLabel } from "./credits";
 import { query } from "./dom";
 import { icon } from "./icons";
 import { rise, rowsIn, rowsOut, settle, slideIn, wipe } from "./lobby-motion";
+import { finishLocked, knifeLocked, mapLocked } from "../story/unlocks";
 import { StoryMenu, storyChrome, storyPanels } from "./lobby-story";
 
 /**
@@ -65,8 +66,12 @@ const modeRow = (id: MatchMode) => {
   return `<button type="button" class="menu-row menu-choice" data-mode="${id}" aria-pressed="false" ${available ? "" : 'disabled title="尚未开放"'}>${available ? "" : icon("lock")}<span class="row-label"></span><i class="row-check"></i></button>`;
 };
 
-const tile = (attribute: string, id: string) =>
-  `<button type="button" class="menu-row menu-tile menu-choice" data-${attribute}="${id}" aria-pressed="false"><span class="row-label"></span></button>`;
+/** `lockable` tiles carry a padlock, shown while the choice still has to be earned. */
+const tile = (attribute: string, id: string, lockable = false) =>
+  `<button type="button" class="menu-row menu-tile menu-choice${attribute === "knife" ? " knife-tile" : ""}" data-${attribute}="${id}" aria-pressed="false"><span class="row-label"></span>${lockable ? icon("lock") : ""}</button>`;
+const UNLOCK_HINT = "完成故事模式后解锁";
+/** How long the hint under a grid stays after a click on a locked tile. */
+const HINT_MS = 3200;
 
 const lobbyMarkup = () => `
         <div class="lobby-scrim"></div>${storyChrome()}
@@ -91,7 +96,8 @@ const lobbyMarkup = () => `
               ${MODE_IDS.map(modeRow).join("")}
             </nav>
             <nav class="menu-panel" data-panel="map" aria-label="作战区域" hidden>
-              ${ROOM_MAPS.map((map) => `<button type="button" class="menu-row menu-choice" data-map="${map.id}" aria-pressed="false"><span class="row-label"></span><span class="row-value">${map.size} × ${map.size}</span><i class="row-check"></i></button>`).join("")}
+              ${ROOM_MAPS.map((map) => `<button type="button" class="menu-row menu-choice" data-map="${map.id}" aria-pressed="false"><span class="row-label"></span><span class="row-value">${map.size} × ${map.size}</span>${icon("lock")}<i class="row-check"></i></button>`).join("")}
+              <small class="unlock-hint" data-hint="map" role="status"></small>
             </nav>
             <nav class="menu-panel" data-panel="outfit" aria-label="干员外观" hidden>
               <div class="menu-caption">角色皮肤</div>
@@ -103,15 +109,14 @@ const lobbyMarkup = () => `
               <small id="skin-status" role="status"></small>
               <div class="menu-caption">炸药涂装</div>
               <div class="menu-grid three">${Object.keys(BOMB_STYLES)
-                .map((id) => tile("finish", id))
+                .map((id) => tile("finish", id, true))
                 .join("")}</div>
+              <small class="unlock-hint" data-hint="finish" role="status"></small>
               <div class="menu-caption">小刀皮肤</div>
-              <div class="menu-grid three">${Object.values(KNIFE_STYLES)
-                .map(
-                  (knife) =>
-                    `<button type="button" class="menu-row menu-tile menu-choice knife-tile" data-knife="${knife.id}" aria-pressed="false"><span class="row-label"></span></button>`,
-                )
+              <div class="menu-grid three">${Object.keys(KNIFE_STYLES)
+                .map((id) => tile("knife", id, true))
                 .join("")}</div>
+              <small class="unlock-hint" data-hint="knife" role="status"></small>
             </nav>${storyPanels()}
           </div>
         </section>
@@ -164,6 +169,7 @@ export class LobbyView {
   private readonly armSetting: HTMLElement;
   private readonly terrainButton: HTMLButtonElement;
   private readonly story: StoryMenu;
+  private hintTimer = 0;
   private readonly listeners = new AbortController();
 
   constructor(
@@ -343,6 +349,9 @@ export class LobbyView {
     else if (this.story.click(button)) return;
     else if ("back" in button.dataset) this.back();
     // GameUI routes the choice itself; picking one closes the sub-menu.
+    // A locked choice explains itself and changes nothing.
+    else if (button.classList.contains("locked"))
+      this.showUnlockHint(map ? "map" : finish ? "finish" : "knife");
     else if (mode || map) this.show("home");
     else if (skin) {
       this.look.skin = skin;
@@ -435,11 +444,22 @@ export class LobbyView {
       // A skin the story hands out shows up once its ending has been reached.
       row.hidden = skinLocked(SKINS[row.dataset.skin!]);
     }
-    for (const row of this.root.querySelectorAll<HTMLElement>("[data-finish]"))
-      label(row, field(BOMB_STYLES[row.dataset.finish!], "name"), row.dataset.finish === this.look.bombStyle);
+    const lock = (row: HTMLElement, locked: boolean) => {
+      row.classList.toggle("locked", locked);
+      row.setAttribute("aria-disabled", String(locked));
+      row.title = locked ? t(UNLOCK_HINT) : "";
+    };
+    for (const row of this.root.querySelectorAll<HTMLElement>("[data-map]"))
+      lock(row, mapLocked(row.dataset.map!));
+    for (const row of this.root.querySelectorAll<HTMLElement>("[data-finish]")) {
+      const id = row.dataset.finish!;
+      label(row, field(BOMB_STYLES[id], "name"), id === this.look.bombStyle);
+      lock(row, finishLocked(id));
+    }
     for (const row of this.root.querySelectorAll<HTMLElement>("[data-knife]")) {
       const knife = KNIFE_STYLES[row.dataset.knife!];
       label(row, field(knife, "name"), knife.id === this.look.knifeStyle);
+      lock(row, knifeLocked(knife.id));
     }
     for (const row of this.root.querySelectorAll<HTMLElement>("[data-arm]"))
       label(row, t(ARM_MODELS.find(([id]) => id === row.dataset.arm)![1]), row.dataset.arm === this.armModel);
@@ -506,6 +526,18 @@ export class LobbyView {
         }),
       );
     }
+  }
+
+  /** Says under the grid why a locked tile did nothing. */
+  private showUnlockHint(grid: "map" | "finish" | "knife") {
+    clearTimeout(this.hintTimer);
+    for (const hint of this.root.querySelectorAll<HTMLElement>(".unlock-hint")) {
+      const shown = hint.dataset.hint === grid;
+      hint.textContent = shown ? t(UNLOCK_HINT) : "";
+    }
+    this.hintTimer = window.setTimeout(() => {
+      for (const hint of this.root.querySelectorAll<HTMLElement>(".unlock-hint")) hint.textContent = "";
+    }, HINT_MS);
   }
 
   // --- Skin import ---

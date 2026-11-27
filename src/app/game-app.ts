@@ -5,6 +5,7 @@ import { CREDITS_MUSIC, MENU_MUSIC, Sound, STORY_MUSIC } from "../audio/sound";
 import { nextAct } from "../story/chapters";
 import type { StoryMatch, StoryMatchOptions } from "../story/stage";
 import { loadStory } from "../story/save";
+import { finishLocked, knifeLocked, mapLocked } from "../story/unlocks";
 import { perkById } from "../core/content";
 import { MAPS } from "../core/maps";
 import { MATCH_MODES } from "../core/match-modes";
@@ -365,7 +366,7 @@ export class GameApp {
       selectMap: (id) => {
         if (!this.screens.is("lobby") || id === this.setup.mapId) return;
         const map = MAPS.find((entry) => entry.id === id);
-        if (!map) return;
+        if (!map || mapLocked(id)) return;
         this.setup.mapId = id;
         this.session.restart(this.setup.backdropOptions());
         this.renderer.selectLobbyMap(map);
@@ -379,6 +380,8 @@ export class GameApp {
       },
       changeOutfit: (value) => {
         if (!this.screens.is("lobby")) return;
+        if (value.bombStyle && finishLocked(value.bombStyle)) return;
+        if (value.knifeStyle && knifeLocked(value.knifeStyle)) return;
         Object.assign(this.setup.appearance, value);
         if (value.skin) void this.renderer.previewSkin(value.skin).catch(console.error);
         this.applyAppearance();

@@ -10,6 +10,7 @@ import {
   type ZombieRate,
 } from "../core/room";
 import type { SkinModel } from "../render/minecraft-skins";
+import { finishLocked, knifeLocked } from "../story/unlocks";
 import { Setting, isRecord, jsonCodec, readEntry, textCodec } from "./storage";
 
 /** State of the imported PNG skin. The entries are written by the renderer's skin loader. */
@@ -58,12 +59,16 @@ export const loadZoneDuration = (): number => Number(zoneDuration.load() ?? ZONE
 export const saveZoneDuration = (seconds: number) => zoneDuration.save(String(seconds));
 
 export function loadAppearance(): Appearance {
-  return {
+  const look: Appearance = {
     skin: readCustomSkin().imported ? "custom" : DEFAULT_SKIN.id,
     bombStyle: DEFAULT_FINISH.id,
     knifeStyle: DEFAULT_KNIFE.id,
     ...appearance.load(),
   };
+  // A choice saved before these were tied to the story falls back until it is earned.
+  if (finishLocked(look.bombStyle)) look.bombStyle = DEFAULT_FINISH.id;
+  if (knifeLocked(look.knifeStyle)) look.knifeStyle = DEFAULT_KNIFE.id;
+  return look;
 }
 
 export function saveAppearance(value: Appearance) {

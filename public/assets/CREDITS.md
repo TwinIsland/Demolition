@@ -200,6 +200,7 @@ Trees, palms, ruin walls and shafts of light are built in code (`src/render/jung
 | `public/assets/environment/jungle.ogg` | Synthesised for this project (insects, crickets, birds, frogs; 24 s seamless loop) | Project | CC0 1.0 | — |
 | `src/modules/maps/rainforest/bgm.mp3` | [Rite of Passage](https://incompetech.com/music/royalty-free/music.html), incompetech.com | Kevin MacLeod | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Re-encoded from 320 to 160 kbit/s MP3 |
 | `src/modules/maps/rainforest/briefing.webp`, `backdrop.webp` | AI-generated key art (monsoon rainforest clearing with a temple ruin turned forward base), supplied by the project owner | Project | CC0 1.0 | — |
+| `src/modules/maps/flatland/briefing.webp`, `backdrop.webp` | AI-generated key art (starter village plaza under cherry blossom at sunset, torii and snow peak), supplied by the project owner | Project | CC0 1.0 | — |
 
 The footsteps and the ambience loop are built by `scripts/make-jungle-sounds.py`.
 
