@@ -69,5 +69,4 @@ export const BUBBLE_X: ArcadeScene = {
   },
   goneArt: STORY_ART.comic2,
   checkpoint: "act2-done",
-  endCard: { title: "第二幕　泡泡 X", note: "进度已保存 · 未完待续" },
 };

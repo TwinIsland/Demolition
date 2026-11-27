@@ -240,5 +240,4 @@ export const BEDROOM: RoomScene = {
     { who: "zero", mood: "smug", text: "原来如此。这就是命运石之门的选择。" },
   ],
   checkpoint: "act1-done",
-  endCard: { title: "第一幕　凡俗的牢笼", note: "进度已保存 · 未完待续" },
 };

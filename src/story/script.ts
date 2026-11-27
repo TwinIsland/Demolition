@@ -56,8 +56,6 @@ export interface RoomScene {
   outro: readonly Line[];
   /** Checkpoint recorded when the scene ends. */
   checkpoint: string;
-  /** Card shown before returning to the menu. */
-  endCard: { title: string; note: string };
 }
 
 /** Moments of the arcade act that carry lines, in the order they happen. */
@@ -98,7 +96,6 @@ export interface ArcadeScene {
   /** Illustration shown once the player has been pulled in. */
   goneArt: string;
   checkpoint: string;
-  endCard: { title: string; note: string };
 }
 
 export type Scene = RoomScene | ArcadeScene;

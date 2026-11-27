@@ -86,7 +86,8 @@ export class StoryMenu {
 
   constructor(
     private readonly root: HTMLElement,
-    private readonly start: (act: string) => void,
+    /** `titled` opens the act on its title card: it was picked from the list, not played into. */
+    private readonly start: (act: string, titled?: boolean) => void,
   ) {
     this.strip = query(root, ".chapter-strip");
     this.dialog = query(root, ".story-confirm");
@@ -125,7 +126,7 @@ export class StoryMenu {
   /** Handles a click in the tab. Returns false when the button is not one of its own. */
   click(button: HTMLButtonElement): boolean {
     const { story, chapter } = button.dataset;
-    if (chapter) this.start(chapter);
+    if (chapter) this.start(chapter, true);
     else if (story === "continue") this.resume();
     else if (story === "new") this.newGame();
     else if (story === "cancel") this.closeDialog();
