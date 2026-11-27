@@ -211,6 +211,11 @@ export class GameApp {
     else if (this.screens.is("replay")) this.skipReplay();
   }
 
+  /** Enter on the main menu: the open tab's primary action. */
+  confirmLobby() {
+    if (!this.ui.lobbyConfirm()) this.openRoom();
+  }
+
   closeCredits() {
     if (!this.screens.is("credits")) return;
     this.screens.transition("lobby");
@@ -224,6 +229,7 @@ export class GameApp {
     if (!this.screens.is("story")) return;
     this.screens.transition("lobby");
     this.ui.hideOverlay();
+    this.ui.refreshStory();
     this.sound.menu("back");
     this.sound.setMusic(MENU_MUSIC);
   }

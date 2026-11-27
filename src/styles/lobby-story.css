@@ -1,0 +1,373 @@
+/*
+ * Main menu tabs and the story tab (markup in ui/lobby.ts and ui/lobby-story.ts).
+ *
+ * The story tab reuses the lobby's rows, heading and card styles and swaps the gold accent for
+ * the violet of the story's comic art, so everything under `#lobby[data-tab="story"]` re-tints.
+ */
+
+/* ---------- Top-level tabs ---------- */
+.menu-tabs {
+  position: absolute;
+  left: calc(var(--u) * 404);
+  top: calc(var(--u) * 46);
+  height: calc(var(--u) * 48);
+  display: flex;
+  gap: calc(var(--u) * 6);
+  padding-left: calc(var(--u) * 26);
+  border-left: 1px solid #ffffff2e;
+  pointer-events: auto;
+  /* Above the top bar, whose brand shares this strip. */
+  z-index: calc(var(--z-topbar) + 1);
+}
+#lobby .menu-tab {
+  position: relative;
+  border: 0;
+  background: none;
+  padding: 0 calc(var(--u) * 22);
+  color: var(--text-muted);
+  font-size: calc(var(--u) * 23);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  transition: color var(--duration-base);
+}
+:lang(en) .menu-tab {
+  font-family: var(--font-hud);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.menu-tab::after {
+  content: "";
+  position: absolute;
+  inset: auto calc(var(--u) * 22) 0;
+  height: calc(var(--u) * 3);
+  background: var(--gold-400);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--duration-moderate) var(--ease-emphasized);
+}
+.menu-tab:is(:hover, :focus-visible) {
+  color: var(--text-strong);
+}
+.menu-tab[aria-pressed="true"] {
+  color: var(--gold-200);
+}
+.menu-tab[aria-pressed="true"]::after {
+  transform: none;
+}
+.menu-tab:focus-visible {
+  outline-offset: calc(var(--u) * -2);
+}
+
+/* ---------- Which tab shows what ---------- */
+#lobby[data-tab="story"] {
+  --gold-200: #ead9ff;
+  --gold-300: #c9a8f5;
+  --gold-400: #a35bf0;
+  --line: #b79cf04d;
+  --focus-ring: 2px solid #c9a8f5;
+}
+#lobby[data-tab="story"] :is(.menu-detail, .hint-versus),
+#lobby[data-tab="versus"] :is(.story-save, .hint-story) {
+  display: none;
+}
+/* The avatar keeps its box, which the renderer measures. */
+#lobby[data-tab="story"] #lobby-avatar {
+  visibility: hidden;
+  pointer-events: none;
+}
+#lobby[data-view="story"] .hint-back {
+  display: none;
+}
+
+/* ---------- Backdrop: the comic panel behind the menu ---------- */
+.story-backdrop {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #0b0812;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.45s ease-out,
+    visibility 0s 0.45s;
+}
+#lobby[data-tab="story"] .story-backdrop {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+.story-backdrop > i {
+  position: absolute;
+  inset: 0;
+}
+.story-art {
+  inset: -3% !important;
+  /* The image is set inline from STORY_ART. */
+  background: 50% 40% / cover;
+  animation: story-drift 26s ease-in-out infinite alternate;
+}
+@keyframes story-drift {
+  from {
+    transform: scale(1) translate3d(-0.8%, 0, 0);
+  }
+  to {
+    transform: scale(1.05) translate3d(0.8%, -0.6%, 0);
+  }
+}
+.story-tone {
+  background:
+    linear-gradient(90deg, #0a0712f5, #0b0814c7 26%, #0b081433 48%, #0b081426 60%, #0a0712d9 86%, #0a0712f2),
+    linear-gradient(0deg, #08060ee6, transparent 30%, transparent 78%, #08060ecc);
+}
+/* Screentone dots fading in from the left, like the panel's own shading. */
+.story-lines {
+  background: radial-gradient(circle, #b98cff38 0 calc(var(--u) * 1.4), transparent calc(var(--u) * 1.8)) 0
+    0 / calc(var(--u) * 9) calc(var(--u) * 9);
+  mask-image: linear-gradient(100deg, #000 4%, transparent 44%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .story-art {
+    animation: none;
+  }
+}
+
+/* ---------- Heading ---------- */
+#lobby[data-tab="story"] .menu-title {
+  text-shadow:
+    calc(var(--u) * 4) calc(var(--u) * 4) 0 #7a2fd6,
+    0 0 calc(var(--u) * 46) #a35bf099;
+}
+
+/* ---------- Primary action ---------- */
+.story-play {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 18);
+  width: 100%;
+  min-height: calc(var(--u) * 104);
+  margin-bottom: calc(var(--u) * 14);
+  padding: 0 calc(var(--u) * 26);
+  overflow: hidden;
+  border: 1px solid #e3ccff8c;
+  background:
+    radial-gradient(circle, #ffffff24 0 calc(var(--u) * 1.3), transparent calc(var(--u) * 1.7)) 0 0 /
+      calc(var(--u) * 8) calc(var(--u) * 8),
+    linear-gradient(100deg, #6a26c9, #9b4df0 58%, #c08bff);
+  color: #fff;
+  text-align: left;
+  box-shadow: 0 calc(var(--u) * 10) calc(var(--u) * 36) #7a2fd666;
+  transition:
+    filter var(--duration-base),
+    translate var(--duration-moderate) var(--ease-emphasized);
+}
+.story-play > .icon {
+  flex: none;
+  width: calc(var(--u) * 24);
+  height: calc(var(--u) * 24);
+  fill: currentColor;
+  stroke-width: 1;
+}
+.play-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: calc(var(--u) * 7);
+}
+.play-label {
+  font-size: calc(var(--u) * 32);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.16em;
+}
+:lang(en) .play-label {
+  font-family: var(--font-hud);
+  text-transform: uppercase;
+}
+.play-note {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 500 max(11px, calc(var(--u) * 17)) / 1.2 var(--font-ui);
+  letter-spacing: 0.08em;
+  color: #f1e4ffd9;
+}
+.story-play kbd {
+  flex: none;
+  padding: calc(var(--u) * 5) calc(var(--u) * 8);
+  font-size: max(10px, calc(var(--u) * 15));
+  letter-spacing: 0.08em;
+  color: #fff;
+  border-color: #ffffff73;
+  background: transparent;
+}
+.story-play:not(:disabled):is(:hover, :focus-visible) {
+  filter: brightness(1.14);
+  translate: calc(var(--u) * 6) 0;
+}
+.story-play:disabled {
+  border-color: var(--line);
+  background: #17111fd9;
+  color: var(--text-faint);
+  box-shadow: none;
+}
+.story-play:disabled .play-note {
+  color: var(--text-faint);
+}
+.story-play:disabled kbd {
+  display: none;
+}
+
+/* ---------- Chapter list ---------- */
+.row-index {
+  flex: none;
+  width: calc(var(--u) * 38);
+  font: 700 calc(var(--u) * 24) / 1 var(--font-hud);
+  letter-spacing: 0.06em;
+  color: var(--gold-300);
+}
+.chapter-row .row-label {
+  flex: none;
+  max-width: 60%;
+}
+.chapter-row > .icon,
+.chapter-row:disabled .row-arrow {
+  display: none;
+}
+.chapter-row[data-state="locked"] > .icon {
+  display: block;
+}
+.chapter-row[data-state="current"]:not(:disabled) .row-value {
+  color: var(--gold-200);
+}
+
+/* ---------- Save card ---------- */
+.story-save {
+  position: absolute;
+  right: var(--menu-edge);
+  bottom: calc(var(--u) * 112);
+  width: calc(var(--u) * 480);
+  display: grid;
+  gap: calc(var(--u) * 10);
+  padding: calc(var(--u) * 24) calc(var(--u) * 24) calc(var(--u) * 22);
+  border: 1px solid var(--line);
+  border-top: calc(var(--u) * 3) solid var(--gold-400);
+  background: linear-gradient(180deg, #150f1ef2, #0c0913f7);
+  box-shadow: 0 calc(var(--u) * 18) calc(var(--u) * 50) #000b;
+  pointer-events: auto;
+}
+.save-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.save-act {
+  font: 800 calc(var(--u) * 44) / 0.8 var(--font-hud);
+  letter-spacing: 0.04em;
+  color: transparent;
+  -webkit-text-stroke: 1px #c9a8f58c;
+}
+.story-save .detail-text {
+  min-height: 3em;
+}
+.save-track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: calc(var(--u) * 6);
+  margin: calc(var(--u) * 6) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.save-track li {
+  display: grid;
+  gap: calc(var(--u) * 7);
+  font: 600 max(10px, calc(var(--u) * 14)) / 1 var(--font-hud);
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+}
+.save-track i {
+  height: calc(var(--u) * 6);
+  background: #ffffff1c;
+}
+.save-track [data-state="done"] i {
+  background: var(--gold-400);
+}
+.save-track [data-state="current"] i {
+  background: linear-gradient(90deg, var(--gold-400) 50%, #ffffff1c 50%);
+  box-shadow: 0 0 calc(var(--u) * 12) #a35bf0b3;
+}
+.save-track .shown {
+  color: var(--gold-200);
+}
+.story-save .detail-stats {
+  grid-template-columns: 1.5fr 1.2fr 0.8fr;
+}
+
+/* ---------- Overwrite dialog ---------- */
+.story-confirm {
+  position: absolute;
+  inset: 0;
+  z-index: calc(var(--z-topbar) + 2);
+  display: grid;
+  place-items: center;
+  background: #06040bd1;
+  backdrop-filter: blur(calc(var(--u) * 6));
+  pointer-events: auto;
+}
+.story-confirm[hidden] {
+  display: none;
+}
+.confirm-box {
+  width: calc(var(--u) * 640);
+  display: grid;
+  gap: calc(var(--u) * 14);
+  padding: calc(var(--u) * 34) calc(var(--u) * 36) calc(var(--u) * 30);
+  border: 1px solid var(--line);
+  border-top: calc(var(--u) * 3) solid var(--gold-400);
+  background: linear-gradient(180deg, #171022, #0c0913);
+  box-shadow: 0 calc(var(--u) * 24) calc(var(--u) * 80) #000c;
+}
+.confirm-box h2 {
+  margin: 0;
+  font-size: calc(var(--u) * 44);
+  font-weight: 900;
+  line-height: 1.15;
+  color: var(--text-strong);
+}
+.confirm-text {
+  margin: 0;
+  font-size: max(12px, calc(var(--u) * 20));
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+.confirm-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: calc(var(--u) * 12);
+  margin-top: calc(var(--u) * 12);
+}
+.confirm-actions .menu-row {
+  justify-content: space-between;
+  background: #ffffff0d;
+  font-size: calc(var(--u) * 24);
+}
+.confirm-actions kbd {
+  font-size: max(9px, calc(var(--u) * 13));
+}
+.confirm-actions .confirm-danger {
+  --gold-400: #ff5d7a;
+  color: #ffc2cd;
+}
+.confirm-actions .confirm-danger::after {
+  background: linear-gradient(90deg, #ff5d7a52, #ff5d7a14 55%, #ff5d7a00);
+}
+
+/* ---------- Row highlight and focus ring in the story's violet ---------- */
+#lobby[data-tab="story"] .menu-row::after {
+  background: linear-gradient(90deg, #a35bf057, #a35bf01a 55%, #a35bf000);
+}
+#lobby[data-tab="story"] :focus-visible {
+  outline-color: #c9a8f5;
+}

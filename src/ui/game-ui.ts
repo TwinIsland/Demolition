@@ -198,6 +198,16 @@ export class GameUI {
     return this.lobby.back();
   }
 
+  /** Runs the primary action of a lobby tab that has its own. Returns false on the versus tab. */
+  lobbyConfirm(): boolean {
+    return this.lobby.confirm();
+  }
+
+  /** Re-reads the story save, after the story wrote to it. */
+  refreshStory() {
+    this.lobby.refreshStory();
+  }
+
   setAppearance(value: Appearance, customSkin: { imported: boolean; model?: SkinModel }) {
     this.lobby.setAppearance(value, customSkin);
   }
@@ -481,8 +491,6 @@ export class GameUI {
         return actions.openCredits();
       case "credits-close":
         return actions.closeCredits();
-      case "story":
-        return actions.openStory();
       case "terrain-preview":
         return actions.toggleTerrainPreview();
       case "sound":

@@ -17,13 +17,30 @@ import { creditsLabel } from "./credits";
 import { query } from "./dom";
 import { icon } from "./icons";
 import { rise, rowsIn, rowsOut, settle, slideIn, wipe } from "./lobby-motion";
+import { STORY_TITLE, StoryMenu, storyChrome, storyPanels } from "./lobby-story";
 
-/** The menu shows one panel at a time; `home` is the main menu, the others are its sub-menus. */
-type View = "home" | "mode" | "map" | "outfit";
-type SubView = Exclude<View, "home">;
+/**
+ * The menu shows one panel at a time. Each top-level tab has a root panel (`home` for versus,
+ * `story` for the story) and the other panels are sub-menus of one of the two.
+ */
+type View = "home" | "mode" | "map" | "outfit" | "story" | "chapters";
+type SubView = Exclude<View, "home" | "story">;
+type Tab = "versus" | "story";
+
+const TABS: Record<Tab, { label: string; root: View }> = {
+  versus: { label: "对战", root: "home" },
+  story: { label: "故事模式", root: "story" },
+};
+const tabOf = (view: View): Tab => (view === "story" || view === "chapters" ? "story" : "versus");
+const isRoot = (view: View) => TABS[tabOf(view)].root === view;
 
 const MODE_IDS = Object.keys(MATCH_MODES) as MatchMode[];
-const VIEW_TITLES: Record<SubView, string> = { mode: "对局模式", map: "作战区域", outfit: "干员外观" };
+const VIEW_TITLES: Record<SubView, string> = {
+  mode: "对局模式",
+  map: "作战区域",
+  outfit: "干员外观",
+  chapters: "章节选择",
+};
 const MODE_NOTES: Record<MatchMode, string> = {
   freeForAll: "标准规则。第一人称放置炸药，最后存活的干员获胜。",
   classic: "标准数值，全程俯视视角进行整场对局。",
@@ -52,8 +69,14 @@ const tile = (attribute: string, id: string) =>
   `<button type="button" class="menu-row menu-tile menu-choice" data-${attribute}="${id}" aria-pressed="false"><span class="row-label"></span></button>`;
 
 const lobbyMarkup = () => `
-        <div class="lobby-scrim"></div>
+        <div class="lobby-scrim"></div>${storyChrome()}
         <div class="menu-wipe" aria-hidden="true"></div>
+        <nav class="menu-tabs" aria-label="主菜单">${(Object.keys(TABS) as Tab[])
+          .map(
+            (tab) =>
+              `<button type="button" class="menu-tab" data-tab="${tab}" aria-pressed="false">${TABS[tab].label}</button>`,
+          )
+          .join("")}</nav>
         <section class="menu-nav">
           <header class="menu-head">
             <div class="menu-crumb"><button type="button" class="menu-back" data-back hidden><i class="row-arrow"></i><span>返回</span><kbd>ESC</kbd></button><small class="menu-kicker"></small></div>
@@ -62,7 +85,6 @@ const lobbyMarkup = () => `
           <div class="menu-panels">
             <nav class="menu-panel" data-panel="home" aria-label="主菜单">
               ${openRow("mode")}${openRow("map")}${openRow("outfit")}
-              <button type="button" class="menu-row" id="story"><span class="row-label">故事模式</span><span class="row-value">升维</span><i class="row-arrow"></i></button>
               <button class="start-btn menu-play" id="start">${icon("play")}<span>开始对局</span><kbd>ENTER</kbd></button>
             </nav>
             <nav class="menu-panel" data-panel="mode" aria-label="对局模式" hidden>
@@ -90,7 +112,7 @@ const lobbyMarkup = () => `
                     `<button type="button" class="menu-row menu-tile menu-choice knife-tile" data-knife="${knife.id}" aria-pressed="false"><span class="row-label"></span></button>`,
                 )
                 .join("")}</div>
-            </nav>
+            </nav>${storyPanels()}
           </div>
         </section>
         <div id="lobby-avatar" tabindex="0" role="group" aria-label="角色预览，可拖动或按方向键旋转"></div>
@@ -108,7 +130,7 @@ const lobbyMarkup = () => `
           <button type="button" id="terrain-preview" aria-pressed="false">战场预览</button>
         </aside>
         <footer class="menu-footer">
-          <div class="menu-hints"><span><kbd>ENTER</kbd><span>开始对局</span></span><span class="hint-back"><kbd>ESC</kbd><span>返回</span></span></div>
+          <div class="menu-hints"><span><kbd>ENTER</kbd><span class="hint-versus">开始对局</span><span class="hint-story">进入故事</span></span><span class="hint-back"><kbd>ESC</kbd><span>返回</span></span></div>
           <div class="design-credit"><span class="credit-line" lang="en">Game Design by <a href="https://tianyihuang.com" target="_blank" rel="noopener noreferrer">TwinIsland</a></span><button type="button" id="credits" class="credit-open">${creditsLabel()}</button><span>v${version}</span></div>
         </footer>
       `;
@@ -141,14 +163,17 @@ export class LobbyView {
   private readonly skinStatus: HTMLElement;
   private readonly armSetting: HTMLElement;
   private readonly terrainButton: HTMLButtonElement;
+  private readonly story: StoryMenu;
   private readonly listeners = new AbortController();
 
   constructor(
     readonly root: HTMLElement,
-    private readonly actions: Pick<UIActions, "changeOutfit" | "importSkin">,
+    private readonly actions: Pick<UIActions, "changeOutfit" | "importSkin" | "openStory">,
   ) {
     root.innerHTML = lobbyMarkup();
     root.dataset.view = this.view;
+    root.dataset.tab = tabOf(this.view);
+    this.story = new StoryMenu(root, (chapter) => actions.openStory(chapter));
     this.title = query(root, ".menu-title");
     this.kicker = query(root, ".menu-kicker");
     this.backButton = query<HTMLButtonElement>(root, ".menu-back");
@@ -199,20 +224,36 @@ export class LobbyView {
     this.skinFile.click();
   }
 
-  /** Steps out of a sub-menu. Returns false on the home panel, where there is nothing to leave. */
+  /** Steps out of a dialog or sub-menu. Returns false on a tab's root panel, where there is nothing to leave. */
   back(): boolean {
-    if (this.view === "home") return false;
-    this.show("home");
+    if (this.story.back()) return true;
+    if (isRoot(this.view)) return false;
+    this.show(TABS[tabOf(this.view)].root);
     return true;
   }
 
-  /** Returns to the home panel without animating, for when the lobby is not on screen. */
+  /** Enter on a tab with its own primary action. Returns false on the versus tab, which opens the room. */
+  confirm(): boolean {
+    if (tabOf(this.view) !== "story") return false;
+    this.story.primary();
+    return true;
+  }
+
+  /** Picks the save up again after the story has written to it. */
+  refreshStory() {
+    this.story.refresh();
+    this.render();
+  }
+
+  /** Returns to the open tab's root panel without animating, for when the lobby is not on screen. */
   reset() {
+    const root = TABS[tabOf(this.view)].root;
+    this.story.back();
     for (const panel of this.root.querySelectorAll<HTMLElement>(".menu-panel")) {
-      panel.hidden = panel.dataset.panel !== "home";
+      panel.hidden = panel.dataset.panel !== root;
       settle(this.rows(panel));
     }
-    this.view = this.root.dataset.view = "home";
+    this.view = this.root.dataset.view = root;
     this.hovered = undefined;
     this.render();
   }
@@ -220,9 +261,9 @@ export class LobbyView {
   /** Plays the arrival of the whole menu: list from the left, card from the right. */
   enter() {
     this.reset();
-    rise([query(this.root, ".menu-crumb"), this.title]);
-    rowsIn(this.rows(this.panel("home")), -1, 0.08);
-    slideIn(this.detail, 0.12);
+    rise([query(this.root, ".menu-tabs"), query(this.root, ".menu-crumb"), this.title]);
+    rowsIn(this.rows(this.panel(this.view)), -1, 0.08);
+    slideIn(this.card(), 0.12);
     rise([query(this.root, ".menu-footer")], 0.3, 10);
   }
 
@@ -250,14 +291,27 @@ export class LobbyView {
     );
   }
 
+  /** The card on the right of the open tab. */
+  private card() {
+    return tabOf(this.view) === "story" ? query(this.root, ".story-save") : this.detail;
+  }
+
   private show(view: View) {
     if (view === this.view) return;
     const leaving = this.panel(this.view);
     const arriving = this.panel(view);
-    // Going deeper moves the list leftwards; coming back reverses it.
-    const direction = view === "home" ? -1 : 1;
+    const switchesTab = tabOf(view) !== tabOf(this.view);
+    // Going deeper moves the list leftwards; coming back reverses it. Tabs move in their own order.
+    const direction = switchesTab ? (tabOf(view) === "story" ? 1 : -1) : isRoot(view) ? -1 : 1;
     this.view = this.root.dataset.view = view;
+    this.root.dataset.tab = tabOf(view);
     this.hovered = undefined;
+    if (switchesTab) {
+      this.story.refresh();
+      wipe(query(this.root, ".menu-wipe"));
+      rise([query(this.root, ".menu-crumb")], 0, 10);
+      slideIn(this.card(), 0.1);
+    }
     this.render();
     rise([this.title], 0.06, 10);
     void rowsOut(this.rows(leaving), direction).then(() => {
@@ -268,7 +322,7 @@ export class LobbyView {
       rowsIn(this.rows(arriving), direction);
       const focus =
         arriving.querySelector<HTMLElement>('[aria-pressed="true"]:not(:disabled)') ??
-        arriving.querySelector<HTMLElement>("#start") ??
+        arriving.querySelector<HTMLElement>("#start, .story-play:not(:disabled)") ??
         arriving.querySelector<HTMLElement>("button:not(:disabled)");
       focus?.focus({ preventScroll: true });
     });
@@ -277,9 +331,11 @@ export class LobbyView {
   private onClick(target: HTMLElement) {
     const button = target.closest<HTMLButtonElement>("button");
     if (!button || button.disabled) return;
-    const { open, skin, finish, knife, arm, mode, map } = button.dataset;
-    if (open) this.show(open as View);
-    else if ("back" in button.dataset) this.show("home");
+    const { open, tab, skin, finish, knife, arm, mode, map } = button.dataset;
+    if (tab) this.show(TABS[tab as Tab].root);
+    else if (open) this.show(open as View);
+    else if (this.story.click(button)) return;
+    else if ("back" in button.dataset) this.back();
     // GameUI routes the choice itself; picking one closes the sub-menu.
     else if (mode || map) this.show("home");
     else if (skin) {
@@ -304,14 +360,16 @@ export class LobbyView {
   }
 
   private onHover(target: HTMLElement) {
-    const row = target.closest<HTMLElement>("[data-mode], [data-map]");
-    if (row && !row.matches(":disabled")) this.setHovered(row.dataset.mode ?? row.dataset.map);
+    const row = target.closest<HTMLElement>("[data-mode], [data-map], [data-chapter]");
+    if (row && !row.matches(":disabled"))
+      this.setHovered(row.dataset.mode ?? row.dataset.map ?? row.dataset.chapter);
   }
 
   private setHovered(id: string | undefined) {
     if (id === this.hovered) return;
     this.hovered = id;
     this.renderDetail();
+    this.story.render(this.view === "chapters" ? id : undefined);
   }
 
   /** Up and Down walk the buttons of the open panel, like a console menu. */
@@ -335,11 +393,20 @@ export class LobbyView {
 
   /** Writes every label that depends on the selection or the language. */
   private render() {
-    const home = this.view === "home";
+    const tab = tabOf(this.view);
     const map = MAPS.find((entry) => entry.id === this.mapId) ?? MAPS[0];
-    this.backButton.hidden = home;
-    this.kicker.textContent = home ? t("当前模式") : t("主菜单");
-    this.title.textContent = t(home ? MATCH_MODES[this.mode].name : VIEW_TITLES[this.view as SubView]);
+    this.backButton.hidden = isRoot(this.view);
+    this.kicker.textContent = t(this.view === "home" ? "当前模式" : tab === "story" ? "故事模式" : "主菜单");
+    this.title.textContent = t(
+      this.view === "home"
+        ? MATCH_MODES[this.mode].name
+        : this.view === "story"
+          ? STORY_TITLE
+          : VIEW_TITLES[this.view],
+    );
+    for (const button of this.root.querySelectorAll<HTMLElement>("[data-tab]"))
+      button.setAttribute("aria-pressed", String(button.dataset.tab === tab));
+    this.story.render(this.view === "chapters" ? this.hovered : undefined);
     query(this.root, '[data-value="mode"]').textContent = t(MATCH_MODES[this.mode].name);
     query(this.root, '[data-value="map"]').textContent = field(map, "name");
     query(this.root, '[data-value="outfit"]').textContent = this.skinName(this.look.skin);

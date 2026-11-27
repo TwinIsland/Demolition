@@ -95,7 +95,7 @@ export function attachGlobalInput(app: GameApp, root: HTMLElement, canvas: HTMLC
     const onControl = event.target instanceof Element && !!event.target.closest(FOCUSABLE_CONTROLS);
     if (event.code === "Enter" && app.screen === "lobby" && !onControl) {
       event.preventDefault();
-      if (!event.repeat) app.openRoom();
+      if (!event.repeat) app.confirmLobby();
     }
     if (action === "expand" && app.screen === "playing") {
       event.preventDefault();
