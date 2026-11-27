@@ -72,7 +72,7 @@ const CUES = {
   "missile-impact": sfx(0.85, { voices: 2, minInterval: 0.1 }),
   "bomb-place": sfx(0.34, { pitchJitter: 0.03 }),
   "fire-ignite": sfx(0.6, { voices: 3, minInterval: 0.08, pitchJitter: 0.04 }),
-  "crate-build": sfx(0.5, { voices: 3, minInterval: 0.05, pitchJitter: 0.05 }),
+  "crate-build": sfx(0.55, { voices: 3, minInterval: 0.05, pitchJitter: 0.1 }),
   "gear-equip": sfx(0.5, { voices: 2 }),
   "gear-throw": sfx(0.46, { pitchJitter: 0.04 }),
   "gear-pickup": sfx(0.34),

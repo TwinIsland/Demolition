@@ -4,12 +4,12 @@ const config = {
     en: {
       name: "Field Crate",
       description:
-        "Right-click to build a wooden crate on the aimed tile instantly for 20 coins. Reaches as far as a planted charge.",
+        "Right-click to build a wooden crate on the aimed tile instantly. Costs no coins: you carry a stock set by your level, refilled on every level-up. Reaches as far as a planted charge.",
     },
   },
   id: "crate",
   name: "木箱",
-  description: "右键花 20 金币在瞄准的格子瞬间搭建木箱，范围和放炸药一样。",
+  description: "右键在瞄准的格子瞬间搭建木箱，不花金币：按等级携带固定数量，每次升级补满。范围和放炸药一样。",
   icon: "crate",
   color: "#c9a26b",
   model: new URL("./model.glb", import.meta.url).href,

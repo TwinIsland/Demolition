@@ -62,4 +62,4 @@ The game is first person. Classic mode, and the Dimensional Collapse perk when s
 - The [knife](content/items/knife.md) is always with you. Two strikes break cover or kill a zombie.
 - A [shield](content/items/shield.md) blocks one whole explosion. It does nothing against the final firestorm.
 - Level 3 zombies always grant a [mutation](content/README.md#mutations).
-- Right-click to spend coins building a wooden crate on the tile you aim at, within the same reach as a charge. Built crates block blasts and can seal a lane or cover a retreat. They are not carried or sold in the supply shop.
+- Right-click to build a wooden crate from your stock (refilled on each level-up) on the tile you aim at, within the same reach as a charge. Built crates block blasts and can seal a lane or cover a retreat. They are not carried or sold in the supply shop.

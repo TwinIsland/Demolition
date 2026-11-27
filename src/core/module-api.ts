@@ -49,7 +49,7 @@ export interface EffectContext {
   stat(key: ModifiedStat, base: number): number;
   /** `scorch` also sweeps the floor with fire when the reset lands, costing every other operator that much health. */
   requestTerrainReset?(delay: number, scorch?: number): boolean;
-  /** Pay to build a crate on the cell ahead. False when coins or terrain rule it out. */
+  /** Build a crate from the stock on the cell ahead. False when the stock or terrain rule it out. */
   build?(): boolean;
   forceArenaView?(duration: number, warningSeconds?: number): boolean;
   /** Cell the player picked, for perks declared `targeted`. */

@@ -1145,8 +1145,31 @@
   color: #e9ebe1;
   font: 600 10px/1.4 var(--font-hud, inherit);
 }
+/* Coin balance with the crate stock straight to its right, on one line. */
+#app #hud .wallet {
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  gap: 6px;
+}
 #app #hud .wallet-crate {
-  margin-left: 0;
+  margin-left: 4px;
+  flex: none;
+}
+#app #hud .wallet-crate[hidden] {
+  display: none;
+}
+#app #hud .wallet-crate b {
+  color: #f1e3c0;
+  font-variant-numeric: tabular-nums;
+}
+#app #hud .wallet-crate .icon {
+  width: 14px;
+  height: 14px;
+  color: #c9a26b;
+}
+#app #hud .wallet-crate.empty {
+  opacity: 0.45;
 }
 #app #hud .supply-shop {
   --wheel: clamp(250px, 44vmin, 400px);

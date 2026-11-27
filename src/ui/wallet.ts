@@ -1,5 +1,5 @@
 import { t } from "../i18n";
-import { BUILD } from "../core/economy";
+import { crateStock } from "../core/economy";
 import { keyHint } from "./control-settings";
 import { query, replayAnimation, setText } from "./dom";
 import { icon } from "./icons";
@@ -10,13 +10,13 @@ const DELTA_MS = 1100;
 
 /**
  * Coin balance. Earning counts the number up with a
- * floating "+N"; spending counts down with a floating "-N".
+ * floating "+N"; spending counts down with a floating "-N". The crate stock sits to its right.
  */
 export class WalletView implements HudView {
   private readonly amount: HTMLElement;
   private readonly deltas: HTMLElement;
   private readonly buildHint: HTMLElement;
-  private readonly buildCost: HTMLElement;
+  private readonly crateCount: HTMLElement;
   private target?: number;
   private shown = 0;
   private from = 0;
@@ -25,20 +25,21 @@ export class WalletView implements HudView {
   private owner = "";
 
   constructor(readonly root: HTMLElement) {
-    root.innerHTML = `<span class="wallet-coin">${icon("coin")}</span><b class="wallet-amount">0</b><span class="wallet-deltas" aria-hidden="true"></span><span class="wallet-supply wallet-crate">${icon("crate")}${keyHint("build")}<b class="wallet-build-cost"></b></span>`;
+    root.innerHTML = `<span class="wallet-coin">${icon("coin")}</span><b class="wallet-amount">0</b><span class="wallet-supply wallet-crate">${icon("crate")}<b class="wallet-crate-count"></b>${keyHint("build")}</span><span class="wallet-deltas" aria-hidden="true"></span>`;
     this.amount = query(root, ".wallet-amount");
     this.deltas = query(root, ".wallet-deltas");
     this.buildHint = query(root, ".wallet-crate");
-    this.buildCost = query(root, ".wallet-build-cost");
+    this.crateCount = query(root, ".wallet-crate-count");
   }
 
   update({ snapshot, viewer }: HudFrame) {
     const credits = viewer.credits;
     this.root.title = t("金币 {0}", credits);
-    setText(this.buildCost, String(BUILD.cost));
-    this.buildHint.title = t("建造木箱 · {0} 金币", BUILD.cost);
+    const full = crateStock(viewer.level);
+    setText(this.crateCount, `${viewer.crates}/${full}`);
+    this.buildHint.title = t("建造木箱 · 剩余 {0}/{1}，升级补满", viewer.crates, full);
     this.buildHint.hidden = !viewer.alive || snapshot.phase !== "playing";
-    this.buildHint.style.opacity = credits >= BUILD.cost ? "1" : "0.45";
+    this.buildHint.classList.toggle("empty", viewer.crates <= 0);
 
     // A new match or another viewer: show the balance without animating the difference.
     if (this.target === undefined || this.owner !== viewer.id || !viewer.alive) {

@@ -38,7 +38,7 @@ interface PlayerInput {
   throwMode?: ThrowMode;
   meleeYaw?: number;
   plantHere?: boolean; // 俯视期间在脚下放置炸药
-  build?: boolean; // 右键在面前建造木箱
+  build?: boolean; // 右键用库存在面前建造木箱
   buyItem?: ItemId; // 对局内补给商店
   activateSkill?: SkillId;
   choosePerk?: PerkId; // 从当前候选中领取一张强化

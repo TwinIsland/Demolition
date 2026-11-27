@@ -5,7 +5,6 @@ import { DIRECTIONS, seededRandom } from "../core/maps";
 import { canPlace, placementRadius } from "../core/placement";
 import { SUMMON_TIME } from "../core/zombies";
 import { idleInput, inTacticalView, isCloaked } from "../core/types";
-import { BUILD } from "../core/economy";
 import type { Personality } from "./tactics";
 import type {
   AgentContext,
@@ -64,14 +63,16 @@ const SHOP_TASTE: Record<string, Record<string, number>> = {
   mint: { medic: 1.3, cloak: 1, scan: 0.9, kick: 0.7, veil: 0.5, detonator: 0 },
   sunny: { scan: 1.2, veil: 1.2, kick: 1, cloak: 0.8, medic: 0.8, detonator: 0 },
 };
+/** Coins a bot keeps back when shopping, so it can still afford a bandage later. */
+const SUPPLY_RESERVE = 20;
 /**
- * Buys healing, shields and grenades while keeping some coins back for direct construction.
+ * Buys healing first, then a shield, then throwables once a reserve of coins is left over.
  */
 function supplyWish(p: Readonly<Player>, s: Readonly<GameSnapshot>): ItemId | undefined {
   const spare = (id: ItemId, reserve: number) =>
     !supplyRefusal(s, p, id) && p.credits - supplyPrice(p, id) >= reserve && !(p.inventory[id] ?? 0);
   if (p.hp < p.maxHp * 0.55 && spare("bandage", 0)) return "bandage";
-  const reserve = BUILD.cost;
+  const reserve = SUPPLY_RESERVE;
   if (p.shield <= 0 && spare("shield", reserve)) return "shield";
   if (spare("grenade", reserve * 2)) return "grenade";
   if (spare("molotov", reserve * 2)) return "molotov";
@@ -203,7 +204,7 @@ export class BotAgent implements PlayerAgent {
         .map((id, index) => ({ id, appeal: appeal(id, index) }))
         .filter(
           ({ id, appeal }) =>
-            appeal > 0 && !p.skills.includes(id) && p.credits - SKILLS[id].price >= BUILD.cost,
+            appeal > 0 && !p.skills.includes(id) && p.credits - SKILLS[id].price >= SUPPLY_RESERVE,
         )
         .sort((a, b) => b.appeal - a.appeal || a.id.localeCompare(b.id, "en"))[0]?.id;
       return input;
@@ -423,7 +424,7 @@ export class BotAgent implements PlayerAgent {
    * Only when the bot keeps another way out and the cell is safe to stand next to.
    */
   private planBuild(s: Readonly<GameSnapshot>, p: Player, enemies: Contact[], f: BombForecast) {
-    if (inTacticalView(p, s.time) || p.credits < BUILD.cost) return;
+    if (inTacticalView(p, s.time) || p.crates <= 0) return;
     const here = cell(p);
     if (f.burning(here.x, here.z, 0, 0.5)) return;
     const hurt = p.hp < p.maxHp * 0.5;

@@ -3,6 +3,7 @@ import { COMBAT } from "./combat";
 import { CONSUMABLES, eachOwned, HAS_TICK_HOOKS, RULES, SKILLS } from "./content";
 import { ZONE } from "./zone";
 import { coverLayout } from "./cover-layout";
+import { crateStock } from "./economy";
 import { supplyInterval } from "./field-supplies";
 import { generateMap, MAPS, movableWalls, seededRandom, spawnPoints, type MapDefinition } from "./maps";
 import { DEFAULT_MODE, MATCH_MODES, modeRules, type MatchMode } from "./match-modes";
@@ -215,6 +216,7 @@ function initialState(
       moduleData: {},
       equipped: "bomb",
       credits: rules.credits,
+      crates: crateStock(1),
       skills: [],
       alive: true,
       shield: 0,

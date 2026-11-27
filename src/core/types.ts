@@ -37,7 +37,7 @@ export interface PlayerInput {
   meleeYaw?: number;
   /** Tactical View: drop a bomb on the cell the player stands on, independently of held equipment. */
   plantHere?: boolean;
-  /** Spend coins to build a crate, independently of equipped gear. */
+  /** Build one crate from the stock, independently of equipped gear. */
   build?: boolean;
   /** Where the crate goes, aimed like a planted charge. Absent: the cell ahead. */
   buildTarget?: Vec2;
@@ -79,6 +79,8 @@ export interface Player extends Vec2 {
   staminaRegenAt: number;
   sprinting: boolean;
   credits: number;
+  /** Crates left to build with; refilled to the level's full stock on every level-up. */
+  crates: number;
   moduleData: Record<string, number>;
   skills: SkillId[];
   inventory: Record<Consumable, number>;

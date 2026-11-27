@@ -1,6 +1,6 @@
 import { COMBAT } from "../combat";
 import { modifiedStat, RULES } from "../content";
-import { BUILD, COINS } from "../economy";
+import { COINS } from "../economy";
 import { placementRadius } from "../placement";
 import { zoneBurning, zoneClearing } from "../zone";
 import type { GameSnapshot, Player, Vec2 } from "../types";
@@ -38,7 +38,7 @@ export function canBuild(s: Readonly<GameSnapshot>, p: Player, cell: Vec2 = cell
   return (
     s.phase === "playing" &&
     p.alive &&
-    p.credits >= BUILD.cost &&
+    p.crates > 0 &&
     s.tiles[z]?.[x] === 0 &&
     !(s.zone && (zoneBurning(s.size, cell, s.zone) || zoneClearing(s.size, cell, s.zone))) &&
     !s.bombs.some((b) => b.x === x && b.z === z) &&
@@ -50,12 +50,12 @@ export function canBuild(s: Readonly<GameSnapshot>, p: Player, cell: Vec2 = cell
   );
 }
 
-/** Pays for a crate and stands it on the aimed cell at once; without an aim, on the cell ahead. */
+/** Takes a crate from the stock and stands it on the aimed cell at once; without an aim, on the cell ahead. */
 export function build(ctx: SimContext, p: Player, target?: Vec2) {
   const s = ctx.state,
     site = target ?? cellAhead(p);
   if (!canBuild(s, p, site)) return false;
-  p.credits -= BUILD.cost;
+  p.crates--;
   s.tiles[site.z][site.x] = 2;
   const cell = site.z * s.size + site.x;
   delete s.coverDamage?.[s.coverOrigins?.[cell] ?? cell];
@@ -68,7 +68,7 @@ export function build(ctx: SimContext, p: Player, target?: Vec2) {
 
 /**
  * Opens a player-built crate. It yields no score; whoever destroys someone else's crate gets a
- * token refund, far below its price, so building can never pay for itself. The caller rolls loot.
+ * token reward. The caller rolls loot.
  */
 export function destroyBuiltCrate(ctx: SimContext, destroyer: Player, x: number, z: number) {
   const s = ctx.state,

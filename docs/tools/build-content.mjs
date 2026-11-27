@@ -16,9 +16,9 @@ const notes = {
     "Bots value a pickup at `16 + 22 × missingHp`.",
   ],
   "items/crate": [
-    "Right-click: pays coins and stands a crate on the aimed tile at once (same reach as a planted charge), independently of equipped gear.",
-    "Always costs 20 coins (`BUILD.cost`). Never dropped, carried, equipped or sold in the supply shop.",
-    "No standing-crate limit. The tile must be free of operators, zombies, items, charges and fire.",
+    "Right-click: takes one crate from your stock and stands it on the aimed tile at once (same reach as a planted charge), independently of equipped gear.",
+    "Costs no coins. The stock is 3 crates at level 1 and one more per level, up to 8 (`BUILD` and `crateStock` in `core/economy.ts`); every level-up refills it. Never dropped, equipped or sold in the supply shop.",
+    "No standing-crate limit beyond the stock. The tile must be free of operators, zombies, items, charges and fire.",
     "A built crate behaves like cover with durability 2, but gives no score. Breaking it rolls loot with the same chance as any other cover. Another operator who destroys it gets 2 coins. It shows the builder's emblem.",
   ],
   "items/grenade": [
@@ -226,7 +226,7 @@ ${skills.map(c => `| ${link("skills", c)} | ${c.code ? c.code.replace("Key", "")
 
 ## Items
 
-Dropped by cover, zombies and field supplies, or bought with coins in the supply shop. The knife is permanent gear; crates are built directly with coins. See [Item mods](../modding/items.md).
+Dropped by cover, zombies and field supplies, or bought with coins in the supply shop. The knife is permanent gear; crates are built from a per-level stock. See [Item mods](../modding/items.md).
 
 | Item | Base drop weight | Shop price | Numbers | Effect |
 | --- | --- | --- | --- | --- |

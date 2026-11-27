@@ -1,18 +1,29 @@
-/** In-match coins. They are earned by fighting and spent on building crates. */
+/** In-match coins. They are earned by fighting and spent in the supply shop. */
 export const COINS = {
   coverDestroyed: 4,
   hit: 6,
   zombieKill: { 1: 5, 2: 8, 3: 12 },
   kill: 30,
-  /** Paid to whoever destroys someone else's built crate. Far below cost, so building is never a money loop. */
+  /** Paid to whoever destroys someone else's built crate. A token sum: crates are a free, limited stock. */
   builtCrateDestroyed: 2,
 } as const;
 
-/** Direct crate building: pay coins to build on the cell ahead, without an inventory item. */
+/**
+ * Direct crate building, without coins or an inventory item. Every operator carries a stock of
+ * crates set by level; building spends one and each level-up refills the stock.
+ */
 export const BUILD = {
-  /** Flat price of every crate. */
-  cost: 20,
+  /** Crates carried at level 1. */
+  baseStock: 3,
+  /** Extra crates per level above the first. */
+  stockPerLevel: 1,
+  /** Largest stock any level grants. */
+  maxStock: 8,
 } as const;
+
+/** Full crate stock of an operator at `level`. */
+export const crateStock = (level: number) =>
+  Math.min(BUILD.maxStock, BUILD.baseStock + BUILD.stockPerLevel * Math.max(0, level - 1));
 
 /** Player-built crates are always wooden, whatever the map's cover looks like. */
 export const BUILT_CRATE_SURFACE = "wood" as const;

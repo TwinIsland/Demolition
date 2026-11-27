@@ -251,7 +251,7 @@ export const EN_MESSAGES: Readonly<Record<string, string>> = {
   跳跃: "Jump",
   "使用装备 / 投掷": "Use / throw equipment",
   建造木箱: "Build a crate",
-  "建造木箱 · {0} 金币": "Build a crate · {0} coins",
+  "建造木箱 · 剩余 {0}/{1}，升级补满": "Build a crate · {0}/{1} left, refilled on level-up",
   上一件装备: "Previous equipment",
   下一件装备: "Next equipment",
   "选择强化 1": "Select perk 1",

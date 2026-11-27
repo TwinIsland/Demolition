@@ -1,30 +1,34 @@
-"""Synthesizes the crate construction sound: planks dropped into place and knocked tight.
+"""Synthesizes the crate placement sound: one short, hollow wooden "tock", the feel of setting a
+block down in a voxel sandbox game. Entirely generated; no recording is sampled.
 Usage: python3 make-build-sound.py <repo root> (needs numpy and ffmpeg)."""
 import sys, subprocess, wave, os, tempfile, numpy as np
 ROOT = sys.argv[1]; SR = 44100
 rng = np.random.default_rng(23)
 def t(d): return np.arange(int(SR*d))/SR
-def place(buf, s, at, g=1.0):
-    i = int(SR*at); n = min(len(s), len(buf)-i); buf[i:i+n] += s[:n]*g
 def lowpass(x, k):
     y = np.zeros(len(x)); a = 0.0
     for i in range(len(x)):
         a += k*(x[i]-a); y[i] = a
     return y
-def knock(pitch, d=.16):
-    """A struck plank: a few damped, inharmonic body modes under a short noise click."""
-    x = t(d); body = np.zeros(len(x))
-    for ratio, gain, decay in ((1, 1, 34), (2.76, .5, 55), (5.4, .22, 90)):
+def tock(pitch, d):
+    """A struck block of wood: a body tone that drops slightly in pitch, two quickly damped
+    inharmonic modes for the hollow colour, and a dull noise tap for the contact."""
+    x = t(d)
+    glide = pitch*(1 + .35*np.exp(-x*60))
+    body = np.sin(2*np.pi*np.cumsum(glide)/SR)*np.exp(-x*30)
+    for ratio, gain, decay in ((2.4, .38, 70), (4.1, .16, 120)):
         body += gain*np.sin(2*np.pi*pitch*ratio*x)*np.exp(-x*decay)
-    click = lowpass(rng.normal(0, 1, len(x)), .35)*np.exp(-x*240)
-    return body + .7*click
-v = np.zeros(int(SR*.42))
-place(v, knock(170), 0, 1.0)      # the crate lands
-place(v, knock(245, .12), .085, .55)  # a loose slat settles
-place(v, knock(205, .14), .17, .8)    # knocked tight
-place(v, lowpass(rng.normal(0, 1, int(SR*.2)), .08)*np.exp(-t(.2)*18), 0, .5)  # dust and weight
-n = len(v); o = int(SR*.03); v[n-o:] *= np.linspace(1, 0, o)
-v = v/np.max(np.abs(v))*.85
+    tap = lowpass(rng.normal(0, 1, len(x)), .22)*np.exp(-x*150)
+    return body + .9*tap
+v = np.zeros(int(SR*.24))
+main = tock(150, .22); v[:len(main)] += main
+# A faint second contact a few milliseconds later, as the block settles flat.
+late = tock(118, .16); i = int(SR*.028); v[i:i+len(late)] += .32*late
+v = lowpass(v, .5)
+attack = int(SR*.002); v[:attack] *= np.linspace(0, 1, attack)
+n = len(v); o = int(SR*.04); v[n-o:] *= np.linspace(1, 0, o)
+v = np.tanh(1.6*v/np.max(np.abs(v)))
+v = v/np.max(np.abs(v))*.9
 with tempfile.TemporaryDirectory() as tmp:
     wav = os.path.join(tmp, "a.wav")
     with wave.open(wav, "wb") as w:
