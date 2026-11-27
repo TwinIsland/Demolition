@@ -21,6 +21,7 @@ import {
   type CueSpec,
 } from "./sound-bank";
 import { distanceTo, falloff, panTo } from "./spatial";
+import { faderGain, loadVolumes, saveVolumes, type VolumeChannel, type Volumes } from "./volume-settings";
 import type { Listener } from "./spatial";
 
 const MENU_CUES = { click: "ui-click", accept: "ui-accept", back: "ui-back" } as const;
@@ -78,6 +79,7 @@ interface Stride extends Vec2 {
 export class GameAudio {
   private readonly engine = new AudioEngine();
   private readonly menuPulse = new BassPulse();
+  private readonly faders = loadVolumes();
   private readonly strides = new Map<string, Stride>();
   private readonly fuseBeats = new Map<number, number>();
   private fireLevel = 0;
@@ -102,6 +104,7 @@ export class GameAudio {
   };
 
   constructor() {
+    for (const channel of Object.keys(this.faders) as VolumeChannel[]) this.applyVolume(channel);
     this.engine.preload([...BANK_CUES, ...contentCues()].map(cue));
     this.engine.preload(Object.values(THUNDER));
     this.engine.setLoopLevel(FIRE_LOOP, 0);
@@ -119,6 +122,26 @@ export class GameAudio {
   toggle() {
     this.engine.setMuted(!this.engine.muted);
     return this.enabled;
+  }
+
+  /** Fader positions (0..1) as the player set them. */
+  get volumes(): Readonly<Volumes> {
+    return this.faders;
+  }
+
+  /** Moves one fader; heard at once and remembered for the next visit. */
+  setVolume(channel: VolumeChannel, position: number) {
+    this.faders[channel] = Math.max(0, Math.min(1, position));
+    this.applyVolume(channel);
+    saveVolumes(this.faders);
+  }
+
+  /** A sample at the fader's new level. Music needs none: the menu track is already playing. */
+  previewVolume(channel: VolumeChannel) {
+    if (channel === "sfx") this.play("blast", { priority: true });
+    else if (channel === "steps") this.play("footstep-0", { priority: true });
+    else if (channel === "ambience") this.engine.play(THUNDER.far, { priority: true });
+    else if (channel !== "music") this.menu();
   }
 
   /**
@@ -141,7 +164,9 @@ export class GameAudio {
   /** Bass-onset pulse (0..1) of the menu track for the lobby backdrop; `time` in seconds. */
   menuBeat(time: number) {
     const analyser = this.engine.isMusicAudible(MENU_MUSIC) ? this.engine.spectrumTap() : undefined;
-    return analyser ? this.menuPulse.sample(analyser, time, this.engine.musicGain()) : this.menuPulse.reset();
+    // The tap sits after the master fader, so the pulse has to discount both gains.
+    const gain = this.engine.musicGain() * this.engine.masterVolume;
+    return analyser ? this.menuPulse.sample(analyser, time, gain) : this.menuPulse.reset();
   }
 
   menu(name: keyof typeof MENU_CUES = "click") {
@@ -305,6 +330,12 @@ export class GameAudio {
   dispose() {
     this.reset();
     this.engine.dispose();
+  }
+
+  private applyVolume(channel: VolumeChannel) {
+    const gain = faderGain(this.faders[channel]);
+    if (channel === "master") this.engine.setMasterVolume(gain);
+    else this.engine.setBusVolume(channel, gain);
   }
 
   private play(ref: string, options?: PlayOptions) {

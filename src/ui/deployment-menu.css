@@ -135,10 +135,88 @@ body.in-game #app .top-actions .icon {
   font-weight: 800;
   color: var(--text-strong);
 }
-#graphics-form {
+.settings-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+  align-items: start;
+  gap: 0 clamp(20px, 3vw, 36px);
+}
+#graphics-form,
+#audio-settings {
   display: grid;
 }
-#graphics-form label {
+.settings-columns h3 {
+  margin: var(--space-4) 0 var(--space-3);
+  font-size: var(--text-md);
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--menu-gold);
+}
+#audio-settings .volume-control {
+  flex: 0 1 190px;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+#audio-settings output {
+  flex: none;
+  width: 3ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-strong);
+}
+#audio-settings input[type="range"] {
+  --fill: 100%;
+  flex: 1;
+  min-width: 0;
+  height: 18px;
+  margin: 0;
+  appearance: none;
+  background: none;
+  cursor: pointer;
+}
+#audio-settings input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: linear-gradient(90deg, var(--menu-gold) var(--fill), #717b7659 var(--fill));
+}
+#audio-settings input[type="range"]::-moz-range-track {
+  height: 4px;
+  background: linear-gradient(90deg, var(--menu-gold) var(--fill), #717b7659 var(--fill));
+}
+#audio-settings input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 8px;
+  height: 16px;
+  margin-top: -6px;
+  border: 1px solid #edc582;
+  border-radius: 0;
+  background: var(--gold-200);
+}
+#audio-settings input[type="range"]::-moz-range-thumb {
+  width: 8px;
+  height: 16px;
+  border: 1px solid #edc582;
+  border-radius: 0;
+  background: var(--gold-200);
+}
+#audio-settings input[type="range"]:hover::-webkit-slider-thumb,
+#audio-settings input[type="range"]:focus-visible::-webkit-slider-thumb {
+  background: #fff3d6;
+  box-shadow: 0 0 8px #e7bc70a6;
+}
+#audio-settings input[type="range"]:hover::-moz-range-thumb,
+#audio-settings input[type="range"]:focus-visible::-moz-range-thumb {
+  background: #fff3d6;
+  box-shadow: 0 0 8px #e7bc70a6;
+}
+#audio-settings input[type="range"]:focus-visible {
+  outline: 1px solid var(--menu-gold);
+  outline-offset: 3px;
+}
+#graphics-form label,
+#audio-settings label {
   min-height: 44px;
   display: flex;
   justify-content: space-between;

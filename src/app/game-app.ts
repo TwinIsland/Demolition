@@ -391,7 +391,7 @@ export class GameApp {
       openGraphics: () => {
         if (!this.screens.is("lobby")) return;
         this.screens.transition("graphics");
-        this.ui.showGraphics(this.renderer.graphics);
+        this.ui.showGraphics(this.renderer.graphics, this.sound.volumes);
         this.sound.menu("accept");
       },
       changeGraphics: (value) => {
@@ -400,6 +400,12 @@ export class GameApp {
         saveGraphics(value);
       },
       closeGraphics: () => this.closeGraphics(),
+      setVolume: (channel, position) => {
+        if (this.screens.is("graphics")) this.sound.setVolume(channel, position);
+      },
+      previewVolume: (channel) => {
+        if (this.screens.is("graphics")) this.sound.previewVolume(channel);
+      },
       openCredits: () => {
         if (!this.screens.is("lobby")) return;
         this.screens.transition("credits");
@@ -436,7 +442,7 @@ export class GameApp {
     this.ui.setSound(this.sound.enabled);
     this.ui.setTerrainPreview(this.previewTerrain);
     // The open dialog is rebuilt in the new language, so focus has to be put back on the select.
-    if (this.screens.is("graphics")) this.ui.showGraphics(this.renderer.graphics);
+    if (this.screens.is("graphics")) this.ui.showGraphics(this.renderer.graphics, this.sound.volumes);
     else this.ui.showPause();
     queueMicrotask(() => this.ui.focusLanguageSelect());
   }

@@ -1,5 +1,5 @@
 import { Howl, Howler } from "howler";
-import type { AudioBus, CueSpec } from "./sound-bank";
+import { AUDIO_BUSES, type AudioBus, type CueSpec } from "./sound-bank";
 import { SustainedVoice } from "./sustained-voice";
 
 /** One-shot voices across all cues; beyond this only priority plays are admitted. */
@@ -51,7 +51,8 @@ const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
 
 /** Howler-backed mixer: pooled one-shots, sustained loops, crossfading music and bus volumes. */
 export class AudioEngine {
-  private readonly buses: Record<AudioBus, number> = { music: 1, sfx: 1, ui: 1 };
+  private readonly buses = Object.fromEntries(AUDIO_BUSES.map((bus) => [bus, 1])) as Record<AudioBus, number>;
+  private master = 1;
   private readonly pools = new Map<string, CuePool>();
   private readonly loops = new Map<string, Sustained & { bus: AudioBus }>();
   private readonly tracks = new Map<string, Sustained>();
@@ -78,6 +79,16 @@ export class AudioEngine {
     if (muted) this.stopVoices(undefined, 0);
   }
 
+  get masterVolume() {
+    return this.master;
+  }
+
+  /** Output fader over every bus; independent of the mute switch. */
+  setMasterVolume(volume: number) {
+    this.master = clamp01(volume);
+    Howler.volume(this.master);
+  }
+
   busVolume(bus: AudioBus) {
     return this.buses[bus];
   }
@@ -86,7 +97,7 @@ export class AudioEngine {
     this.buses[bus] = clamp01(volume);
     if (bus === "music") this.currentTrack()?.voice.setVolume(this.musicGain(), BUS_FADE_MS);
     for (const loop of this.loops.values())
-      if (loop.bus === bus) loop.voice.setVolume(loop.level * this.buses[bus], BUS_FADE_MS);
+      if (loop.bus === bus) loop.voice.setVolume(clamp01(loop.level * this.buses[bus]), BUS_FADE_MS);
   }
 
   preload(specs: Iterable<CueSpec>) {
@@ -183,7 +194,7 @@ export class AudioEngine {
     return !this.isMuted && url === this.musicUrl && !!this.currentTrack()?.voice.audible;
   }
 
-  /** Linear gain the current track settles at (track level times bus volume). */
+  /** Linear gain the current track settles at (track level times bus volume), before the master fader. */
   musicGain() {
     return clamp01((this.currentTrack()?.level ?? 0) * this.buses.music);
   }

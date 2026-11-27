@@ -23,7 +23,8 @@ import { mountControls } from "./control-settings";
 import { creditsMarkup, mountCredits } from "./credits";
 import { query } from "./dom";
 import { EquipmentWheel } from "./equipment-wheel";
-import { graphicsChange, graphicsForm, syncGraphics } from "./graphics-options";
+import { graphicsChange, graphicsForm, syncGraphics, syncVolumeRow } from "./graphics-options";
+import type { VolumeChannel, Volumes } from "../audio/sound";
 import { icon } from "./icons";
 import { LobbyView } from "./lobby";
 import { manualMarkup } from "./manual";
@@ -154,6 +155,7 @@ export class GameUI {
     this.refreshShellCopy = bindShellCopy(root);
     this.refreshCopy();
     root.addEventListener("change", (event) => this.onChange(event), { signal });
+    root.addEventListener("input", (event) => this.onInput(event), { signal });
     root.addEventListener("click", (event) => this.onClick(event), { signal });
   }
 
@@ -259,8 +261,8 @@ export class GameUI {
     mountControls(this.overlay.show(manualMarkup(inGame), "help-modal", ".guide-section summary"));
   }
 
-  showGraphics(value: GraphicsSettings) {
-    const dialog = this.overlay.show(graphicsForm(), "graphics-modal");
+  showGraphics(value: GraphicsSettings, volumes: Readonly<Volumes>) {
+    const dialog = this.overlay.show(graphicsForm(volumes), "graphics-modal");
     syncGraphics(query<HTMLFormElement>(dialog, "#graphics-form"), value);
   }
 
@@ -378,8 +380,20 @@ export class GameUI {
     this.wheel.syncKeyHints();
   }
 
+  /** Faders act while they are dragged; everything else waits for `change`. */
+  private onInput(event: Event) {
+    const target = event.target;
+    if (!(target instanceof HTMLInputElement) || !target.dataset.volume) return;
+    syncVolumeRow(target);
+    this.actions.setVolume(target.dataset.volume as VolumeChannel, Number(target.value) / 100);
+  }
+
   private onChange(event: Event) {
     const target = event.target as HTMLInputElement | HTMLSelectElement;
+    if (target.dataset.volume) {
+      this.actions.previewVolume(target.dataset.volume as VolumeChannel);
+      return;
+    }
     if (target.hasAttribute("data-language")) {
       if (target.value === "en" || target.value === "zh") this.actions.setLanguage(target.value);
       return;

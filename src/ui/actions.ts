@@ -1,3 +1,4 @@
+import type { VolumeChannel } from "../audio/sound";
 import type { MatchMode } from "../core/match-modes";
 import type { Appearance, BotSlot, ZombieRate } from "../core/room";
 import type { ItemId, PerkId, SkillId, Vec2 } from "../core/types";
@@ -45,6 +46,10 @@ export interface UIActions {
   openGraphics(): void;
   changeGraphics(value: GraphicsSettings): void;
   closeGraphics(): void;
+  /** A fader moved in the settings; `position` is 0 to 1. */
+  setVolume(channel: VolumeChannel, position: number): void;
+  /** A fader was let go: sound a sample on its bus. */
+  previewVolume(channel: VolumeChannel): void;
   /** Credits roll, opened from the lobby. */
   openCredits(): void;
   closeCredits(): void;

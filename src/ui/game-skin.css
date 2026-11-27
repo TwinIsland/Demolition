@@ -355,9 +355,10 @@
 
 /* ---------- Settings ---------- */
 #app #overlay .graphics-modal {
-  width: min(470px, 100%);
+  width: min(860px, 100%);
 }
 #app #graphics-form label,
+#app #audio-settings label,
 #app #overlay .modal > .language-setting {
   min-height: 46px;
   margin: 0;
@@ -368,7 +369,8 @@
   letter-spacing: 0.05em;
   color: #d3d9d0;
 }
-#app #graphics-form label:hover {
+#app #graphics-form label:hover,
+#app #audio-settings label:hover {
   color: #fff3d6;
   background: linear-gradient(90deg, #e7bc7014, #0000 70%);
 }

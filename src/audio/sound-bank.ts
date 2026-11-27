@@ -1,5 +1,9 @@
-/** Mix buses; each has its own volume on top of the master mute. */
-export type AudioBus = "music" | "sfx" | "ui";
+/**
+ * Mix buses; each has its own volume under the master fader. `ambience` carries the beds a place
+ * makes by itself (rain, wildlife, room hum, thunder) and `steps` every footfall.
+ */
+export const AUDIO_BUSES = ["music", "sfx", "ui", "ambience", "steps"] as const;
+export type AudioBus = (typeof AUDIO_BUSES)[number];
 
 export interface CueSpec {
   url: string;
@@ -27,6 +31,11 @@ const sfx = (volume: number, tweaks: Partial<CueDef> = {}): CueDef => ({
 const ui = (volume: number, tweaks: Partial<CueDef> = {}): CueDef =>
   sfx(volume, { bus: "ui", voices: 2, minInterval: 0.04, ...tweaks });
 
+const step = (volume: number, tweaks: Partial<CueDef> = {}): CueDef =>
+  sfx(volume, { bus: "steps", pitchJitter: 0.08, ...tweaks });
+const ambience = (volume: number, tweaks: Partial<CueDef> = {}): CueDef =>
+  sfx(volume, { bus: "ambience", voices: 1, ...tweaks });
+
 /** Recordings shipped in public/assets, keyed by file stem. */
 const CUES = {
   "ui-click": ui(0.42),
@@ -50,21 +59,21 @@ const CUES = {
   "mutation-award": ui(0.58),
   "reset-signal": sfx(0.56, { voices: 2 }),
   "room-shift": sfx(0.9, { voices: 1 }),
-  "footstep-0": sfx(0.5, { pitchJitter: 0.08 }),
-  "footstep-1": sfx(0.5, { pitchJitter: 0.08 }),
-  "footstep-2": sfx(0.5, { pitchJitter: 0.08 }),
-  "footstep-grass-0": sfx(0.36, { pitchJitter: 0.08 }),
-  "footstep-grass-1": sfx(0.36, { pitchJitter: 0.08 }),
-  "footstep-grass-2": sfx(0.36, { pitchJitter: 0.08 }),
-  "footstep-mud-0": sfx(0.4, { pitchJitter: 0.08 }),
-  "footstep-mud-1": sfx(0.4, { pitchJitter: 0.08 }),
-  "footstep-mud-2": sfx(0.4, { pitchJitter: 0.08 }),
-  "footstep-water-0": sfx(0.36, { pitchJitter: 0.08 }),
-  "footstep-water-1": sfx(0.36, { pitchJitter: 0.08 }),
-  "footstep-water-2": sfx(0.36, { pitchJitter: 0.08 }),
-  "footstep-carpet-0": sfx(0.26, { pitchJitter: 0.08 }),
-  "footstep-carpet-1": sfx(0.26, { pitchJitter: 0.08 }),
-  "footstep-carpet-2": sfx(0.26, { pitchJitter: 0.08 }),
+  "footstep-0": step(0.5),
+  "footstep-1": step(0.5),
+  "footstep-2": step(0.5),
+  "footstep-grass-0": step(0.36),
+  "footstep-grass-1": step(0.36),
+  "footstep-grass-2": step(0.36),
+  "footstep-mud-0": step(0.4),
+  "footstep-mud-1": step(0.4),
+  "footstep-mud-2": step(0.4),
+  "footstep-water-0": step(0.36),
+  "footstep-water-1": step(0.36),
+  "footstep-water-2": step(0.36),
+  "footstep-carpet-0": step(0.26),
+  "footstep-carpet-1": step(0.26),
+  "footstep-carpet-2": step(0.26),
   // Pitch stays fixed: the beep is a timing signal.
   "fuse-tick": sfx(0.32, { voices: 4, minInterval: 0.02 }),
   blast: sfx(0.5, { voices: 4, minInterval: 0.06, pitchJitter: 0.04 }),
@@ -100,9 +109,9 @@ const CUES = {
   "zombie-groan-0": sfx(1, { voices: 2, minInterval: 0.3, pitchJitter: 0.1 }),
   "zombie-groan-1": sfx(1, { voices: 2, minInterval: 0.3, pitchJitter: 0.1 }),
   "zombie-groan-2": sfx(1, { voices: 2, minInterval: 0.3, pitchJitter: 0.1 }),
-  "zombie-step-0": sfx(0.9, { voices: 2, minInterval: 0.05, pitchJitter: 0.1 }),
-  "zombie-step-1": sfx(0.9, { voices: 2, minInterval: 0.05, pitchJitter: 0.1 }),
-  "zombie-step-2": sfx(0.9, { voices: 2, minInterval: 0.05, pitchJitter: 0.1 }),
+  "zombie-step-0": step(0.9, { voices: 2, minInterval: 0.05, pitchJitter: 0.1 }),
+  "zombie-step-1": step(0.9, { voices: 2, minInterval: 0.05, pitchJitter: 0.1 }),
+  "zombie-step-2": step(0.9, { voices: 2, minInterval: 0.05, pitchJitter: 0.1 }),
   "glass-shatter": sfx(0.7, { voices: 2, minInterval: 0.06, pitchJitter: 0.04 }),
   "bomb-kick": sfx(0.6, { minInterval: 0.08, pitchJitter: 0.05 }),
   "cover-break-0": sfx(0.6, { minInterval: 0.05, pitchJitter: 0.06 }),
@@ -120,19 +129,19 @@ const MODULE_CUE: CueDef = sfx(0.5, { pitchJitter: 0.04 });
 export const MENU_MUSIC = "./assets/volatile-reaction.mp3";
 export const MUSIC_VOLUME = 0.18;
 export const FIRE_LOOP: CueSpec = { url: "./assets/arena-fire.ogg", ...sfx(0.8, { voices: 1 }) };
-export const RAIN_LOOP: CueSpec = { url: "./assets/environment/rain.ogg", ...sfx(0.3, { voices: 1 }) };
+export const RAIN_LOOP: CueSpec = { url: "./assets/environment/rain.ogg", ...ambience(0.3) };
 /** Insects, birds and frogs under the rain on forest maps. */
-export const JUNGLE_LOOP: CueSpec = { url: "./assets/environment/jungle.ogg", ...sfx(0.34, { voices: 1 }) };
+export const JUNGLE_LOOP: CueSpec = { url: "./assets/environment/jungle.ogg", ...ambience(0.34) };
 /** Light ballasts, ventilation and lapping water in a tiled hall. */
-export const POOL_LOOP: CueSpec = { url: "./assets/environment/poolrooms.ogg", ...sfx(0.5, { voices: 1 }) };
+export const POOL_LOOP: CueSpec = { url: "./assets/environment/poolrooms.ogg", ...ambience(0.5) };
 /** Fluorescent tubes and far-off air handling on an office floor. */
 export const OFFICE_LOOP: CueSpec = {
   url: "./assets/environment/backrooms.ogg",
-  ...sfx(0.1, { voices: 1 }),
+  ...ambience(0.1),
 };
 const thunder = (name: string): CueSpec => ({
   url: `./assets/environment/${name}.ogg`,
-  ...sfx(0.7, { voices: 1, minInterval: 2, pitchJitter: 0.06 }),
+  ...ambience(0.7, { minInterval: 2, pitchJitter: 0.06 }),
 });
 export const THUNDER = { near: thunder("thunder-near"), far: thunder("thunder-far") };
 

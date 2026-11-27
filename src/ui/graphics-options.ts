@@ -3,13 +3,43 @@ import { GRAPHICS_PRESETS, type GraphicsPreset, type GraphicsSettings } from "..
 import { keyHint } from "./control-settings";
 import { language, t } from "../i18n";
 import { motionSelect } from "../feel/settings";
+import { VOLUME_CHANNELS, type VolumeChannel, type Volumes } from "../audio/sound";
+
+const VOLUME_LABELS: Record<VolumeChannel, string> = {
+  master: "主音量",
+  music: "音乐",
+  sfx: "战斗音效",
+  ui: "界面与提示",
+  ambience: "环境音",
+  steps: "脚步声",
+};
+
+const percent = (position: number) => Math.round(position * 100);
+
+/** One fader per mix bus. The rows report through `data-volume`; GameUI listens for them. */
+const volumeRows = (volumes: Readonly<Volumes>) =>
+  VOLUME_CHANNELS.map((channel) => {
+    const value = percent(volumes[channel]);
+    return `<label>${t(VOLUME_LABELS[channel])}<span class="volume-control"><input type="range" min="0" max="100" step="1" value="${value}" data-volume="${channel}" style="--fill:${value}%"><output>${value}</output></span></label>`;
+  }).join("");
+
+/** Keeps the filled part of the track and the readout in step with a fader being dragged. */
+export function syncVolumeRow(input: HTMLInputElement) {
+  input.style.setProperty("--fill", `${input.value}%`);
+  const readout = input.parentElement?.querySelector("output");
+  if (readout) readout.textContent = input.value;
+}
+
 export function languageSelect() {
   return `<label class="language-setting">${t("语言")}<select name="language" data-language aria-label="${t("语言")}">
     <option value="en" lang="en" ${language === "en" ? "selected" : ""}>English</option>
     <option value="zh" lang="zh-CN" ${language === "zh" ? "selected" : ""}>简体中文</option>
   </select></label>`;
 }
-export const graphicsForm = () => `<h2>${t("设置")}</h2><form id="graphics-form">
+export const graphicsForm = (
+  volumes: Readonly<Volumes>,
+) => `<h2>${t("设置")}</h2><div class="settings-columns"><form id="graphics-form">
+  <h3>${t("画面")}</h3>
   ${languageSelect()}
   <label>${t("画质预设")}<select name="preset"><option value="performance">${t("性能")}</option><option value="balanced">${t("均衡")}</option><option value="high">${t("高画质")}</option><option value="custom" disabled>${t("自定义")}</option></select></label>
   <label>${t("渲染比例")}<select name="scale"><option value="0.7">70%</option><option value="0.85">85%</option><option value="1">100%</option></select></label>
@@ -19,7 +49,7 @@ export const graphicsForm = () => `<h2>${t("设置")}</h2><form id="graphics-for
   <label>${t("场景细节")}<select name="detail"><option value="low">${t("低")}</option><option value="medium">${t("中")}</option><option value="high">${t("高")}</option></select></label>
   <label>${t("地面反射")}<input type="checkbox" name="reflections"></label>
   ${motionSelect()}
-  </form><div class="graphics-footer"><span>${keyHint("performance")} ${t("性能面板")}</span><button class="primary" id="graphics-done">${t("完成")}</button></div>`;
+  </form><section id="audio-settings"><h3>${t("声音")}</h3>${volumeRows(volumes)}</section></div><div class="graphics-footer"><span>${keyHint("performance")} ${t("性能面板")}</span><button class="primary" id="graphics-done">${t("完成")}</button></div>`;
 
 export function syncGraphics(form: HTMLFormElement, value: GraphicsSettings) {
   const preset = Object.entries(GRAPHICS_PRESETS).find(
