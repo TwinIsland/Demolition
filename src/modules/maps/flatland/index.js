@@ -23,6 +23,8 @@ export default defineMap(
     wallDensity: 0,
     theme: "village",
     weather: "spring",
+    artwork: new URL("./briefing.webp", import.meta.url).href,
+    backdrop: new URL("./backdrop.webp", import.meta.url).href,
     obstacles: [
       { use: "set:village", weight: 70 },
       { use: "crate", weight: 18 },
