@@ -7,9 +7,18 @@
   height: 100%;
   padding: 3px;
 }
+/* The card grid reserves 24 px for a line glyph; painted art needs a wider first column. */
+#app .shop-grid .shop-card:has(> .icon-art) {
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  column-gap: 12px;
+}
 #app .shop-card .icon-art {
   width: 44px;
   height: 44px;
+}
+#app #hud .wallet-crate .icon-art {
+  width: 20px;
+  height: 20px;
 }
 #app .perk-icon > .icon-art,
 #app #perk-tray .perk-icon > .icon-art,
