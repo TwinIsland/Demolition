@@ -14,9 +14,9 @@ import { rollCredits } from "./credits";
 import { walkRoom } from "./home";
 import { sayTooMuch } from "./overflow";
 import { playPullOut } from "./pull-out";
+import { ArrivalShaft } from "./arrival";
 import { ShutdownSky } from "./sky";
 import { reachEnding, type Ending } from "./unlocks";
-import { playWelcome } from "./welcome";
 
 type Script = typeof SHUTDOWN_SCRIPT;
 /** Whatever is on stage at the moment: a staged match, a film, a room, the credits. */
@@ -40,7 +40,12 @@ const FADE_MS = 450;
 /** Easier opponents after this many defeats: the story should end, sooner or later. */
 const MERCY_AFTER = 2;
 const SOUTH = 0,
-  EAST = Math.PI / 2;
+  EAST = Math.PI / 2,
+  NORTH = Math.PI;
+/** Whoever comes next wears the game's own default; only their hand is ever seen. */
+const NEWCOMER_SKIN = "sapper";
+/** The newcomer's way down: from how high, and for how long. */
+const ARRIVAL = { height: 46, ms: 4200 };
 
 /**
  * Plays act 5 from the voice in the sky to the credits. It is a chain of parts, each of which
@@ -270,22 +275,82 @@ export function playShutdown(
     return true;
   };
 
-  /** Two guides where there was one, and a name too long for the box. */
+  /**
+   * Two guides where there was one, seen by whoever comes next: a new match on the same village,
+   * with the sky back, and the camera is the newcomer coming down a shaft of light onto the
+   * plaza. Then a name too long for the box.
+   */
   const stayHere = async (previous: Part) => {
     if (!(await stage.talk(lines.stay.parting))) return false;
-    stage.root.dataset.kind = "film";
-    const arrival = enter(playWelcome(stage.overlay()));
-    leave(previous);
-    stage.host.cue("pull");
-    stage.host.music("opening");
-    await arrival.done;
-    if (disposed || !(await stage.wait(900))) return false;
+    const { part, result } = await staged(
+      {
+        mapId: MAP,
+        skin: NEWCOMER_SKIN,
+        setup: {
+          spawn: spots.newcomer,
+          yaw: NORTH,
+          cast: [
+            {
+              id: "zero",
+              name: "零",
+              color: "#7b3fd0",
+              skin: HERO_SKIN,
+              ...spots.guides[0],
+              yaw: SOUTH,
+              passive: true,
+            },
+            {
+              id: "lulu",
+              name: "露露",
+              color: "#c8382e",
+              skin: "story-lulu",
+              ...spots.guides[1],
+              yaw: SOUTH,
+              passive: true,
+            },
+          ],
+        },
+      },
+      async (d) => {
+        const shaft = new ArrivalShaft(d.match.scene, spots.newcomer, d.state.size);
+        const started = performance.now();
+        const height = (now: number) => ARRIVAL.height * (1 - Math.min(1, (now - started) / ARRIVAL.ms)) ** 2;
+        // The story lowers the newcomer itself: gravity would have them down before they could look.
+        const lower = (now: number) =>
+          d.match.mutate((state) => {
+            state.players[0].elevation = height(now);
+            state.players[0].verticalSpeed = 0;
+          });
+        lower(started);
+        void d
+          .until(() => {
+            const now = performance.now();
+            if (height(now) > 0) lower(now);
+            shaft.update(now, d.state.players[0].elevation);
+            return false;
+          })
+          .then(() => shaft.dispose());
+        stage.root.classList.remove("veiled");
+        if (!(await fade(() => leave(previous)))) return;
+        stage.host.cue("pull");
+        stage.host.music("opening");
+        if (!(await d.until(() => height(performance.now()) === 0))) return;
+        stage.host.cue("down");
+        shaft.fade();
+        return (await d.seconds(1.6)) || undefined;
+      },
+    );
+    if (!result) return false;
     if (SHUTDOWN_ART.stay) stage.art(SHUTDOWN_ART.stay);
     const { fits, spill } = lines.stay.welcome;
     const gag = enter(sayTooMuch(stage, "零", fits, spill, !!SHUTDOWN_ART.stay));
     if (!(await gag.finished)) return false;
     leave(gag);
-    return stage.talk(lines.stay.after);
+    if (!(await stage.talk(lines.stay.after))) return false;
+    // The credits roll over the panel; the village behind it can go.
+    stage.root.dataset.kind = "film";
+    leave(part);
+    return true;
   };
 
   const run = async () => {
