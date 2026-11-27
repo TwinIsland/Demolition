@@ -1,3 +1,4 @@
+import { SHUTDOWN_ART } from "../story/shutdown/art";
 import { language, t } from "../i18n";
 import { STORY_ART } from "../story/assets";
 import { ACTS, actDone, actUnlocked, nextAct, type Act } from "../story/chapters";
@@ -21,6 +22,7 @@ const ACT_NOTES: Record<string, string> = {
 const ACT_COVERS: Partial<Record<string, string>> = {
   act1: STORY_ART.comic1,
   act2: STORY_ART.comic2,
+  act5: SHUTDOWN_ART.wall,
 };
 const coverOf = (act: Act) => {
   for (let index = ACTS.indexOf(act); index >= 0; index--) {

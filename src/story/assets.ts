@@ -1,3 +1,5 @@
+import { shutdownImages } from "./shutdown/art";
+
 /** Story art, bundled with the game and decoded on the loading screen like every other image. */
 const url = (file: string) => new URL(`./assets/${file}`, import.meta.url).href;
 
@@ -37,6 +39,9 @@ export const STORY_SKINS = {
   "story-zero": url("skins/zero.png"),
   "story-lulu": url("skins/lulu.png"),
   "story-zhangsan": url("skins/zhang-san.png"),
+  "story-bluescreen": url("skins/blue-screen.png"),
+  "story-popup": url("skins/popup.png"),
+  "story-antivirus": url("skins/antivirus.png"),
 } as const;
 
 export const storyImages = (): string[] => [
@@ -45,4 +50,5 @@ export const storyImages = (): string[] => [
   ...Object.values(LULU_PORTRAITS),
   ...Object.values(ZHANGSAN_PORTRAITS),
   ...Object.values(STORY_SKINS),
+  ...shutdownImages(),
 ];

@@ -15,6 +15,11 @@ export interface SkinPack extends Pack {
   model: "auto" | "default" | "slim";
   /** Square image with a transparent background, stencilled on crates this character builds. */
   emblem?: string;
+  /**
+   * A skin the story hands out: it stays out of the pickers until the ending named here ("home"
+   * or "stay") has been reached. See story/shutdown/unlocks.ts.
+   */
+  reward?: string;
 }
 export interface BombFinish extends Pack {
   colors: readonly [string, string, string];
