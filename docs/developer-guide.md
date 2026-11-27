@@ -75,7 +75,7 @@ A match is a pure function of its options, seed and inputs.
 
 `src/bootstrap.ts` loads the catalog before anything else is imported: it fetches `mods/manifest.json`, imports every pack's `index.js` in parallel, then starts the game. `core/content.ts` validates each definition against `core/schema/` and indexes skills, items and perks. A bad config fails loudly. Node tools use `catalog.node.ts`, which scans the folders directly. The two are switched by the `#game-catalog` import in `package.json`.
 
-`npm run build` copies `src/modules/` to `dist/mods/`, bundles the SDK to `dist/mods/sdk.js` and writes the manifest.
+`npm run build` copies `src/modules/` to `dist/mods/`, writes `dist/mods/sdk.js` (a stub that re-exports the running game's SDK, so it never references hashed chunks) and writes the manifest.
 
 ## Where to change things
 

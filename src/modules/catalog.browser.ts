@@ -2,6 +2,7 @@ import { t } from "../i18n";
 import type { SkinPack, MapDefinition, BombFinish } from "../core/pack-api";
 import { ID_PATTERN } from "../core/schema";
 import type { ContentModule, MutationDefinition } from "../core/module-api";
+import * as sdk from "./sdk.js";
 
 const content: ContentModule[] = [];
 export default content;
@@ -31,6 +32,9 @@ async function loadCategory<T>(root: URL, manifest: Record<string, unknown>, cat
 
 // Bootstrap awaits the complete catalog before simulation or UI registries are imported.
 export async function loadCatalog() {
+  // Release packs import `mods/sdk.js`, a stub that re-exports this object. The stub names no hashed chunk, so a
+  // copy cached from an earlier deployment keeps working after the chunks it was built with are gone.
+  (globalThis as { __demolitionSdk?: typeof sdk }).__demolitionSdk = sdk;
   const base = new URL(import.meta.env.BASE_URL, document.baseURI);
   const response = await fetch(new URL("mods/manifest.json", base), { cache: "no-store" });
   if (!response.ok) throw new Error(t("Mod 清单加载失败 · HTTP {0}", response.status));
