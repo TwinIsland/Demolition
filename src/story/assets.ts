@@ -21,6 +21,28 @@ export const ZERO_PORTRAITS = {
   flustered: url("zero-flustered.png"),
   sincere: url("zero-sincere.png"),
 } as const;
-export type Mood = keyof typeof ZERO_PORTRAITS;
+/** Lulu's, in her own moods. */
+export const LULU_PORTRAITS = {
+  pout: url("lulu-pout.png"),
+  flustered: url("lulu-flustered.png"),
+  impressed: url("lulu-impressed.png"),
+} as const;
+/** The sample opponent has one face, and it is not filled in either. */
+export const ZHANGSAN_PORTRAITS = { blank: url("zhangsan-blank.png") } as const;
+export type Mood =
+  keyof typeof ZERO_PORTRAITS | keyof typeof LULU_PORTRAITS | keyof typeof ZHANGSAN_PORTRAITS;
 
-export const storyImages = (): string[] => [...Object.values(STORY_ART), ...Object.values(ZERO_PORTRAITS)];
+/** Skins of the story's cast, by the id the game's renderer knows them under. */
+export const STORY_SKINS = {
+  "story-zero": url("skins/zero.png"),
+  "story-lulu": url("skins/lulu.png"),
+  "story-zhangsan": url("skins/zhang-san.png"),
+} as const;
+
+export const storyImages = (): string[] => [
+  ...Object.values(STORY_ART),
+  ...Object.values(ZERO_PORTRAITS),
+  ...Object.values(LULU_PORTRAITS),
+  ...Object.values(ZHANGSAN_PORTRAITS),
+  ...Object.values(STORY_SKINS),
+];

@@ -82,6 +82,8 @@ export interface Stage {
   art(url?: string): void;
   /** Adds a canvas covering the stage, above the scene and below the text box, for a cutscene. */
   overlay(): HTMLCanvasElement;
+  /** Saves a checkpoint in the middle of an act and shows the save mark; the scene goes on. */
+  mark(checkpoint: string): void;
   /**
    * Saves the checkpoint, shows the save mark, and runs on into the next act. After the last act
    * built, the scene stays up with a way back to the menu.

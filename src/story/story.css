@@ -289,8 +289,9 @@
   width: 57.27% !important;
   height: 71.89% !important;
 }
-.story-stage[data-kind="room"] .story-keys[data-for="arcade"],
-.story-stage[data-kind="arcade"] .story-keys[data-for="room"] {
+.story-stage:not([data-kind="room"]) .story-keys[data-for="room"],
+.story-stage:not([data-kind="arcade"]) .story-keys[data-for="arcade"],
+.story-stage:not([data-kind="staged"]) .story-keys[data-for="staged"] {
   display: none;
 }
 /* The power is out: the room goes, the screen stays. */
@@ -347,4 +348,28 @@
   margin: 0;
   font: inherit;
   font-size: calc(var(--px) * 24);
+}
+
+/* Acts staged on the real game: the stage is a pane of glass over the match drawn underneath. */
+.story-screen:has(.story-stage[data-kind="staged"]) {
+  background: none;
+}
+.story-stage[data-kind="staged"] {
+  background: none;
+}
+.story-stage[data-kind="staged"] .story-canvas {
+  display: none;
+}
+/* Until the match can be drawn, and whenever the scene moves people around unseen. */
+.story-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s steps(6);
+}
+.story-stage.veiled::before {
+  opacity: 1;
 }
