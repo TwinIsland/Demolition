@@ -322,7 +322,7 @@ export function playArcade(stage: Stage, scene: ArcadeScene): ScenePlayer {
     if (!alive) return;
     stage.art(scene.goneArt);
     if (!(await say(scene.lines.gone))) return;
-    stage.end(scene.checkpoint, scene.endCard);
+    stage.end(scene.checkpoint);
   };
 
   function crateBroken() {

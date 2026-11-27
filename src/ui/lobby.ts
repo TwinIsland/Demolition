@@ -172,7 +172,7 @@ export class LobbyView {
     root.innerHTML = lobbyMarkup();
     root.dataset.view = this.view;
     root.dataset.tab = tabOf(this.view);
-    this.story = new StoryMenu(root, (chapter) => actions.openStory(chapter));
+    this.story = new StoryMenu(root, (chapter, titled) => actions.openStory(chapter, titled));
     this.title = query(root, ".menu-title");
     this.kicker = query(root, ".menu-kicker");
     this.backButton = query<HTMLButtonElement>(root, ".menu-back");

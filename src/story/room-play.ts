@@ -20,7 +20,7 @@ export function playRoom(stage: Stage, scene: RoomScene): ScenePlayer {
     over = true;
     stage.goal();
     stage.root.classList.add("booting");
-    if (await stage.talk(scene.outro)) stage.end(scene.checkpoint, scene.endCard);
+    if (await stage.talk(scene.outro)) stage.end(scene.checkpoint);
   };
   const begin = async () => {
     if (scene.opening) {

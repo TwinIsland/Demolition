@@ -443,7 +443,7 @@ export class GameApp {
         this.sound.setMusic(CREDITS_MUSIC);
       },
       closeCredits: () => this.closeCredits(),
-      openStory: (act) => {
+      openStory: (act, titled) => {
         if (!this.screens.is("lobby")) return;
         this.screens.transition("story");
         this.ui.showStory(
@@ -455,6 +455,7 @@ export class GameApp {
             finish: () => this.closeStory(),
           },
           act ?? nextAct(loadStory())?.id,
+          titled,
         );
         this.sound.menu("accept");
         this.sound.setMusic(STORY_MUSIC.opening);
