@@ -167,7 +167,7 @@ export class LobbyView {
 
   constructor(
     readonly root: HTMLElement,
-    private readonly actions: Pick<UIActions, "changeOutfit" | "importSkin" | "openStory">,
+    private readonly actions: Pick<UIActions, "changeOutfit" | "importSkin" | "openStory" | "changeLobbyTab">,
   ) {
     root.innerHTML = lobbyMarkup();
     root.dataset.view = this.view;
@@ -238,6 +238,11 @@ export class LobbyView {
     return true;
   }
 
+  /** The top-level tab that is open. */
+  get tab(): Tab {
+    return tabOf(this.view);
+  }
+
   /** Picks the save up again after the story has written to it. */
   refreshStory() {
     this.story.refresh();
@@ -306,6 +311,7 @@ export class LobbyView {
     this.root.dataset.tab = tabOf(view);
     this.hovered = undefined;
     if (switchesTab) {
+      this.actions.changeLobbyTab(tabOf(view));
       this.story.refresh();
       wipe(query(this.root, ".menu-wipe"));
       rise([query(this.root, ".menu-crumb")], 0, 10);

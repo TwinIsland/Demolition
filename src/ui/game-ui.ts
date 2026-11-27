@@ -22,7 +22,8 @@ import { CombatFeed } from "./combat-feed";
 import { mountControls } from "./control-settings";
 import { creditsMarkup, mountCredits } from "./credits";
 import type { SpectrumReader } from "./credits-spectrum";
-import { mountStory, storyMarkup, type StoryHost } from "../story/story-view";
+import { mountStory, storyMarkup, type StoryHandle, type StoryHost } from "../story/story-view";
+import { StoryExitPrompt } from "./story-exit";
 import { query } from "./dom";
 import { EquipmentWheel } from "./equipment-wheel";
 import { graphicsChange, graphicsForm, syncGraphics, syncVolumeRow } from "./graphics-options";
@@ -203,6 +204,11 @@ export class GameUI {
     return this.lobby.confirm();
   }
 
+  /** The main menu's open top-level tab. */
+  get lobbyTab() {
+    return this.lobby.tab;
+  }
+
   /** Re-reads the story save, after the story wrote to it. */
   refreshStory() {
     this.lobby.refreshStory();
@@ -292,11 +298,23 @@ export class GameUI {
     );
   }
 
-  private stopStory?: () => void;
+  private story?: StoryHandle;
+  private storyExit?: StoryExitPrompt;
 
   showStory(host: StoryHost, act?: string, titled = false) {
-    this.stopStory?.();
-    this.stopStory = mountStory(this.overlay.screen(storyMarkup(), "story-screen"), host, act, titled);
+    this.story?.stop();
+    const screen = this.overlay.screen(storyMarkup(), "story-screen");
+    const story = (this.story = mountStory(screen, host, act, titled));
+    this.storyExit = new StoryExitPrompt(screen, {
+      pause: (on) => story.pause(on),
+      leave: () => host.finish(),
+      click: () => host.menu("click"),
+    });
+  }
+
+  /** Escape in the story: asks before leaving, or withdraws the question. */
+  toggleStoryExit() {
+    this.storyExit?.toggle();
   }
 
   /**
@@ -319,8 +337,8 @@ export class GameUI {
   hideOverlay() {
     this.stopCredits?.();
     this.stopCredits = undefined;
-    this.stopStory?.();
-    this.stopStory = undefined;
+    this.story?.stop();
+    this.story = this.storyExit = undefined;
     this.overlay.hide();
   }
 

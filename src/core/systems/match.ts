@@ -128,7 +128,7 @@ export function effectContext(ctx: SimContext, p: Player, target?: Vec2): Effect
  */
 export function finishIfDecided(s: GameSnapshot) {
   const living = s.players.filter((p) => p.alive);
-  if (s.mode === "practice" || living.length > 1) return;
+  if (s.mode === "practice" || s.story || living.length > 1) return;
   s.phase = "finished";
   delete s.terrainReset;
   delete s.arenaView;

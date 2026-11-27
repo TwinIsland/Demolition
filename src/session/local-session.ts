@@ -17,6 +17,13 @@ export class LocalMatchSession implements MatchSession {
   setAgents(agents: PlayerAgent[]) {
     this.agents = new Map(agents.map((a) => [a.playerId, a]));
   }
+  setAgent(playerId: string, agent?: PlayerAgent) {
+    if (agent) this.agents.set(playerId, agent);
+    else this.agents.delete(playerId);
+  }
+  mutate(change: (state: GameSnapshot) => void) {
+    change(this.simulation.state);
+  }
   submit(playerId: string, input: PlayerInput) {
     const prior = this.pending.get(playerId);
     this.pending.set(playerId, {

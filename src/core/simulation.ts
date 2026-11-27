@@ -24,7 +24,7 @@ import { finishIfDecided, tickCountdown, updateArenaView, updateTerrainReset } f
 import { move } from "./systems/movement";
 import { applyShopCommand, activateSkill, choosePerk, usePerk } from "./systems/progression";
 import { emptyMatchStats, idleInput, inTacticalView } from "./types";
-import type { GameSnapshot, MatchOptions, Player, PlayerInput, Tile } from "./types";
+import type { GameSnapshot, MatchOptions, Player, PlayerInput, Tile, Vec2 } from "./types";
 import { ZombieDirector } from "./zombies";
 
 /**
@@ -127,7 +127,7 @@ export class Simulation {
 
     // 7. World: zombies, then the field supply timer.
     stepZombies(ctx, dt);
-    spawnFieldSupply(ctx);
+    if (!s.story) spawnFieldSupply(ctx);
 
     // 8. Match end and event log upkeep.
     finishIfDecided(s);
@@ -164,12 +164,22 @@ function initialState(
   map: MapDefinition,
   tiles: Tile[][],
 ): GameSnapshot {
+  const story = options.story;
   const slots = options.opponents ?? defaultSlots(options.difficulty);
-  const bots = BOT_PROFILES.flatMap((profile) => {
-    const slot = slots.find((s) => s.id === profile.id && s.enabled);
-    return slot ? [{ ...profile, bot: true, skin: slot.skin, difficulty: slot.difficulty }] : [];
-  });
-  if (mode !== "practice" && !bots.length) throw new Error(t("至少需要一位 AI 对手"));
+  const bots = story
+    ? story.cast.map(({ id, name, color, skin, difficulty }) => ({
+        id,
+        name,
+        color,
+        skin,
+        difficulty,
+        bot: true,
+      }))
+    : BOT_PROFILES.flatMap((profile) => {
+        const slot = slots.find((s) => s.id === profile.id && s.enabled);
+        return slot ? [{ ...profile, bot: true, skin: slot.skin, difficulty: slot.difficulty }] : [];
+      });
+  if (mode !== "practice" && !story && !bots.length) throw new Error(t("至少需要一位 AI 对手"));
   const profiles = [
     {
       id: options.humanId ?? "you",
@@ -180,10 +190,13 @@ function initialState(
     },
     ...bots,
   ];
-  const spawns = spawnPoints(map),
+  const spawns: (Vec2 & { yaw?: number; passive?: boolean })[] = story
+      ? [{ ...story.spawn, yaw: story.yaw }, ...story.cast]
+      : spawnPoints(map),
     rules = modeRules(mode);
   return {
     mode,
+    story: story ? true : undefined,
     canResetTerrain: mode === "practice" && !!map.randomizeTerrain,
     seed: options.seed,
     mapId: map.id,
@@ -194,16 +207,17 @@ function initialState(
     wallOrigins: movableWalls(map, tiles),
     time: 0,
     duration: zoneDuration(options.zoneDuration) * (map.zoneScale ?? 1),
-    countdown: RULES.countdown,
-    phase: "countdown",
+    countdown: story ? 0 : RULES.countdown,
+    phase: story ? "playing" : "countdown",
     winnerId: null,
     players: profiles.map((p, i) => ({
       ...p,
-      ...spawns[i],
+      x: spawns[i].x,
+      z: spawns[i].z,
       elevation: 0,
-      tacticalView: rules.overhead || undefined,
+      tacticalView: rules.overhead || story?.overhead || undefined,
       verticalSpeed: 0,
-      yaw: i === 0 ? -Math.PI / 2 : Math.PI / 2,
+      yaw: spawns[i].yaw ?? (i === 0 ? -Math.PI / 2 : Math.PI / 2),
       hp: rules.health,
       maxHp: rules.health,
       stamina: rules.stamina,
@@ -220,7 +234,7 @@ function initialState(
       skills: [],
       alive: true,
       shield: 0,
-      invulnerableUntil: 0,
+      invulnerableUntil: spawns[i].passive ? Number.MAX_SAFE_INTEGER : 0,
       speed: rules.speed,
       range: rules.range,
       capacity: rules.capacity,

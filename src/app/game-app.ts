@@ -3,6 +3,7 @@ import { preloadEverything } from "./preload";
 import { KeyboardAgent } from "../agents/keyboard-agent";
 import { CREDITS_MUSIC, MENU_MUSIC, Sound, STORY_MUSIC } from "../audio/sound";
 import { nextAct } from "../story/chapters";
+import type { StoryMatch, StoryMatchOptions } from "../story/stage";
 import { loadStory } from "../story/save";
 import { perkById } from "../core/content";
 import { MAPS } from "../core/maps";
@@ -75,6 +76,8 @@ export class GameApp {
   private closed = false;
   /** Where "back" leads from the manual: the lobby, or the match it was opened over. */
   private helpFromLobby = true;
+  /** The match story mode is staging, while there is one. */
+  private storyMatch?: StoryMatch;
   private deathShown = false;
   private readonly feedback: FeedbackHud;
   private displayedLevel = 1;
@@ -170,7 +173,7 @@ export class GameApp {
     this.releaseControls();
     this.session.restart(this.setup.lobbyOptions());
     this.sound.reset();
-    this.sound.setMusic(MENU_MUSIC);
+    this.sound.setMusic(this.lobbyMusic());
     this.ui.setInGame(false);
     this.ui.enterLobby();
     this.sound.menu("back");
@@ -202,13 +205,18 @@ export class GameApp {
   back() {
     if (this.screens.is("graphics")) this.closeGraphics();
     else if (this.screens.is("credits")) this.closeCredits();
-    else if (this.screens.is("story")) this.closeStory();
+    else if (this.screens.is("story")) this.ui.toggleStoryExit();
     else if (this.screens.is("room")) this.goHome();
     else if (this.screens.is("lobby")) {
       if (this.ui.lobbyBack()) this.sound.menu("back");
     } else if (this.screens.is("playing")) this.pause();
     else if (this.screens.is("paused", "help")) this.resume();
     else if (this.screens.is("replay")) this.skipReplay();
+  }
+
+  /** Music of the main menu: the story tab plays the story's theme, the rest the menu track. */
+  private lobbyMusic() {
+    return this.ui.lobbyTab === "story" ? STORY_MUSIC.opening : MENU_MUSIC;
   }
 
   /** Enter on the main menu: the open tab's primary action. */
@@ -221,7 +229,7 @@ export class GameApp {
     this.screens.transition("lobby");
     this.ui.hideOverlay();
     this.sound.menu("back");
-    this.sound.setMusic(MENU_MUSIC);
+    this.sound.setMusic(this.lobbyMusic());
   }
 
   /** Leaves the story for the menu. Progress is kept from the last checkpoint reached. */
@@ -229,9 +237,10 @@ export class GameApp {
     if (!this.screens.is("story")) return;
     this.screens.transition("lobby");
     this.ui.hideOverlay();
+    this.closeStoryMatch();
     this.ui.refreshStory();
     this.sound.menu("back");
-    this.sound.setMusic(MENU_MUSIC);
+    this.sound.setMusic(this.lobbyMusic());
   }
 
   closeGraphics() {
@@ -443,6 +452,9 @@ export class GameApp {
         this.sound.setMusic(CREDITS_MUSIC);
       },
       closeCredits: () => this.closeCredits(),
+      changeLobbyTab: () => {
+        if (this.screens.is("lobby")) this.sound.setMusic(this.lobbyMusic());
+      },
       openStory: (act, titled) => {
         if (!this.screens.is("lobby")) return;
         this.screens.transition("story");
@@ -452,6 +464,11 @@ export class GameApp {
             menu: (name) => this.sound.menu(name),
             cue: (name) => this.sound.storyCue(name),
             silence: () => this.sound.stopMusic(),
+            music: (track) => this.sound.setMusic(STORY_MUSIC[track]),
+            match: {
+              open: (options) => this.openStoryMatch(options),
+              close: () => this.closeStoryMatch(),
+            },
             finish: () => this.closeStory(),
           },
           act ?? nextAct(loadStory())?.id,
@@ -631,6 +648,66 @@ export class GameApp {
     return state.players.find((p) => p.id === LOCAL_PLAYER_ID)!;
   }
 
+  // --- Story matches ---
+
+  /**
+   * Stages a match for the story on the session and renderer the game already has. The story
+   * screen stays up: the stage above it goes transparent and directs what happens underneath.
+   */
+  private async openStoryMatch({ mapId, setup, skin }: StoryMatchOptions): Promise<StoryMatch> {
+    this.closeStoryMatch(false);
+    this.sound.reset();
+    this.session.restart({
+      mode: "freeForAll",
+      mapId,
+      seed: 1,
+      humanId: LOCAL_PLAYER_ID,
+      appearance: { ...this.setup.appearance, skin },
+      zombieRate: "off",
+      story: setup,
+    });
+    await this.renderer.prepare(this.session.getSnapshot(), true, () => {});
+    const { session, renderer, keyboard, ui } = this;
+    let hud = false;
+    const match: StoryMatch = {
+      get state() {
+        return session.getSnapshot();
+      },
+      renderer,
+      mutate: (change) => session.mutate?.(change),
+      setAgent: (id, agent) => session.setAgent?.(id, agent),
+      paused: true,
+      get control() {
+        return keyboard.enabled;
+      },
+      set control(value) {
+        if (value === keyboard.enabled) return;
+        keyboard.clear();
+        keyboard.enabled = value;
+      },
+      get hud() {
+        return hud;
+      },
+      set hud(value) {
+        hud = value;
+        ui.setInGame(value);
+      },
+    };
+    this.displayedLevel = Infinity;
+    this.feedback.clear();
+    this.loop.resetClock();
+    return (this.storyMatch = match);
+  }
+
+  private closeStoryMatch(restore = true) {
+    if (!this.storyMatch) return;
+    this.storyMatch = undefined;
+    this.releaseControls();
+    this.ui.setInGame(false);
+    this.sound.reset();
+    if (restore) this.session.restart(this.setup.lobbyOptions());
+  }
+
   // --- Frame ---
 
   private frame(now: number, dt: number) {
@@ -646,15 +723,18 @@ export class GameApp {
       this.replayFrame(now, dt);
       return;
     }
-    if (this.screens.is("playing")) {
+    const story = this.screens.is("story") ? this.storyMatch : undefined;
+    const storyRuns = !!story && !story.paused;
+    if (this.screens.is("playing") || storyRuns) {
       const observation = this.session.getSnapshot();
       const input = this.keyboard.decide({ self: this.viewer(observation), state: observation, dt });
-      this.session.submit(LOCAL_PLAYER_ID, input);
+      this.session.submit(LOCAL_PLAYER_ID, story?.gate ? story.gate(input) : input);
       const simStarted = performance.now();
       this.session.advance(dt);
       this.renderer.profile("sim", performance.now() - simStarted);
-      this.recorder.capture(this.session.getSnapshot());
+      if (!story) this.recorder.capture(this.session.getSnapshot());
     }
+    story?.onFrame?.(this.session.getSnapshot(), storyRuns ? dt : 0);
     const state = this.session.getSnapshot();
     const viewer = this.viewer(state);
     const topDown = viewer.alive && inTacticalView(viewer, state.time);
@@ -666,7 +746,10 @@ export class GameApp {
     this.renderScene(state, viewer, now);
     this.presentBattle(state, viewer, now);
     this.renderer.finishFrame();
-    if (this.hudRefresh.ready(now) && !this.screens.is("lobby", "graphics", "credits", "story")) {
+    if (
+      this.hudRefresh.ready(now) &&
+      (story ? story.hud : !this.screens.is("lobby", "graphics", "credits", "story"))
+    ) {
       const hudStarted = performance.now();
       this.ui.update({
         snapshot: state,
@@ -787,7 +870,8 @@ export class GameApp {
 
   private renderScene(state: Readonly<GameSnapshot>, viewer: Player, now: number) {
     const inLobby =
-      this.screens.is("lobby", "graphics", "credits", "story") ||
+      this.screens.is("lobby", "graphics", "credits") ||
+      (this.screens.is("story") && !this.storyMatch) ||
       (this.screens.is("help") && this.helpFromLobby);
     const mode = inLobby ? "lobby" : viewer.alive ? "first-person" : "spectator";
     this.renderer.render(

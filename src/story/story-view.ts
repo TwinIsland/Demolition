@@ -1,5 +1,5 @@
 import "./story.css";
-import { ZERO_PORTRAITS } from "./assets";
+import { LULU_PORTRAITS, ZERO_PORTRAITS, ZHANGSAN_PORTRAITS } from "./assets";
 import { ACTS } from "./chapters";
 import { playArcade } from "./arcade-play";
 import { DialogueBox, dialogueMarkup } from "./dialogue";
@@ -8,6 +8,13 @@ import { reachCheckpoint } from "./save";
 import type { ScenePlayer, Stage, StoryHost } from "./stage";
 
 export type { StoryHost } from "./stage";
+
+/** The running story, as the app holds it. */
+export interface StoryHandle {
+  /** Holds the story still under a dialog: no keys reach it and the scene's clock stops. */
+  pause(on: boolean): void;
+  stop(): void;
+}
 
 export const storyMarkup = () => `
   <div class="story-stage">
@@ -21,6 +28,7 @@ export const storyMarkup = () => `
     <div class="story-save" hidden><i></i><span>已保存</span></div>
     <div class="story-card" hidden><span>未完待续</span><small><kbd>E</kbd> 返回主菜单</small></div>
     <div class="story-keys" data-for="room"><span><kbd>WASD</kbd> 移动</span><span><kbd>E</kbd> 调查 / 继续</span><span><kbd>ESC</kbd> 离开</span></div>
+    <div class="story-keys" data-for="staged"><span><kbd>WASD</kbd> 移动</span><span><kbd>空格</kbd> 放炸药</span><span><kbd>ESC</kbd> 离开</span></div>
     <div class="story-keys" data-for="arcade"><span><kbd>WASD</kbd> 移动</span><span><kbd>空格</kbd> 放泡泡</span><span><kbd>ESC</kbd> 离开</span></div>
   </div>`;
 
@@ -45,7 +53,12 @@ const TITLE_MS = 2200;
  * stops it. An act that is not built yet falls back to the first one. This is the stage: the text
  * box, the chips, the keys and the save. What happens on it is up to the scene's player.
  */
-export function mountStory(screen: HTMLElement, host: StoryHost, actId?: string, titled = false): () => void {
+export function mountStory(
+  screen: HTMLElement,
+  host: StoryHost,
+  actId?: string,
+  titled = false,
+): StoryHandle {
   let act = ACTS.find((candidate) => candidate.id === actId && candidate.scene) ?? ACTS[0];
   const find = <T extends HTMLElement>(selector: string) => screen.querySelector<T>(selector)!;
   const root = find(".story-stage"),
@@ -57,7 +70,7 @@ export function mountStory(screen: HTMLElement, host: StoryHost, actId?: string,
     art = find<HTMLImageElement>(".story-art");
   const dialogue = new DialogueBox(
     root,
-    { zero: ZERO_PORTRAITS },
+    { zero: ZERO_PORTRAITS, lulu: LULU_PORTRAITS, zhangsan: ZHANGSAN_PORTRAITS },
     { tick: () => host.typeTick(), move: () => host.menu("click"), accept: () => host.menu("accept") },
   );
   const flags: Record<string, number> = {};
@@ -66,7 +79,8 @@ export function mountStory(screen: HTMLElement, host: StoryHost, actId?: string,
   /** Empty while the scene is being created: a scene starts talking before it exists here. */
   const running: { player?: ScenePlayer } = {};
   let alive = true,
-    ended = false;
+    ended = false,
+    paused = false;
 
   const stage: Stage = {
     root,
@@ -114,6 +128,14 @@ export function mountStory(screen: HTMLElement, host: StoryHost, actId?: string,
       art.before(canvas);
       return canvas;
     },
+    mark(checkpoint) {
+      reachCheckpoint(checkpoint, flags);
+      saved.hidden = true;
+      // Restart the mark's own fade if the last one is still up.
+      void saved.offsetWidth;
+      saved.hidden = false;
+      void stage.wait(SAVE_NOTE_MS).then(() => (saved.hidden = true));
+    },
     end(checkpoint) {
       reachCheckpoint(checkpoint, flags);
       goal.hidden = prompt.hidden = true;
@@ -133,7 +155,7 @@ export function mountStory(screen: HTMLElement, host: StoryHost, actId?: string,
   const open = () => {
     const scene = act.scene!;
     root.dataset.kind = scene.kind;
-    root.classList.remove("booting", "blackout", "pulling");
+    root.classList.remove("booting", "blackout", "pulling", "veiled");
     art.hidden = true;
     art.classList.remove("leaving");
     const canvas = document.createElement("canvas");
@@ -141,7 +163,13 @@ export function mountStory(screen: HTMLElement, host: StoryHost, actId?: string,
     stage.canvas.replaceWith(canvas);
     // The scene starts out frozen, and its first conversation releases it.
     running.player = undefined;
-    running.player = scene.kind === "room" ? playRoom(stage, scene) : playArcade(stage, scene);
+    running.player =
+      scene.kind === "room"
+        ? playRoom(stage, scene)
+        : scene.kind === "arcade"
+          ? playArcade(stage, scene)
+          : scene.play(stage);
+    running.player.paused = paused;
     steer();
   };
   /** One act runs into the next behind a short fade, with no stop at the menu. */
@@ -164,6 +192,7 @@ export function mountStory(screen: HTMLElement, host: StoryHost, actId?: string,
     running.player?.move(Math.sign(x), Math.sign(y));
   };
   const onKeyDown = (event: KeyboardEvent) => {
+    if (paused) return;
     if (event.code === "Escape" || event.metaKey || event.ctrlKey || event.altKey) return;
     if (!(event.code in MOVES) && !CONFIRM.has(event.code) && !/^Digit[1-9]$/.test(event.code)) return;
     event.preventDefault();
@@ -187,6 +216,7 @@ export function mountStory(screen: HTMLElement, host: StoryHost, actId?: string,
     steer();
   };
   const onClick = (event: MouseEvent) => {
+    if (paused) return;
     if (ended) host.finish();
     else if (dialogue.active && !(event.target as HTMLElement).closest("[data-option]")) dialogue.confirm();
   };
@@ -208,13 +238,20 @@ export function mountStory(screen: HTMLElement, host: StoryHost, actId?: string,
   window.addEventListener("blur", onBlur);
   root.addEventListener("click", onClick);
 
-  return () => {
-    alive = false;
-    for (const timer of timers) clearTimeout(timer);
-    window.removeEventListener("keydown", onKeyDown);
-    window.removeEventListener("keyup", onKeyUp);
-    window.removeEventListener("blur", onBlur);
-    dialogue.dispose();
-    running.player?.dispose();
+  return {
+    pause(on) {
+      paused = on;
+      if (running.player) running.player.paused = on;
+      if (on) onBlur();
+    },
+    stop() {
+      alive = false;
+      for (const timer of timers) clearTimeout(timer);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onBlur);
+      dialogue.dispose();
+      running.player?.dispose();
+    },
   };
 }

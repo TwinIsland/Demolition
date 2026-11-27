@@ -132,7 +132,12 @@ export const MENU_MUSIC = "./assets/volatile-reaction.mp3";
 /** Plays under the credits roll, from the top each time. */
 export const CREDITS_MUSIC = "./assets/credits-freedom.mp3";
 /** Story mode cues, by the part of the story they play under. */
-export const STORY_MUSIC = { opening: "./assets/story/electronic-girl-8bit.mp3" } as const;
+export const STORY_MUSIC = {
+  opening: "./assets/story/electronic-girl-8bit.mp3",
+  duel: "./assets/story/share-friendship.mp3",
+  ascension: CREDITS_MUSIC,
+  lesson: "./assets/story/clumsy-communication.mp3",
+} as const;
 export const MUSIC_VOLUME = 0.18;
 export const FIRE_LOOP: CueSpec = { url: "./assets/arena-fire.ogg", ...sfx(0.8, { voices: 1 }) };
 export const RAIN_LOOP: CueSpec = { url: "./assets/environment/rain.ogg", ...ambience(0.3) };

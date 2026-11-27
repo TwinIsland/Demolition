@@ -40,7 +40,7 @@ export class DialogueBox {
   constructor(
     root: HTMLElement,
     /** Portraits by speaker and mood; a speaker without an entry has none. */
-    private readonly portraits: Partial<Record<Speaker, Record<Mood, string>>>,
+    private readonly portraits: Partial<Record<Speaker, Partial<Record<Mood, string>>>>,
     private readonly sounds: { tick(): void; move(): void; accept(): void },
   ) {
     this.box = root.querySelector<HTMLElement>(".story-dialogue")!;
@@ -117,7 +117,9 @@ export class DialogueBox {
 
   private say(who: Speaker, text: string, mood?: Mood) {
     if (mood) this.moods.set(who, mood);
-    const portrait = this.portraits[who]?.[this.moods.get(who) ?? "smug"];
+    const faces = this.portraits[who];
+    // A speaker who has not shown a mood yet wears the first face they have.
+    const portrait = faces && (faces[this.moods.get(who)!] ?? Object.values(faces)[0]);
     this.portrait.hidden = !portrait;
     if (portrait) this.portrait.src = portrait;
     this.box.dataset.who = who;
