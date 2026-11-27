@@ -3,7 +3,7 @@ import { MAPS } from "../core/maps";
 import { MUTATIONS } from "../core/mutations";
 import type { GameSnapshot } from "../core/types";
 import { EN_MESSAGES } from "../locales/en";
-import type { Sound } from "../audio/sound";
+import { CREDITS_MUSIC, type Sound } from "../audio/sound";
 import type { GameRenderer } from "../render/game-renderer";
 import type { LoadProgress } from "../render/scene-assets";
 import { iconArt } from "../ui/icons";
@@ -125,7 +125,7 @@ export async function preloadEverything(
   const progress = new ProgressGroup(report);
   await Promise.all([
     renderer.prepareAll(state, MAPS, progress.scene),
-    progress.track(sound.preloadAll(MAPS.map((map) => map.bgm ?? ""))),
+    progress.track(sound.preloadAll([...MAPS.map((map) => map.bgm ?? ""), CREDITS_MUSIC])),
     progress.track([...stylesheetImages(), ...contentImages()].map(decodeImage)),
     progress.track(loadFonts()),
     progress.track([preloadSkinAssets()]),

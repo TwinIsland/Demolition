@@ -127,6 +127,8 @@ export type CueId = keyof typeof CUES;
 const MODULE_CUE: CueDef = sfx(0.5, { pitchJitter: 0.04 });
 
 export const MENU_MUSIC = "./assets/volatile-reaction.mp3";
+/** Plays under the credits roll, from the top each time. */
+export const CREDITS_MUSIC = "./assets/credits-freedom.ogg";
 export const MUSIC_VOLUME = 0.18;
 export const FIRE_LOOP: CueSpec = { url: "./assets/arena-fire.ogg", ...sfx(0.8, { voices: 1 }) };
 export const RAIN_LOOP: CueSpec = { url: "./assets/environment/rain.ogg", ...ambience(0.3) };

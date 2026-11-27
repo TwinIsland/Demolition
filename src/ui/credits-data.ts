@@ -77,6 +77,12 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
         license: "Pixabay Content License",
       },
       {
+        title: "You've Got to Have Freedom",
+        use: ["致谢", "Credits"],
+        author: "Pharoah Sanders",
+        license: "© Pharoah Sanders",
+      },
+      {
         title: "Dark Place (loop)",
         use: ["备用曲目", "Fallback track"],
         author: "OpenGameArt",

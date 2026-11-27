@@ -1,7 +1,7 @@
 import { LEVEL_GAIN_TEXT } from "../core/level-rewards";
 import { preloadEverything } from "./preload";
 import { KeyboardAgent } from "../agents/keyboard-agent";
-import { MENU_MUSIC, Sound } from "../audio/sound";
+import { CREDITS_MUSIC, MENU_MUSIC, Sound } from "../audio/sound";
 import { perkById } from "../core/content";
 import { MAPS } from "../core/maps";
 import { MATCH_MODES } from "../core/match-modes";
@@ -213,6 +213,7 @@ export class GameApp {
     this.screens.transition("lobby");
     this.ui.hideOverlay();
     this.sound.menu("back");
+    this.sound.setMusic(MENU_MUSIC);
   }
 
   closeGraphics() {
@@ -421,6 +422,7 @@ export class GameApp {
         this.screens.transition("credits");
         this.ui.showCredits();
         this.sound.menu("accept");
+        this.sound.setMusic(CREDITS_MUSIC);
       },
       closeCredits: () => this.closeCredits(),
       setLanguage: (value) => this.changeLanguage(value),
