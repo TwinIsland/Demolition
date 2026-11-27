@@ -658,6 +658,41 @@
   color: #1a1408;
 }
 
+/* ---------- Painted frames (optional art, see ui/match-result.ts) ---------- */
+.result-screen[data-frames~="plate"] .rs-band {
+  background:
+    linear-gradient(90deg, #0000, color-mix(in srgb, var(--outcome) 26%, #0000) 30% 70%, #0000),
+    var(--rs-frame-plate) center / 100% 100% no-repeat;
+}
+.result-screen[data-frames~="panel"] .rs-operator {
+  padding: calc(var(--u) * 30) calc(var(--u) * 34) calc(var(--u) * 34);
+  border: 1px solid #0000;
+  border-image: var(--rs-frame-panel) 128 fill / calc(var(--u) * 64) stretch;
+  background: none;
+  clip-path: none;
+}
+.result-screen[data-frames~="row"] .rs-row {
+  border: 1px solid #0000;
+  border-image: var(--rs-frame-row) 0 160 fill / 0 calc(var(--u) * 62) stretch;
+  background: none;
+  box-shadow: none;
+}
+/* The player's colour, which the drawn row carries as its tint. */
+.result-screen[data-frames~="row"] .rs-row::before {
+  content: "";
+  position: absolute;
+  inset: 22% auto 22% calc(var(--u) * 6);
+  width: calc(var(--u) * 5);
+  background: var(--player-color);
+  box-shadow: 0 0 calc(var(--u) * 10) var(--player-color);
+}
+.result-screen[data-frames~="card"] .rs-card {
+  border: 1px solid #0000;
+  border-image: var(--rs-frame-card) 64 fill / calc(var(--u) * 32) stretch;
+  background: none;
+  box-shadow: inset 0 calc(var(--u) * -3) 0 var(--player-color);
+}
+
 /* ---------- Reveal stages ---------- */
 .result-screen[data-stage="banner"] :is(.rs-body, .rs-highlights, .rs-actions),
 .result-screen[data-stage="board"] :is(.rs-highlights, .rs-actions),

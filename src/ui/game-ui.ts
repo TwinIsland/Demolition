@@ -29,7 +29,7 @@ import { icon } from "./icons";
 import { LobbyView } from "./lobby";
 import { manualMarkup } from "./manual";
 import { pauseMarkup } from "./match-menus";
-import { placement, resultKind, resultMarkup } from "./match-result";
+import { applyResultFrames, placement, resultKind, resultMarkup } from "./match-result";
 import { paintSkinHeads } from "./skin-heads";
 import { playResult } from "./match-result-motion";
 import { roomMarkup, updateRoom } from "./match-room";
@@ -277,6 +277,7 @@ export class GameUI {
   showResult(snapshot: Readonly<GameSnapshot>, viewer: Player, tick: () => void) {
     const kind = resultKind(snapshot, viewer);
     const screen = this.overlay.screen(resultMarkup(snapshot, viewer, kind), `result-screen outcome-${kind}`);
+    applyResultFrames(screen);
     paintSkinHeads(screen);
     this.badge.show(
       query(screen, ".outcome-badge-slot"),

@@ -25,8 +25,30 @@ const ART = Object.fromEntries(
     }),
   ).map(([path, url]) => [path.replace(/^.*\/|\.\w+$/g, ""), url]),
 );
-/** Every result backdrop, for the loading screen. */
-export const resultArt = () => Object.values(ART);
+/**
+ * Optional painted chrome: `result-art/frames/<panel|row|card|plate>.<webp|png>` with transparency.
+ * `panel` (operator panel, 9-slice, 128 px corners of 1024), `row` (scoreboard row, 160 px end caps
+ * of 1600 x 160), `card` (highlight card, 9-slice, 64 px corners of 768 x 256) and `plate` (the band
+ * behind the headline, stretched). Each one replaces the drawn version of that element only.
+ */
+const FRAMES = Object.fromEntries(
+  Object.entries(
+    import.meta.glob<string>("./result-art/frames/*.{webp,png}", {
+      eager: true,
+      query: "?url",
+      import: "default",
+    }),
+  ).map(([path, url]) => [path.replace(/^.*\/|\.\w+$/g, ""), url]),
+);
+/** Every result backdrop and frame, for the loading screen. */
+export const resultArt = () => [...Object.values(ART), ...Object.values(FRAMES)];
+
+/** Hands the painted frames to the stylesheet: `--rs-frame-<name>` and `data-frames`. */
+export function applyResultFrames(screen: HTMLElement) {
+  for (const [name, url] of Object.entries(FRAMES))
+    screen.style.setProperty(`--rs-frame-${name}`, `url("${url}")`);
+  screen.dataset.frames = Object.keys(FRAMES).join(" ");
+}
 
 export function resultKind(snapshot: Readonly<GameSnapshot>, viewer: Player): ResultKind {
   if (snapshot.phase !== "finished") return "eliminated";
