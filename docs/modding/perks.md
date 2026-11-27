@@ -72,6 +72,6 @@ A perk with `use` is stored and triggered later by the player. It then appears i
 | `context.forceArenaView(duration, warningSeconds)` | Locks every operator in overhead view. Returns `false` while another forced view is running |
 | `context.target` | The tile picked for a `targeted` perk |
 | `context.callStrike(target, { delay, radius, power })` | Calls a missile onto `target`. After `delay` seconds every open or cover tile within `radius` burns at `power`; walls give no shelter. Returns `false` outside the arena |
-| `context.seizeBombs(radius)` | Every other operator's live charge within `radius` tiles becomes the player's. Returns how many changed hands |
+| `context.seizeLinkedBombs()` | Every other operator's charge whose blast path joins up with the player's own charges (directly or through other linked charges) becomes the player's. Returns how many changed hands. `linkedBombs(state, playerId)` from the SDK lists them without taking them |
 
 See [Hijack](../content/perks/hijack.md), [Cataclysm](../content/perks/apocalypse.md), [Dimensional Collapse](../content/perks/dimension-collapse.md) and [Missile Strike](../content/perks/missile-strike.md).

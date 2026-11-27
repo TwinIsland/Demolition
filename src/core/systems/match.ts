@@ -5,7 +5,7 @@ import type { GameSnapshot, Player, PlayerInput, Vec2 } from "../types";
 import { COMBAT } from "../combat";
 import { build } from "./building";
 import { hurt } from "./combat";
-import { seizeBombs } from "./bombs";
+import { seizeLinkedBombs } from "./bombs";
 import { callStrike } from "./strikes";
 import type { SimContext } from "./context";
 
@@ -66,7 +66,7 @@ export function effectContext(ctx: SimContext, p: Player, target?: Vec2): Effect
   return {
     target,
     callStrike: (cell, options) => callStrike(ctx, p, cell, options),
-    seizeBombs: (radius) => seizeBombs(ctx, p, radius),
+    seizeLinkedBombs: () => seizeLinkedBombs(ctx, p),
     stat: (key, base) => modifiedStat(p, key, base, s.time),
     build: () => build(ctx, p),
     forceArenaView: (duration, warningSeconds = 0) => {

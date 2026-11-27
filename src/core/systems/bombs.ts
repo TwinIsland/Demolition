@@ -1,7 +1,7 @@
 import { COMBAT } from "../combat";
 import { combatMessage } from "../combat-message";
 import { ITEMS, modifiedStat, RULES } from "../content";
-import { blastCells, blastContact, slideBlocked, SLIDE_STEP } from "../geometry";
+import { blastCells, blastContact, linkedBombs, slideBlocked, SLIDE_STEP } from "../geometry";
 import { canPlace } from "../placement";
 import type { Blast, Bomb, Player, Vec2 } from "../types";
 import { slidingZombieContact } from "../zombies";
@@ -42,22 +42,21 @@ export function placeBomb(
 }
 
 /**
- * Hands every other operator's live charge within `radius` cells of `p` to `p`: credit, self-damage
- * and blast-path visibility all follow the new owner. Returns how many charges changed hands.
+ * Hands `p` every other operator's live charge whose blast path joins up with the paths of `p`'s
+ * own charges: credit, self-damage and blast-path visibility all follow the new owner. Returns
+ * how many charges changed hands.
  */
-export function seizeBombs(ctx: SimContext, p: Player, radius: number) {
+export function seizeLinkedBombs(ctx: SimContext, p: Player) {
   const s = ctx.state;
-  if (!p.alive || s.phase !== "playing" || !Number.isFinite(radius) || radius <= 0) return 0;
-  let seized = 0;
-  for (const bomb of s.bombs) {
-    if (bomb.ownerId === p.id || Math.hypot(bomb.x - p.x, bomb.z - p.z) > radius) continue;
+  if (!p.alive || s.phase !== "playing") return 0;
+  const linked = linkedBombs(s, p.id);
+  for (const bomb of linked) {
     bomb.ownerId = p.id;
     bomb.seized = true;
     // A fresh id makes every client rebuild the charge in its new owner's colours.
     bomb.id = ctx.nextId();
-    seized++;
   }
-  return seized;
+  return linked.length;
 }
 
 /** Moves a bomb one cell. A sliding bomb that is stopped, or that enters fire, goes off. */

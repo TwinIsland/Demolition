@@ -64,6 +64,32 @@ export function blastCells(
     }
   return cells;
 }
+/**
+ * Other operators' live charges whose blast paths join up with those of `playerId`: a charge is
+ * linked when its path shares a cell with the path of one of the player's own charges, or of a
+ * charge already linked. Shared by the Hijack perk, its button state and the bots.
+ */
+export function linkedBombs(state: Pick<GameSnapshot, "tiles" | "size" | "bombs">, playerId: string): Bomb[] {
+  const key = (c: Vec2) => c.z * state.size + c.x;
+  const paths = new Map(state.bombs.map((b) => [b, blastCells(state, b).map(key)]));
+  const covered = new Set<number>();
+  let pending = state.bombs.filter((b) => b.ownerId !== playerId);
+  for (const bomb of state.bombs)
+    if (bomb.ownerId === playerId) for (const c of paths.get(bomb)!) covered.add(c);
+  const linked: Bomb[] = [];
+  for (let grew = covered.size > 0; grew;) {
+    grew = false;
+    pending = pending.filter((bomb) => {
+      const path = paths.get(bomb)!;
+      if (!path.some((c) => covered.has(c))) return true;
+      for (const c of path) covered.add(c);
+      linked.push(bomb);
+      grew = true;
+      return false;
+    });
+  }
+  return linked;
+}
 export function walkable(state: Readonly<GameSnapshot>, x: number, z: number, playerId = ""): boolean {
   return (
     state.tiles[z]?.[x] === 0 &&
