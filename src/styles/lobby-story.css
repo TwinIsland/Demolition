@@ -251,9 +251,15 @@
   left: var(--menu-edge);
   right: var(--menu-edge);
   bottom: calc(var(--u) * 108);
+  /* Above the list column, whose box would otherwise swallow clicks on the first panels. */
+  z-index: 1;
   display: grid;
   gap: calc(var(--u) * 14);
   pointer-events: auto;
+}
+/* The list column ends where the strip begins. */
+#lobby[data-tab="story"] .menu-nav {
+  bottom: calc(var(--u) * 400);
 }
 .story-chapters .menu-caption {
   margin: 0;
