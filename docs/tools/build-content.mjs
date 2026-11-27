@@ -82,7 +82,7 @@ const notes = {
     "Active perk: stored until you trigger it, then consumed. Only one copy can be held.",
     "Triggering opens the targeting tablet, a 2D map of the arena. Click a tile (or steer with the movement keys and press Enter) to fire; right-click or Esc cancels and keeps the perk. The match keeps running while the tablet is open.",
     "After `delay` seconds the missile lands. Every open or cover tile within `radius` tiles burns for 0.9 s at `power` blast power, falling off with distance from the centre. Walls give no shelter, cover inside is destroyed, and charges inside are set off.",
-    "The caller takes full damage from it. A shield blocks it like any blast. Everyone sees the marker on the ground and on the radar and hears the warning.",
+    "The caller takes full damage from it. A shield blocks it like any blast. Everyone hears the warning at launch, but only the caller sees the marker on the ground and on the radar from the start; everyone else sees it for the last 1.5 s.",
     "Bots fire at the opponent they have seen with the most others nearby, never within `radius` + 1.5 tiles of themselves, and move out of a marked area.",
   ],
   "perks/short-fuse": ["Multiplies the fuse of charges you plant by `1 − rate × stacks` (base 2.65 s; two stacks: 1.86 s).", "Offered until you hold `maxStacks`."],

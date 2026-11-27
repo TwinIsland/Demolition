@@ -54,7 +54,7 @@ Each level-up offers three perks. The tier is rolled first (Silver 61, Gold 30, 
 | [Rapid Circuit](perks/capacitor.md) | Diamond | 20% | 2 stacks | an active skill | Reduce active skill cooldowns by 20%. Each stack applies to the remaining cooldown, up to 2 stacks. |
 | [Piercing Charge](perks/piercing-charge.md) | Diamond | 20% | 1 held | – | Your blasts break through one destructible obstacle and keep going. Permanent walls still stop them. Does not stack. |
 | [Cataclysm](perks/apocalypse.md) | Diamond | 20% | 1 held | map with terrain reset | Activate once to start a three-second arena-wide countdown. Surviving cover changes position and keeps its remaining durability, and fire sweeps the whole floor: every other operator loses 20 HP. You are spared. |
-| [Missile Strike](perks/missile-strike.md) | Diamond | 20% | 1 held | – | Activate once to open the targeting tablet and pick a tile. Three seconds later a missile lands there: a wide blast that ignores walls and hits hard. |
+| [Missile Strike](perks/missile-strike.md) | Diamond | 20% | 1 held | – | Activate once to open the targeting tablet and pick a tile. A missile lands there 2.5 seconds later: a wide blast that ignores walls and hits hard. Only you see the landing zone at first; everyone else gets 1.5 seconds of warning. |
 | [Dimensional Collapse](perks/dimension-collapse.md) | Mythic | 100% | 1 held | – | After a 3-second arena countdown, lock every operator except you in overhead view for 10 seconds. Each operator then returns to their previous view. |
 
 Perks per tier: Silver 7, Gold 6, Diamond 5, Mythic 1.

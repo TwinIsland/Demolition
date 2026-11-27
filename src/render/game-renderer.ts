@@ -345,7 +345,7 @@ export class GameRenderer {
     this.target.scale.setScalar(topDown && motionScale() > 0 ? 1 + 0.1 * Math.sin(wallTime * 7) : 1);
     if (firstPerson && rig.tacticalBlend > 0) this.avatars.get(localId)!.visible = rig.tacticalBlend > 0.35;
     this.blastEffect.update(state, rig.camera);
-    for (const impact of this.strikes.update(state, this.renderer.getPixelRatio())) {
+    for (const impact of this.strikes.update(state, this.renderer.getPixelRatio(), localId)) {
       // Felt across the whole arena, hardest close to the impact.
       const distance = Math.hypot(impact.x - you.x, impact.z - you.z);
       this.feel.rumble(THREE.MathUtils.clamp(1.25 - distance / 12, 0.3, 1.1));

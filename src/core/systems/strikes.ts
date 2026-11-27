@@ -1,11 +1,24 @@
 import type { StrikeOptions } from "../module-api";
-import type { GameSnapshot, Player, Vec2 } from "../types";
+import type { GameSnapshot, Player, Strike, Vec2 } from "../types";
 import { ignite } from "./bombs";
 import type { SimContext } from "./context";
 import { emit } from "./events";
 
 /** Seconds the fire of a missile impact stays on the ground. */
 export const STRIKE_FIRE = 0.9;
+
+/** Seconds before impact at which everyone but the caller gets to see where a missile lands. */
+export const STRIKE_TELEGRAPH = 1.5;
+
+/** Seconds of warning `viewerId` gets for a strike: the caller sees it from launch, everyone else late. */
+export const strikeWarning = (strike: Strike, viewerId: string | undefined) => {
+  const total = strike.landsAt - strike.launchedAt;
+  return viewerId === undefined || viewerId === strike.ownerId ? total : Math.min(total, STRIKE_TELEGRAPH);
+};
+
+/** Whether `viewerId` can see the landing zone of a strike yet. */
+export const strikeRevealed = (strike: Strike, time: number, viewerId: string | undefined) =>
+  strike.landsAt - time <= strikeWarning(strike, viewerId);
 
 /** Open and cover cells within `radius` of the impact. Permanent walls stay, but shelter nobody. */
 export function strikeCells(s: Pick<GameSnapshot, "tiles" | "size">, target: Vec2, radius: number): Vec2[] {

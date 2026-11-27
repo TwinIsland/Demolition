@@ -3,7 +3,7 @@ import { RULES } from "../core/content";
 import { slidingZombieContact } from "../core/zombies";
 import { blastCells, blastContact, slideBlocked, SLIDE_STEP } from "../core/geometry";
 import { fireCells } from "../core/systems/fires";
-import { strikeCells, STRIKE_FIRE } from "../core/systems/strikes";
+import { strikeCells, strikeRevealed, STRIKE_FIRE } from "../core/systems/strikes";
 import { trailHidden } from "../core/types";
 import type { Bomb, GameSnapshot, Vec2 } from "../core/types";
 import { ZONE, zoneIgnitesIn } from "../core/zone";
@@ -132,8 +132,9 @@ export class BombForecast {
         }
       }
     }
-    // Incoming missiles: the marker is public, so every bot knows where and when.
+    // Incoming missiles: a bot knows where and when once the marker is shown to it.
     for (const strike of state.strikes ?? []) {
+      if (!strikeRevealed(strike, state.time, viewerId)) continue;
       const at = Math.max(0, strike.landsAt - state.time);
       for (const c of strikeCells(state, strike, strike.radius)) spans(this.fire, c, at, at + STRIKE_FIRE);
       this.horizon = Math.max(this.horizon, at + STRIKE_FIRE);

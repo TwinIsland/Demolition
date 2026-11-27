@@ -158,7 +158,7 @@ export interface Blast extends Vec2 {
   ownerId: string;
   expiresAt: number;
 }
-/** A called-in missile on its way down. Everyone sees the marker; `radius` is in cells. */
+/** A called-in missile on its way down. The caller sees the marker at once, everyone else shortly before impact; `radius` is in cells. */
 export interface Strike extends Vec2 {
   id: number;
   ownerId: string;

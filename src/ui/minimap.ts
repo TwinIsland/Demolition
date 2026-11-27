@@ -1,4 +1,5 @@
 import { bombGuideColor, bombWarning } from "../core/bomb-warning";
+import { strikeRevealed } from "../core/systems/strikes";
 import { isCloaked } from "../core/types";
 import type { GameSnapshot, Player } from "../core/types";
 
@@ -35,6 +36,7 @@ export function drawMinimap(
   }
   // Incoming missiles: the blast radius and a blinking centre.
   for (const strike of state.strikes ?? []) {
+    if (!strikeRevealed(strike, state.time, self.id)) continue;
     const cx = pad + (strike.x + 0.5) * cell,
       cy = pad + (strike.z + 0.5) * cell;
     ctx.fillStyle = "#ff3b2f38";

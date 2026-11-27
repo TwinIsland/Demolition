@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { strikeRevealed, strikeWarning } from "../core/systems/strikes";
 import type { GameSnapshot, Strike, Vec2 } from "../core/types";
 import { TILE_SIZE, world } from "./arena";
 import type { MaterialLibrary } from "./materials";
@@ -27,7 +28,7 @@ float sxNoise(vec3 p) {
 }
 float sxFbm(vec3 p) { return .55 * sxNoise(p) + .3 * sxNoise(p * 2.1) + .15 * sxNoise(p * 4.3); }`;
 
-/** Ground marker: the blast radius, a rotating reticle, and rings that close in as the missile nears. */
+/** Ground marker, shown to the caller from launch and to everyone else late: the blast radius, a rotating reticle, and rings that close in as the missile nears. */
 const markerMaterial = () =>
   new THREE.ShaderMaterial({
     uniforms: { progress: { value: 0 }, time: { value: 0 } },
@@ -190,7 +191,7 @@ interface Burst {
 }
 
 /**
- * Missile Strike: the public ground marker, the missile and its smoke trail, and the explosion
+ * Missile Strike: the ground marker, the missile and its smoke trail, and the explosion
  * (flash, fireball, ground shockwave, sparks, smoke column, scorch). Everything follows simulation
  * time, so a paused match freezes it. All geometry, textures and shader programs exist before the
  * first match: the model loads through the shared manager and `warm` compiles the programs.
@@ -321,7 +322,7 @@ export class StrikeEffect {
   }
 
   /** Returns the cells hit since the last call, for camera shake. */
-  update(state: Readonly<GameSnapshot>, pixelRatio: number): Vec2[] {
+  update(state: Readonly<GameSnapshot>, pixelRatio: number, viewerId: string): Vec2[] {
     const impacts: Vec2[] = [];
     const live = new Set((state.strikes ?? []).map((s) => s.id));
     for (const [id, flight] of this.flights) {
@@ -337,7 +338,7 @@ export class StrikeEffect {
     for (const strike of state.strikes ?? []) {
       let flight = this.flights.get(strike.id);
       if (!flight) this.flights.set(strike.id, (flight = this.launch(strike, state.size)));
-      this.fly(flight, state);
+      this.fly(flight, state, viewerId);
     }
     this.bursts = this.bursts.filter((burst) => {
       const age = state.time - burst.at;
@@ -351,12 +352,21 @@ export class StrikeEffect {
     return impacts;
   }
 
-  private fly({ marker, body, plume, trail, strike }: Flight, state: Readonly<GameSnapshot>) {
+  private fly(
+    { marker, body, plume, trail, strike }: Flight,
+    state: Readonly<GameSnapshot>,
+    viewerId: string,
+  ) {
     const total = strike.landsAt - strike.launchedAt;
-    const progress = THREE.MathUtils.clamp((state.time - strike.launchedAt) / total, 0, 1);
-    marker.material.uniforms.progress.value = progress;
-    marker.material.uniforms.time.value = state.time;
     const left = strike.landsAt - state.time;
+    // The rings close over the warning this viewer gets, so a late marker still plays in full.
+    marker.visible = strikeRevealed(strike, state.time, viewerId);
+    marker.material.uniforms.progress.value = THREE.MathUtils.clamp(
+      1 - left / strikeWarning(strike, viewerId),
+      0,
+      1,
+    );
+    marker.material.uniforms.time.value = state.time;
     const dive = THREE.MathUtils.clamp(1 - left / Math.min(FLIGHT, total), 0, 1);
     const visible = dive > 0;
     body.visible = visible;

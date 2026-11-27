@@ -1,6 +1,6 @@
 import { bombGuideColor } from "../core/bomb-warning";
 import type { PerkDefinition } from "../core/module-api";
-import { strikeCells, strikeTargetValid } from "../core/systems/strikes";
+import { strikeCells, strikeRevealed, strikeTargetValid } from "../core/systems/strikes";
 import { isCloaked } from "../core/types";
 import type { GameSnapshot, Player, Vec2 } from "../core/types";
 import { field, t } from "../i18n";
@@ -158,7 +158,9 @@ export class StrikePanel implements HudView {
       ctx.fillText(column(i), at(i + 0.5), PAD * 0.5);
       ctx.fillText(String(i).padStart(2, "0"), PAD * 0.5, at(i + 0.5));
     }
-    for (const strike of s.strikes ?? []) this.footprint(ctx, s, strike, strike.radius, cell, "#ff5a4766");
+    for (const strike of s.strikes ?? [])
+      if (strikeRevealed(strike, s.time, viewer.id))
+        this.footprint(ctx, s, strike, strike.radius, cell, "#ff5a4766");
     for (const zombie of s.zombies) {
       ctx.fillStyle = "#c9e36a";
       ctx.fillRect(
