@@ -607,7 +607,7 @@ export class Models {
           model.rotation.z = Math.PI / 2;
           model.position.set(height / 2, length / 2, 0);
           // The standard charge sits to one side of its origin, outside the fist. A held model follows it.
-          if (held) model.position.set(-0.22, length / 2, depth * 0.3);
+          if (held) model.position.set(-0.16, length / 2, depth * 0.18);
           lamp.position.set(0, length + 0.05, 0);
           group.add(model);
         })
