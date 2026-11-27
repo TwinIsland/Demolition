@@ -17,8 +17,10 @@ export const BUILD = {
   baseStock: 3,
   /** Extra crates per level above the first. */
   stockPerLevel: 1,
-  /** Largest stock any level grants. */
+  /** Largest stock an operator can hold, from levels and salvage together. */
   maxStock: 8,
+  /** Crates gained by destroying another operator's crate; this may exceed the level's own stock. */
+  salvage: 1,
 } as const;
 
 /** Full crate stock of an operator at `level`. */

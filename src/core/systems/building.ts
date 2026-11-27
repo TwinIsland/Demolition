@@ -1,6 +1,6 @@
 import { COMBAT } from "../combat";
 import { modifiedStat, RULES } from "../content";
-import { COINS } from "../economy";
+import { BUILD, COINS } from "../economy";
 import { placementRadius } from "../placement";
 import { zoneBurning, zoneClearing } from "../zone";
 import type { GameSnapshot, Player, Vec2 } from "../types";
@@ -68,7 +68,7 @@ export function build(ctx: SimContext, p: Player, target?: Vec2) {
 
 /**
  * Opens a player-built crate. It yields no score; whoever destroys someone else's crate gets a
- * token reward. The caller rolls loot.
+ * token coin reward and one crate for their own stock. The caller rolls loot.
  */
 export function destroyBuiltCrate(ctx: SimContext, destroyer: Player, x: number, z: number) {
   const s = ctx.state,
@@ -76,7 +76,11 @@ export function destroyBuiltCrate(ctx: SimContext, destroyer: Player, x: number,
   if (!crate) return false;
   s.tiles[z][x] = 0;
   removeBuiltCrate(s, x, z);
-  if (destroyer.alive && destroyer.id !== crate.ownerId) gainCredits(destroyer, COINS.builtCrateDestroyed);
+  if (destroyer.alive && destroyer.id !== crate.ownerId) {
+    gainCredits(destroyer, COINS.builtCrateDestroyed);
+    // Salvage: the crate joins the destroyer's stock, even past their level's number.
+    destroyer.crates = Math.min(BUILD.maxStock, destroyer.crates + BUILD.salvage);
+  }
   return true;
 }
 

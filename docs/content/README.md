@@ -28,7 +28,7 @@ Dropped by cover, zombies and field supplies, or bought with coins in the supply
 | [Molotov](items/molotov.md) | 2.6 | 30 | reach 4, flight 0.6, trajectory lob | Lob over cover. It shatters on landing and sets the floor around it alight for 4.5 seconds, burning anyone who stands in the flames, you included. |
 | [Tactical Shield](items/shield.md) | 3.4 | 40 | duration 4.5 | Blocks melee and zombie attacks for up to 4.5 seconds. The first blast it absorbs shatters the shield. |
 | [Bandage](items/bandage.md) | 3 | 25 | heal 30 | Restore 30 HP. Kept in your inventory at full health. |
-| [Field Crate](items/crate.md) | never drops | – |  | Right-click to build a wooden crate on the aimed tile instantly. Costs no coins: you carry a stock set by your level, refilled on every level-up. Reaches as far as a planted charge. |
+| [Field Crate](items/crate.md) | never drops | – |  | Right-click to build a wooden crate on the aimed tile instantly. Costs no coins: you carry a stock set by your level, refilled on every level-up, and destroying another operator's crate adds one to it. Reaches as far as a planted charge. |
 
 ## Perks
 

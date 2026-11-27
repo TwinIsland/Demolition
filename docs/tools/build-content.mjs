@@ -19,7 +19,7 @@ const notes = {
     "Right-click: takes one crate from your stock and stands it on the aimed tile at once (same reach as a planted charge), independently of equipped gear.",
     "Costs no coins. The stock is 3 crates at level 1 and one more per level, up to 8 (`BUILD` and `crateStock` in `core/economy.ts`); every level-up refills it. Never dropped, equipped or sold in the supply shop.",
     "No standing-crate limit beyond the stock. The tile must be free of operators, zombies, items, charges and fire.",
-    "A built crate behaves like cover with durability 2, but gives no score. Breaking it rolls loot with the same chance as any other cover. Another operator who destroys it gets 2 coins. It shows the builder's emblem.",
+    "A built crate behaves like cover with durability 2, but gives no score. Breaking it rolls loot with the same chance as any other cover. Another operator who destroys it gets 2 coins and one crate for their own stock, which can exceed their level's number up to the cap of 8. It shows the builder's emblem.",
   ],
   "items/grenade": [
     "Lobbed over walls and cover to any clear tile within `reach` tiles, landing after `flight` seconds. A direct (low) throw uses the charge placement radius and needs a clear path.",

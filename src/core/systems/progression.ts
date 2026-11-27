@@ -40,7 +40,8 @@ function offerUpgrades(ctx: SimContext, p: Player) {
       : 0;
     ctx.offerHistory.set(p.id, history);
     const gains = applyLevelGains(p, p.level);
-    p.crates = crateStock(p.level);
+    // Refill to the level's stock; salvaged crates above it are kept.
+    p.crates = Math.max(p.crates, crateStock(p.level));
     const text = ["升到 Lv.{0}", ...gains.map((_, i) => `{${i + 1}}`)].join(" · ");
     emit(ctx, p, combatMessage(text, p.level, ...gains.map((gain) => LEVEL_GAIN_TEXT[gain])), {
       type: "level",
