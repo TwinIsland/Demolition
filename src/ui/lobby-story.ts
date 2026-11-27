@@ -6,14 +6,6 @@ import { query } from "./dom";
 import { icon } from "./icons";
 import { rise } from "./lobby-motion";
 
-/** One line per act for its panel. Spoiler-free: it shows as soon as the act unlocks. */
-const ACT_NOTES: Record<string, string> = {
-  act1: "紧闭的窗帘，三桶泡面，以及一台被封印在床底的魔导器。",
-  act2: "桌面上唯一的图标。咏唱需要十一秒，引信只有三秒。",
-  act3: "一个没有「上」的世界，和一位嘴硬的引导精灵。",
-  act4: "世界多出了一条轴。这才是吾真正的姿态。呕。",
-  act5: "天上传来母亲大人的声音。四天王一共三个，这是传统。",
-};
 /**
  * Comic panel behind the menu, per act. An act without one yet borrows the nearest earlier
  * panel, so adding art for an act is one entry here.
@@ -47,7 +39,7 @@ export const storyPanels = () => `
             </nav>`;
 
 const chapterPanel = (act: Act, index: number) =>
-  `<button type="button" class="chapter-panel" data-chapter="${act.id}"><i class="chapter-art"></i><span class="chapter-body"><span class="chapter-number">${number(index)}</span><span class="chapter-state"></span><span class="chapter-enter">${icon("play")}<span>再点一次进入</span></span><strong class="chapter-name"></strong><small class="chapter-note"></small></span>${icon("lock")}</button>`;
+  `<button type="button" class="chapter-panel" data-chapter="${act.id}"><i class="chapter-art"></i><span class="chapter-body"><span class="chapter-number">${number(index)}</span><span class="chapter-state"></span><span class="chapter-enter">${icon("play")}<span>再点一次进入</span></span><strong class="chapter-name"></strong></span>${icon("lock")}</button>`;
 
 /**
  * Everything of the story tab outside the list: the backdrop, the strip of chapter panels along
@@ -209,7 +201,6 @@ export class StoryMenu {
       const art = locked ? undefined : ACT_COVERS[act.id];
       query<HTMLElement>(panel, ".chapter-art").style.backgroundImage = art ? `url("${art}")` : "";
       query(panel, ".chapter-name").textContent = locked ? "？？？" : name(act);
-      query(panel, ".chapter-note").textContent = locked ? "" : t(ACT_NOTES[act.id] ?? "");
       query(panel, ".chapter-state").textContent = t(
         locked
           ? "未解锁"
