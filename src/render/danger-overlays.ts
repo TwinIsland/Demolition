@@ -5,6 +5,7 @@ import { powerTier } from "../core/combat";
 import { trailHidden } from "../core/types";
 import type { GameSnapshot } from "../core/types";
 import { world } from "./arena";
+import { standIn } from "./gpu-warmup";
 
 const FLASH = new THREE.Color("#ffffff");
 /** Texture slot and tint of a concealed charge's path, which only its owner is shown. */
@@ -27,6 +28,25 @@ export class DangerOverlays {
     const loader = new THREE.TextureLoader(manager);
     this.textures = ["base", "boost", "heavy", "veil"].map((name) =>
       loader.load(`./assets/danger-${name}.svg`),
+    );
+  }
+  private material(tier: number) {
+    return new THREE.MeshBasicMaterial({
+      map: this.textures[tier],
+      transparent: true,
+      opacity: 0.23,
+      depthWrite: false,
+      polygonOffset: true,
+      polygonOffsetFactor: -2,
+    });
+  }
+  /**
+   * Each bomb's overlay disposes its material when the bomb goes off, which would free the
+   * program whenever no bomb is down. These hold it, and upload the four path textures.
+   */
+  warmObjects(): THREE.Object3D[] {
+    return this.textures.map(
+      (_, tier) => new THREE.InstancedMesh(this.geometry, standIn(this.material(tier)), 1),
     );
   }
   clear() {
@@ -56,14 +76,7 @@ export class DangerOverlays {
         if (!this.entries.has(bomb.id)) {
           const cells = blastCells(state, bomb),
             tier = bomb.concealed ? VEIL_TEXTURE : powerTier(bomb.power ?? 70);
-          const material = new THREE.MeshBasicMaterial({
-            map: this.textures[tier],
-            transparent: true,
-            opacity: 0.23,
-            depthWrite: false,
-            polygonOffset: true,
-            polygonOffsetFactor: -2,
-          });
+          const material = this.material(tier);
           const mesh = new THREE.InstancedMesh(this.geometry, material, cells.length),
             matrix = new THREE.Matrix4(),
             rotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2);

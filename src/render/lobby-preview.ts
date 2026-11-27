@@ -18,6 +18,33 @@ export class LobbyPreview {
   private lastTime = 0;
   private controller = new AbortController();
   private skinTicket = 0;
+  /**
+   * The canvas itself is not multisampled, so the operator is drawn into a multisampled buffer
+   * and copied over the backdrop from there.
+   */
+  private target = new THREE.WebGLRenderTarget(1, 1, { samples: 4, type: THREE.HalfFloatType });
+  private clearColor = new THREE.Color();
+  private copyScene = new THREE.Scene();
+  private copyCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  private copy = new THREE.Mesh(
+    new THREE.PlaneGeometry(2, 2),
+    new THREE.ShaderMaterial({
+      uniforms: { image: { value: this.target.texture } },
+      transparent: true,
+      depthTest: false,
+      depthWrite: false,
+      vertexShader: "varying vec2 at; void main() { at = uv; gl_Position = vec4(position.xy, 0., 1.); }",
+      // The resolved edge texels are premultiplied by their coverage.
+      fragmentShader: `
+        uniform sampler2D image; varying vec2 at;
+        void main() {
+          vec4 texel = texture2D(image, at);
+          gl_FragColor = vec4(texel.rgb / max(texel.a, 1e-4), texel.a);
+          #include <tonemapping_fragment>
+          #include <colorspace_fragment>
+        }`,
+    }),
+  );
   constructor(
     private models: Models,
     private surface: HTMLElement,
@@ -30,6 +57,8 @@ export class LobbyPreview {
     const rim = new THREE.DirectionalLight(0xb1d9f0, 1.8);
     rim.position.set(2, 2, -2);
     this.scene.add(key, rim);
+    this.copy.frustumCulled = false;
+    this.copyScene.add(this.copy);
     this.camera.position.set(0, 1.48, 4);
     this.camera.lookAt(0, 0.88, 0);
     let pointer: number | undefined,
@@ -110,9 +139,20 @@ export class LobbyPreview {
     renderer.setViewport(rect.left - canvas.left, canvas.bottom - rect.bottom, rect.width, rect.height);
     renderer.setScissor(rect.left - canvas.left, canvas.bottom - rect.bottom, rect.width, rect.height);
     renderer.setScissorTest(true);
-    renderer.autoClear = false;
-    renderer.clearDepth();
+    const ratio = renderer.getPixelRatio(),
+      width = Math.max(1, Math.round(rect.width * ratio)),
+      height = Math.max(1, Math.round(rect.height * ratio));
+    if (this.target.width !== width || this.target.height !== height) this.target.setSize(width, height);
+    const alpha = renderer.getClearAlpha();
+    renderer.getClearColor(this.clearColor);
+    renderer.setRenderTarget(this.target);
+    renderer.setClearColor(0x000000, 0);
+    renderer.clear();
     renderer.render(this.scene, this.camera);
+    renderer.setRenderTarget(null);
+    renderer.setClearColor(this.clearColor, alpha);
+    renderer.autoClear = false;
+    renderer.render(this.copyScene, this.copyCamera);
     renderer.autoClear = auto;
     renderer.setViewport(this.viewport);
     renderer.setScissor(this.scissor);
@@ -123,5 +163,8 @@ export class LobbyPreview {
     this.backdrop.dispose();
     this.skinTicket++;
     this.avatar.dispose();
+    this.target.dispose();
+    this.copy.geometry.dispose();
+    this.copy.material.dispose();
   }
 }

@@ -25,6 +25,9 @@ export class PlacementTiles {
   private mesh?: THREE.InstancedMesh;
   private matrix = new THREE.Matrix4().makeRotationX(-Math.PI / 2);
   private signature = "";
+  warmObjects(): THREE.Object3D[] {
+    return [new THREE.InstancedMesh(this.geometry, this.material, 1)];
+  }
   update(s: Readonly<GameSnapshot>, p: Player, show: boolean, mapChanged: boolean) {
     this.root.visible = show;
     if (!show) {

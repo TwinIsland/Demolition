@@ -101,6 +101,13 @@ export class ZoneWalls {
     parent.add(this.dust);
   }
 
+  /** The warning and fire tiles are built when the zone first moves; these compile them earlier. */
+  warmObjects(): THREE.Object3D[] {
+    return [this.warningMaterial, this.fireMaterial].map(
+      (material) => new THREE.InstancedMesh(this.warningGeometry, material, 1),
+    );
+  }
+
   /** Instanced copies of the arena's boundary wall, one slot per playable cell. */
   private prepare(state: Readonly<GameSnapshot>) {
     const key = `${state.seed}:${state.mapId}:${state.size}`;

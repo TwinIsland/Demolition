@@ -45,6 +45,7 @@ import { CameraRig, type CameraMode } from "./camera-rig";
 import { syncEntities } from "./entity-sync";
 import { PostPipeline, postQuality } from "./post/post-pipeline";
 import { DynamicResolution } from "./dynamic-resolution";
+import { disposeStandIns, texturesUnder, uploadTextures } from "./gpu-warmup";
 
 /** Retina panels report 2 or 3; shading every one of those pixels buys little over 1.5. */
 const MAX_PIXEL_RATIO = 1.5;
@@ -127,9 +128,15 @@ export class GameRenderer {
   private lamps = 1;
   private quality = readGraphics();
   private lastEvent = 0;
+  /** Hidden stand-ins that keep every mid-match shader program and texture on the GPU. */
+  private standIns?: THREE.Group;
+  /** Same kind of buffer as the post pipeline's, so warm-up compiles the programs it will use. */
+  private warmTarget = new THREE.WebGLRenderTarget(64, 64, { type: THREE.HalfFloatType });
   constructor(container: HTMLElement) {
     this.renderer = new THREE.WebGLRenderer({
-      antialias: true,
+      // Every frame reaches the canvas as a full-screen pass, so multisampling it buys nothing.
+      antialias: false,
+      stencil: false,
       powerPreference: "high-performance",
     });
     this.renderer.info.autoReset = false;
@@ -238,6 +245,11 @@ export class GameRenderer {
     this.mapId = state.mapId;
     this.rig.reset();
     if (terrainOnly) return;
+    // A new match starts at full resolution again; this runs behind the loading screen.
+    if (this.resolution.reset()) {
+      this.renderer.setPixelRatio(basePixelRatio(this.quality));
+      this.resize();
+    }
     this.models.clearAnimations();
     for (const zombie of this.zombies.values()) (zombie as MinecraftAvatar).dispose();
     this.zombies.clear();
@@ -268,6 +280,7 @@ export class GameRenderer {
     if (showBackdrop && this.preview) {
       this.renderer.info.reset();
       this.submitStarted = performance.now();
+      this.performance.beginGpu();
       if (this.preview.backdrop.draw(this.renderer, wallTime, menuBeat)) return;
     }
     if (this.seed !== state.seed || this.mapId !== state.mapId)
@@ -275,6 +288,7 @@ export class GameRenderer {
         state,
         this.mapId === state.mapId && state.mode === "practice" && state.phase === "playing",
       );
+    const syncStarted = performance.now();
     this.feel.begin(state, localId, wallTime);
     const mapChanged = this.arena!.sync(state);
     const workLamps = this.arena!.workLamps();
@@ -357,7 +371,9 @@ export class GameRenderer {
       this.feel.rumble(THREE.MathUtils.clamp(1.25 - distance / 12, 0.3, 1.1));
     }
     this.renderer.info.reset();
+    this.performance.part("sync", performance.now() - syncStarted);
     this.submitStarted = performance.now();
+    this.performance.beginGpu();
     // The blended perspective/orthographic projection breaks AO's depth reconstruction.
     this.post.setOcclusionActive(rig.tacticalBlend < 0.02);
     this.refreshShadows(state, wallTime, mapChanged || zoneShake > 0);
@@ -410,6 +426,10 @@ export class GameRenderer {
     if (!this.resolution.sample(dt)) return;
     this.renderer.setPixelRatio(basePixelRatio(this.quality) * this.resolution.scale);
     this.resize();
+  }
+  /** Adds CPU time spent outside the renderer to the diagnostics panel, under `name`. */
+  profile(name: string, ms: number) {
+    this.performance.part(name, ms);
   }
   finishFrame() {
     const now = performance.now();
@@ -659,9 +679,9 @@ export class GameRenderer {
       for (const map of maps) this.preview?.backdrop.preload(map);
       await Promise.all([this.models.preload(state.players, true), this.models.preloadCatalog()]);
       if (this.seed !== state.seed || this.mapId !== state.mapId) this.rebuild(state);
-      this.strikes.warm(this.renderer, this.rig.camera);
-      this.groundFire.warm(this.renderer, this.rig.camera);
+      this.groundFire.warm(this.renderer);
       await this.assets.ready();
+      await this.warmUp(state);
     } finally {
       stop();
     }
@@ -672,9 +692,85 @@ export class GameRenderer {
       await this.models.preload(state.players, includeDrops);
       if (this.seed !== state.seed || this.mapId !== state.mapId) this.rebuild(state);
       await this.assets.ready();
+      await this.warmUp(state);
     } finally {
       stop();
     }
+  }
+  /**
+   * Pays for shader compilation and texture upload behind the loading screen. Anything that
+   * first appears mid-match (zombies, pickups, charges, effects) is added once as a stand-in,
+   * compiled without blocking, drawn for real into a small buffer and then left hidden in the
+   * scene, where it keeps those programs from being freed between uses.
+   */
+  private async warmUp(state: Readonly<GameSnapshot>) {
+    const { renderer, scene } = this;
+    const camera = this.rig.camera;
+    const group = new THREE.Group();
+    group.name = "stand-ins";
+    group.add(
+      ...this.models.warmObjects(state.players),
+      ...this.overlays.warmObjects(),
+      ...this.zoneWalls.warmObjects(),
+      ...this.blastEffect.warmObjects(),
+      ...this.strikes.warmObjects(),
+      ...this.shields.warmObjects(),
+      ...this.ashes.warmObjects(),
+      ...this.summons.warmObjects(),
+      ...this.placements.warmObjects(),
+    );
+    // Models and skins attach from promises that have already settled; let those run.
+    await new Promise((resolve) => setTimeout(resolve));
+    if (this.disposed) return disposeStandIns(group);
+    group.traverse((object) => {
+      object.frustumCulled = false;
+    });
+    // Hidden objects are still compiled; they only have to show for the one draw below.
+    group.visible = false;
+    scene.add(group);
+    const retired = this.standIns;
+    this.standIns = group;
+
+    // Program variants depend on where the frame goes: bind what the post pipeline binds.
+    const offscreen = <T>(work: () => T): T => {
+      const toneMapping = renderer.toneMapping;
+      renderer.toneMapping = THREE.NoToneMapping;
+      renderer.setRenderTarget(this.warmTarget);
+      try {
+        return work();
+      } finally {
+        renderer.setRenderTarget(null);
+        renderer.toneMapping = toneMapping;
+      }
+    };
+    try {
+      // Never let a driver that fails to report a program as linked hold the loading screen.
+      await Promise.race([
+        offscreen(() => renderer.compileAsync(scene, camera)),
+        new Promise((resolve) => setTimeout(resolve, 15_000)),
+      ]);
+    } catch (error) {
+      console.warn("Shader warm-up failed", error);
+    }
+    if (this.disposed) return;
+    // One real draw: uploads geometry and textures, and compiles the shadow-pass variants.
+    group.visible = true;
+    offscreen(() => {
+      renderer.shadowMap.needsUpdate = renderer.shadowMap.enabled;
+      renderer.clear();
+      renderer.render(scene, camera);
+    });
+    group.visible = false;
+    uploadTextures(renderer, texturesUnder(scene));
+    if (retired) disposeStandIns(retired);
+    // The stand-ins are in the shadow map now; redraw it without them on the next frame.
+    this.shadowSignature = NaN;
+    this.nextShadow = 0;
+    renderer.shadowMap.needsUpdate = renderer.shadowMap.enabled;
+    // These draw straight to the canvas after the post pipeline, from scenes of their own.
+    this.nightVision.warm(renderer, camera);
+    this.offerFire.warm(renderer);
+    this.upgradeFx.warm(renderer);
   }
   attachPreview(surface: HTMLElement) {
     this.preview = new LobbyPreview(this.models, surface, this.assets.manager);
@@ -749,6 +845,8 @@ export class GameRenderer {
     this.models.dispose();
     this.overlays.dispose();
     this.zoneWalls.dispose();
+    if (this.standIns) disposeStandIns(this.standIns);
+    this.warmTarget.dispose();
     this.post.dispose();
     this.renderer.dispose();
   }

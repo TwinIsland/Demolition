@@ -210,6 +210,26 @@ export class Models {
       }
     return avatar;
   }
+  /**
+   * One of everything that first appears mid-match: each zombie level, every pickup, and each
+   * player's charges and crate. See `gpu-warmup.ts` for why these stay in the scene, hidden.
+   */
+  warmObjects(players: readonly Player[]): THREE.Object3D[] {
+    const zombies = [1, 2, 3].map((level) => {
+      const zombie = this.zombie(level);
+      zombie.userData.disposeStandIn = () => zombie.dispose();
+      return zombie;
+    });
+    const charges = players.flatMap((p) =>
+      [70, 85, 130].map((power) => this.explosive(p.color, power, p.bombStyle)),
+    );
+    return [
+      ...zombies,
+      ...Object.keys(ITEMS).map((kind) => this.item(kind)),
+      ...charges,
+      ...players.map((p) => this.builtCrate(p)),
+    ];
+  }
   firstPersonArm() {
     const avatar = new MinecraftAvatar();
     this.hand = avatar;

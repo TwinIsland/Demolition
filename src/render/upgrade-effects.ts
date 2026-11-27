@@ -44,6 +44,9 @@ export class UpgradeEffects {
         card: true,
       });
   }
+  warm(renderer: THREE.WebGLRenderer) {
+    renderer.compile(this.scene, this.camera);
+  }
   draw(renderer: THREE.WebGLRenderer, time: number) {
     if (!this.bursts.length) return;
     const elapsed = (time - this.started) / 1.7;

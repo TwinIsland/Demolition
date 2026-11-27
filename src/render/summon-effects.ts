@@ -32,6 +32,13 @@ export class SummonEffects {
     }
     this.motes.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
   }
+  /** One portal per zombie level, so the first summon of a match compiles nothing. */
+  warmObjects(): THREE.Object3D[] {
+    return this.materials.flatMap((material) => [
+      new THREE.Mesh(this.rim, material.rim),
+      new THREE.Points(this.motes, material.sparks),
+    ]);
+  }
   update(parent: THREE.Group, enemy: Zombie, t: number) {
     let portal = parent.getObjectByName("summon");
     if (t >= 1) {

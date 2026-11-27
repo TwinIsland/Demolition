@@ -78,8 +78,7 @@
   display: flex;
 }
 .skill-buttons button {
-  background: #26302ee6;
-  backdrop-filter: var(--blur-panel);
+  background: #26302ef0;
   border: 1px solid var(--line-subtle);
   display: flex;
   align-items: center;

@@ -51,6 +51,12 @@ export class BlastEffect {
     return mesh;
   }
 
+  /** Batches are built on the first blast; this compiles their program and uploads the atlas. */
+  warmObjects(): THREE.Object3D[] {
+    for (let frame = 0; frame < 16; frame++) this.batch(frame, 1).visible = false;
+    return [new THREE.InstancedMesh(this.batch(0, 1).geometry, this.material, 1)];
+  }
+
   update(state: Readonly<GameSnapshot>, camera: THREE.Camera) {
     for (const mesh of this.batches.values()) mesh.visible = false;
     for (const b of state.blasts) this.embers.set(b.id, b);

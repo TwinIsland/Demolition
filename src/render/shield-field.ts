@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { isCloaked } from "../core/types";
 import type { GameSnapshot } from "../core/types";
 import { world } from "./arena";
+import { standIn } from "./gpu-warmup";
 
 /** One world-space shell per protected player. The local camera can look through its inner face. */
 export class ShieldField {
@@ -13,8 +14,8 @@ export class ShieldField {
     this.cells = new THREE.TextureLoader(manager).load("./assets/shield-field.webp");
     this.cells.wrapS = this.cells.wrapT = THREE.RepeatWrapping;
   }
-  private create() {
-    const material = new THREE.ShaderMaterial({
+  private material() {
+    return new THREE.ShaderMaterial({
       uniforms: {
         cells: { value: this.cells },
         time: { value: 0 },
@@ -47,7 +48,13 @@ export class ShieldField {
           #include <colorspace_fragment>
         }`,
     });
-    const shell = new THREE.Mesh(this.geometry, material);
+  }
+  /** A shell that is never shown: it keeps the shader compiled and the cell texture uploaded. */
+  warmObjects(): THREE.Object3D[] {
+    return [new THREE.Mesh(this.geometry, standIn(this.material()))];
+  }
+  private create() {
+    const shell = new THREE.Mesh(this.geometry, this.material());
     shell.renderOrder = 6;
     this.root.add(shell);
     return shell;

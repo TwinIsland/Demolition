@@ -26,6 +26,11 @@ export class NightVision {
     this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.scene.add(this.mesh);
   }
+  /** Compiles the overlay as it is drawn: straight to the canvas, after the post pipeline. */
+  warm(renderer: THREE.WebGLRenderer, camera: THREE.Camera) {
+    renderer.compile(this.scene, camera);
+    if (this.mesh.material.map?.image) renderer.initTexture(this.mesh.material.map);
+  }
   draw(renderer: THREE.WebGLRenderer, camera: THREE.Camera, avatars: Iterable<THREE.Group>, time: number) {
     let index = 0;
     for (const avatar of avatars) {

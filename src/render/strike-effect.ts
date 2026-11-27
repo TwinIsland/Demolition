@@ -254,11 +254,13 @@ export class StrikeEffect {
     this.sparkGeometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 60);
   }
 
-  /** Compiles every shader program of the effect behind the loading screen. */
-  warm(renderer: THREE.WebGLRenderer, camera: THREE.Camera) {
-    const scene = new THREE.Scene();
+  /**
+   * One of everything a strike draws. Strikes clone these materials and dispose the clones, so
+   * the prototypes have to hold the programs, compiled in the scene the match is drawn in.
+   */
+  warmObjects(): THREE.Object3D[] {
     const p = this.prototypes;
-    scene.add(
+    return [
       new THREE.Mesh(this.disc, p.marker),
       new THREE.Mesh(this.cone, p.plume),
       new THREE.Mesh(this.ball, p.fireball),
@@ -267,8 +269,8 @@ export class StrikeEffect {
       new THREE.Points(this.sparkGeometry, p.sparks),
       new THREE.Mesh(this.ball, this.flashMaterial),
       new THREE.Sprite(this.smoke),
-    );
-    renderer.compile(scene, camera);
+      ...(this.model ? [this.model.clone()] : []),
+    ];
   }
 
   private launch(strike: Strike, size: number): Flight {

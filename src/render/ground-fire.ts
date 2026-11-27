@@ -246,9 +246,9 @@ export class GroundFire {
     ];
   }
 
-  warm(renderer: THREE.WebGLRenderer, camera: THREE.Camera) {
+  /** Builds the layers so the scene-wide warm-up compiles them. */
+  warm(renderer: THREE.WebGLRenderer) {
     this.resize(1);
-    renderer.compile(this.root, camera);
     // Upload the sheets now, or as soon as they arrive: still on the loading screen either way.
     this.renderer = renderer;
     for (const sheet of this.sheets) if (sheet.image) renderer.initTexture(sheet);

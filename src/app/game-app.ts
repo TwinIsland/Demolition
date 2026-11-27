@@ -589,7 +589,9 @@ export class GameApp {
       const observation = this.session.getSnapshot();
       const input = this.keyboard.decide({ self: this.viewer(observation), state: observation, dt });
       this.session.submit(LOCAL_PLAYER_ID, input);
+      const simStarted = performance.now();
       this.session.advance(dt);
+      this.renderer.profile("sim", performance.now() - simStarted);
     }
     const state = this.session.getSnapshot();
     const viewer = this.viewer(state);
@@ -602,13 +604,17 @@ export class GameApp {
     this.renderScene(state, viewer, now);
     this.presentBattle(state, viewer, now);
     this.renderer.finishFrame();
-    if (this.hudRefresh.ready(now) && !this.screens.is("lobby", "graphics", "credits"))
+    if (this.hudRefresh.ready(now) && !this.screens.is("lobby", "graphics", "credits")) {
+      const hudStarted = performance.now();
       this.ui.update({
         snapshot: state,
         viewer,
         landing: this.renderer.landingPreview,
         selectedPerk: this.keyboard.selectedPerk,
       });
+      // Lands in the next frame's sample, which is the frame that waits for it.
+      this.renderer.profile("hud", performance.now() - hudStarted);
+    }
   }
 
   private renderRoom(now: number) {

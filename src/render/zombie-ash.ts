@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { seededRandom } from "../core/maps";
 import type { MinecraftAvatar } from "./minecraft-avatar";
+import { standIn } from "./gpu-warmup";
 
 export const ZOMBIE_FALL_DURATION = 0.65;
 type Burst = {
@@ -26,8 +27,8 @@ export class ZombieAsh {
     this.geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
     this.geometry.setAttribute("motion", new THREE.Float32BufferAttribute(motion, 4));
   }
-  start(at: number, x: number, z: number, level: number, body?: MinecraftAvatar) {
-    const material = new THREE.ShaderMaterial({
+  private material() {
+    return new THREE.ShaderMaterial({
       uniforms: { age: { value: 0 } },
       transparent: true,
       depthWrite: false,
@@ -50,7 +51,13 @@ export class ZombieAsh {
           #include <colorspace_fragment>
         }`,
     });
-    const points = new THREE.Points(this.geometry, material);
+  }
+  /** Bursts dispose their material when they end; this one keeps the program alive between them. */
+  warmObjects(): THREE.Object3D[] {
+    return [new THREE.Points(this.geometry, standIn(this.material()))];
+  }
+  start(at: number, x: number, z: number, level: number, body?: MinecraftAvatar) {
+    const points = new THREE.Points(this.geometry, this.material());
     points.position.set(x, 0.02, z);
     points.rotation.y = body?.rotation.y ?? at * 2.7;
     const scale = 1 + (level - 1) * 0.12;

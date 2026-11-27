@@ -505,7 +505,6 @@
     linear-gradient(90deg, #e7bc70, #e7bc70) 50% 100% / 46% 2px no-repeat,
     linear-gradient(180deg, #141d1ff2, #0d1415e6);
   clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 100%, 14px 100%);
-  backdrop-filter: blur(6px);
 }
 #app #hud .round-status > span {
   color: #c3ccc3;
@@ -555,7 +554,6 @@
   box-shadow:
     0 8px 26px #0009,
     inset 0 0 0 1px #0008;
-  backdrop-filter: blur(6px);
 }
 #app #hud .radar-title {
   color: #d7ddd3;

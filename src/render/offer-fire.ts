@@ -175,6 +175,9 @@ export class OfferFire {
       else bounds.set(1, 1, -1, -1);
     });
   }
+  warm(renderer: THREE.WebGLRenderer) {
+    renderer.compile(this.scene, this.camera);
+  }
   draw(renderer: THREE.WebGLRenderer, time: number, quality: number, intensity: number, rewardGold: boolean) {
     if (time >= this.nextLayout) {
       this.layout(renderer.domElement);

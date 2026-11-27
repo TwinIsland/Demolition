@@ -47,7 +47,6 @@
   display: grid;
   place-items: center;
   color: #c5ccc7;
-  backdrop-filter: var(--blur-panel);
   border-radius: 0;
   background: #1a211bdd;
   border-color: #b3bc922d;

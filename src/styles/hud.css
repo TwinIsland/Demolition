@@ -17,8 +17,8 @@
   padding: 10px 21px;
   border: 1px solid var(--line-subtle);
   border-radius: var(--radius-pill);
-  background: #232d2ab0;
-  backdrop-filter: var(--blur-panel);
+  /* No backdrop blur over the 3D view: the compositor would re-blur it every frame. */
+  background: #232d2ae0;
   white-space: nowrap;
 }
 .round-status > span {
@@ -103,7 +103,6 @@
   padding: 11px;
   width: 222px;
   box-shadow: var(--shadow-md);
-  backdrop-filter: var(--blur-panel);
 }
 .radar-title {
   display: flex;
