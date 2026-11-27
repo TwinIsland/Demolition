@@ -52,6 +52,8 @@ export interface MapDefinition extends Pack {
   /** @deprecated Use `obstacles`. Read only when `obstacles` is absent. */
   covers?: readonly MapCover[];
   bgm?: string;
+  /** Loudness of `bgm` against the other maps' tracks. Defaults to 1. */
+  bgmGain?: number;
   artwork?: string;
   backdrop?: string;
   /**

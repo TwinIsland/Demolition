@@ -133,7 +133,9 @@ export class GameAudio {
   /** Menu music resumes where it left off; field tracks stream and start from the top. */
   setMusic(path: string) {
     const menu = path === MENU_MUSIC;
-    this.engine.playMusic(path, { volume: MUSIC_VOLUME, stream: !menu, restart: !menu });
+    // A map may ask for its own track to sit higher or lower in the mix.
+    const gain = menu ? 1 : (MAPS.find((map) => map.bgm === path)?.bgmGain ?? 1);
+    this.engine.playMusic(path, { volume: Math.min(1, MUSIC_VOLUME * gain), stream: !menu, restart: !menu });
   }
 
   /** Bass-onset pulse (0..1) of the menu track for the lobby backdrop; `time` in seconds. */

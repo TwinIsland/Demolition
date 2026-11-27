@@ -54,6 +54,7 @@ export default defineMap(
     theme: "backrooms",
     weather: "office",
     bgm: new URL("./bgm.mp3", import.meta.url).href,
+    bgmGain: 1.7,
     artwork: new URL("./briefing.webp", import.meta.url).href,
     backdrop: new URL("./backdrop.webp", import.meta.url).href,
     obstacles: [{ use: "set:backrooms", weight: 1 }],
