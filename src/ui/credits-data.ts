@@ -103,7 +103,7 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
         license: "CC BY 3.0",
       },
       {
-        title: "Zombie hurt & death, player hurt & attack",
+        title: "Zombie and player voices, level-up, pickup, crate and fuse sounds",
         author: "Mojang Studios · Minecraft: Java Edition",
         license: "© Mojang Studios",
       },

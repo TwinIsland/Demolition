@@ -99,6 +99,7 @@ Equipment and reward cues use Kenney recordings distributed under CC0. The downl
 | zombie-hurt-1, zombie-hurt-2, zombie-death | Minecraft: Java Edition zombie hurt and death recordings, Mojang Studios. Original Ogg files from the [official 1.21.4 asset index](https://piston-meta.mojang.com/v1/packages/819525fa2445f041d8c865e8ea3d215b362f106e/19.json). |
 | player-hurt-0, player-hurt-1, player-hurt-2 | Minecraft: Java Edition player hurt recordings (`damage/hit1`–`hit3`), Mojang Studios. Original Ogg files from the same asset index. |
 | player-attack-0, player-attack-1, player-attack-2 | Minecraft: Java Edition player attack recordings (`entity/player/attack/strong1`–`strong3`), Mojang Studios. Original Ogg files from the same asset index. |
+| level-up, pickup-confirm, gear-pickup, crate-build, bomb-place | Minecraft: Java Edition recordings, Mojang Studios: `random/levelup`, `random/pop` (both pickup cues), `dig/wood1`, `random/fuse`. Original Ogg files from the same asset index. They replace the Kenney and synthesised cues that earlier rows and `scripts/make-build-sound.py` describe for these names. |
 | blast-ringing | Short excerpt with a fade from [Tinnitus by Joseph SARDIN, BigSoundBank](https://bigsoundbank.com/tinnitus-s1388.html), CC0. |
 | Knife contact with wood, metal, and sandbags | Kenney’s CC0 impactWood_medium_002, impactMetal_light_001, and impactSoft_heavy_001. [Impact Sounds](https://kenney.nl/assets/impact-sounds) |
 
