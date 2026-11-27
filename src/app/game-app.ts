@@ -202,7 +202,7 @@ export class GameApp {
   back() {
     if (this.screens.is("graphics")) this.closeGraphics();
     else if (this.screens.is("credits")) this.closeCredits();
-    else if (this.screens.is("story")) this.closeStory();
+    else if (this.screens.is("story")) this.ui.toggleStoryExit();
     else if (this.screens.is("room")) this.goHome();
     else if (this.screens.is("lobby")) {
       if (this.ui.lobbyBack()) this.sound.menu("back");

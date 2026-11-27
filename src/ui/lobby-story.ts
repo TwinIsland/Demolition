@@ -47,7 +47,7 @@ export const storyPanels = () => `
             </nav>`;
 
 const chapterPanel = (act: Act, index: number) =>
-  `<button type="button" class="chapter-panel" data-chapter="${act.id}"><i class="chapter-art"></i><span class="chapter-body"><span class="chapter-number">${number(index)}</span><span class="chapter-state"></span><strong class="chapter-name"></strong><small class="chapter-note"></small></span>${icon("lock")}</button>`;
+  `<button type="button" class="chapter-panel" data-chapter="${act.id}"><i class="chapter-art"></i><span class="chapter-body"><span class="chapter-number">${number(index)}</span><span class="chapter-state"></span><span class="chapter-enter">${icon("play")}<span>再点一次进入</span></span><strong class="chapter-name"></strong><small class="chapter-note"></small></span>${icon("lock")}</button>`;
 
 /**
  * Everything of the story tab outside the list: the backdrop, the strip of chapter panels along
@@ -81,6 +81,8 @@ export class StoryMenu {
   private readonly dialog: HTMLElement;
   /** Chapter panel under the pointer or focus; the backdrop previews its art. */
   private hovered?: string;
+  /** Chapter picked with a first click; a second click on it starts the act. */
+  private selected?: string;
   /** Image the backdrop shows now; its two layers take turns so a change crossfades. */
   private cover = "";
 
@@ -121,12 +123,22 @@ export class StoryMenu {
   /** Re-reads the save. Call after the story has run. */
   refresh() {
     this.save = loadStory();
+    this.select(undefined);
+  }
+
+  private select(chapter: string | undefined) {
+    this.selected = chapter;
+    for (const panel of this.strip.querySelectorAll<HTMLElement>("[data-chapter]"))
+      panel.setAttribute("aria-pressed", String(panel.dataset.chapter === chapter));
+    this.renderCover();
   }
 
   /** Handles a click in the tab. Returns false when the button is not one of its own. */
   click(button: HTMLButtonElement): boolean {
     const { story, chapter } = button.dataset;
-    if (chapter) this.start(chapter, true);
+    // The first click picks a chapter and shows its panel; the second one enters it.
+    if (chapter && chapter !== this.selected) this.select(chapter);
+    else if (chapter) this.start(chapter, true);
     else if (story === "continue") this.resume();
     else if (story === "new") this.newGame();
     else if (story === "cancel") this.closeDialog();
@@ -215,7 +227,8 @@ export class StoryMenu {
 
   /** The backdrop follows the story: the furthest act reached, or the one being looked at. */
   private renderCover() {
-    const act = ACTS.find((entry) => entry.id === this.hovered) ?? nextAct(this.save) ?? ACTS.at(-1)!;
+    const shown = this.hovered ?? this.selected;
+    const act = ACTS.find((entry) => entry.id === shown) ?? nextAct(this.save) ?? ACTS.at(-1)!;
     const cover = coverOf(act);
     if (cover === this.cover) return;
     this.cover = cover;

@@ -9,6 +9,13 @@ import type { ScenePlayer, Stage, StoryHost } from "./stage";
 
 export type { StoryHost } from "./stage";
 
+/** The running story, as the app holds it. */
+export interface StoryHandle {
+  /** Holds the story still under a dialog: no keys reach it and the scene's clock stops. */
+  pause(on: boolean): void;
+  stop(): void;
+}
+
 export const storyMarkup = () => `
   <div class="story-stage">
     <canvas class="story-canvas"></canvas>
@@ -45,7 +52,12 @@ const TITLE_MS = 2200;
  * stops it. An act that is not built yet falls back to the first one. This is the stage: the text
  * box, the chips, the keys and the save. What happens on it is up to the scene's player.
  */
-export function mountStory(screen: HTMLElement, host: StoryHost, actId?: string, titled = false): () => void {
+export function mountStory(
+  screen: HTMLElement,
+  host: StoryHost,
+  actId?: string,
+  titled = false,
+): StoryHandle {
   let act = ACTS.find((candidate) => candidate.id === actId && candidate.scene) ?? ACTS[0];
   const find = <T extends HTMLElement>(selector: string) => screen.querySelector<T>(selector)!;
   const root = find(".story-stage"),
@@ -66,7 +78,8 @@ export function mountStory(screen: HTMLElement, host: StoryHost, actId?: string,
   /** Empty while the scene is being created: a scene starts talking before it exists here. */
   const running: { player?: ScenePlayer } = {};
   let alive = true,
-    ended = false;
+    ended = false,
+    paused = false;
 
   const stage: Stage = {
     root,
@@ -142,6 +155,7 @@ export function mountStory(screen: HTMLElement, host: StoryHost, actId?: string,
     // The scene starts out frozen, and its first conversation releases it.
     running.player = undefined;
     running.player = scene.kind === "room" ? playRoom(stage, scene) : playArcade(stage, scene);
+    running.player.paused = paused;
     steer();
   };
   /** One act runs into the next behind a short fade, with no stop at the menu. */
@@ -164,6 +178,7 @@ export function mountStory(screen: HTMLElement, host: StoryHost, actId?: string,
     running.player?.move(Math.sign(x), Math.sign(y));
   };
   const onKeyDown = (event: KeyboardEvent) => {
+    if (paused) return;
     if (event.code === "Escape" || event.metaKey || event.ctrlKey || event.altKey) return;
     if (!(event.code in MOVES) && !CONFIRM.has(event.code) && !/^Digit[1-9]$/.test(event.code)) return;
     event.preventDefault();
@@ -187,6 +202,7 @@ export function mountStory(screen: HTMLElement, host: StoryHost, actId?: string,
     steer();
   };
   const onClick = (event: MouseEvent) => {
+    if (paused) return;
     if (ended) host.finish();
     else if (dialogue.active && !(event.target as HTMLElement).closest("[data-option]")) dialogue.confirm();
   };
@@ -208,13 +224,20 @@ export function mountStory(screen: HTMLElement, host: StoryHost, actId?: string,
   window.addEventListener("blur", onBlur);
   root.addEventListener("click", onClick);
 
-  return () => {
-    alive = false;
-    for (const timer of timers) clearTimeout(timer);
-    window.removeEventListener("keydown", onKeyDown);
-    window.removeEventListener("keyup", onKeyUp);
-    window.removeEventListener("blur", onBlur);
-    dialogue.dispose();
-    running.player?.dispose();
+  return {
+    pause(on) {
+      paused = on;
+      if (running.player) running.player.paused = on;
+      if (on) onBlur();
+    },
+    stop() {
+      alive = false;
+      for (const timer of timers) clearTimeout(timer);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onBlur);
+      dialogue.dispose();
+      running.player?.dispose();
+    },
   };
 }

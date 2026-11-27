@@ -45,6 +45,12 @@ export function playRoom(stage: Stage, scene: RoomScene): ScenePlayer {
     act: () => {
       if (room.facing && !room.frozen) void examine(room.facing);
     },
+    get paused() {
+      return room.paused;
+    },
+    set paused(value) {
+      room.paused = value;
+    },
     dispose: () => room.dispose(),
   };
 }

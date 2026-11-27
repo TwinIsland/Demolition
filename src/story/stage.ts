@@ -55,5 +55,7 @@ export interface ScenePlayer {
   act(): void;
   /** Set by the stage during a conversation that holds the scene still. */
   frozen: boolean;
+  /** Stops the scene's clock, for a dialog laid over the story. Nothing moves or burns down meanwhile. */
+  paused: boolean;
   dispose(): void;
 }

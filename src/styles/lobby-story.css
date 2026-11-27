@@ -482,3 +482,53 @@
 #lobby[data-tab="story"] :focus-visible {
   outline-color: #c9a8f5;
 }
+
+/* ---------- A picked chapter: the second click enters it ---------- */
+.chapter-enter {
+  display: none;
+  justify-self: end;
+  align-items: center;
+  gap: calc(var(--u) * 7);
+  padding: calc(var(--u) * 5) calc(var(--u) * 10);
+  background: #fff;
+  font: 700 max(10px, calc(var(--u) * 14)) / 1 var(--font-ui);
+  letter-spacing: 0.1em;
+  color: #2a1150;
+}
+.chapter-enter .icon {
+  width: calc(var(--u) * 12);
+  height: calc(var(--u) * 12);
+  fill: currentColor;
+  stroke-width: 1;
+}
+.chapter-panel[aria-pressed="true"] {
+  translate: 0 calc(var(--u) * -14);
+  border-color: #fff;
+  box-shadow:
+    calc(var(--u) * 8) calc(var(--u) * 14) 0 #000000a6,
+    0 0 calc(var(--u) * 40) #a35bf0d9;
+}
+.chapter-panel[aria-pressed="true"] .chapter-state {
+  display: none;
+}
+.chapter-panel[aria-pressed="true"] .chapter-enter {
+  display: inline-flex;
+}
+.chapter-panel[aria-pressed="true"] .chapter-art {
+  scale: 1.06;
+}
+
+/* ---------- "Leave the story?" over the story screen (ui/story-exit.ts) ---------- */
+.story-exit {
+  --gold-200: #ead9ff;
+  --gold-300: #c9a8f5;
+  --gold-400: #a35bf0;
+  --line: #b79cf04d;
+  z-index: 20;
+}
+.story-exit .menu-row::after {
+  background: linear-gradient(90deg, #a35bf057, #a35bf01a 55%, #a35bf000);
+}
+.story-exit :focus-visible {
+  outline-color: #c9a8f5;
+}
