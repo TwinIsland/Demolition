@@ -22,6 +22,7 @@ import { CombatFeed } from "./combat-feed";
 import { mountControls } from "./control-settings";
 import { creditsMarkup, mountCredits } from "./credits";
 import type { SpectrumReader } from "./credits-spectrum";
+import { mountStory, storyMarkup, type StoryHost } from "../story/story-view";
 import { query } from "./dom";
 import { EquipmentWheel } from "./equipment-wheel";
 import { graphicsChange, graphicsForm, syncGraphics, syncVolumeRow } from "./graphics-options";
@@ -281,6 +282,13 @@ export class GameUI {
     );
   }
 
+  private stopStory?: () => void;
+
+  showStory(host: StoryHost) {
+    this.stopStory?.();
+    this.stopStory = mountStory(this.overlay.screen(storyMarkup(), "story-screen"), host);
+  }
+
   /**
    * The after-action screen: the match result once it is decided, otherwise the viewer's own
    * elimination. `tick` sounds the counters of the reveal.
@@ -301,6 +309,8 @@ export class GameUI {
   hideOverlay() {
     this.stopCredits?.();
     this.stopCredits = undefined;
+    this.stopStory?.();
+    this.stopStory = undefined;
     this.overlay.hide();
   }
 
@@ -471,6 +481,8 @@ export class GameUI {
         return actions.openCredits();
       case "credits-close":
         return actions.closeCredits();
+      case "story":
+        return actions.openStory();
       case "terrain-preview":
         return actions.toggleTerrainPreview();
       case "sound":

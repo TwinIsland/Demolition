@@ -1,7 +1,7 @@
 import { LEVEL_GAIN_TEXT } from "../core/level-rewards";
 import { preloadEverything } from "./preload";
 import { KeyboardAgent } from "../agents/keyboard-agent";
-import { CREDITS_MUSIC, MENU_MUSIC, Sound } from "../audio/sound";
+import { CREDITS_MUSIC, MENU_MUSIC, Sound, STORY_MUSIC } from "../audio/sound";
 import { perkById } from "../core/content";
 import { MAPS } from "../core/maps";
 import { MATCH_MODES } from "../core/match-modes";
@@ -200,6 +200,7 @@ export class GameApp {
   back() {
     if (this.screens.is("graphics")) this.closeGraphics();
     else if (this.screens.is("credits")) this.closeCredits();
+    else if (this.screens.is("story")) this.closeStory();
     else if (this.screens.is("room")) this.goHome();
     else if (this.screens.is("lobby")) {
       if (this.ui.lobbyBack()) this.sound.menu("back");
@@ -210,6 +211,15 @@ export class GameApp {
 
   closeCredits() {
     if (!this.screens.is("credits")) return;
+    this.screens.transition("lobby");
+    this.ui.hideOverlay();
+    this.sound.menu("back");
+    this.sound.setMusic(MENU_MUSIC);
+  }
+
+  /** Leaves the story for the menu. Progress is kept from the last checkpoint reached. */
+  closeStory() {
+    if (!this.screens.is("story")) return;
     this.screens.transition("lobby");
     this.ui.hideOverlay();
     this.sound.menu("back");
@@ -425,6 +435,18 @@ export class GameApp {
         this.sound.setMusic(CREDITS_MUSIC);
       },
       closeCredits: () => this.closeCredits(),
+      openStory: () => {
+        if (!this.screens.is("lobby")) return;
+        this.screens.transition("story");
+        this.ui.showStory({
+          typeTick: () => this.sound.typeTick(),
+          menu: (name) => this.sound.menu(name),
+          finish: () => this.closeStory(),
+        });
+        this.sound.menu("accept");
+        this.sound.setMusic(STORY_MUSIC.opening);
+      },
+      closeStory: () => this.closeStory(),
       setLanguage: (value) => this.changeLanguage(value),
       toggleSound: () => {
         this.ui.setSound(this.sound.toggle());
@@ -436,7 +458,7 @@ export class GameApp {
   }
 
   private openHelp() {
-    if (this.screens.is("shop", "room", "credits")) return;
+    if (this.screens.is("shop", "room", "credits", "story")) return;
     // Reopening the manual from itself keeps the place it was first opened from.
     this.helpFromLobby = this.screens.is("lobby") || (this.screens.is("help") && this.helpFromLobby);
     this.screens.transition("help");
@@ -630,7 +652,7 @@ export class GameApp {
     this.renderScene(state, viewer, now);
     this.presentBattle(state, viewer, now);
     this.renderer.finishFrame();
-    if (this.hudRefresh.ready(now) && !this.screens.is("lobby", "graphics", "credits")) {
+    if (this.hudRefresh.ready(now) && !this.screens.is("lobby", "graphics", "credits", "story")) {
       const hudStarted = performance.now();
       this.ui.update({
         snapshot: state,
@@ -751,7 +773,8 @@ export class GameApp {
 
   private renderScene(state: Readonly<GameSnapshot>, viewer: Player, now: number) {
     const inLobby =
-      this.screens.is("lobby", "graphics", "credits") || (this.screens.is("help") && this.helpFromLobby);
+      this.screens.is("lobby", "graphics", "credits", "story") ||
+      (this.screens.is("help") && this.helpFromLobby);
     const mode = inLobby ? "lobby" : viewer.alive ? "first-person" : "spectator";
     this.renderer.render(
       this.session.getRenderSnapshot?.() ?? state,

@@ -62,6 +62,7 @@ const lobbyMarkup = () => `
           <div class="menu-panels">
             <nav class="menu-panel" data-panel="home" aria-label="主菜单">
               ${openRow("mode")}${openRow("map")}${openRow("outfit")}
+              <button type="button" class="menu-row" id="story"><span class="row-label">故事模式</span><span class="row-value">升维</span><i class="row-arrow"></i></button>
               <button class="start-btn menu-play" id="start">${icon("play")}<span>开始对局</span><kbd>ENTER</kbd></button>
             </nav>
             <nav class="menu-panel" data-panel="mode" aria-label="对局模式" hidden>

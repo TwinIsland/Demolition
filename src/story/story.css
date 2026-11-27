@@ -1,0 +1,201 @@
+/* Story mode: a 320 x 180 pixel stage scaled up as one piece. One --px is one stage pixel. */
+.story-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  background: #000;
+}
+.story-stage {
+  position: relative;
+  width: min(100vw, calc(100vh * 16 / 9));
+  aspect-ratio: 16 / 9;
+  container-type: size;
+  overflow: hidden;
+  background: #0b0a14;
+  color: #e9e6f5;
+  font-family: "Fusion Pixel 12px", "Noto Sans SC", sans-serif;
+  font-weight: 400;
+  line-height: 1.25;
+  user-select: none;
+}
+.story-stage > * {
+  --px: calc(100cqw / 320);
+  font-size: calc(var(--px) * 12);
+}
+.story-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  outline: none;
+}
+.story-stage.booting .story-canvas {
+  animation: story-boot 1.4s steps(7) forwards;
+}
+@keyframes story-boot {
+  0% {
+    filter: brightness(1);
+  }
+  12% {
+    filter: brightness(4) contrast(1.6);
+  }
+  100% {
+    filter: brightness(0.35) saturate(0.6) hue-rotate(40deg);
+  }
+}
+
+.story-goal,
+.story-prompt,
+.story-keys {
+  position: absolute;
+  padding: calc(var(--px) * 2) calc(var(--px) * 5);
+  background: #0b0a14d9;
+  border: calc(var(--px) * 1) solid #55518f;
+}
+.story-goal {
+  top: calc(var(--px) * 5);
+  left: calc(var(--px) * 5);
+  color: #e8b45a;
+}
+.story-prompt {
+  top: calc(var(--px) * 5);
+  right: calc(var(--px) * 5);
+  display: flex;
+  gap: calc(var(--px) * 4);
+}
+.story-keys {
+  left: 50%;
+  bottom: calc(var(--px) * 3);
+  translate: -50% 0;
+  border: 0;
+  background: none;
+  color: #8f8aa8;
+  display: flex;
+  gap: calc(var(--px) * 8);
+  white-space: nowrap;
+  font-size: calc(var(--px) * 8);
+}
+.story-stage kbd {
+  all: unset;
+  color: #e8b45a;
+}
+.story-dialogue:not([hidden]) ~ .story-keys,
+.story-card:not([hidden]) ~ .story-keys {
+  visibility: hidden;
+}
+
+.story-dialogue {
+  position: absolute;
+  left: calc(var(--px) * 8);
+  right: calc(var(--px) * 8);
+  bottom: calc(var(--px) * 6);
+  min-height: calc(var(--px) * 52);
+  display: flex;
+  gap: calc(var(--px) * 6);
+  padding: calc(var(--px) * 5);
+  background: #0b0a14f2;
+  border: calc(var(--px) * 2) solid #e9e6f5;
+  box-shadow: 0 0 0 calc(var(--px) * 1) #0b0a14;
+  cursor: pointer;
+}
+.story-dialogue[hidden],
+.story-card[hidden],
+.story-goal[hidden],
+.story-prompt[hidden],
+.story-choices[hidden],
+.story-portrait[hidden] {
+  display: none;
+}
+.story-portrait {
+  flex: none;
+  width: calc(var(--px) * 36);
+  height: calc(var(--px) * 36);
+  border: calc(var(--px) * 1) solid #55518f;
+  image-rendering: pixelated;
+}
+.story-speech {
+  flex: 1;
+  min-width: 0;
+}
+.story-name {
+  color: #e8b45a;
+}
+.story-name:empty {
+  display: none;
+}
+.story-text {
+  margin: 0;
+  white-space: pre-wrap;
+}
+.story-dialogue[data-who="narrator"] .story-text {
+  color: #b9b4d0;
+}
+.story-dialogue[data-who="system"] .story-text {
+  color: #7fe0a0;
+}
+.story-choices {
+  margin: calc(var(--px) * 3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.story-choices li {
+  padding-left: calc(var(--px) * 10);
+  color: #b9b4d0;
+}
+.story-choices li.selected {
+  color: #fff;
+}
+.story-choices li.selected::before {
+  content: "▶";
+  margin-left: calc(var(--px) * -10);
+  width: calc(var(--px) * 10);
+  display: inline-block;
+  color: #e8b45a;
+}
+.story-next {
+  position: absolute;
+  right: calc(var(--px) * 5);
+  bottom: calc(var(--px) * 3);
+  width: calc(var(--px) * 5);
+  height: calc(var(--px) * 3);
+  background: #e8b45a;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  visibility: hidden;
+}
+.story-dialogue.waiting .story-next {
+  visibility: visible;
+  animation: story-blink 0.8s steps(2) infinite;
+}
+@keyframes story-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.story-card {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: calc(var(--px) * 8);
+  text-align: center;
+  background: #0b0a14;
+  cursor: pointer;
+}
+.story-card h2 {
+  margin: 0;
+  font: inherit;
+  font-size: calc(var(--px) * 24);
+  color: #fff;
+}
+.story-card p {
+  margin: 0;
+  color: #e8b45a;
+}
+.story-card small {
+  font-size: calc(var(--px) * 8);
+  color: #8f8aa8;
+}

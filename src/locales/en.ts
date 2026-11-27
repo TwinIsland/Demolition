@@ -61,6 +61,8 @@ export const EN_MESSAGES: Readonly<Record<string, string>> = {
   仍然继续: "Continue anyway",
   "角色预览，可拖动或按方向键旋转": "Operator preview. Drag or use the arrow keys to rotate.",
   作战区域: "Maps",
+  故事模式: "Story",
+  升维: "Ascension",
   战场预览: "Preview map",
   返回部署界面: "Back to deployment",
   加载中: "Loading",

@@ -83,6 +83,12 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
         license: "© Pharoah Sanders",
       },
       {
+        title: "电动少女 (8-Bit Remix)",
+        use: ["故事模式", "Story mode"],
+        author: "Chinese Football",
+        license: "© Chinese Football",
+      },
+      {
         title: "Dark Place (loop)",
         use: ["备用曲目", "Fallback track"],
         author: "OpenGameArt",

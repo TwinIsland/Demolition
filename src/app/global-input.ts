@@ -57,6 +57,11 @@ export function attachGlobalInput(app: GameApp, root: HTMLElement, canvas: HTMLC
       onChatKey(event);
       return;
     }
+    if (app.screen === "story") {
+      // The story reads its own keys; only the way out is handled here.
+      if (event.code === "Escape" && !event.repeat) app.back();
+      return;
+    }
     if (event.altKey || event.ctrlKey || event.metaKey || event.isComposing) return;
     if (app.screen === "replay") {
       // The killcam takes no input except the keys that cut it short.

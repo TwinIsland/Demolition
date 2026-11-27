@@ -53,6 +53,9 @@ export interface UIActions {
   /** Credits roll, opened from the lobby. */
   openCredits(): void;
   closeCredits(): void;
+  /** Story mode, opened from the lobby. */
+  openStory(): void;
+  closeStory(): void;
   setLanguage(value: Language): void;
   toggleSound(): void;
   /** Feedback for a click that triggers nothing with its own sound. */

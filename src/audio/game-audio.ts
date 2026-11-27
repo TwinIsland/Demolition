@@ -15,6 +15,7 @@ import {
   POOL_LOOP,
   OFFICE_LOOP,
   MENU_MUSIC,
+  STORY_MUSIC,
   MUSIC_VOLUME,
   RAIN_LOOP,
   THUNDER,
@@ -158,7 +159,11 @@ export class GameAudio {
   setMusic(path: string) {
     const menu = path === MENU_MUSIC;
     // A map may ask for its own track to sit higher or lower in the mix.
-    const gain = menu ? 1 : (MAPS.find((map) => map.bgm === path)?.bgmGain ?? 1);
+    const gain = menu
+      ? 1
+      : path === STORY_MUSIC.opening
+        ? 0.6
+        : (MAPS.find((map) => map.bgm === path)?.bgmGain ?? 1);
     this.engine.playMusic(path, {
       volume: Math.min(1, MUSIC_VOLUME * gain),
       stream: !menu && path !== CREDITS_MUSIC,

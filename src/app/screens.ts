@@ -4,6 +4,7 @@ export type Screen =
   | "lobby"
   | "graphics"
   | "credits"
+  | "story"
   | "room"
   | "shop"
   | "playing"
@@ -18,6 +19,7 @@ const ALL: readonly Screen[] = [
   "lobby",
   "graphics",
   "credits",
+  "story",
   "room",
   "shop",
   "playing",
@@ -37,12 +39,18 @@ const ENTERED_FROM: Record<Screen, readonly Screen[]> = {
   lobby: ALL,
   graphics: ["lobby"],
   credits: ["lobby"],
+  story: ["lobby"],
   room: ALL,
   shop: ["loading"],
   playing: ["shop", "playing", "paused", "help", "eliminated"],
   paused: ["playing"],
   help: ALL.filter(
-    (screen) => screen !== "shop" && screen !== "room" && screen !== "credits" && screen !== "replay",
+    (screen) =>
+      screen !== "shop" &&
+      screen !== "room" &&
+      screen !== "credits" &&
+      screen !== "story" &&
+      screen !== "replay",
   ),
   // The killcam plays between the kill and the screen that reports it.
   replay: ["playing"],
