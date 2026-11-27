@@ -5,9 +5,10 @@ import type { RoomScene } from "../script";
  * Act 1, "The mundane cage": the bedroom. Teaches walking and examining, and ends when the old
  * computer under the bed is switched on.
  *
- * The layout is traced over the painting in 8-pixel cells: # wall, W curtains, P posters,
- * M mirror, S bookshelf, B bed, b the gap under its foot, N the desk with the noodle cups,
- * D chair and drawers, = door.
+ * The layout is traced over the painting in 8-pixel cells. Solid: # wall, W curtains, P and Q
+ * the two posters, M mirror, S bookshelf, B bed, F the plush on it, b the gap under the bed,
+ * N desk, D chair and bin, X cardboard box, = door. Walked over: t tissues, s socks, p phone,
+ * c crisps, a alarm clock.
  */
 export const BEDROOM: RoomScene = {
   id: "bedroom",
@@ -21,22 +22,23 @@ export const BEDROOM: RoomScene = {
     "########################################",
     "########################################",
     "########################################",
-    "#########WWWWWW#PPPPPPPPPP#MMMMSSSSSS###",
-    "#BBBBBBBB..................MMMM..NNNNNN#",
-    "#BBBBBBBB..................MMMM..NNNNNN#",
-    "#BBBBBBBB........................NNNNNN#",
-    "#BBBBBBBB......................DDDNNNNN#",
-    "#BBBBBBBB...........@..........DDDNNNNN#",
-    "#BBBBBBBB......................DDDNNNNN#",
-    "#BBBBBBBB......................DDDDDDDD#",
-    "#BBBBBBBB......................DDDDDDDD#",
-    "#BBBBBBBB........======........DDDDDDDD#",
-    "#BBBBBBBB........======...........DDDDD#",
-    "#bbbbbbbb........======...........DDDDD#",
-    "#bbbbbbbb........======................#",
-    "#................======................#",
+    "###########WWWWW#PPPP#QQQQMMMSSSS#######",
+    "##BBBBBBBFF.tt...................NNNNN##",
+    "##BBBBBBBFF...aa...............DDNNNNN##",
+    "##BBBBBBBFF.pp.................DDNNNNN##",
+    "##BBBBBBBBB......ss............DDNNNNN##",
+    "##BBBBBBBBB...........@........DDNNNNN##",
+    "##BBBBBBBBB.tt.................DDNNNNN##",
+    "##BBBBBBBBB...cc.................NNNNN##",
+    "##bbbbbbbbb...cc.................NNNNN##",
+    "##XXXX.....................ss.......DD##",
+    "##XXXX.tt......................tt.....##",
+    "##XXXX................................##",
+    "##################====##################",
+    "########################################",
     "########################################",
   ],
+  walkOver: "tspca",
   opening: {
     art: STORY_ART.comic1,
     lines: [
@@ -60,6 +62,36 @@ export const BEDROOM: RoomScene = {
   goal: "调查床底",
   hotspots: [
     {
+      id: "megumin",
+      symbol: "P",
+      label: "惠惠的海报",
+      lines: [
+        { who: "zero", mood: "sincere", text: "吾之师。一日一发，绝不妥协。" },
+        { who: "narrator", text: "他试过在房间里咏唱。隔壁敲了墙。" },
+      ],
+    },
+    {
+      id: "aqua",
+      symbol: "Q",
+      label: "阿库娅的海报",
+      lines: [
+        { who: "zero", mood: "smug", text: "没用的女神啊。吾若转生，绝不选你。" },
+        { who: "aqua", text: "バーカ。" },
+        { who: "zero", mood: "flustered", text: "……！？" },
+        { who: "narrator", text: "海报不会说话。大概。" },
+      ],
+    },
+    {
+      id: "cirno",
+      symbol: "F",
+      label: "琪露诺 fumo",
+      lines: [
+        { who: "zero", mood: "sincere", text: "冰之妖精……吾麾下最强的使魔。" },
+        { who: "cirno", text: "baka！" },
+        { who: "narrator", text: "玩偶没有发声装置。他检查过九次。" },
+      ],
+    },
+    {
       id: "mirror",
       symbol: "M",
       label: "镜子",
@@ -78,16 +110,98 @@ export const BEDROOM: RoomScene = {
       ],
     },
     {
-      id: "noodles",
+      id: "desk",
       symbol: "N",
-      label: "泡面",
-      lines: [{ who: "zero", mood: "smug", text: "三具空壳。这就是吾战斗过的证明。" }],
+      label: "书桌",
+      lines: [],
+      cycle: [
+        {
+          label: "泡面",
+          lines: [{ who: "zero", mood: "smug", text: "四具空壳。这就是吾战斗过的证明。" }],
+        },
+        {
+          label: "抽纸",
+          lines: [
+            { who: "zero", mood: "smug", text: "圣遗物，「千之白羽」。" },
+            { who: "narrator", text: "抽纸。超市买二送一。" },
+          ],
+        },
+        {
+          label: "手柄",
+          lines: [
+            { who: "zero", mood: "smug", text: "吾之双手，记得一万场战斗。" },
+            { who: "narrator", text: "左摇杆漂移。他坚称这是风格。" },
+          ],
+        },
+        {
+          label: "漫画",
+          lines: [
+            { who: "zero", mood: "smug", text: "禁书。凡人翻阅会失去理智。" },
+            { who: "narrator", text: "第七卷被借走两年了。他没有开口要回来。" },
+          ],
+        },
+        {
+          label: "台灯",
+          lines: [
+            { who: "zero", mood: "flustered", text: "这间屋子里唯一的光。……是吾允许它亮着的。" },
+            { who: "narrator", text: "他怕黑。" },
+          ],
+        },
+      ],
     },
     {
-      id: "poster",
-      symbol: "P",
-      label: "海报",
-      lines: [{ who: "zero", mood: "sincere", text: "总有一天，吾也会被卡车选中的。" }],
+      id: "tissues",
+      symbol: "t",
+      label: "纸团",
+      lines: [
+        { who: "zero", mood: "flustered", text: "……这是吾与花粉之邪神交战的痕迹。" },
+        { who: "narrator", text: "他有鼻炎。请不要多想。" },
+      ],
+    },
+    {
+      id: "socks",
+      symbol: "s",
+      label: "袜子",
+      lines: [
+        { who: "zero", mood: "sincere", text: "失散的左翼与右翼。它们已经很久没有相见了。" },
+        { who: "narrator", text: "相距四米。" },
+      ],
+    },
+    {
+      id: "crisps",
+      symbol: "c",
+      label: "薯片",
+      lines: [
+        { who: "zero", mood: "smug", text: "供奉给深渊的祭品。" },
+        { who: "narrator", text: "过期两周。他昨天还吃了。" },
+      ],
+    },
+    {
+      id: "phone",
+      symbol: "p",
+      label: "手机",
+      lines: [
+        { who: "zero", mood: "smug", text: "零条新消息。很好，吾不需要羁绊。" },
+        { who: "narrator", text: "这是他今天第十四次确认这一点。" },
+      ],
+    },
+    {
+      id: "clock",
+      symbol: "a",
+      label: "闹钟",
+      lines: [
+        { who: "zero", mood: "smug", text: "时间……不过是凡人给自己套上的枷锁。" },
+        { who: "narrator", text: "闹钟设在早上七点。从来没有成功过。" },
+      ],
+    },
+    {
+      id: "box",
+      symbol: "X",
+      label: "纸箱",
+      lines: [
+        { who: "zero", mood: "sincere", text: "封印之匣。里面沉睡着吾的过去。" },
+        { who: "narrator", text: "小学的奖状，和一支竖笛。" },
+      ],
     },
     {
       id: "window",

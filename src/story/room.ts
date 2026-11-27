@@ -56,7 +56,8 @@ export function openRoom(
     left = Math.floor((VIEW.width - rows[0].length * cell) / 2);
   const symbolAt = (x: number, y: number) =>
     rows[Math.floor((y - top) / cell)]?.[Math.floor((x - left) / cell)] ?? "#";
-  const walkable = (x: number, y: number) => ".@".includes(symbolAt(x, y));
+  const open = `.@${scene.walkOver ?? ""}`;
+  const walkable = (x: number, y: number) => open.includes(symbolAt(x, y));
   const fits = (x: number, y: number) =>
     walkable(x - FEET.halfWidth, y) &&
     walkable(x + FEET.halfWidth, y) &&
@@ -114,9 +115,11 @@ export function openRoom(
     const [hx, hz] = HEADING[heading];
     // Sideways the feet are wider than they are deep, so the reach starts from their edge.
     const reach = REACH + (hx ? FEET.halfWidth : 0);
-    const ahead = hotspots.get(
-      symbolAt(zero.pos.x + hx * reach, zero.pos.y - FEET.height / 2 + hz * (reach + FEET.height / 2)),
-    );
+    // What is in front wins over the clutter underfoot.
+    const ahead =
+      hotspots.get(
+        symbolAt(zero.pos.x + hx * reach, zero.pos.y - FEET.height / 2 + hz * (reach + FEET.height / 2)),
+      ) ?? hotspots.get(symbolAt(zero.pos.x, zero.pos.y - FEET.height / 2));
     if (ahead !== facing) onFacing((facing = ahead));
   });
   return room;

@@ -55,9 +55,13 @@ export function mountStory(screen: HTMLElement, host: StoryHost, actId?: string)
     { zero: ZERO_PORTRAITS },
     { tick: () => host.typeTick(), move: () => host.menu("click"), accept: () => host.menu("accept") },
   );
+  /** How many times each cycling hotspot has been examined. */
+  const visits = new Map<string, number>();
+  const current = (hotspot: Hotspot) =>
+    hotspot.cycle ? hotspot.cycle[(visits.get(hotspot.id) ?? 0) % hotspot.cycle.length] : hotspot;
   const showPrompt = (hotspot: Hotspot | undefined) => {
     prompt.hidden = !hotspot || room.frozen;
-    if (hotspot) prompt.lastElementChild!.textContent = hotspot.label;
+    if (hotspot) prompt.lastElementChild!.textContent = current(hotspot).label;
   };
   const room = openRoom(find<HTMLCanvasElement>(".story-canvas"), scene, (hotspot) => showPrompt(hotspot));
   const flags: Record<string, number> = {};
@@ -86,7 +90,9 @@ export function mountStory(screen: HTMLElement, host: StoryHost, actId?: string)
     showPrompt(room.facing);
   };
   const examine = async (hotspot: Hotspot) => {
-    if (!(await talk(hotspot.lines))) return;
+    const { lines } = current(hotspot);
+    visits.set(hotspot.id, (visits.get(hotspot.id) ?? 0) + 1);
+    if (!(await talk(lines))) return;
     if (!hotspot.ends) return release();
     goal.hidden = true;
     stage.classList.add("booting");

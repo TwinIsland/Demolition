@@ -1,7 +1,7 @@
 import type { Mood } from "./assets";
 
 /** Who a line belongs to. `narrator` and `system` have no portrait; `door` is a voice from off screen. */
-export type Speaker = "zero" | "door" | "narrator" | "system";
+export type Speaker = "zero" | "door" | "narrator" | "system" | "aqua" | "cirno";
 
 /** One step of a conversation: a spoken line, or a choice between replies. */
 export type Line =
@@ -21,6 +21,11 @@ export interface Hotspot {
   /** Shown in the prompt while the player faces it. */
   label: string;
   lines: readonly Line[];
+  /**
+   * Several things in one place, such as the clutter on a desk: each visit examines the next
+   * one, in a loop, and `label` and `lines` above are not used.
+   */
+  cycle?: readonly { label: string; lines: readonly Line[] }[];
   /** Examining it ends the scene, once its lines are read. */
   ends?: boolean;
 }
@@ -37,6 +42,8 @@ export interface RoomScene {
   /** Pixels per layout cell. */
   cell: number;
   layout: readonly string[];
+  /** Symbols the player can walk across: clutter on the floor, examined while standing on or at it. */
+  walkOver?: string;
   /** A full-screen illustration with lines read over it, before the room appears. */
   opening?: { art: string; lines: readonly Line[] };
   /** Played in the room before the player may move. */
@@ -57,6 +64,8 @@ export const SPEAKER_NAMES: Record<Speaker, string> = {
   door: "门外",
   narrator: "",
   system: "系统",
+  aqua: "阿库娅",
+  cirno: "琪露诺",
 };
 
 /** Size of the 8-bit canvas. */
