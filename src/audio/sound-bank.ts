@@ -79,6 +79,9 @@ const CUES = {
   "pickup-confirm": sfx(0.34),
   "skill-cast": sfx(0.42),
   hurt: sfx(0.62, { pitchJitter: 0.04 }),
+  // The listener's own voice: on the interface bus so no blast or fire bed can bury it.
+  "hurt-voice-0": ui(0.7, { voices: 2, minInterval: 0.25, pitchJitter: 0.07 }),
+  "hurt-voice-1": ui(0.7, { voices: 2, minInterval: 0.25, pitchJitter: 0.07 }),
   "shield-block": sfx(0.62, { pitchJitter: 0.04 }),
   hit: sfx(0.6, { minInterval: 0.05, pitchJitter: 0.04 }),
   "zombie-death": sfx(0.5, { pitchJitter: 0.04 }),

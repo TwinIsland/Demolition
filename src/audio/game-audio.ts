@@ -423,7 +423,10 @@ export class GameAudio {
         return;
       }
       case "hurt":
-        return this.play(event.blocked ? "shield-block" : "hurt");
+        if (event.blocked) return this.play("shield-block");
+        // Any damage that gets through, whatever dealt it: the blow, and the operator's grunt.
+        this.play("hurt");
+        return this.play(`hurt-voice-${event.id % 2}`, { priority: true });
       case "hit": {
         const sound = event.item ? ITEMS[event.item]?.melee?.hitSound : undefined;
         return this.play(sound ?? "hit", { level: LEVEL.meleeHit, priority: true });
