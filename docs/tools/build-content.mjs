@@ -85,6 +85,13 @@ const notes = {
     "The caller takes full damage from it. A shield blocks it like any blast. Everyone hears the warning at launch, but only the caller sees the marker on the ground and on the radar from the start; everyone else sees it for the last 1.5 s.",
     "Bots fire at the opponent they have seen with the most others nearby, never within `radius` + 1.5 tiles of themselves, and move out of a marked area.",
   ],
+  "perks/hijack": [
+    "Active perk: stored until you trigger it, then consumed. Only one copy can be held.",
+    "Every planted charge and landed grenade of another operator within `radius` tiles of you changes owner at once. Fuses keep running; nothing is moved or defused.",
+    "From then on the charge is yours in every respect: kills, score and cover rewards go to you, its blast costs you only own-charge damage and hits its former owner in full, your [Remote Detonator](../skills/detonator.md) sets it off, and a [Blind Fuse](../skills/veil.md) trail is shown to you instead of them.",
+    "Hijacked charges do not count against your charge capacity. The button stays grey while no foreign charge is in reach, so the perk cannot be wasted.",
+    "Bots trigger it with two or more foreign charges in reach, or below 50% HP when standing in the path of one.",
+  ],
   "perks/short-fuse": ["Multiplies the fuse of charges you plant by `1 − rate × stacks` (base 2.65 s; two stacks: 1.86 s).", "Offered until you hold `maxStacks`."],
   "perks/last-stand": [
     "While at or below `threshold` × max HP: movement speed × `speed`, and charges planted in that state carry × `power` blast power.",
@@ -239,7 +246,7 @@ Each level-up offers three perks. The tier is rolled first (Silver 61, Gold 30, 
 
 | Perk | Tier | Share in tier | Limit | Requires | Effect |
 | --- | --- | --- | --- | --- | --- |
-${perks.map(c => `| ${link("perks", c)} | ${TIER[c.tier]} | ${Math.round(100 * c.weight / perks.filter(p => p.tier === c.tier).reduce((n, p) => n + p.weight, 0))}% | ${c.stats?.maxStacks ? `${c.stats.maxStacks} stacks` : c.stats?.cap ? `stat cap ${c.stats.cap}` : ["apocalypse", "dimension-collapse", "last-stand", "missile-strike", "piercing-charge"].includes(c.id) ? "1 held" : "–"} | ${c.requiresSkill ? `\`${c.requiresSkill}\` skill` : c.requiresActiveSkill ? "an active skill" : c.requiresTerrainReset ? "map with terrain reset" : "–"} | ${en(c, "description")} |`).join("\n")}
+${perks.map(c => `| ${link("perks", c)} | ${TIER[c.tier]} | ${Math.round(100 * c.weight / perks.filter(p => p.tier === c.tier).reduce((n, p) => n + p.weight, 0))}% | ${c.stats?.maxStacks ? `${c.stats.maxStacks} stacks` : c.stats?.cap ? `stat cap ${c.stats.cap}` : ["apocalypse", "dimension-collapse", "hijack", "last-stand", "missile-strike", "piercing-charge"].includes(c.id) ? "1 held" : "–"} | ${c.requiresSkill ? `\`${c.requiresSkill}\` skill` : c.requiresActiveSkill ? "an active skill" : c.requiresTerrainReset ? "map with terrain reset" : "–"} | ${en(c, "description")} |`).join("\n")}
 
 Perks per tier: ${TIER_ORDER.map(t => `${TIER[t]} ${tierCount[t]}`).join(", ")}.
 

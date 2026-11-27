@@ -179,7 +179,9 @@ export class KeyboardAgent implements PlayerAgent {
    * as soon as a slot frees up, so a press a moment before a blast is not swallowed.
    */
   private bufferedShot(self: Player, state: Readonly<GameSnapshot>, selected: string) {
-    const slotFree = () => state.bombs.filter((bomb) => bomb.ownerId === self.id).length < self.capacity;
+    const slotFree = () =>
+      state.bombs.filter((bomb) => bomb.ownerId === self.id && bomb.source !== "throwable" && !bomb.seized)
+        .length < self.capacity;
     const playing = self.alive && state.phase === "playing" && selected === "bomb";
     if (this.shot) {
       this.pendingPlace =

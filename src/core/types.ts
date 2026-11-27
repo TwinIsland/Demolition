@@ -135,6 +135,8 @@ export interface Bomb extends Vec2 {
   kind?: ItemId;
   /** Only the owner is shown where this charge will burn; bots have to guess. */
   concealed?: boolean;
+  /** Taken over from another operator: it does not count against the new owner's capacity. */
+  seized?: boolean;
   id: number;
   ownerId: string;
   range: number;

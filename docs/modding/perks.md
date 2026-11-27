@@ -36,6 +36,7 @@ export default definePerk(config, {
 | `requiresActiveSkill` | Only offered to owners of at least one active skill |
 | `requiresTerrainReset` | Only offered on maps with `randomizeTerrain` |
 | `requiresFreeView` | Not offered in modes that lock everyone in the top-down view (Classic) |
+| `useSound` | Audio asset played when an active perk is triggered. Default is the shared cast cue |
 | `targeted` | Active perk that needs a tile: the player picks it on the targeting tablet first. `stats.radius` and `stats.delay` are shown there |
 
 How tiers and weights turn into chances is in [Probabilities](../probabilities.md#perk-offers). Adding a perk to a tier dilutes the others in that tier and does not change the tier's own chance.
@@ -71,5 +72,6 @@ A perk with `use` is stored and triggered later by the player. It then appears i
 | `context.forceArenaView(duration, warningSeconds)` | Locks every operator in overhead view. Returns `false` while another forced view is running |
 | `context.target` | The tile picked for a `targeted` perk |
 | `context.callStrike(target, { delay, radius, power })` | Calls a missile onto `target`. After `delay` seconds every open or cover tile within `radius` burns at `power`; walls give no shelter. Returns `false` outside the arena |
+| `context.seizeBombs(radius)` | Every other operator's live charge within `radius` tiles becomes the player's. Returns how many changed hands |
 
-See [Cataclysm](../content/perks/apocalypse.md), [Dimensional Collapse](../content/perks/dimension-collapse.md) and [Missile Strike](../content/perks/missile-strike.md).
+See [Hijack](../content/perks/hijack.md), [Cataclysm](../content/perks/apocalypse.md), [Dimensional Collapse](../content/perks/dimension-collapse.md) and [Missile Strike](../content/perks/missile-strike.md).

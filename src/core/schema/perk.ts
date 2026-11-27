@@ -18,6 +18,8 @@ export const PerkConfigSchema = v.object({
   requiresFreeView: v.optional(flag),
   /** The player picks a cell on the targeting panel before the perk is spent. */
   targeted: v.optional(flag),
+  /** Audio asset played when the perk is triggered, instead of the shared cast cue. */
+  useSound: v.optional(text),
 });
 
 const hookEntries = {

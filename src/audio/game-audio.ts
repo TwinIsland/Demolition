@@ -1,5 +1,5 @@
 import { bombWarning, finalCountdown } from "../core/bomb-warning";
-import { ITEMS, SKILLS, TIERS, isEquipment, perkById } from "../core/content";
+import { ITEMS, PERKS, SKILLS, TIERS, isEquipment, perkById } from "../core/content";
 import type { GameEvent, GameSnapshot, Player, Vec2 } from "../core/types";
 import { SUMMON_TIME } from "../core/zombies";
 import { AudioEngine } from "./audio-engine";
@@ -417,7 +417,7 @@ export class GameAudio {
       case "skill":
         return this.play(SKILLS[event.skill]?.sound || "skill-cast", { level: LEVEL.skill });
       case "perk-use":
-        return this.play("skill-cast", { level: 0.46, priority: true });
+        return this.play(perkById(event.perk)?.useSound ?? "skill-cast", { level: 0.46, priority: true });
       case "perk": {
         const perk = perkById(event.perk);
         if (perk) this.play(perk.sound ?? TIERS[perk.tier].sound, { level: LEVEL.perk, priority: true });
@@ -566,5 +566,6 @@ function contentCues() {
     if (skill.sound) refs.add(skill.sound);
     if (skill.endSound) refs.add(skill.endSound);
   }
+  for (const perk of PERKS) if (perk.useSound) refs.add(perk.useSound);
   return refs;
 }

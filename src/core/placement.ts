@@ -70,7 +70,9 @@ export function canPlace(
   // press would chain another explosion for as long as the fire lasts.
   if (equipment === "bomb" && s.blasts.some((b) => b.x === x && b.z === z)) return false;
   if (equipment === "bomb")
-    return s.bombs.filter((b) => b.ownerId === p.id && b.source !== "throwable").length < p.capacity;
+    return (
+      s.bombs.filter((b) => b.ownerId === p.id && b.source !== "throwable" && !b.seized).length < p.capacity
+    );
   // Low throws travel through each intervening cell.
   let cx = Math.round(p.x),
     cz = Math.round(p.z),

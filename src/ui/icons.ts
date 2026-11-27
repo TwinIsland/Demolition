@@ -45,6 +45,8 @@ const ICON_PATHS: Record<string, string> = {
   veil: '<rect x="7" y="10" width="10" height="9" rx="1"/><path d="M12 10V7q0-3 3-3M3 5l18 16"/><path d="M2 14h2m16 0h2M12 21v2M5 8 4 7" stroke-dasharray="2 2.5"/>',
   cloak:
     '<circle cx="12" cy="6" r="3" stroke-dasharray="2.4 2"/><path d="M6 21c0-3 1-4 0-6s1-5 6-5 7 3 6 5 0 3 0 6" stroke-dasharray="3 2.2"/><path d="M2 12c2-2 3 2 5 0m10 0c2-2 3 2 5 0"/>',
+  hijack:
+    '<circle cx="10" cy="15" r="6"/><path d="m14 10 2-2m1-4v3h3M20 4l-4 4"/><path d="M7.5 15h5m-2-2 2 2-2 2"/>',
   missile:
     '<path d="M14 3c4 0 7 3 7 7l-9 9-7-7z"/><path d="m8 9-5 1 3 3m9 3-1 5-3-3M3 21l4-4m-2 0-2-2m6 4-2-2"/><circle cx="15.5" cy="8.5" r="1.5"/>',
 };

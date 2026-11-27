@@ -41,6 +41,25 @@ export function placeBomb(
   emit(ctx, p, "放置炸药", { type: "bomb" });
 }
 
+/**
+ * Hands every other operator's live charge within `radius` cells of `p` to `p`: credit, self-damage
+ * and blast-path visibility all follow the new owner. Returns how many charges changed hands.
+ */
+export function seizeBombs(ctx: SimContext, p: Player, radius: number) {
+  const s = ctx.state;
+  if (!p.alive || s.phase !== "playing" || !Number.isFinite(radius) || radius <= 0) return 0;
+  let seized = 0;
+  for (const bomb of s.bombs) {
+    if (bomb.ownerId === p.id || Math.hypot(bomb.x - p.x, bomb.z - p.z) > radius) continue;
+    bomb.ownerId = p.id;
+    bomb.seized = true;
+    // A fresh id makes every client rebuild the charge in its new owner's colours.
+    bomb.id = ctx.nextId();
+    seized++;
+  }
+  return seized;
+}
+
 /** Moves a bomb one cell. A sliding bomb that is stopped, or that enters fire, goes off. */
 export function slideBomb(ctx: SimContext, bomb: Bomb, dx: number, dz: number, kickerId?: string) {
   const s = ctx.state,

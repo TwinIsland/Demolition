@@ -103,7 +103,11 @@ export class EquipmentWheel implements HudView {
     this.root.setAttribute("aria-label", t("按住 {0}，移动鼠标，松开装备", bindings.label("gearWheel")));
   }
   update({ snapshot, viewer: self }: HudFrame) {
-    const free = Math.max(0, self.capacity - snapshot.bombs.filter((b) => b.ownerId === self.id).length);
+    const free = Math.max(
+      0,
+      self.capacity -
+        snapshot.bombs.filter((b) => b.ownerId === self.id && b.source !== "throwable" && !b.seized).length,
+    );
     for (const [id, { slot, count }] of this.slots) {
       const active = id === self.equipped;
       const value =

@@ -56,6 +56,8 @@ export interface EffectContext {
   target?: Vec2;
   /** Calls a missile onto a cell of the arena. False when the cell is outside it. */
   callStrike?(target: Vec2, options: StrikeOptions): boolean;
+  /** Hands every other operator's live charge within `radius` cells to the player. Returns how many changed hands. */
+  seizeBombs?(radius: number): number;
 }
 
 /** Skills and perks receive these hooks while owned. Time and dt use simulation seconds. */
