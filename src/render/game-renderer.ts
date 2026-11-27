@@ -12,13 +12,14 @@ import { NightVision } from "./night-vision";
 import { UpgradeEffects } from "./upgrade-effects";
 import { GroundFire } from "./ground-fire";
 import { OfferFire } from "./offer-fire";
-import type { Appearance } from "../core/room";
+import { BOMB_STYLES, type Appearance } from "../core/room";
 import type { MapDefinition } from "../core/pack-api";
 import * as THREE from "three";
 import { BombLights } from "./bomb-lights";
 import { PerformancePanel } from "./performance-panel";
 import { readGraphics, type GraphicsSettings } from "./graphics-settings";
 import { DangerOverlays } from "./danger-overlays";
+import { BombAuras } from "./bomb-auras";
 import { ZoneWalls } from "./zone-walls";
 import { aimCell, canLob, canPlace } from "../core/placement";
 import { throwPoint } from "../core/throw-path";
@@ -120,6 +121,7 @@ export class GameRenderer {
   private bombs = new Map<number, THREE.Group>();
   private items = new Map<number, THREE.Group>();
   private blastEffect = new BlastEffect(this.assets.manager);
+  private bombAuras = new BombAuras();
   private dynamic = new THREE.Group();
   private hand: MinecraftAvatar;
   private flights = new Map<number, THREE.Group>();
@@ -168,7 +170,14 @@ export class GameRenderer {
     this.bombLights = new BombLights(this.scene);
     this.environment = new OutdoorLighting(this.renderer, this.scene, this.assets.manager);
     this.weather = new SceneEnvironment(this.renderer, this.scene, this.environment);
-    this.scene.add(this.dynamic, this.rig.camera, this.target, this.throwGuide.root, this.blastEffect.root);
+    this.scene.add(
+      this.dynamic,
+      this.rig.camera,
+      this.target,
+      this.throwGuide.root,
+      this.blastEffect.root,
+      this.bombAuras.root,
+    );
     this.scene.add(
       this.placements.root,
       this.shields.root,
@@ -589,6 +598,8 @@ export class GameRenderer {
     }
   }
   private syncBombs({ state, localId }: FrameView) {
+    const auras = this.bombAuras;
+    auras.begin(state.time);
     syncEntities(
       this.dynamic,
       state.bombs,
@@ -597,7 +608,9 @@ export class GameRenderer {
         // A landed grenade stays a grenade for its short fuse.
         if (bomb.kind) return this.models.item(bomb.kind, false);
         const owner = state.players.find((p) => p.id === bomb.ownerId)!;
-        return this.models.explosive(owner.color, bomb.power ?? 70, owner.bombStyle);
+        const mesh = this.models.explosive(owner.color, bomb.power ?? 70, owner.bombStyle);
+        mesh.userData.aura = BOMB_STYLES[owner.bombStyle ?? ""]?.aura;
+        return mesh;
       },
       (mesh, bomb) => {
         const slide = bomb.slide;
@@ -631,8 +644,10 @@ export class GameRenderer {
           mesh.position.y = 0.18 * settle * settle;
           mesh.rotation.z = -0.09 * settle;
         } else mesh.rotation.z = 0;
+        if (mesh.userData.aura) auras.add(mesh.position, bomb.id, mesh.userData.aura);
       },
     );
+    auras.commit();
   }
   private syncThrown(state: Readonly<GameSnapshot>) {
     syncEntities(
@@ -888,6 +903,7 @@ export class GameRenderer {
     this.target.material.dispose();
     this.models.dispose();
     this.overlays.dispose();
+    this.bombAuras.dispose();
     this.zoneWalls.dispose();
     if (this.standIns) disposeStandIns(this.standIns);
     this.warmTarget.dispose();

@@ -183,9 +183,9 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
         author: "Google Gemini",
       },
       {
-        title: "Equipment models",
-        use: ["装备模型", "Art directed by TwinIsland"],
-        author: "Meshy AI",
+        title: "Equipment, bomb and knife 3D models",
+        use: ["装备、炸药与小刀 3D 模型", "Art directed by TwinIsland"],
+        author: "Meshy 7.5",
       },
     ],
   },

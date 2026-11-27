@@ -215,4 +215,4 @@ Maps, skins, bomb finishes, skills, items, perks and mutations are all self-cont
 
 ## Credits
 
-Game design by [TwinIsland](https://tianyihuang.com). Third-party assets and their licenses are listed in [CREDITS.md](public/assets/CREDITS.md).
+Game design by [TwinIsland](https://tianyihuang.com). Third-party assets and their licenses are listed in [CREDITS.md](public/assets/CREDITS.md). The equipment, bomb and knife 3D models were generated with Meshy 7.5; icons and key art were generated with Google Gemini and OpenAI ImageGen.

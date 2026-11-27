@@ -1,3 +1,4 @@
+import { DEFAULT_KNIFE, KNIFE_STYLES } from "../core/knife-styles";
 import { ZONE } from "../core/zone";
 import {
   BOMB_STYLES,
@@ -33,10 +34,12 @@ const appearance = new Setting<Partial<Appearance>>({
   codec: jsonCodec((raw) => {
     if (!isRecord(raw)) return undefined;
     const saved: Partial<Appearance> = {};
-    const { skin, bombStyle } = raw;
+    const { skin, bombStyle, knifeStyle } = raw;
     if (typeof skin === "string" && (Object.hasOwn(SKIN_PRESETS, skin) || skin === "custom"))
       saved.skin = skin;
     if (typeof bombStyle === "string" && Object.hasOwn(BOMB_STYLES, bombStyle)) saved.bombStyle = bombStyle;
+    if (typeof knifeStyle === "string" && Object.hasOwn(KNIFE_STYLES, knifeStyle))
+      saved.knifeStyle = knifeStyle;
     return saved;
   }),
 });
@@ -58,6 +61,7 @@ export function loadAppearance(): Appearance {
   return {
     skin: readCustomSkin().imported ? "custom" : DEFAULT_SKIN.id,
     bombStyle: DEFAULT_FINISH.id,
+    knifeStyle: DEFAULT_KNIFE.id,
     ...appearance.load(),
   };
 }

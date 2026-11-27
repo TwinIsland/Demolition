@@ -97,6 +97,7 @@ export interface Player extends Vec2 {
   difficulty?: Difficulty;
   skin?: Appearance["skin"];
   bombStyle?: Appearance["bombStyle"];
+  knifeStyle?: Appearance["knifeStyle"];
   yaw: number;
   hp: number;
   maxHp: number;

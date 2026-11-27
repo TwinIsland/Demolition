@@ -27,6 +27,7 @@ export class LobbyPreview {
   private camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.05, 12);
   private avatar = new MinecraftAvatar();
   private style?: Appearance["bombStyle"];
+  private knife?: Appearance["knifeStyle"];
   private viewport = new THREE.Vector4();
   private scissor = new THREE.Vector4();
   private yaw = Math.PI - 0.34;
@@ -134,9 +135,14 @@ export class LobbyPreview {
     );
   }
   async dress(look: Appearance) {
+    // The hand shows whichever was changed last; on the first call that is the charge.
+    if (this.knife !== look.knifeStyle) {
+      this.knife = look.knifeStyle;
+      this.avatar.hold(this.models.item("knife", false, this.knife), "melee");
+    }
     if (this.style !== look.bombStyle) {
       this.style = look.bombStyle;
-      this.avatar.hold(this.models.explosive("#f07066", 70, this.style), "bomb");
+      this.avatar.hold(this.models.explosive("#f07066", 70, this.style, undefined, true), "bomb");
     }
     const ticket = ++this.skinTicket;
     const skin = await this.models.localSkin(look.skin);

@@ -1,7 +1,15 @@
 import { version } from "../../package.json";
 import { MAPS, generateMap, seededRandom } from "../core/maps";
 import { DEFAULT_MODE, MATCH_MODES, type MatchMode } from "../core/match-modes";
-import { BOMB_STYLES, DEFAULT_FINISH, DEFAULT_SKIN, SKINS, type Appearance } from "../core/room";
+import {
+  BOMB_STYLES,
+  DEFAULT_FINISH,
+  DEFAULT_KNIFE_STYLE,
+  DEFAULT_SKIN,
+  SKINS,
+  type Appearance,
+} from "../core/room";
+import { KNIFE_RARITIES, KNIFE_STYLES } from "../core/knife-styles";
 import { field, t } from "../i18n";
 import type { SkinModel } from "../render/minecraft-skins";
 import type { UIActions } from "./actions";
@@ -74,6 +82,13 @@ const lobbyMarkup = () => `
               <div class="menu-grid three">${Object.keys(BOMB_STYLES)
                 .map((id) => tile("finish", id))
                 .join("")}</div>
+              <div class="menu-caption">小刀皮肤</div>
+              <div class="menu-grid three">${Object.values(KNIFE_STYLES)
+                .map(
+                  (knife) =>
+                    `<button type="button" class="menu-row menu-tile menu-choice knife-tile" data-knife="${knife.id}" data-rarity="${knife.rarity}" style="--rarity:${KNIFE_RARITIES[knife.rarity].color}" aria-pressed="false"><span class="row-label"></span><small class="tile-tag"></small></button>`,
+                )
+                .join("")}</div>
             </nav>
           </div>
         </section>
@@ -106,7 +121,11 @@ export class LobbyView {
   private view: View = "home";
   private mode: MatchMode = DEFAULT_MODE;
   private mapId = MAPS[0].id;
-  private look: Appearance = { skin: DEFAULT_SKIN.id, bombStyle: DEFAULT_FINISH.id };
+  private look: Appearance = {
+    skin: DEFAULT_SKIN.id,
+    bombStyle: DEFAULT_FINISH.id,
+    knifeStyle: DEFAULT_KNIFE_STYLE,
+  };
   private armModel: SkinModel = "auto";
   /** Row under the pointer or focus in a sub-menu; the detail card shows it before it is chosen. */
   private hovered?: string;
@@ -257,7 +276,7 @@ export class LobbyView {
   private onClick(target: HTMLElement) {
     const button = target.closest<HTMLButtonElement>("button");
     if (!button || button.disabled) return;
-    const { open, skin, finish, arm, mode, map } = button.dataset;
+    const { open, skin, finish, knife, arm, mode, map } = button.dataset;
     if (open) this.show(open as View);
     else if ("back" in button.dataset) this.show("home");
     // GameUI routes the choice itself; picking one closes the sub-menu.
@@ -270,6 +289,10 @@ export class LobbyView {
     } else if (finish) {
       this.look.bombStyle = finish;
       this.actions.changeOutfit({ bombStyle: finish });
+      this.render();
+    } else if (knife) {
+      this.look.knifeStyle = knife;
+      this.actions.changeOutfit({ knifeStyle: knife });
       this.render();
     } else if (arm) {
       this.armModel = arm as SkinModel;
@@ -339,6 +362,11 @@ export class LobbyView {
       label(row, this.skinName(row.dataset.skin!), row.dataset.skin === this.look.skin);
     for (const row of this.root.querySelectorAll<HTMLElement>("[data-finish]"))
       label(row, field(BOMB_STYLES[row.dataset.finish!], "name"), row.dataset.finish === this.look.bombStyle);
+    for (const row of this.root.querySelectorAll<HTMLElement>("[data-knife]")) {
+      const knife = KNIFE_STYLES[row.dataset.knife!];
+      label(row, field(knife, "name"), knife.id === this.look.knifeStyle);
+      query(row, ".tile-tag").textContent = t(KNIFE_RARITIES[knife.rarity].name);
+    }
     for (const row of this.root.querySelectorAll<HTMLElement>("[data-arm]"))
       label(row, t(ARM_MODELS.find(([id]) => id === row.dataset.arm)![1]), row.dataset.arm === this.armModel);
     this.armSetting.hidden = this.look.skin !== "custom";

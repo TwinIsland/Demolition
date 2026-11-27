@@ -9,14 +9,17 @@ import { MinecraftSkins, type SkinModel } from "./minecraft-skins";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import type { ItemId, Player } from "../core/types";
 import { ITEMS } from "../core/content";
+import { KNIFE_STYLES } from "../core/knife-styles";
 import { MaterialLibrary } from "./materials";
 import { BombFinishes } from "./bomb-finishes";
 import { CoverModels, type SceneryId } from "./cover-models";
-import type { MapDefinition } from "../core/pack-api";
+import type { BombFinish, MapDefinition } from "../core/pack-api";
 import type { Obstacle } from "../core/obstacles";
 import { TILE_SIZE } from "../core/geometry";
 import { crownGeometry, palmFronds, palmTrunk, ruinWall, trunkGeometry } from "./jungle-flora";
 
+/** Longest side of a modelled bomb finish, matching the height of the standard charge. */
+const CHARGE_LENGTH = 1.25;
 /** Height of the ceiling of a tiled hall above the deck. */
 export const POOL_CEILING = 5.7;
 /** Height of the suspended ceiling of an office floor. Its walls reach it. */
@@ -57,6 +60,8 @@ export class Models {
       this.finishes.get("Wrap", BOMB_STYLES[p.bombStyle ?? "standard"] ?? DEFAULT_FINISH, 0, p.color);
     await Promise.all([
       this.chargeAsset,
+      ...players.map((p) => this.finishModel(BOMB_STYLES[p.bombStyle ?? ""])),
+      ...players.map((p) => this.pickupAsset("knife", p.knifeStyle)),
       this.covers.ready,
       ...players.map((p) => this.skins.get(p.id, p.skin)),
       // Zombie skins and crate emblems appear mid-match, so they load up front as well.
@@ -69,7 +74,11 @@ export class Models {
   async preloadCatalog() {
     for (const finish of Object.values(BOMB_STYLES))
       for (const tier of [0, 1, 2]) this.finishes.get("Wrap", finish, tier, "#ffffff");
-    await Promise.all(Object.keys(SKINS).map((id) => this.skins.get("", id)));
+    await Promise.all([
+      ...Object.keys(SKINS).map((id) => this.skins.get("", id)),
+      ...Object.values(BOMB_STYLES).map((finish) => this.finishModel(finish)),
+      ...Object.keys(KNIFE_STYLES).map((id) => this.pickupAsset("knife", id)),
+    ]);
   }
   private hand?: MinecraftAvatar;
   equipAvatar(avatar: MinecraftAvatar, p: Player, signalColor: string) {
@@ -77,6 +86,7 @@ export class Models {
       avatar.userData.equipped === p.equipped &&
       avatar.userData.power === p.attack &&
       avatar.userData.finish === p.bombStyle &&
+      avatar.userData.knife === p.knifeStyle &&
       avatar.userData.signalColor === signalColor
     )
       return;
@@ -84,11 +94,12 @@ export class Models {
       equipped: p.equipped,
       power: p.attack,
       finish: p.bombStyle,
+      knife: p.knifeStyle,
       signalColor,
     });
     if (p.equipped === "bomb")
-      avatar.hold(this.explosive(p.color, p.attack, p.bombStyle, signalColor), "bomb");
-    else avatar.hold(this.item(p.equipped, false), ITEMS[p.equipped]?.melee ? "melee" : "item");
+      avatar.hold(this.explosive(p.color, p.attack, p.bombStyle, signalColor, true), "bomb");
+    else avatar.hold(this.item(p.equipped, false, p.knifeStyle), ITEMS[p.equipped]?.melee ? "melee" : "item");
   }
   swingAmount(player: Player, time: number) {
     const melee = ITEMS[player.equipped]?.melee;
@@ -569,10 +580,34 @@ export class Models {
     power = 70,
     style: BombStyle = "standard",
     signalColor: string = OWN_BOMB_COLOR,
+    /** In a hand rather than on the floor: a modelled finish is stood on end to fit the grip. */
+    held = false,
   ) {
     const tier = powerTier(power);
     const group = new THREE.Group();
     const finish = BOMB_STYLES[style] ?? DEFAULT_FINISH;
+    const lamp = this.sphere(0.037, this.materials.glow(signalColor));
+    lamp.position.set(0.324, 1.167, 0);
+    lamp.name = "warning-lamp";
+    group.add(lamp);
+    group.scale.setScalar(1 + tier * 0.07);
+    const custom = this.finishModel(finish);
+    if (custom) {
+      lamp.visible = !held;
+      custom
+        .then((asset) => {
+          const model = asset.clone();
+          const { length, height } = asset.userData as { length: number; height: number };
+          if (held) {
+            model.rotation.z = Math.PI / 2;
+            model.position.y = length / 2;
+          }
+          lamp.position.set(0, height + 0.05, 0);
+          group.add(model);
+        })
+        .catch((error) => console.error("Cannot load bomb finish model", error));
+      return group;
+    }
     this.chargeAsset
       .then((gltf) => {
         const model = gltf.scene.clone(true);
@@ -586,15 +621,41 @@ export class Models {
         group.add(model);
       })
       .catch((error) => console.error("Cannot load explosive model", error));
-    const lamp = this.sphere(0.037, this.materials.glow(signalColor));
-    lamp.position.set(0.324, 1.167, 0);
-    lamp.name = "warning-lamp";
-    group.add(lamp);
-    group.scale.setScalar(1 + tier * 0.07);
     return group;
   }
-  private pickupAssets = new Map<ItemId, Promise<THREE.Group>>();
-  item(kind: ItemId, ground = true) {
+  private finishModels = new Map<string, Promise<THREE.Group>>();
+  /** The GLB of a modelled bomb finish, scaled to the standard charge's length and resting on the floor. */
+  private finishModel(finish: BombFinish | undefined) {
+    if (!finish?.model) return undefined;
+    let asset = this.finishModels.get(finish.id);
+    if (!asset) {
+      asset = new GLTFLoader(this.manager).loadAsync(finish.model).then(({ scene }) => {
+        const bounds = new THREE.Box3().setFromObject(scene);
+        const size = bounds.getSize(new THREE.Vector3());
+        const center = bounds.getCenter(new THREE.Vector3());
+        const scale = CHARGE_LENGTH / Math.max(size.x, size.y, size.z);
+        const holder = new THREE.Group();
+        holder.add(scene);
+        holder.scale.setScalar(scale);
+        holder.position.set(-center.x * scale, -bounds.min.y * scale, -center.z * scale);
+        scene.traverse((o) => {
+          if (!(o instanceof THREE.Mesh)) return;
+          o.castShadow = true;
+          o.receiveShadow = true;
+        });
+        // One more level, so that a clone can be turned without losing the centring above.
+        const root = new THREE.Group();
+        root.add(holder);
+        root.userData = { length: size.x * scale, height: size.y * scale };
+        return root;
+      });
+      this.finishModels.set(finish.id, asset);
+    }
+    return asset;
+  }
+  private pickupAssets = new Map<string, Promise<THREE.Group>>();
+  /** `style` picks a cosmetic model for a melee weapon; other items ignore it. */
+  item(kind: ItemId, ground = true, style?: string) {
     const g = new THREE.Group();
     const base = this.ring(0.55, this.materials.glow(ITEMS[kind].color), 0.025);
     base.rotation.x = -Math.PI / 2;
@@ -610,16 +671,18 @@ export class Models {
       halo.position.y = 0.1;
       g.add(halo);
     }
-    void this.pickupAsset(kind)
+    void this.pickupAsset(kind, style)
       .then((model) => g.add(model.clone()))
       .catch(console.error);
     return g;
   }
-  private pickupAsset(kind: ItemId) {
-    let asset = this.pickupAssets.get(kind);
+  private pickupAsset(kind: ItemId, style?: string) {
+    const cosmetic = ITEMS[kind]?.melee ? KNIFE_STYLES[style ?? ""] : undefined;
+    const key = cosmetic?.model ? `${kind}:${cosmetic.id}` : kind;
+    let asset = this.pickupAssets.get(key);
     if (!asset) {
       asset = new GLTFLoader(this.manager)
-        .loadAsync(ITEMS[kind].model ?? "./assets/pickups/capacity.glb")
+        .loadAsync(cosmetic?.model ?? ITEMS[kind].model ?? "./assets/pickups/capacity.glb")
         .then(({ scene }) => {
           const bounds = new THREE.Box3().setFromObject(scene);
           const size = bounds.getSize(new THREE.Vector3());
@@ -637,16 +700,22 @@ export class Models {
             if (!(o instanceof THREE.Mesh)) return;
             o.castShadow = true;
             o.receiveShadow = true;
+            // The lit parts of the texture glow: the map doubles as the emissive mask.
+            if (cosmetic?.glow && o.material instanceof THREE.MeshStandardMaterial) {
+              o.material.emissive.set(cosmetic.glow);
+              o.material.emissiveMap = o.material.map;
+              o.material.emissiveIntensity = 0.55;
+            }
           });
           return holder;
         });
-      this.pickupAssets.set(kind, asset);
+      this.pickupAssets.set(key, asset);
     }
     return asset;
   }
   dispose() {
     this.clearAnimations();
-    for (const asset of this.pickupAssets.values())
+    for (const asset of [...this.pickupAssets.values(), ...this.finishModels.values()])
       void asset
         .then((root) => {
           const materials = new Set<THREE.Material>();
@@ -665,6 +734,7 @@ export class Models {
         })
         .catch(() => {});
     this.pickupAssets.clear();
+    this.finishModels.clear();
     this.hand?.dispose();
     this.skins.dispose();
     this.geometries.forEach((g) => g.dispose());
