@@ -37,6 +37,12 @@ export const SHUTDOWN_SCRIPT = {
       { x: 10, z: 9 },
       { x: 12, z: 9 },
     ],
+    /** The "stay" ending: where the next player comes down, and the two who wait in front of the gate. */
+    newcomer: { x: 10, z: 8 },
+    guides: [
+      { x: 9.55, z: 6.2 },
+      { x: 10.5, z: 6.35 },
+    ],
     /** Where they start the fight: three corners, the hero keeps the middle. */
     corners: [
       { x: 18, z: 1 },
