@@ -49,10 +49,25 @@ const LEVEL = {
   landing: 0.7,
 } as const;
 /** How far, in cells, the actions of other operators and of zombies carry. */
-const EARSHOT = { action: 7, kick: 8, fall: 10, zombie: 8, groan: 6 } as const;
-/** Seconds between idle groans from the zombies around the listener, shortest to longest. */
-const GROAN_GAP = [3.5, 8] as const;
+/**
+ * Linear, like the game the zombie voices come from: full level beside the listener, silent at
+ * the range. Zombies carry furthest because hearing them coming is the point.
+ */
+const EARSHOT = { action: 7, kick: 8, fall: 10, zombie: 9, groan: 12, zombieStep: 9, step: 9 } as const;
+/** Seconds between one zombie's idle groans, shortest to longest; the first comes sooner. */
+const GROAN_GAP = [3, 7.5] as const;
+/** Cells a zombie shuffles between footfalls. */
+const ZOMBIE_STRIDE = 0.75;
 const GROANS = 3;
+const ZOMBIE_STEPS = 3;
+
+/** What the audio remembers of one zombie between snapshots. */
+interface ZombieTrace extends Vec2 {
+  travel: number;
+  step: number;
+  nextGroan: number;
+  struck?: number;
+}
 
 interface Stride extends Vec2 {
   travel: number;
@@ -82,9 +97,8 @@ export class GameAudio {
     sliding: new Set<number>(),
     airborne: new Set<string>(),
     fallen: new Set<string>(),
-    zombies: new Map<number, number | undefined>(),
+    zombies: new Map<number, ZombieTrace>(),
     ringsClosed: 0,
-    nextGroan: 0,
   };
 
   constructor() {
@@ -309,7 +323,7 @@ export class GameAudio {
       const step = `${map ? STEP_FAMILY[groundAt(map, p.x, p.z)] : "footstep"}-${stride.index}`;
       stride.index = (stride.index + 1) % 3;
       if (p.id === self.id) this.play(step);
-      else this.play(step, { gain: 0.62 * falloff(distanceTo(self, p), 6), pan: panTo(self, p) });
+      else this.play(step, { gain: 0.8 * falloff(distanceTo(self, p), EARSHOT.step), pan: panTo(self, p) });
     }
   }
 
@@ -504,32 +518,49 @@ export class GameAudio {
     }
     seen.ringsClosed = closed;
 
-    const zombies = new Map<number, number | undefined>();
-    let nearest: Vec2 | undefined,
-      nearestDistance: number = EARSHOT.groan;
+    const zombies = new Map<number, ZombieTrace>();
     for (const zombie of state.zombies) {
       const distance = distanceTo(self, zombie),
-        struck = zombie.attack?.at;
-      zombies.set(zombie.id, struck);
-      if (!audible || distance >= EARSHOT.zombie) continue;
-      if (!seen.zombies.has(zombie.id)) {
-        if (zombie.spawnAt !== undefined && state.time < zombie.spawnAt + SUMMON_TIME)
-          this.play("zombie-spawn", placed(zombie, EARSHOT.zombie));
-      } else if (struck !== undefined && struck !== seen.zombies.get(zombie.id))
+        struck = zombie.attack?.at,
+        known = seen.zombies.get(zombie.id),
+        risen = zombie.spawnAt === undefined || state.time >= zombie.spawnAt + SUMMON_TIME;
+      const trace: ZombieTrace = known ?? {
+        x: zombie.x,
+        z: zombie.z,
+        travel: 0,
+        step: zombie.id % ZOMBIE_STEPS,
+        nextGroan: state.time + 0.5 + Math.random() * GROAN_GAP[0],
+      };
+      zombies.set(zombie.id, trace);
+      // Every zombie keeps its own stride and its own voice, heard from where it stands.
+      trace.travel += Math.hypot(zombie.x - trace.x, zombie.z - trace.z);
+      trace.x = zombie.x;
+      trace.z = zombie.z;
+      const footfall = trace.travel >= ZOMBIE_STRIDE,
+        groans = risen && state.time >= trace.nextGroan,
+        attacked = struck !== undefined && struck !== trace.struck;
+      if (footfall) trace.travel %= ZOMBIE_STRIDE;
+      if (groans) trace.nextGroan = state.time + GROAN_GAP[0] + Math.random() * (GROAN_GAP[1] - GROAN_GAP[0]);
+      trace.struck = struck;
+      if (!audible) continue;
+      if (!known && !risen && distance < EARSHOT.zombie)
+        this.play("zombie-spawn", placed(zombie, EARSHOT.zombie));
+      if (known && attacked && distance < EARSHOT.zombie)
         this.play(`zombie-attack-${zombie.id % 2}`, placed(zombie, EARSHOT.zombie));
-      const risen = zombie.spawnAt === undefined || state.time >= zombie.spawnAt + SUMMON_TIME;
-      if (risen && distance < nearestDistance) {
-        nearest = zombie;
-        nearestDistance = distance;
+      if (footfall && risen && distance < EARSHOT.zombieStep) {
+        this.play(`zombie-step-${trace.step}`, {
+          gain: falloff(distance, EARSHOT.zombieStep),
+          pan: panTo(self, zombie),
+        });
+        trace.step = (trace.step + 1) % ZOMBIE_STEPS;
       }
+      if (groans && distance < EARSHOT.groan)
+        this.play(`zombie-groan-${Math.floor(Math.random() * GROANS)}`, {
+          gain: falloff(distance, EARSHOT.groan),
+          pan: panTo(self, zombie),
+        });
     }
     seen.zombies = zombies;
-    // One zombie at a time gives itself away, so a horde reads as a presence, not a chorus.
-    if (state.time < seen.nextGroan - GROAN_GAP[1]) seen.nextGroan = 0;
-    if (audible && nearest && state.time >= seen.nextGroan) {
-      this.play(`zombie-groan-${Math.floor(Math.random() * GROANS)}`, placed(nearest, EARSHOT.groan + 2));
-      seen.nextGroan = state.time + GROAN_GAP[0] + Math.random() * (GROAN_GAP[1] - GROAN_GAP[0]);
-    }
     seen.primed = true;
   }
 

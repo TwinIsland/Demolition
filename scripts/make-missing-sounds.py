@@ -1,5 +1,5 @@
 """Builds the cues for events that used to be silent: skills ending, glass breaking, kicks,
-cover breaking, operators going down, the zone wall, and zombies rising, groaning and striking.
+cover breaking, operators going down, the zone wall, and zombies rising and striking.
 
 Usage: python3 make-missing-sounds.py <repo root> <open-game-sfx-index/audio> (needs numpy and ffmpeg).
 The second argument is a checkout of https://github.com/Mcamento8/open-game-sfx-index (CC0 mirror of
@@ -245,6 +245,3 @@ for n, (voice, swish) in enumerate((("zombie-24.wav", "swish_4.wav"), ("zombie-1
     place(a, load(BATTLE + swish, 0.85), 0.0, 0.5)
     place(a, load(ZOMBIE + voice, 0.9), 0.04, 1.0)
     write(f"public/assets/zombie-attack-{n}.ogg", a, 0.85, 0.05)
-
-for n, voice in enumerate(("zombie-17.wav", "zombie-20.wav", "zombie-3.wav")):
-    write(f"public/assets/zombie-groan-{n}.ogg", load(ZOMBIE + voice, 0.9), 0.8, 0.06)
