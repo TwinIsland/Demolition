@@ -547,7 +547,8 @@ export class GameApp {
     // A zero-length advance settles the trade without moving match time.
     this.session.advance(0);
     const viewer = this.viewer();
-    this.sound.shop(viewer.credits === before ? "deny" : "buy");
+    if (viewer.credits === before) this.sound.shop("deny");
+    else this.sound.skillTrade(refund);
     this.ui.showShop(viewer);
   }
 

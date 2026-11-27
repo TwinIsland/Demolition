@@ -49,6 +49,8 @@ const CUES = {
   "shop-close": ui(0.5, { voices: 1 }),
   "shop-buy": ui(0.46),
   "shop-deny": ui(0.4, { minInterval: 0.2 }),
+  "skill-pick": ui(0.5),
+  "skill-unpick": ui(0.5),
   "match-victory": ui(0.6, { voices: 1, minInterval: 1 }),
   "match-eliminated": ui(0.62, { voices: 1, minInterval: 1 }),
   "type-tick": ui(0.2, { voices: 3, minInterval: 0.03, pitchJitter: 0.05 }),

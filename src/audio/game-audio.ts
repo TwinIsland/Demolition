@@ -226,6 +226,11 @@ export class GameAudio {
     this.play(`shop-${cue}`, { priority: true });
   }
 
+  /** Skill shop: a skill taken into the loadout, or handed back. */
+  skillTrade(refund: boolean) {
+    this.play(refund ? "skill-unpick" : "skill-pick", { priority: true });
+  }
+
   levelUp() {
     this.play("level-up", { priority: true });
   }
