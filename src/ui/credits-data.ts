@@ -182,6 +182,11 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
         use: ["装备、技能、增益与基因图标", "Art directed by TwinIsland"],
         author: "Google Gemini",
       },
+      {
+        title: "Equipment models",
+        use: ["装备模型", "Art directed by TwinIsland"],
+        author: "Meshy AI",
+      },
     ],
   },
 ];
