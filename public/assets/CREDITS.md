@@ -102,6 +102,7 @@ Equipment and reward cues use Kenney recordings distributed under CC0. The downl
 | level-up, pickup-confirm, gear-pickup, crate-build, bomb-place | Minecraft: Java Edition recordings, Mojang Studios: `random/levelup`, `random/pop` (both pickup cues), `dig/wood1`, `random/fuse`. Original Ogg files from the same asset index. They replace the Kenney and synthesised cues that earlier rows and `scripts/make-build-sound.py` describe for these names. |
 | `src/modules/perks/hijack/use.ogg` | Minecraft: Java Edition beacon recording (`block/beacon/power1`), Mojang Studios. Original Ogg file from the same asset index. Played when the Hijack perk is triggered. |
 | zombie-groan-0, zombie-groan-1, zombie-groan-2, zombie-step-0, zombie-step-1, zombie-step-2 | Minecraft: Java Edition zombie recordings, Mojang Studios: `mob/zombie/say1`–`say3` and `mob/zombie/step1`, `step3`, `step4`. Original Ogg files from the same asset index. |
+| footstep-mud-0, footstep-mud-1, footstep-mud-2 | Minecraft: Java Edition mud step recordings (`block/mud/step3`–`step5`), Mojang Studios. Original Ogg files from the same asset index. They replace the Kenney-based mud steps described under the Rainforest map. |
 | blast-ringing | Short excerpt with a fade from [Tinnitus by Joseph SARDIN, BigSoundBank](https://bigsoundbank.com/tinnitus-s1388.html), CC0. |
 | Knife contact with wood, metal, and sandbags | Kenney’s CC0 impactWood_medium_002, impactMetal_light_001, and impactSoft_heavy_001. [Impact Sounds](https://kenney.nl/assets/impact-sounds) |
 
