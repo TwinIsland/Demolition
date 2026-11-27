@@ -91,7 +91,32 @@ export function explode(ctx: SimContext, bomb: Bomb, origin: Vec2 = bomb) {
 /** Lays down blast cells, opens cover, then sets off every bomb the blast reaches. */
 function detonate(ctx: SimContext, bomb: Bomb, source: NonNullable<Blast["source"]> = bomb.source ?? "bomb") {
   // Capture the original blockers before modifying crates for this explosion.
-  ignite(ctx, bomb, blastCells(ctx.state, bomb), source, "blast", "炸药爆开");
+  ignite(ctx, bomb, blastCells(withOpenedCover(ctx), bomb), source, "blast", "炸药爆开");
+}
+
+/** Cover opened earlier in this tick, valid for the current simulation time only. */
+function openedCover(ctx: SimContext) {
+  const time = ctx.state.time;
+  if (ctx.openedCover?.time !== time) ctx.openedCover = { time, cells: new Set() };
+  return ctx.openedCover.cells;
+}
+
+/**
+ * The arena as blasts of this tick see it: cover that an explosion has just opened still stands.
+ * Without this, the first charge of a chain would clear a crate and the next one, set off in the
+ * same instant, would burn straight through the gap.
+ */
+function withOpenedCover(ctx: SimContext): Pick<SimContext["state"], "tiles" | "size"> {
+  const s = ctx.state,
+    opened = openedCover(ctx);
+  if (!opened.size) return s;
+  const tiles = s.tiles.map((row) => [...row]);
+  for (const cell of opened) {
+    const x = cell % s.size,
+      z = Math.floor(cell / s.size);
+    if (tiles[z][x] === 0) tiles[z][x] = 2;
+  }
+  return { size: s.size, tiles };
 }
 
 /** One explosion over an arbitrary footprint: fire, opened cover, and the charges it sets off. */
@@ -124,6 +149,7 @@ export function ignite(
     });
     s.items = s.items.filter((i) => i.x !== cell.x || i.z !== cell.z);
     if (s.tiles[cell.z][cell.x] === 2) {
+      openedCover(ctx).add(cell.z * s.size + cell.x);
       coverScore += destroyCover(ctx, owner, cell.x, cell.z);
       if (owner.alive) destroyed++;
     }

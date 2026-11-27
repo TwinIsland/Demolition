@@ -33,4 +33,9 @@ export interface SimContext {
   readonly regen: Map<string, { hp: number; from: number; owed: number }>;
   /** Simulation time of the next field supply drop. */
   nextSupplyAt: number;
+  /**
+   * Cover cells opened by explosions during the tick at `time`. Charges set off later in the same
+   * tick still treat them as standing cover, so one crate shields against a whole chain reaction.
+   */
+  openedCover?: { time: number; cells: Set<number> };
 }

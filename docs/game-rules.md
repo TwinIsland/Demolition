@@ -92,7 +92,7 @@ Source: `core/economy.ts`, `core/systems/building.ts`, the [Field Crate](content
 - Right-click to build a crate on the tile you aim at, without changing equipment or buying an item first. It is aimed like a planted charge and reaches as far (the placement radius, 2 tiles by default). A crate stands at once, with no build time. In the top-down view it goes on the tile ahead.
 - You carry a stock of crates set by your level: 3 at level 1 and one more per level, up to 8. Building spends one, and every level-up refills the stock to that level's full number. The HUD shows the stock to the right of the coins.
 - There is no limit on how many crates you can have standing at once; each site must still be clear.
-- A built crate blocks movement and blasts like any cover and has the same durability. It gives no score, but drops loot with the same chance as any other cover. It shows the builder's emblem.
+- A built crate blocks movement and blasts like any cover and has the same durability. Cover opened by an explosion keeps blocking every other charge set off in the same instant, so one crate shields against a whole chain reaction. It gives no score, but drops loot with the same chance as any other cover. It shows the builder's emblem.
 
 ## Supply shop
 
