@@ -1,4 +1,5 @@
 import { maps } from "#game-catalog";
+import { DIRECTIONS } from "./directions";
 import { indexPacks, type MapDefinition } from "./pack-api";
 import type { Tile, Vec2 } from "./types";
 
@@ -127,9 +128,4 @@ function connectedAround(tiles: Tile[][], x: number, z: number, exits: Vec2[]) {
   return !targets.size;
 }
 export const cellKey = (x: number, z: number) => `${Math.round(x)},${Math.round(z)}`;
-export const DIRECTIONS = [
-  { x: 1, z: 0 },
-  { x: -1, z: 0 },
-  { x: 0, z: 1 },
-  { x: 0, z: -1 },
-];
+export { DIRECTIONS };

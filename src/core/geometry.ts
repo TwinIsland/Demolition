@@ -1,5 +1,5 @@
 import type { Bomb, GameSnapshot, Vec2 } from "./types";
-import { DIRECTIONS } from "./maps";
+import { DIRECTIONS } from "./directions";
 export const TILE_SIZE = 2.4;
 export const SLIDE_STEP = 0.12;
 /** Slide Kick tuning, in cells and simulation seconds. Shared by the simulation and bot planning. */
