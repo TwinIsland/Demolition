@@ -80,6 +80,8 @@ export const EN_MESSAGES: Readonly<Record<string, string>> = {
   制作中: "In the works",
   已完成: "Completed",
   进行中: "In progress",
+  未开始: "Not started",
+  单人剧情: "Single player",
   当前章节: "Current chapter",
   上次游玩: "Last played",
   完成度: "Progress",

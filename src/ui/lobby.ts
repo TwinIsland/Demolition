@@ -17,13 +17,13 @@ import { creditsLabel } from "./credits";
 import { query } from "./dom";
 import { icon } from "./icons";
 import { rise, rowsIn, rowsOut, settle, slideIn, wipe } from "./lobby-motion";
-import { STORY_TITLE, StoryMenu, storyChrome, storyPanels } from "./lobby-story";
+import { StoryMenu, storyChrome, storyPanels } from "./lobby-story";
 
 /**
  * The menu shows one panel at a time. Each top-level tab has a root panel (`home` for versus,
  * `story` for the story) and the other panels are sub-menus of one of the two.
  */
-type View = "home" | "mode" | "map" | "outfit" | "story" | "chapters";
+type View = "home" | "mode" | "map" | "outfit" | "story";
 type SubView = Exclude<View, "home" | "story">;
 type Tab = "versus" | "story";
 
@@ -31,7 +31,7 @@ const TABS: Record<Tab, { label: string; root: View }> = {
   versus: { label: "对战", root: "home" },
   story: { label: "故事模式", root: "story" },
 };
-const tabOf = (view: View): Tab => (view === "story" || view === "chapters" ? "story" : "versus");
+const tabOf = (view: View): Tab => (view === "story" ? "story" : "versus");
 const isRoot = (view: View) => TABS[tabOf(view)].root === view;
 
 const MODE_IDS = Object.keys(MATCH_MODES) as MatchMode[];
@@ -39,7 +39,6 @@ const VIEW_TITLES: Record<SubView, string> = {
   mode: "对局模式",
   map: "作战区域",
   outfit: "干员外观",
-  chapters: "章节选择",
 };
 const MODE_NOTES: Record<MatchMode, string> = {
   freeForAll: "标准规则。第一人称放置炸药，最后存活的干员获胜。",
@@ -291,9 +290,9 @@ export class LobbyView {
     );
   }
 
-  /** The card on the right of the open tab. */
+  /** The block that accompanies the list of the open tab: the detail card, or the chapter strip. */
   private card() {
-    return tabOf(this.view) === "story" ? query(this.root, ".story-save") : this.detail;
+    return tabOf(this.view) === "story" ? query(this.root, ".story-chapters") : this.detail;
   }
 
   private show(view: View) {
@@ -360,16 +359,14 @@ export class LobbyView {
   }
 
   private onHover(target: HTMLElement) {
-    const row = target.closest<HTMLElement>("[data-mode], [data-map], [data-chapter]");
-    if (row && !row.matches(":disabled"))
-      this.setHovered(row.dataset.mode ?? row.dataset.map ?? row.dataset.chapter);
+    const row = target.closest<HTMLElement>("[data-mode], [data-map]");
+    if (row && !row.matches(":disabled")) this.setHovered(row.dataset.mode ?? row.dataset.map);
   }
 
   private setHovered(id: string | undefined) {
     if (id === this.hovered) return;
     this.hovered = id;
     this.renderDetail();
-    this.story.render(this.view === "chapters" ? id : undefined);
   }
 
   /** Up and Down walk the buttons of the open panel, like a console menu. */
@@ -396,17 +393,17 @@ export class LobbyView {
     const tab = tabOf(this.view);
     const map = MAPS.find((entry) => entry.id === this.mapId) ?? MAPS[0];
     this.backButton.hidden = isRoot(this.view);
-    this.kicker.textContent = t(this.view === "home" ? "当前模式" : tab === "story" ? "故事模式" : "主菜单");
+    this.kicker.textContent = t(this.view === "home" ? "当前模式" : tab === "story" ? "单人剧情" : "主菜单");
     this.title.textContent = t(
       this.view === "home"
         ? MATCH_MODES[this.mode].name
         : this.view === "story"
-          ? STORY_TITLE
+          ? "故事模式"
           : VIEW_TITLES[this.view],
     );
     for (const button of this.root.querySelectorAll<HTMLElement>("[data-tab]"))
       button.setAttribute("aria-pressed", String(button.dataset.tab === tab));
-    this.story.render(this.view === "chapters" ? this.hovered : undefined);
+    this.story.render();
     query(this.root, '[data-value="mode"]').textContent = t(MATCH_MODES[this.mode].name);
     query(this.root, '[data-value="map"]').textContent = field(map, "name");
     query(this.root, '[data-value="outfit"]').textContent = this.skinName(this.look.skin);

@@ -67,7 +67,7 @@
   --focus-ring: 2px solid #c9a8f5;
 }
 #lobby[data-tab="story"] :is(.menu-detail, .hint-versus),
-#lobby[data-tab="versus"] :is(.story-save, .hint-story) {
+#lobby[data-tab="versus"] :is(.story-chapters, .hint-story) {
   display: none;
 }
 /* The avatar keeps its box, which the renderer measures. */
@@ -102,9 +102,15 @@
 }
 .story-art {
   inset: -3% !important;
-  /* The image is set inline from STORY_ART. */
+  /* The image is set from ACT_COVERS in ui/lobby-story.ts. */
   background: 50% 40% / cover;
   animation: story-drift 26s ease-in-out infinite alternate;
+  opacity: 0;
+  transition: opacity 0.9s ease-in-out;
+}
+/* Two layers take turns, so a new chapter's panel fades in over the old one. */
+.story-art.current {
+  opacity: 1;
 }
 @keyframes story-drift {
   from {
@@ -116,8 +122,8 @@
 }
 .story-tone {
   background:
-    linear-gradient(90deg, #0a0712f5, #0b0814c7 26%, #0b081433 48%, #0b081426 60%, #0a0712d9 86%, #0a0712f2),
-    linear-gradient(0deg, #08060ee6, transparent 30%, transparent 78%, #08060ecc);
+    linear-gradient(90deg, #0a0712f2, #0b0814b3 28%, #0b08141f 50%, #0b08140d 72%, #0a071266),
+    linear-gradient(0deg, #08060ef2 8%, #08060ea6 34%, transparent 56%, transparent 80%, #08060ecc);
 }
 /* Screentone dots fading in from the left, like the panel's own shading. */
 .story-lines {
@@ -219,90 +225,189 @@
   display: none;
 }
 
-/* ---------- Chapter list ---------- */
-.row-index {
+/* ---------- Save line under the heading ---------- */
+.story-status {
   flex: none;
-  width: calc(var(--u) * 38);
-  font: 700 calc(var(--u) * 24) / 1 var(--font-hud);
-  letter-spacing: 0.06em;
+  display: flex;
+  gap: calc(var(--u) * 34);
+  margin: calc(var(--u) * -8) 0 calc(var(--u) * 20);
+}
+.story-status dt {
+  font: 500 max(10px, calc(var(--u) * 14)) / 1.3 var(--font-ui);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--gold-300);
 }
-.chapter-row .row-label {
-  flex: none;
-  max-width: 60%;
-}
-.chapter-row > .icon,
-.chapter-row:disabled .row-arrow {
-  display: none;
-}
-.chapter-row[data-state="locked"] > .icon {
-  display: block;
-}
-.chapter-row[data-state="current"]:not(:disabled) .row-value {
-  color: var(--gold-200);
+.story-status dd {
+  margin: calc(var(--u) * 4) 0 0;
+  white-space: nowrap;
+  font: 700 max(12px, calc(var(--u) * 21)) / 1.2 var(--font-ui);
+  color: var(--text-strong);
 }
 
-/* ---------- Save card ---------- */
-.story-save {
+/* ---------- Chapter strip: one manga panel per act ---------- */
+.story-chapters {
   position: absolute;
+  left: var(--menu-edge);
   right: var(--menu-edge);
-  bottom: calc(var(--u) * 112);
-  width: calc(var(--u) * 480);
+  bottom: calc(var(--u) * 108);
   display: grid;
-  gap: calc(var(--u) * 10);
-  padding: calc(var(--u) * 24) calc(var(--u) * 24) calc(var(--u) * 22);
-  border: 1px solid var(--line);
-  border-top: calc(var(--u) * 3) solid var(--gold-400);
-  background: linear-gradient(180deg, #150f1ef2, #0c0913f7);
-  box-shadow: 0 calc(var(--u) * 18) calc(var(--u) * 50) #000b;
+  gap: calc(var(--u) * 14);
   pointer-events: auto;
 }
-.save-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+.story-chapters .menu-caption {
+  margin: 0;
 }
-.save-act {
-  font: 800 calc(var(--u) * 44) / 0.8 var(--font-hud);
-  letter-spacing: 0.04em;
-  color: transparent;
-  -webkit-text-stroke: 1px #c9a8f58c;
+.story-chapters .menu-caption::after {
+  order: 1;
 }
-.story-save .detail-text {
-  min-height: 3em;
+.chapters-count {
+  order: 2;
+  color: var(--text-muted);
 }
-.save-track {
+.chapter-strip {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
-  gap: calc(var(--u) * 6);
-  margin: calc(var(--u) * 6) 0 0;
+  gap: calc(var(--u) * 14);
+  /* The slanted panels lean out of their cells by this much. */
+  padding: 0 calc(var(--u) * 16);
+}
+.chapter-panel {
+  position: relative;
+  height: calc(var(--u) * 236);
   padding: 0;
-  list-style: none;
+  overflow: hidden;
+  border: calc(var(--u) * 3) solid #efe6ffd9;
+  background: #100b18;
+  color: var(--text-strong);
+  text-align: left;
+  transform: skewX(-7deg);
+  box-shadow: calc(var(--u) * 8) calc(var(--u) * 8) 0 #000000a6;
+  transition:
+    translate var(--duration-moderate) var(--ease-emphasized),
+    border-color var(--duration-base),
+    box-shadow var(--duration-base);
 }
-.save-track li {
+/* Everything inside leans back, so only the frame is slanted. */
+.chapter-panel > * {
+  transform: skewX(7deg);
+}
+.chapter-art {
+  position: absolute;
+  inset: 0 -12%;
+  background:
+    radial-gradient(circle, #b98cff3d 0 calc(var(--u) * 1.6), transparent calc(var(--u) * 2)) 0 0 /
+      calc(var(--u) * 9) calc(var(--u) * 9),
+    linear-gradient(160deg, #3a2260, #150d22);
+  transition: scale 0.6s var(--ease-emphasized);
+}
+.chapter-art[style*="url"] {
+  background-position: 50% 22%;
+  background-size: cover;
+}
+.chapter-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, #0b0812f7 18%, #0b0812a6 52%, #0b081233);
+}
+.chapter-body {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
   display: grid;
-  gap: calc(var(--u) * 7);
-  font: 600 max(10px, calc(var(--u) * 14)) / 1 var(--font-hud);
-  letter-spacing: 0.1em;
-  color: var(--text-faint);
+  grid-template: auto 1fr auto auto / 1fr auto;
+  align-items: start;
+  gap: calc(var(--u) * 6) calc(var(--u) * 10);
+  padding: calc(var(--u) * 14) calc(var(--u) * 30) calc(var(--u) * 16) calc(var(--u) * 34);
 }
-.save-track i {
-  height: calc(var(--u) * 6);
-  background: #ffffff1c;
+.chapter-number {
+  font: 800 calc(var(--u) * 54) / 0.85 var(--font-hud);
+  letter-spacing: 0.02em;
+  color: transparent;
+  -webkit-text-stroke: calc(var(--u) * 1.5) #e3ccffd9;
 }
-.save-track [data-state="done"] i {
-  background: var(--gold-400);
+.chapter-state {
+  justify-self: end;
+  padding: calc(var(--u) * 5) calc(var(--u) * 10);
+  background: #0b0812cc;
+  font: 600 max(10px, calc(var(--u) * 14)) / 1 var(--font-ui);
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
 }
-.save-track [data-state="current"] i {
-  background: linear-gradient(90deg, var(--gold-400) 50%, #ffffff1c 50%);
-  box-shadow: 0 0 calc(var(--u) * 12) #a35bf0b3;
+.chapter-name {
+  grid-area: 3 / 1 / auto / -1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: calc(var(--u) * 30);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
 }
-.save-track .shown {
+.chapter-note {
+  grid-area: 4 / 1 / auto / -1;
+  display: -webkit-box;
+  min-height: 2.9em;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font: 400 max(11px, calc(var(--u) * 15)) / 1.45 var(--font-ui);
+  color: var(--text-muted);
+}
+.chapter-panel > .icon {
+  display: none;
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  margin: auto;
+  width: calc(var(--u) * 34);
+  height: calc(var(--u) * 34);
+  color: #b7a4d68c;
+}
+.chapter-panel:not(:disabled):is(:hover, :focus-visible) {
+  translate: 0 calc(var(--u) * -10);
+  border-color: #fff;
+  box-shadow:
+    calc(var(--u) * 8) calc(var(--u) * 12) 0 #000000a6,
+    0 0 calc(var(--u) * 34) #a35bf0b3;
+}
+.chapter-panel:not(:disabled):is(:hover, :focus-visible) .chapter-art {
+  scale: 1.06;
+}
+.chapter-panel:focus-visible {
+  outline-offset: calc(var(--u) * 4);
+}
+.chapter-panel[data-state="done"] .chapter-state {
   color: var(--gold-200);
 }
-.story-save .detail-stats {
-  grid-template-columns: 1.5fr 1.2fr 0.8fr;
+/* The act "continue" leads to. */
+.chapter-panel.next {
+  border-color: var(--gold-400);
+  box-shadow:
+    calc(var(--u) * 8) calc(var(--u) * 8) 0 #000000a6,
+    0 0 calc(var(--u) * 26) #a35bf099;
+}
+.chapter-panel.next .chapter-state {
+  background: var(--gold-400);
+  color: #fff;
+}
+.chapter-panel.next .chapter-number {
+  -webkit-text-stroke-color: var(--gold-300);
+}
+.chapter-panel[data-state="locked"] {
+  border-color: #b7a4d647;
+  box-shadow: none;
+}
+.chapter-panel[data-state="locked"] > .icon {
+  display: block;
+}
+.chapter-panel[data-state="locked"] .chapter-art {
+  opacity: 0.35;
+}
+.chapter-panel[data-state="locked"] :is(.chapter-number, .chapter-name) {
+  opacity: 0.45;
 }
 
 /* ---------- Overwrite dialog ---------- */
