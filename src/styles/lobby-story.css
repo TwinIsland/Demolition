@@ -522,3 +522,46 @@
 .story-exit :focus-visible {
   outline-color: #c9a8f5;
 }
+
+/* ---------- Earned by finishing the story: locked maps, bomb finishes and knives ---------- */
+:is(.menu-tile, [data-map]) > .icon {
+  display: none;
+  flex: none;
+  width: calc(var(--u) * 16);
+  height: calc(var(--u) * 16);
+}
+.menu-tile > .icon {
+  margin-left: auto;
+}
+.menu-row.locked {
+  color: var(--text-faint);
+  filter: grayscale(1);
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.menu-row.locked > .icon {
+  display: block;
+}
+.menu-row.locked > .row-check {
+  display: none;
+}
+/* A locked row does not answer the pointer like a choice would. */
+.menu-row.locked:is(:hover, :focus-visible)::before {
+  transform: scaleY(0.24);
+  opacity: 0.45;
+}
+.menu-row.locked:is(:hover, :focus-visible)::after {
+  transform: scaleX(0);
+}
+.menu-row.locked:is(:hover, :focus-visible) .row-label {
+  translate: none;
+}
+.unlock-hint {
+  flex: none;
+  font-size: var(--menu-small);
+  letter-spacing: 0.06em;
+  color: var(--gold-200);
+}
+.unlock-hint:empty {
+  display: none;
+}

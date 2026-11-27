@@ -15,8 +15,8 @@ export default defineMap(
     name: "平面国",
     subtitle: "21 × 21 · 新手村",
     order: 9,
-    // Reached from the story; it has no cover art for the room's map list yet.
-    hidden: true,
+    // Listed in the room's map list, where it stays locked until the story is finished
+    // (story/unlocks.ts).
     size: SIZE,
     // Every cell comes from the plan: nothing is scattered.
     density: 0,

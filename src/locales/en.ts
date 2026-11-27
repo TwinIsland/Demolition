@@ -90,6 +90,7 @@ export const EN_MESSAGES: Readonly<Record<string, string>> = {
   "当前进度（{0}，{1}）将被清除，无法恢复。": "Your progress ({0}, {1}) will be erased for good.",
   覆盖并开始: "Overwrite and start",
   再点一次进入: "Click again to enter",
+  完成故事模式后解锁: "Finish the story to unlock",
   "退出到主菜单？": "Quit to the main menu?",
   "进度保存在上一个存档点，下次会从那里继续。":
     "Progress is kept at the last save point, and you will resume from there.",
