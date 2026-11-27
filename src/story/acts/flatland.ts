@@ -1,6 +1,6 @@
 import { BotAgent } from "../../agents/bot-agent";
 import type { GameSnapshot, Vec2 } from "../../core/types";
-import { SPOTS } from "../../modules/maps/flatland/layout.js";
+import { SPOTS } from "../../modules/maps/flatland-story/layout.js";
 import { playIntroCard } from "../cutscenes/intro-card";
 import { playLanding } from "../cutscenes/landing";
 import { playRelicDrop } from "../cutscenes/relic-drop";
@@ -132,14 +132,14 @@ const GOALS = {
 };
 
 /** Where the duel is staged: the dojo yard, with the guide watching from the street. */
-const DUEL = { hero: { x: 13, z: 5 }, guide: { x: 11, z: 5 }, opponent: SPOTS.dojo.opponent };
+const DUEL = SPOTS.dojo;
 /** Out of sight until she makes her entrance. */
-const OFFSTAGE: Vec2 = { x: 19, z: 19 };
+const OFFSTAGE: Vec2 = { x: 13, z: 13 };
 const RESPAWN_SECONDS = 1.2;
+const CRATE_GOAL = 3;
 /** Less than his own blast costs him, until the duel. */
 const FRAGILE_HP = 10;
 const DUEL_HP = 100;
-const open = (state: Readonly<GameSnapshot>, cell: Vec2) => state.tiles[cell.z][cell.x] === 0;
 
 async function script(d: Director) {
   const { stage, match } = d;
@@ -215,12 +215,15 @@ async function script(d: Director) {
   if (!(await d.until((state) => state.blasts.length > 0))) return;
   if (!(await d.until((state) => state.blasts.length === 0 && state.players[0].alive))) return;
   if (!(await say(LINES.wallHolds))) return;
-  const crates = SPOTS.firstCrates;
-  const opened = (state: Readonly<GameSnapshot>) => crates.filter((cell) => open(state, cell)).length;
+  // Any three will do: he is free to pick his own.
+  const standing = (state: Readonly<GameSnapshot>) =>
+    state.tiles.reduce((sum, row) => sum + row.filter((tile) => tile === 2).length, 0);
+  const before = standing(d.state);
+  const opened = (state: Readonly<GameSnapshot>) => Math.min(CRATE_GOAL, before - standing(state));
   if (
     !(await d.until((state) => {
-      stage.goal(`${GOALS.crates} ${opened(state)}/${crates.length}`);
-      return opened(state) === crates.length && state.blasts.length === 0;
+      stage.goal(`${GOALS.crates} ${opened(state)}/${CRATE_GOAL}`);
+      return opened(state) === CRATE_GOAL && state.blasts.length === 0;
     }))
   )
     return;
@@ -327,7 +330,7 @@ export const FLATLAND: StagedScene = {
     playStagedMatch(
       stage,
       {
-        mapId: "flatland",
+        mapId: "flatland-story",
         skin: "story-zero",
         setup: {
           spawn: SPOTS.arrival,
