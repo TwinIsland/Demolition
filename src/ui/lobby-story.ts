@@ -6,10 +6,7 @@ import { query } from "./dom";
 import { icon } from "./icons";
 import { rise } from "./lobby-motion";
 
-/** Title of the story, shown as the tab's heading. */
-export const STORY_TITLE = "升维";
-
-/** One line per act for the card. Spoiler-free: it shows as soon as the act unlocks. */
+/** One line per act for its panel. Spoiler-free: it shows as soon as the act unlocks. */
 const ACT_NOTES: Record<string, string> = {
   act1: "紧闭的窗帘，三桶泡面，以及一台被封印在床底的魔导器。",
   act2: "桌面上唯一的图标。咏唱需要十一秒，引信只有三秒。",
@@ -31,7 +28,6 @@ const coverOf = (act: Act) => {
   }
   return STORY_ART.comic1;
 };
-const EMPTY_NOTE = "世界平静得令人作呕。至少有一个人是这么认为的。";
 
 const number = (index: number) => String(index + 1).padStart(2, "0");
 /** Act titles hold the ordinal and the name, separated by an ideographic space (U+3000). */
@@ -41,27 +37,27 @@ const fullName = (act: Act) => `${ordinal(act)} · ${name(act)}`;
 
 type ActState = "done" | "current" | "locked";
 
-/** The story tab's two panels, for the lobby's panel stack. */
+/** The story tab's panel, for the lobby's panel stack. */
 export const storyPanels = () => `
             <nav class="menu-panel" data-panel="story" aria-label="故事模式" hidden>
+              <dl class="story-status"></dl>
               <button type="button" class="story-play" data-story="continue">${icon("play")}<span class="play-text"><span class="play-label">继续</span><small class="play-note"></small></span><kbd>ENTER</kbd></button>
               <button type="button" class="menu-row" data-story="new"><span class="row-label">新游戏</span><span class="row-value" data-value="new"></span><i class="row-arrow"></i></button>
-              <button type="button" class="menu-row" data-open="chapters"><span class="row-label">章节选择</span><span class="row-value" data-value="chapters"></span><i class="row-arrow"></i></button>
-            </nav>
-            <nav class="menu-panel" data-panel="chapters" aria-label="章节选择" hidden>
-              ${ACTS.map((chapter, index) => `<button type="button" class="menu-row chapter-row" data-chapter="${chapter.id}"><span class="row-index">${number(index)}</span><span class="row-label"></span><span class="row-value"></span>${icon("lock")}<i class="row-arrow"></i></button>`).join("")}
             </nav>`;
 
-/** Everything of the story tab outside the list: backdrop, save card and the overwrite dialog. */
+const chapterPanel = (act: Act, index: number) =>
+  `<button type="button" class="chapter-panel" data-chapter="${act.id}"><i class="chapter-art"></i><span class="chapter-body"><span class="chapter-number">${number(index)}</span><span class="chapter-state"></span><strong class="chapter-name"></strong><small class="chapter-note"></small></span>${icon("lock")}</button>`;
+
+/**
+ * Everything of the story tab outside the list: the backdrop, the strip of chapter panels along
+ * the bottom (a page of manga, one panel per act) and the overwrite dialog.
+ */
 export const storyChrome = () => `
         <div class="story-backdrop" aria-hidden="true"><i class="story-art"></i><i class="story-art"></i><i class="story-tone"></i><i class="story-lines"></i></div>
-        <aside class="story-save">
-          <header class="save-head"><small class="detail-kicker"></small><span class="save-act"></span></header>
-          <h2 class="detail-title"></h2>
-          <p class="detail-text"></p>
-          <ol class="save-track" aria-hidden="true">${ACTS.map((_, index) => `<li><i></i><span>${number(index)}</span></li>`).join("")}</ol>
-          <dl class="detail-stats"></dl>
-        </aside>
+        <section class="story-chapters" aria-label="章节选择">
+          <header class="menu-caption"><span>章节选择</span><span class="chapters-count"></span></header>
+          <div class="chapter-strip">${ACTS.map(chapterPanel).join("")}</div>
+        </section>
         <div class="story-confirm" role="alertdialog" aria-modal="true" aria-labelledby="story-confirm-title" hidden>
           <div class="confirm-box">
             <small class="detail-kicker">新游戏</small>
@@ -80,10 +76,10 @@ export const storyChrome = () => `
  */
 export class StoryMenu {
   private save: StorySave = loadStory();
-  private readonly card: HTMLElement;
+  private readonly strip: HTMLElement;
   private readonly dialog: HTMLElement;
-  /** What the card last showed, so it only animates when its subject changes. */
-  private cardKey = "";
+  /** Chapter panel under the pointer or focus; the backdrop previews its art. */
+  private hovered?: string;
   /** Image the backdrop shows now; its two layers take turns so a change crossfades. */
   private cover = "";
 
@@ -91,8 +87,33 @@ export class StoryMenu {
     private readonly root: HTMLElement,
     private readonly start: (act: string) => void,
   ) {
-    this.card = query(root, ".story-save");
+    this.strip = query(root, ".chapter-strip");
     this.dialog = query(root, ".story-confirm");
+    const hover = (id: string | undefined) => {
+      if (id === this.hovered) return;
+      this.hovered = id;
+      this.renderCover();
+    };
+    const over = (event: Event) => {
+      const panel = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-chapter]");
+      if (panel && !panel.disabled) hover(panel.dataset.chapter);
+    };
+    this.strip.addEventListener("pointerover", over);
+    this.strip.addEventListener("focusin", over);
+    this.strip.addEventListener("pointerleave", () => hover(undefined));
+    this.strip.addEventListener("focusout", () => hover(undefined));
+    this.strip.addEventListener("keydown", (event) => this.onKeyDown(event));
+  }
+
+  /** Left and Right walk the chapter panels. */
+  private onKeyDown(event: KeyboardEvent) {
+    if (event.code !== "ArrowLeft" && event.code !== "ArrowRight") return;
+    const panels = [...this.strip.querySelectorAll<HTMLButtonElement>("button:not(:disabled)")];
+    const index = panels.indexOf(document.activeElement as HTMLButtonElement);
+    if (index < 0) return;
+    event.preventDefault();
+    const step = event.code === "ArrowRight" ? 1 : -1;
+    panels[(index + step + panels.length) % panels.length].focus();
   }
 
   /** Re-reads the save. Call after the story has run. */
@@ -128,8 +149,8 @@ export class StoryMenu {
     return true;
   }
 
-  /** Writes every label of the tab. `hovered` is the act row under the pointer, if any. */
-  render(hovered: string | undefined) {
+  /** Writes every label of the tab. */
+  render() {
     const next = nextAct(this.save);
     const play = query<HTMLButtonElement>(this.root, '[data-story="continue"]');
     play.disabled = !this.resumable();
@@ -141,28 +162,59 @@ export class StoryMenu {
           ? fullName(next)
           : t("{0}制作中，敬请期待", ordinal(next));
     query(this.root, '[data-value="new"]').textContent = t(this.started ? "覆盖现有存档" : "从第一幕开始");
-    query(this.root, '[data-value="chapters"]').textContent = t(
+    query(this.root, ".chapters-count").textContent = t(
       "已解锁 {0} / {1}",
       ACTS.filter((act) => actUnlocked(act, this.save)).length,
       ACTS.length,
     );
 
+    const stats: [string, string][] = [
+      [t("当前章节"), !this.started ? t("尚无存档") : next ? fullName(next) : t("已通关")],
+      [t("上次游玩"), this.lastPlayed()],
+      [t("完成度"), `${this.completion()}%`],
+    ];
+    query(this.root, ".story-status").replaceChildren(
+      ...stats.map(([label, value]) => {
+        const item = document.createElement("div");
+        const term = document.createElement("dt");
+        const data = document.createElement("dd");
+        term.textContent = label;
+        data.textContent = value;
+        item.append(term, data);
+        return item;
+      }),
+    );
+
     for (const act of ACTS) {
-      const row = query<HTMLButtonElement>(this.root, `[data-chapter="${act.id}"]`);
+      const panel = query<HTMLButtonElement>(this.strip, `[data-chapter="${act.id}"]`);
       const state = this.state(act);
-      row.disabled = state === "locked" || !act.scene;
-      row.dataset.state = state;
-      query(row, ".row-label").textContent = state === "locked" ? "？？？" : name(act);
-      query(row, ".row-value").textContent = t(
-        state === "locked" ? "未解锁" : !act.scene ? "制作中" : state === "done" ? "已完成" : "进行中",
+      const locked = state === "locked";
+      panel.disabled = locked || !act.scene;
+      panel.dataset.state = state;
+      panel.classList.toggle("next", act === next && this.started);
+      const art = locked ? undefined : ACT_COVERS[act.id];
+      query<HTMLElement>(panel, ".chapter-art").style.backgroundImage = art ? `url("${art}")` : "";
+      query(panel, ".chapter-name").textContent = locked ? "？？？" : name(act);
+      query(panel, ".chapter-note").textContent = locked ? "" : t(ACT_NOTES[act.id] ?? "");
+      query(panel, ".chapter-state").textContent = t(
+        locked
+          ? "未解锁"
+          : !act.scene
+            ? "制作中"
+            : state === "done"
+              ? "已完成"
+              : this.started
+                ? "进行中"
+                : "未开始",
       );
     }
-    this.renderCard(hovered);
-    // The backdrop follows the story: the furthest act reached, or the one being looked at.
-    this.showCover(coverOf(ACTS.find((act) => act.id === hovered) ?? next ?? ACTS.at(-1)!));
+    this.renderCover();
   }
 
-  private showCover(cover: string) {
+  /** The backdrop follows the story: the furthest act reached, or the one being looked at. */
+  private renderCover() {
+    const act = ACTS.find((entry) => entry.id === this.hovered) ?? nextAct(this.save) ?? ACTS.at(-1)!;
+    const cover = coverOf(act);
     if (cover === this.cover) return;
     this.cover = cover;
     const layers = [...this.root.querySelectorAll<HTMLElement>(".story-art")];
@@ -228,49 +280,5 @@ export class StoryMenu {
       minute: "2-digit",
       hour12: false,
     }).format(playedAt);
-  }
-
-  /** The card shows the hovered act, or else the save itself. */
-  private renderCard(hovered: string | undefined) {
-    const next = nextAct(this.save);
-    const picked = ACTS.find((act) => act.id === hovered);
-    const act = picked ?? next ?? ACTS.at(-1)!;
-    const index = ACTS.indexOf(act);
-    const empty = !picked && !this.started;
-
-    query(this.card, ".detail-kicker").textContent = t(picked ? "章节" : "存档");
-    query(this.card, ".save-act").textContent = `ACT ${number(index)}`;
-    query(this.card, ".detail-title").textContent = empty
-      ? t("尚无存档")
-      : !picked && !next
-        ? t("已通关")
-        : name(act);
-    query(this.card, ".detail-text").textContent = t(empty ? EMPTY_NOTE : (ACT_NOTES[act.id] ?? ""));
-    this.card.querySelectorAll<HTMLElement>(".save-track li").forEach((step, i) => {
-      step.dataset.state = this.started ? this.state(ACTS[i]) : "locked";
-      step.classList.toggle("shown", i === index && !empty);
-    });
-
-    const stats: [string, string][] = [
-      [t("当前章节"), !this.started ? "—" : next ? fullName(next) : t("已通关")],
-      [t("上次游玩"), this.lastPlayed()],
-      [t("完成度"), `${this.completion()}%`],
-    ];
-    query(this.card, ".detail-stats").replaceChildren(
-      ...stats.map(([label, value]) => {
-        const item = document.createElement("div");
-        const term = document.createElement("dt");
-        const data = document.createElement("dd");
-        term.textContent = label;
-        data.textContent = value;
-        item.append(term, data);
-        return item;
-      }),
-    );
-
-    const key = empty ? "empty" : `${act.id}:${!!picked}`;
-    if (key !== this.cardKey && this.cardKey)
-      rise([query(this.card, ".detail-title"), query(this.card, ".detail-text")], 0, 8);
-    this.cardKey = key;
   }
 }
