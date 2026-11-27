@@ -33,6 +33,11 @@ export interface BombFinish extends Pack {
    * mask, tinted by `color`. `intensity` is around 0.3 (faint) to 1 (strong).
    */
   glow?: { color: string; intensity: number };
+  /**
+   * Flipbook shown in place of the standard detonation when a bomb with this finish goes off:
+   * a square image with alpha holding 4 x 4 frames, read left to right and top to bottom.
+   */
+  explosion?: string;
 }
 /** @deprecated Use {@link ObstacleSurface}. */
 export type CoverSurface = ObstacleSurface;

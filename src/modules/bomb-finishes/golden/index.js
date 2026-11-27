@@ -13,4 +13,5 @@ export default defineFinish({
   capColor: "#ffd76a",
   model: new URL("./model.glb", import.meta.url).href,
   glow: { color: "#ffcf5a", intensity: 0.12 },
+  explosion: new URL("./explosion.webp", import.meta.url).href,
 });

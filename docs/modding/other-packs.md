@@ -46,5 +46,6 @@ export default defineSkin({
 | `capColor` | Optional end-cap colour |
 | `model` | Optional GLB that replaces the standard charge: a bundle lying along X, base at y = 0. It shows no power tiers or owner collar |
 | `glow` | Optional `{ color, intensity }` for a modelled finish: the bright parts of its texture shine in that tint |
+| `explosion` | Optional flipbook that replaces the detonation of this finish's bombs: a square image with alpha, 4 × 4 frames read left to right, top to bottom |
 
 Copy `bomb-finishes/olive/` as a starting point, or `bomb-finishes/frost/` for a modelled finish with a glow.
