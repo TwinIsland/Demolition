@@ -4,7 +4,7 @@ import { perkById, SKILLS } from "../../core/content";
 import type { GameEvent, GameSnapshot, PlayerInput, Vec2 } from "../../core/types";
 import { field } from "../../i18n";
 import { bindings, equipmentBinding, skillBinding, type BindingId } from "../../input/bindings";
-import { SPOTS } from "../../modules/maps/flatland/layout.js";
+import { SPOTS } from "../../modules/maps/flatland-story/layout.js";
 import { world } from "../../render/arena";
 import { ASCENSION_GOALS as GOALS, ASCENSION_LINES as LINES } from "../acts/ascension";
 import { ASCENSION_ART } from "./assets";
@@ -25,30 +25,23 @@ const SOUTH = Math.PI;
 const PLACE = {
   hero: SPOTS.plaza.reveal,
   lulu: { x: SPOTS.plaza.reveal.x + 1, z: SPOTS.plaza.reveal.z },
-  /** Cover the act opens behind the veil, so that its walks need no demolition. */
-  cleared: [
-    { x: 10, z: 6 },
-    { x: 6, z: 10 },
-    { x: 14, z: 10 },
-    { x: 17, z: 10 },
-  ],
-  /** The crate for the knife, and where the guide waits beside it. */
-  crate: { x: 7, z: 8 },
-  crateGuide: { x: 8, z: 7 },
-  /** The lane south of the low wall: throw from here into the yard beyond it. */
+  /** Cover the act opens behind the veil: the crate that closes the graveyard off from the path. */
+  cleared: [{ x: 8, z: 12 }],
+  /** The crate for the knife, where the hero stands to it, and where the guide waits beside it. */
+  crate: { x: 5, z: 5 },
+  crateFront: { x: 6, z: 5 },
+  crateGuide: { x: 6, z: 6 },
+  /** The lane south of the low wall: throw from here into the street beyond it. */
   lane: { x: 6, z: 3 },
   laneGuide: { x: 8, z: 3 },
   shop: SPOTS.shop.customer,
-  shopGuide: { x: 5, z: 11 },
-  dummy: { x: 2, z: 13 },
-  /** The street beside the graveyard, and the open ground between the stones. */
-  graves: { x: 15, z: 10 },
-  gravesGuide: { x: 13, z: 10 },
-  risen: [
-    { x: 17, z: 11 },
-    { x: 15, z: 11 },
-    { x: 19, z: 11 },
-  ],
+  shopGuide: { x: 2, z: 8 },
+  /** In the farm plot, down the alley west of the shop. */
+  dummy: { x: 1, z: 12 },
+  /** The path beside the graveyard, and the open ground between the stones. */
+  graves: { x: 7, z: 12 },
+  gravesGuide: { x: 6, z: 12 },
+  risen: [SPOTS.graves[3], { x: 11, z: 12 }, { x: 10, z: 13 }],
 } as const;
 
 /** The sun in the painted sky stands a little east of the scene's own; this brings them together. */
@@ -108,7 +101,7 @@ export function playAscension(stage: Stage): ScenePlayer {
   const player = playStagedMatch(
     stage,
     {
-      mapId: "flatland",
+      mapId: "flatland-story",
       skin: "story-zero",
       setup: {
         spawn: PLACE.hero,
@@ -378,10 +371,14 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
 
   // --- 4.2 Gear ------------------------------------------------------------------------------
 
-  void d.walk(LULU, PLACE.crateGuide, 3.4).then(() => d.face(LULU, PLACE.crate));
+  void (async () => {
+    for (const cell of route(d.state, cellOf(d.actor(LULU)), PLACE.crateGuide))
+      if (!(await d.walk(LULU, cell, 3.4))) return;
+    d.face(LULU, PLACE.crate);
+  })();
   if (!(await say(LINES.hands))) return;
   allowed.add("equip").add("use");
-  anchor = { x: PLACE.crate.x, z: PLACE.crate.z - 1 };
+  anchor = PLACE.crateFront;
   stage.goal(GOALS.knife);
   if (!(await d.until((state) => state.tiles[PLACE.crate.z][PLACE.crate.x] === 0))) return;
   if (!(await say(LINES.knifed))) return;
