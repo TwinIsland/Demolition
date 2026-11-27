@@ -19,9 +19,9 @@ import { TILE_SIZE } from "../core/geometry";
 import { crownGeometry, palmFronds, palmTrunk, ruinWall, trunkGeometry } from "./jungle-flora";
 
 /** Longest side of a modelled bomb finish, matching the height of the standard charge. */
-/** A modelled finish stands as tall and as wide as the body of the standard charge, at most. */
-const CHARGE_HEIGHT = 0.95;
-const CHARGE_WIDTH = 0.6;
+/** A modelled finish stands a little taller and wider than the body of the standard charge, at most. */
+const CHARGE_HEIGHT = 1.05;
+const CHARGE_WIDTH = 0.66;
 /** Pack models are replaced in place, so their URL carries the build stamp past the browser cache. */
 const fresh = (url: string) =>
   /^(data|blob):/.test(url) ? url : url + (url.includes("?") ? "&" : "?") + "v=" + __ASSET_STAMP__;
