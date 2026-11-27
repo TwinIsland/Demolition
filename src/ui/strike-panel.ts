@@ -6,7 +6,7 @@ import type { GameSnapshot, Player, Vec2 } from "../core/types";
 import { field, t } from "../i18n";
 import { query, setText } from "./dom";
 import { artIcon } from "./icons";
-import { drawSelfMarker } from "./tactical-map";
+import { drawSelfMarker, zombieColor } from "./tactical-map";
 import type { HudFrame, HudView } from "./view";
 
 export interface StrikePanelActions {
@@ -165,13 +165,13 @@ export class StrikePanel implements HudView {
       if (strikeRevealed(strike, s.time, viewer.id))
         this.footprint(ctx, s, strike, strike.radius, cell, "#ff5a4766");
     for (const zombie of s.zombies) {
-      ctx.fillStyle = "#c9e36a";
-      ctx.fillRect(
-        at(zombie.x + 0.5) - cell * 0.17,
-        at(zombie.z + 0.5) - cell * 0.17,
-        cell * 0.34,
-        cell * 0.34,
-      );
+      ctx.fillStyle = zombieColor(zombie.level);
+      ctx.strokeStyle = "#06120e";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(at(zombie.x + 0.5), at(zombie.z + 0.5), cell * 0.24, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
     }
     for (const bomb of s.bombs) {
       ctx.fillStyle = bombGuideColor(s.players, bomb.ownerId, viewer.id);
@@ -187,7 +187,7 @@ export class StrikePanel implements HudView {
       ctx.strokeStyle = "#06120e";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.arc(at(p.x + 0.5), at(p.z + 0.5), cell * 0.3, 0, Math.PI * 2);
+      ctx.rect(at(p.x + 0.5) - cell * 0.32, at(p.z + 0.5) - cell * 0.32, cell * 0.64, cell * 0.64);
       ctx.fill();
       ctx.stroke();
     }

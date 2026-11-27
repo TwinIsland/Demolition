@@ -3,7 +3,7 @@ import { strikeRevealed } from "../core/systems/strikes";
 import { isCloaked } from "../core/types";
 import type { GameSnapshot, Player } from "../core/types";
 import { ringOf } from "../core/zone";
-import { drawMapFrame, drawSelfMarker, mapBackdrop, mapPalette } from "./tactical-map";
+import { drawMapFrame, drawSelfMarker, mapBackdrop, mapPalette, zombieColor } from "./tactical-map";
 
 /** The radar is drawn in these units whatever the canvas resolution is. */
 const UNITS = 260;
@@ -60,20 +60,20 @@ export function drawMinimap(
         if (ringOf(state.size, { x, z }) === warning)
           ctx.fillRect(pad + x * cell, pad + z * cell, cell, cell);
   }
+  // Zombies are round, operators square; a stronger zombie keeps the shape and changes colour.
   for (const zombie of state.zombies) {
-    const x = pad + (zombie.x + 0.5) * cell,
-      y = pad + (zombie.z + 0.5) * cell,
-      r = cell * 0.3;
     ctx.beginPath();
-    ctx.moveTo(x, y - r);
-    ctx.lineTo(x + r, y);
-    ctx.lineTo(x, y + r);
-    ctx.lineTo(x - r, y);
-    ctx.closePath();
+    ctx.arc(
+      pad + (zombie.x + 0.5) * cell,
+      pad + (zombie.z + 0.5) * cell,
+      Math.max(2.4, cell * 0.27),
+      0,
+      Math.PI * 2,
+    );
     ctx.strokeStyle = CASING;
     ctx.lineWidth = 1.6;
     ctx.stroke();
-    ctx.fillStyle = zombie.level === 3 ? "#cf90ff" : zombie.level === 2 ? "#edb456" : "#a8cf5d";
+    ctx.fillStyle = zombieColor(zombie.level);
     ctx.fill();
   }
   for (const item of state.items) {
@@ -118,11 +118,12 @@ export function drawMinimap(
   for (const p of state.players) {
     if (p.id === self.id || !p.alive) continue;
     if (self.scanUntil <= state.time && isCloaked(p, state.time)) continue;
+    const r = Math.max(3.2, cell * 0.36);
     ctx.fillStyle = p.color;
     ctx.strokeStyle = CASING;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(pad + (p.x + 0.5) * cell, pad + (p.z + 0.5) * cell, Math.max(3, cell * 0.34), 0, Math.PI * 2);
+    ctx.rect(pad + (p.x + 0.5) * cell - r, pad + (p.z + 0.5) * cell - r, r * 2, r * 2);
     ctx.stroke();
     ctx.fill();
   }

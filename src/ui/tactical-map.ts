@@ -204,6 +204,9 @@ export function mapBackdrop(mapId: string, size: number, pixels: number, pad: nu
   return canvas;
 }
 
+/** Zombie contact colour by level: green, amber for the tougher kind, violet for the strongest. */
+export const zombieColor = (level: number) => (level >= 3 ? "#cf90ff" : level === 2 ? "#edb456" : "#a8cf5d");
+
 export interface SelfMarkerOptions {
   /** Half-length of the arrow, in canvas units. */
   radius: number;
