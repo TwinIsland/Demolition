@@ -40,7 +40,7 @@ Every key can be rebound in the in-game manual.
 
 ## Views
 
-The game is first person. Classic mode, and the Dimensional Collapse perk when someone else triggers it, put you in a top-down view that plays like the classic genre: four-way movement one tile at a time (tap for one tile, hold to keep walking), Space plants a charge on your own tile, and jumping and gear are off; crates, skills and perks still work.
+The game is first person. Classic mode, and the Dimensional Collapse perk when someone else triggers it, put you in a top-down view that plays like the classic genre: four-way movement that stops as soon as you let go and steers itself along the lanes and around corners (hold a turn early and it is taken when the opening comes up), Space plants a charge on your own tile, and jumping and gear are off; crates, skills and perks still work.
 
 ![Top-down view](media/top-down.jpg)
 

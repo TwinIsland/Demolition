@@ -6,35 +6,33 @@ import type { Bomb, Player, PlayerInput } from "../types";
 import { explode, slideBomb } from "./bombs";
 import type { SimContext } from "./context";
 
-/** Seconds a direction pressed during a grid step still counts when the step ends. */
-const STEP_BUFFER = 0.22;
-/** Centre distance at which a grid walker, who cannot lean into a bomb, already pushes it. */
-const GRID_KICK_REACH = 1.05;
+/** Overhead view: how far off a lane centre the corner assist still reaches. Half a tile is all of it. */
+const OVERHEAD_ASSIST = 0.5;
 
-/** Walk, sprint, jump and kick for one tick. In the overhead view movement goes tile by tile. */
+type Axis = "x" | "z";
+
+/**
+ * Walk, sprint, jump and kick for one tick. Both views run the same continuous walk with the same
+ * speed, collision and kick rules; the overhead view only narrows it to one axis at a time and
+ * steers the player along the lanes (see `moveOverhead`).
+ */
 export function move(ctx: SimContext, p: Player, input: PlayerInput, dt: number, overhead: boolean) {
   const s = ctx.state;
   const jump = !!input.jump && !overhead;
   if (jump || p.elevation > 0 || p.verticalSpeed !== 0) moveVertically(p, jump, dt);
-  let mx = Number.isFinite(input.moveX) ? input.moveX : 0;
-  let mz = Number.isFinite(input.moveZ) ? input.moveZ : 0;
-  if (overhead && mx && mz) {
-    if (Math.abs(mx) >= Math.abs(mz)) mz = 0;
-    else mx = 0;
-  }
+  const mx = Number.isFinite(input.moveX) ? input.moveX : 0;
+  const mz = Number.isFinite(input.moveZ) ? input.moveZ : 0;
   const speed = modifiedStat(p, "moveSpeed", p.speed, s.time);
   const startX = p.x,
     startZ = p.z;
+  const sprint = sprintSeconds(p, Boolean(input.sprint && (mx || mz)), dt);
+  const distance = speed * (dt + sprint * (STAMINA.speedFactor - 1));
   if (overhead) {
-    const sprint = sprintSeconds(p, Boolean(input.sprint && (mx || mz || p.gridStep)), dt);
-    moveOnGrid(ctx, p, Math.sign(mx), Math.sign(mz), speed * (dt + sprint * (STAMINA.speedFactor - 1)));
+    moveOverhead(ctx, p, mx, mz, input.preferAxis, distance);
     recoverOrSpend(p, p.x !== startX || p.z !== startZ ? sprint : 0, dt, s.time);
     return;
   }
-  delete p.gridStep;
   const length = Math.max(1, Math.hypot(mx, mz));
-  const sprint = sprintSeconds(p, Boolean(input.sprint && (mx || mz)), dt);
-  const distance = speed * (dt + sprint * (STAMINA.speedFactor - 1));
   const x = (mx / length) * distance,
     z = (mz / length) * distance;
   if (p.elevation === 0 && (x || z) && s.bombs.length && canKick(p)) tryKick(ctx, p, x, z);
@@ -53,86 +51,87 @@ export function move(ctx: SimContext, p: Player, input: PlayerInput, dt: number,
 }
 
 /**
- * Overhead movement, as in classic arena bombers: the player stands on tile centres and walks one
- * whole tile at a time. A step, once begun, is finished; a tap is exactly one tile, a held key
- * keeps walking without a pause between tiles, and a turn pressed during a step is taken when
- * the step ends. `dx`/`dz` is the wanted direction, on one axis.
+ * Overhead movement, with the feel of a classic arena bomber on top of the first-person walk. The
+ * player moves continuously and stops the tick the keys are released; nothing commits to a whole
+ * tile. Three aids stand in for the grid:
+ *  - one axis per tick, so the path is always four-way;
+ *  - while walking, the player is drawn sideways onto the centre of the lane, so turns line up;
+ *  - walking into a corner beside an opening slides around it, from anywhere on the tile.
+ * With both axes pressed the preferred one (the latest key; for analog input the larger) is tried
+ * first and the other is the fallback. Holding a turn before the opening therefore keeps the
+ * player walking and takes the turn the moment it opens.
  */
-function moveOnGrid(ctx: SimContext, p: Player, dx: number, dz: number, distance: number) {
-  const s = ctx.state;
-  const wants = dx !== 0 || dz !== 0;
-  if (wants && s.bombs.length && canKick(p)) tryKick(ctx, p, dx, dz, GRID_KICK_REACH);
-  else delete p.kickPush;
-  let step = p.gridStep;
-  if (step && wants && (dx !== step.dx || dz !== step.dz)) step.queued = { dx, dz, at: s.time };
-  // At most two tiles a tick; only a huge speed bonus could ever need the second.
-  for (let i = 0; i < 2 && distance > 1e-9; i++) {
-    if (!step) {
-      const here = { x: Math.round(p.x), z: Math.round(p.z) };
-      if (p.x !== here.x || p.z !== here.z) {
-        // Off the grid (just switched views, or shoved): walk to the nearest tile centre first.
-        step = p.gridStep = { ...here, dx: 0, dz: 0 };
-      } else {
-        const queued = p.gridQueued && s.time - p.gridQueued.at <= STEP_BUFFER ? p.gridQueued : undefined;
-        delete p.gridQueued;
-        // A buffered turn wins over the key still held, if that way is open.
-        const choice = [queued, wants ? { dx, dz } : undefined].find(
-          (d) => d && !blockerAt(ctx, p, here.x + d.dx, here.z + d.dz),
-        );
-        if (!choice) {
-          const bump = queued ?? (wants ? { dx, dz } : undefined);
-          // Walking into a sliding bomb still sets it off.
-          if (bump) tryOccupy(ctx, p, here.x + bump.dx, here.z + bump.dz);
-          return;
-        }
-        step = p.gridStep = { x: here.x + choice.dx, z: here.z + choice.dz, dx: choice.dx, dz: choice.dz };
-      }
-    }
-    const tx = step.x - p.x,
-      tz = step.z - p.z;
-    const remaining = Math.abs(tx) + Math.abs(tz);
-    const travel = Math.min(distance, remaining);
-    // One axis at a time; only a walk back onto the grid ever has both.
-    const nx = p.x + Math.sign(tx) * Math.min(Math.abs(tx), travel),
-      nz = p.z + Math.sign(tz) * Math.min(Math.abs(tz), Math.max(0, travel - Math.abs(tx)));
-    if (!tryOccupy(ctx, p, nx, nz)) {
-      // The way closed mid-step (a wall rose, a bomb slid in): go back to the tile just left.
-      const back = { x: step.x - step.dx, z: step.z - step.dz };
-      const retreat = step.dx !== 0 || step.dz !== 0;
-      if (retreat && !blockerAt(ctx, p, back.x, back.z)) p.gridStep = { ...back, dx: -step.dx, dz: -step.dz };
-      else delete p.gridStep;
-      return;
-    }
-    p.x = nx;
-    p.z = nz;
-    distance -= travel;
-    if (travel < remaining) return;
-    p.x = step.x;
-    p.z = step.z;
-    if (step.queued) p.gridQueued = step.queued;
-    step = undefined;
-    delete p.gridStep;
+function moveOverhead(
+  ctx: SimContext,
+  p: Player,
+  mx: number,
+  mz: number,
+  prefer: Axis | undefined,
+  distance: number,
+) {
+  const want = { x: Math.max(-1, Math.min(1, mx)), z: Math.max(-1, Math.min(1, mz)) };
+  const first: Axis =
+    prefer && want[prefer] ? prefer : Math.abs(want.x) >= Math.abs(want.z) && want.x ? "x" : "z";
+  if (!want[first]) {
+    delete p.kickPush;
+    return;
   }
+  const kicking = p.elevation === 0 && ctx.state.bombs.length > 0 && canKick(p);
+  if (kicking) tryKick(ctx, p, first === "x" ? want.x : 0, first === "z" ? want.z : 0);
+  else delete p.kickPush;
+  // A windup in progress means the player is deliberately pushing a bomb: no assist, no detour.
+  const second: Axis = first === "x" ? "z" : "x";
+  if (walkAxis(ctx, p, first, want[first] * distance, want[second], !p.kickPush) || p.kickPush) return;
+  if (want[second]) walkAxis(ctx, p, second, want[second] * distance, 0, true);
+}
+
+/**
+ * One overhead step along `axis`. True when the player moved, either ahead or around a corner.
+ * `across` is what the player wants on the other axis; the lane never pulls against it.
+ */
+function walkAxis(ctx: SimContext, p: Player, axis: Axis, step: number, across: number, assist: boolean) {
+  const open = axis === "x" ? tryOccupy(ctx, p, p.x + step, p.z) : tryOccupy(ctx, p, p.x, p.z + step);
+  if (!open) return assist && assistCorner(ctx, p, axis, step, 0, OVERHEAD_ASSIST);
+  p[axis] += step;
+  // Lane magnet: drift onto the centre line at walking pace.
+  const side = axis === "x" ? "z" : "x";
+  const offset = Math.round(p[side]) - p[side];
+  if (offset && (!across || Math.sign(across) === Math.sign(offset))) {
+    const nudge = Math.sign(offset) * Math.min(Math.abs(offset), Math.abs(step));
+    const [nx, nz] = axis === "x" ? [p.x, p.z + nudge] : [p.x + nudge, p.z];
+    if (!blockerAt(ctx, p, nx, nz)) p[side] += nudge;
+  }
+  return true;
 }
 
 /**
  * Corner assist. A player walking into the edge of an opening is only a little off the lane
  * centre; instead of sticking on the corner, slip sideways toward the centre at walking pace.
  * `along` is the blocked step on `axis`; `across` is the player's own step on the other axis.
+ * True when the player was moved.
  */
-function assistCorner(ctx: SimContext, p: Player, axis: "x" | "z", along: number, across: number) {
+function assistCorner(
+  ctx: SimContext,
+  p: Player,
+  axis: Axis,
+  along: number,
+  across: number,
+  range: number = RULES.cornerAssist,
+) {
   const side = axis === "x" ? "z" : "x";
   const lane = Math.round(p[side]);
   const offset = lane - p[side];
-  if (!offset || Math.abs(offset) > RULES.cornerAssist) return;
+  if (!offset || Math.abs(offset) > range) return false;
   // Steering away from the lane overrides the assist.
-  if (across && Math.sign(across) !== Math.sign(offset)) return;
+  if (across && Math.sign(across) !== Math.sign(offset)) return false;
   const ahead = p[axis] + along;
   const open = axis === "x" ? !blockerAt(ctx, p, ahead, lane) : !blockerAt(ctx, p, lane, ahead);
-  if (!open) return;
+  if (!open) return false;
   const nudge = Math.sign(offset) * Math.min(Math.abs(offset), Math.abs(along));
   const [nx, nz] = axis === "x" ? [p.x, p.z + nudge] : [p.x + nudge, p.z];
-  if (!blockerAt(ctx, p, nx, nz)) p[side] += nudge;
+  if (blockerAt(ctx, p, nx, nz)) return false;
+  p[side] += nudge;
+  return true;
 }
 
 /** Only players who own a kick hook track a push, so the HUD never shows a windup they lack. */

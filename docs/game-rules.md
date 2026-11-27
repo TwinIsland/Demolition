@@ -48,7 +48,7 @@ Wild values are the `WILD` preset in `core/match-modes.ts`. Wild also regenerate
 - After blast or zombie damage you are immune for 1.3 s. After a knife hit, 0.3 s.
 - Cover has 2 durability against the knife. Any blast destroys it.
 - In overhead view a charge is planted on the tile you stand on, and you walk off it.
-- Overhead movement is tile by tile (`moveOnGrid` in `core/systems/movement.ts`): you stand on tile centres, a tap walks exactly one tile, a held key keeps walking without pausing, and a turn pressed during a step is taken when the step ends (0.22 s buffer). A step that gets blocked midway returns to the tile it left. A Slide Kick triggers from the neighbouring tile, since you cannot lean into the charge.
+- Overhead movement is the same continuous walk as first person, with the same speed, collision and Slide Kick rules, restricted to one axis at a time (`moveOverhead` in `core/systems/movement.ts`). You stop the moment the keys are released. While walking you are drawn onto the centre of the lane, and walking into a corner beside an opening slides you around it from anywhere on the tile. With two directions held, the latest one is tried first and the other is the fallback, so a turn held early is taken as soon as the opening comes up.
 
 Sources: `core/combat.ts`, `core/geometry.ts`, `core/systems/bombs.ts`, `RULES` in `core/content.ts`.
 

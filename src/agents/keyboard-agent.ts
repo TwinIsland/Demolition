@@ -350,17 +350,22 @@ export class KeyboardAgent implements PlayerAgent {
     this.buildRequested = undefined;
     this.skill = this.activePerk = this.supply = this.perkTarget = undefined;
     if (this.boardMode) {
-      let moveX = 0,
-        moveZ = 0;
-      // Set iteration keeps press order so the latest held direction wins at corners.
+      // Both axes go out; the latest direction pressed is the one to try first and to face, the
+      // other is the fallback, so a turn held early is taken as soon as the opening comes up.
+      let preferAxis: "x" | "z" | undefined;
+      // Set iteration keeps press order: the last direction found is the latest held.
       for (const key of this.keys) {
         const action = BOARD_ARROWS[key] ?? bindings.action(key);
-        if (action === "left" || action === "right" || action === "forward" || action === "back")
-          [moveX, moveZ, this.boardYaw] = BOARD_DIRECTIONS[action];
+        if (action === "left" || action === "right" || action === "forward" || action === "back") {
+          this.boardYaw = BOARD_DIRECTIONS[action][2];
+          preferAxis = BOARD_DIRECTIONS[action][0] ? "x" : "z";
+        }
       }
+      const moveX = this.axis("right", "left"),
+        moveZ = this.axis("back", "forward");
       const plantHere = this.plantHere;
       this.plantHere = false;
-      return { ...shared, moveX, moveZ, yaw: this.boardYaw, plantHere };
+      return { ...shared, moveX, moveZ, preferAxis, yaw: this.boardYaw, plantHere };
     }
     const forward = this.axis("forward", "back");
     const right = this.axis("right", "left");
