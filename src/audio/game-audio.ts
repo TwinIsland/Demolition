@@ -235,7 +235,7 @@ export class GameAudio {
     this.play("level-up", { priority: true });
   }
 
-  /** Start countdown, "go", and the last five seconds before the zone is smallest, each announced once. */
+  /** Start countdown and the last five seconds before the zone is smallest, each announced once. */
   matchClock(state: Readonly<GameSnapshot>) {
     let beat: string | undefined;
     if (state.phase === "countdown") beat = "start-" + Math.ceil(state.countdown);
@@ -244,8 +244,8 @@ export class GameAudio {
       const left = Math.ceil(state.duration - state.time);
       if (left > 0 && left <= 5) beat = "end-" + left;
     }
-    if (beat && beat !== this.countdownBeat)
-      this.play(beat === "go" ? "deploy-signal" : "clock-pulse", { priority: true });
+    // The deploy itself is silent: only the seconds tick.
+    if (beat && beat !== "go" && beat !== this.countdownBeat) this.play("clock-pulse", { priority: true });
     this.countdownBeat = beat;
   }
 
