@@ -15,6 +15,12 @@ export type SurfaceProfile =
   | "soil"
   | "metal"
   | "prop"
+  // A tree trunk: a prop that the overhead views cut off above wall height.
+  | "trunk"
+  // Leaves over the board: a prop that the overhead views do not draw at all.
+  | "canopy"
+  // Leaves and bare rock in the rain: wet, but without the sheen of a painted prop.
+  | "matte"
   // A tiled hall: walls, the deck people walk on, the pool lining and the water over it.
   | "tile"
   | "deck"
@@ -46,6 +52,8 @@ export interface WeatherUniforms {
   wxTile: { value: number };
   /** Ceiling panels of an office floor: 1 lit, 0 out. */
   wxLampLevel: { value: number };
+  /** Work lamps of an outdoor map: xyz is the lamp, w its strength (0 for an unused slot). */
+  wxWorkLamps: { value: THREE.Vector4[] };
   wxReflection: { value: THREE.Texture | null };
   wxReflectionMatrix: { value: THREE.Matrix4 };
   wxReflectionOn: { value: number };
@@ -61,6 +69,7 @@ export function createWeatherUniforms(): WeatherUniforms {
     wxFog: { value: new THREE.Vector2(0, 0.5) },
     wxTile: { value: 2.4 },
     wxLampLevel: { value: 1 },
+    wxWorkLamps: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) },
     wxReflection: { value: null },
     wxReflectionMatrix: { value: new THREE.Matrix4() },
     wxReflectionOn: { value: 0 },
@@ -82,6 +91,9 @@ export function profileFor(material: THREE.Material): SurfaceProfile | undefined
   if (name === "backrooms-carpet") return "carpet";
   if (name === "backrooms-ceiling") return "ceiling";
   if (name === "wall-base" || name === "platform") return "metal";
+  if (name === "df:jungle-trunk") return "trunk";
+  if (name === "df:jungle-canopy") return "canopy";
+  if (name === "df:jungle-crown" || name === "df:scan-rock") return "matte";
   if (name.startsWith("df:")) return name === "df:glass" ? undefined : "prop";
   return undefined;
 }
@@ -176,6 +188,9 @@ uniform float wxPuddleLevel;
 uniform vec2 wxFog;
 uniform float wxTile;
 uniform float wxLampLevel;
+#ifdef WX_GLOW
+  uniform vec4 wxWorkLamps[4];
+#endif
 #ifdef WX_REFLECT
   uniform sampler2D wxReflection;
   uniform float wxReflectionOn;
@@ -192,7 +207,11 @@ uniform float wxLampLevel;
   uniform sampler2D wxMudMap;
   uniform sampler2D wxMudNormal;
   uniform sampler2D wxMudRough;
+  // Fallen leaves, which cover the ground wherever grass has not taken it.
+  uniform sampler2D wxLitterMap;
+  uniform sampler2D wxLitterNormal;
   float wxMud = 0.0;
+  float wxLitter = 0.0;
 #endif
 ${NOISE_GLSL}
 vec3 wxBump(vec3 surfacePosition, vec3 surfaceNormal, float height) {
@@ -264,6 +283,10 @@ vec2 wxRipples(vec2 p) {
 `;
 
 const FRAGMENT_MAP = /* glsl */ `
+#ifdef WX_CUTAWAY
+  // Seen from above the canopy, a tree is cut at wall height so it hides nothing behind it.
+  if (vWxPos.y > WX_CUTAWAY && cameraPosition.y > 14.0) discard;
+#endif
 #if defined(USE_MAP) && defined(WX_SOIL)
   {
     vec2 wxMaskUv = (vWxPos.xz - wxSoilArea.xy) * wxSoilArea.zw;
@@ -272,8 +295,12 @@ const FRAGMENT_MAP = /* glsl */ `
     wxMud = smoothstep(0.3, 0.72, wxMask + (wxFbm(vWxPos.xz * 1.1) - 0.5) * 0.7);
     vec4 wxGrass = wxStochastic(map, vMapUv);
     // Broad patches of lusher and drier growth, so the lawn does not read as one flat colour.
-    wxGrass.rgb *= mix(vec3(0.62, 0.86, 0.5), vec3(0.95, 1.12, 0.7), wxFbm(vWxPos.xz * 0.13 + 3.0));
-    diffuseColor *= mix(wxGrass, texture2D(wxMudMap, vMapUv * 1.3) * vec4(1.5, 1.3, 1.1, 1.0), wxMud);
+    wxGrass.rgb *= mix(vec3(0.5, 0.68, 0.38), vec3(0.78, 0.92, 0.52), wxFbm(vWxPos.xz * 0.13 + 3.0));
+    // Grass holds the clearings; between them the ground is a mat of fallen leaves.
+    wxLitter = smoothstep(0.4, 0.6, wxFbm(vWxPos.xz * 0.2 + 9.0) + (wxNoise(vWxPos.xz * 2.3) - 0.5) * 0.3);
+    vec4 wxLeaves = texture2D(wxLitterMap, vMapUv * 0.77 + wxWarp * 0.05) * vec4(1.3, 1.22, 1.1, 1.0);
+    wxGrass = mix(wxGrass, wxLeaves, wxLitter);
+    diffuseColor *= mix(wxGrass, texture2D(wxMudMap, vMapUv * 1.3) * vec4(1.55, 1.3, 1.05, 1.0), wxMud);
   }
 #elif defined(USE_MAP) && defined(WX_HEX)
   diffuseColor *= wxStochastic(map, vMapUv);
@@ -285,7 +312,7 @@ const FRAGMENT_MAP = /* glsl */ `
 const FRAGMENT_ROUGHNESS = /* glsl */ `
 float roughnessFactor = roughness;
 #if defined(USE_ROUGHNESSMAP) && defined(WX_SOIL)
-  roughnessFactor *= mix(texture2D(roughnessMap, vRoughnessMapUv).g,
+  roughnessFactor *= mix(mix(texture2D(roughnessMap, vRoughnessMapUv).g, 0.82, wxLitter),
     max(0.8, texture2D(wxMudRough, vRoughnessMapUv * 1.3).g), wxMud);
 #elif defined(USE_ROUGHNESSMAP) && defined(WX_HEX)
   roughnessFactor *= wxStochastic(roughnessMap, vRoughnessMapUv).g;
@@ -296,7 +323,8 @@ float roughnessFactor = roughness;
 
 const FRAGMENT_SURFACE = /* glsl */ `
 #if defined(USE_NORMALMAP_TANGENTSPACE) && defined(WX_SOIL)
-  vec3 mapN = mix(wxStochastic(normalMap, vNormalMapUv).xyz,
+  vec3 mapN = mix(mix(wxStochastic(normalMap, vNormalMapUv).xyz,
+      texture2D(wxLitterNormal, vNormalMapUv * 0.77).xyz, wxLitter),
     texture2D(wxMudNormal, vNormalMapUv * 1.3).xyz, wxMud) * 2.0 - 1.0;
   mapN.xy *= normalScale;
   normal = normalize(tbn * mapN);
@@ -456,10 +484,16 @@ vec2 wxWaterSlope = vec2(0.0);
       wxPuddle = smoothstep(wxPuddleLevel, wxPuddleLevel + 0.035, wxPool) * wxFacingUp * wxWet;
       #ifdef WX_SOIL
         wxDamp *= mix(0.2, 0.6, wxMud);
-        wxPuddle *= wxMud;
+        // Pools gather in the ruts, not across the whole trail.
+        wxPuddle *= wxMud * smoothstep(0.5, 0.62, wxFbm(wxP.xz * 0.9 + 3.0));
       #endif
       diffuseColor.rgb *= mix(1.0, 0.72, max(wxDamp * 0.6, wxPuddle));
-      roughnessFactor = mix(roughnessFactor, roughnessFactor * 0.55, wxDamp);
+      #ifdef WX_SOIL
+        // Wet earth stays dull; only standing water shines.
+        roughnessFactor = mix(roughnessFactor, roughnessFactor * 0.82, wxDamp);
+      #else
+        roughnessFactor = mix(roughnessFactor, roughnessFactor * 0.55, wxDamp);
+      #endif
       roughnessFactor = mix(roughnessFactor, 0.03, wxPuddle);
       #if WX_LEVEL >= 1
         wxWaterSlope = wxRipples(wxP.xz) * wxRain;
@@ -487,6 +521,16 @@ vec2 wxWaterSlope = vec2(0.0);
     // With the panels out only what leaks in from the next rooms is left.
     diffuseColor.rgb *= mix(0.4, mix(0.66, 1.16, wxGlow), wxLampLevel);
   }
+  #endif
+  #ifdef WX_GLOW
+    // Work lamps: a warm pool of light around each, painted here instead of lit by real lamps.
+    for (int wxI = 0; wxI < 4; wxI++) {
+      vec3 wxTo = wxWorkLamps[wxI].xyz - wxP;
+      float wxFar = dot(wxTo, wxTo);
+      float wxLit = 0.3 + 0.7 * max(dot(wxN, wxTo * inversesqrt(wxFar + 0.0001)), 0.0);
+      wxLit *= wxWorkLamps[wxI].w / (1.0 + wxFar * 0.11) * (1.0 - smoothstep(60.0, 150.0, wxFar));
+      totalEmissiveRadiance += diffuseColor.rgb * vec3(1.0, 0.7, 0.4) * wxLit;
+    }
   #endif
 }
 `;
@@ -528,6 +572,7 @@ const DEFINES: Record<SurfaceProfile, string[]> = {
     "WX_UV_JITTER",
     "WX_WEATHERED",
     "WX_STRUCTURE",
+    "WX_GLOW",
     "WX_TONE 0.22",
     "WX_WET_DARKEN 0.66",
     "WX_WET_GLOSS 0.45",
@@ -536,6 +581,7 @@ const DEFINES: Record<SurfaceProfile, string[]> = {
     "WX_UV_JITTER",
     "WX_WEATHERED",
     "WX_PUDDLES",
+    "WX_GLOW",
     "WX_TONE 0.16",
     "WX_WET_DARKEN 0.64",
     "WX_WET_GLOSS 0.7",
@@ -549,9 +595,20 @@ const DEFINES: Record<SurfaceProfile, string[]> = {
     "WX_WET_DARKEN 0.6",
     "WX_WET_GLOSS 0.7",
   ],
-  soil: ["WX_HEX", "WX_SOIL", "WX_PUDDLES", "WX_TONE 0.0", "WX_WET_DARKEN 0.85", "WX_WET_GLOSS 0.92"],
+  soil: [
+    "WX_HEX",
+    "WX_SOIL",
+    "WX_PUDDLES",
+    "WX_GLOW",
+    "WX_TONE 0.0",
+    "WX_WET_DARKEN 0.85",
+    "WX_WET_GLOSS 0.92",
+  ],
   metal: ["WX_TONE 0.12", "WX_WET_DARKEN 0.85", "WX_WET_GLOSS 0.4"],
-  prop: ["WX_TONE 0.1", "WX_WET_DARKEN 0.72", "WX_WET_GLOSS 0.45"],
+  prop: ["WX_GLOW", "WX_TONE 0.1", "WX_WET_DARKEN 0.72", "WX_WET_GLOSS 0.45"],
+  trunk: ["WX_GLOW", "WX_CUTAWAY 2.9", "WX_TONE 0.1", "WX_WET_DARKEN 0.72", "WX_WET_GLOSS 0.45"],
+  canopy: ["WX_CUTAWAY 0.0", "WX_TONE 0.1", "WX_WET_DARKEN 0.9", "WX_WET_GLOSS 0.95"],
+  matte: ["WX_GLOW", "WX_TONE 0.1", "WX_WET_DARKEN 0.85", "WX_WET_GLOSS 0.9"],
   // One texture repeat is half a cell, which makes a wall tile 30 cm and a mosaic tile 15 cm.
   tile: ["WX_WORLD_UV 0.8333333", "WX_TONE 0.0", "WX_WET_DARKEN 0.97", "WX_WET_GLOSS 0.75"],
   deck: ["WX_WORLD_UV 0.8333333", "WX_PUDDLES", "WX_TONE 0.0", "WX_WET_DARKEN 0.95", "WX_WET_GLOSS 0.6"],

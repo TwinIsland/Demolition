@@ -52,6 +52,51 @@ export class Arena {
   /** Cells where a relocated wall has not finished rising yet. */
   readonly wallLandings = new Set<number>();
   private coverRevision: number;
+  /**
+   * Work lamps standing on fixed walls: where their light falls from, and the wall cell each
+   * needs. The renderer hands the lit ones to the environment.
+   */
+  private lamps: { x: number; y: number; z: number; cell: number }[] = [];
+  private lampsLit = -1;
+  /** The lamps still standing, or undefined when nothing changed since the last call. */
+  workLamps() {
+    const standing = this.lamps.filter((lamp) => this.fixedWalls.has(lamp.cell));
+    if (standing.length === this.lampsLit) return undefined;
+    this.lampsLit = standing.length;
+    return standing.map(({ x, y, z }) => ({ x, y, z, strength: 2.4 }));
+  }
+  /** The temple's gateposts carry a lamp each, on the side that looks out of the plaza. */
+  private mountLamp(wall: THREE.Group, x: number, z: number, size: number) {
+    const middle = (size - 1) / 2,
+      dx = x - middle,
+      dz = z - middle;
+    // One post per gate: the cell left of the opening as seen from outside.
+    const gate =
+      (dz === -4 && dx === -2) ||
+      (dx === 4 && dz === -2) ||
+      (dz === 4 && dx === 2) ||
+      (dx === -4 && dz === 2);
+    if (!gate) return;
+    const outX = Math.abs(dx) === 4 ? Math.sign(dx) : 0,
+      outZ = Math.abs(dz) === 4 ? Math.sign(dz) : 0;
+    const lamp = this.models.workLamp();
+    // The wall is turned in quarter steps for variety, so undo that to face the lamp outwards.
+    const facing = Math.atan2(outX, outZ);
+    lamp.position
+      .set(outX * 0.9, 2.46, outZ * 0.9)
+      .applyAxisAngle(new THREE.Vector3(0, 1, 0), -this.turnOf(x, z));
+    lamp.rotation.y = facing - this.turnOf(x, z);
+    wall.add(lamp);
+    this.lamps.push({
+      x: world(x, size) + outX * 2.2,
+      y: 2.9,
+      z: world(z, size) + outZ * 2.2,
+      cell: z * size + x,
+    });
+  }
+  private turnOf(x: number, z: number) {
+    return (((x * 7 + z * 13) % 4) * Math.PI) / 2;
+  }
   constructor(
     private models: Models,
     state: Readonly<GameSnapshot>,
@@ -121,8 +166,10 @@ export class Arena {
           const wall = models.wall(
             map.theme,
             wallVariant(x, z, border || state.wallOrigins?.[z * size + x] !== undefined),
+            (Math.imul(x * 31 + z * 131, 40503) >>> 0) % 997,
           );
-          if (jungle) wall.rotation.y = (((x * 7 + z * 13) % 4) * Math.PI) / 2;
+          if (jungle) this.mountLamp(wall, x, z, size);
+          if (jungle) wall.rotation.y = this.turnOf(x, z);
           wall.position.set(px, 0, pz);
           this.root.add(wall);
           const id = state.wallOrigins?.[z * size + x];

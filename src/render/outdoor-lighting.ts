@@ -4,6 +4,7 @@ import { Sky } from "three/addons/objects/Sky.js";
 
 import { CLEAR_SKY, type SkyLook, type SkyRig } from "./environment/sky-look";
 
+const HIGH_SUN = [-35, 42, 25] as const;
 interface LoadedSky {
   texture: THREE.DataTexture;
   reflection: THREE.WebGLRenderTarget;
@@ -51,6 +52,8 @@ export class OutdoorLighting implements SkyRig {
   apply(look: SkyLook) {
     this.look = look;
     this.sun.color.set(look.sun.color);
+    // Keep the distance: the shadow camera's depth range is set for it.
+    this.sun.position.set(...(look.sun.from ?? HIGH_SUN)).setLength(60);
     this.fill.color.set(look.fill.sky);
     this.fill.groundColor.set(look.fill.ground);
     this.fog.color.set(look.fog.color);

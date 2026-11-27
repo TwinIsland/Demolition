@@ -11,12 +11,20 @@ import type { MaterialLibrary } from "./materials";
  * obstacle, and scenery that stands outside the grid at its authored size.
  */
 const SCENERY = {
-  "jungle-tree": { footprint: 0.96, height: 4.3 },
-  "jungle-rock": { footprint: 0.96, height: 2.6 },
-  "canopy-tree": undefined,
-  "canopy-tree-far": undefined,
-  "palm-tree": undefined,
-  undergrowth: undefined,
+  // Scanned plants and rocks, at the size they were photographed; the theme scales them.
+  "fern-a": undefined,
+  "fern-b": undefined,
+  "fern-c": undefined,
+  "calathea-a": undefined,
+  "calathea-b": undefined,
+  "anthurium-a": undefined,
+  "anthurium-b": undefined,
+  "shrub-a": undefined,
+  "shrub-b": undefined,
+  "rock-a": undefined,
+  "rock-b": undefined,
+  "rock-c": undefined,
+  "rock-d": undefined,
 } satisfies Record<string, { footprint: number; height: number } | undefined>;
 export type SceneryId = keyof typeof SCENERY;
 
@@ -42,6 +50,12 @@ export class CoverModels {
       materials.applyPalette(scene);
       const model = new THREE.Group();
       model.add(scene);
+      if (!fit && id.startsWith("scenery:")) {
+        // Scans come half buried and off centre; stand them on the origin.
+        const bounds = new THREE.Box3().setFromObject(scene);
+        const center = bounds.getCenter(new THREE.Vector3());
+        scene.position.set(-center.x, -bounds.min.y, -center.z);
+      }
       if (fit) {
         const bounds = new THREE.Box3().setFromObject(scene);
         const size = bounds.getSize(new THREE.Vector3());

@@ -4,7 +4,8 @@ export interface SkyLook {
   sky: string;
   backgroundIntensity: number;
   environmentIntensity: number;
-  sun: { color: string; intensity: number };
+  /** `from` is where the sun stands, as a direction from the arena; the default is a high sun. */
+  sun: { color: string; intensity: number; from?: readonly [number, number, number] };
   fill: { sky: string; ground: string; intensity: number };
   fog: { color: string; density: number };
 }
@@ -58,11 +59,16 @@ export const OFFICE_FLOOR: SkyLook = {
   fill: { sky: "#fff1c2", ground: "#7a6634", intensity: 0.62 },
   fog: { color: "#6f6435", density: 0.013 },
 };
+/**
+ * A break in the monsoon, late in the day: low warm sun through the canopy, green light bounced
+ * off the leaves, and mist thick enough to lose the far trees in.
+ */
 export const JUNGLE_RAIN_SKY: SkyLook = {
   sky: "./assets/environment/overcast-sky.hdr",
-  backgroundIntensity: 0.5,
-  environmentIntensity: 0.7,
-  sun: { color: "#dfe6cf", intensity: 0.85 },
-  fill: { sky: "#a9bfae", ground: "#3d4631", intensity: 0.55 },
-  fog: { color: "#7d8f84", density: 0.0085 },
+  backgroundIntensity: 0.4,
+  environmentIntensity: 0.42,
+  sun: { color: "#ffd9a6", intensity: 2.7, from: [-40, 36, 24] },
+  fill: { sky: "#9db9a2", ground: "#2c3622", intensity: 0.5 },
+  // Thin, so the board stays clear from above; the mist near the ground is the weather's.
+  fog: { color: "#6f8b77", density: 0.0062 },
 };

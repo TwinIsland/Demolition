@@ -2,16 +2,21 @@ import * as THREE from "three";
 import { TILE_SIZE } from "../core/geometry";
 import { groundAt, type MapDefinition } from "../core/pack-api";
 import type { GameSnapshot } from "../core/types";
+import { JUNGLE_RAIN_SKY } from "./environment/sky-look";
+import { shaftGeometry } from "./jungle-flora";
 import type { Models } from "./models";
 
 /**
- * Everything a rainforest arena has besides walls and obstacles: one continuous ground of grass
- * and mud, tufts of grass, and the forest that stands around the grid.
+ * Everything a rainforest arena has besides walls and obstacles: one continuous ground of grass,
+ * fallen leaves and mud, tufts of grass, shafts of sunlight, and the forest around the grid.
  *
  * All of it is added as plain meshes, so the arena's static batches turn it into a few instanced
- * draws per chunk. Level of detail is by distance from the grid: undergrowth and palms at the
- * edge, full trees behind them and low-polygon trees further out, where fog hides the difference.
- * Grass blades flatten themselves in the vertex shader beyond 34 metres.
+ * draws per chunk. Level of detail is by distance from the grid: undergrowth and full trees at
+ * the edge, simpler trees further out, where the mist hides the difference. Grass blades flatten
+ * themselves in the vertex shader beyond 34 metres.
+ *
+ * The overhead views must see the whole board. Trees that could lean over it lose their crowns
+ * there and are cut off at wall height; see the `trunk` and `canopy` surface profiles.
  */
 
 /** Stable 0..1 hash of a cell and a salt, so scenery never changes between rebuilds of a map. */
@@ -22,21 +27,22 @@ const hash = (x: number, z: number, salt: number) => {
 };
 
 let tuft: THREE.BufferGeometry | undefined;
-/** A patch of short tapered blades. Normals point up so tufts shade like the lawn. */
+/** A patch of tapered blades. Normals point up so tufts shade like the ground they stand on. */
 function tuftGeometry() {
   if (tuft) return tuft;
   const positions: number[] = [],
     normals: number[] = [],
     colors: number[] = [];
-  const root = new THREE.Color("#62803a"),
-    tip = new THREE.Color("#b4cf74");
-  const blades = 11;
+  // Dark at the root, where blades shade each other, and never brighter than a sunlit leaf.
+  const root = new THREE.Color("#3b5224"),
+    tip = new THREE.Color("#8aa650");
+  const blades = 16;
   for (let i = 0; i < blades; i++) {
     const turn = (i / blades) * Math.PI * 2 + hash(i, 3, 1) * 0.8,
       reach = 0.03 + hash(i, 5, 2) * 0.22,
-      height = 0.07 + hash(i, 7, 3) * 0.11,
-      width = 0.007 + hash(i, 9, 4) * 0.006,
-      lean = 0.01 + hash(i, 11, 5) * 0.05;
+      height = 0.1 + hash(i, 7, 3) * 0.2,
+      width = 0.005 + hash(i, 9, 4) * 0.006,
+      lean = 0.02 + hash(i, 11, 5) * 0.09;
     const cx = Math.cos(turn),
       cz = Math.sin(turn);
     // Root corners sit across the blade's direction; the tip leans outward.
@@ -76,6 +82,19 @@ function groundGeometry() {
 
 /** Height of the natural ground. Paved slabs and overlays sit just above it. */
 export const GROUND_LEVEL = -0.03;
+
+const UNDERGROWTH = [
+  // Scan, smallest scale, extra scale. The scans are of knee-high plants; a rainforest's are not.
+  ["fern-a", 1.6, 1.4],
+  ["fern-b", 1.6, 1.4],
+  ["fern-c", 2.0, 1.6],
+  ["calathea-a", 2.2, 1.8],
+  ["calathea-b", 2.6, 2.0],
+  ["anthurium-a", 2.4, 2.4],
+  ["anthurium-b", 2.6, 2.4],
+  ["shrub-a", 3.0, 2.5],
+  ["shrub-b", 3.0, 2.5],
+] as const;
 
 export function buildJungle(
   root: THREE.Group,
@@ -124,27 +143,26 @@ export function buildJungle(
         );
     }
 
-  // The forest around the grid, walked as rings of tiles outside the boundary wall.
   const stand = (
-    id: Parameters<Models["scenery"]>[0],
+    model: THREE.Object3D,
     x: number,
     z: number,
     scale: number,
     turn: number,
     shadows: boolean,
   ) => {
-    const model = models.scenery(id);
     model.position.set(x, GROUND_LEVEL, z);
     model.rotation.y = turn;
-    model.scale.setScalar(scale);
+    model.scale.multiplyScalar(scale);
     model.traverse((part) => {
-      if (part instanceof THREE.Mesh) {
-        part.castShadow = shadows;
-        part.receiveShadow = shadows;
-      }
+      if (!(part instanceof THREE.Mesh)) return;
+      part.castShadow = shadows;
+      // Crowns stay unshadowed either way.
+      part.receiveShadow = part.receiveShadow && shadows;
     });
     root.add(model);
   };
+  // The forest around the grid, walked as rings of tiles outside the boundary wall.
   const reach = 15;
   for (let z = -reach; z < size + reach; z++)
     for (let x = -reach; x < size + reach; x++) {
@@ -155,16 +173,62 @@ export function buildJungle(
         jitterZ = at(z) + (hash(x, z, 2) - 0.5) * TILE_SIZE * 0.8,
         roll = hash(x, z, 3),
         turn = hash(x, z, 4) * 6.28,
-        vary = hash(x, z, 5);
-      if (ring <= 3) {
-        if (roll < 0.42) stand("undergrowth", jitterX, jitterZ, 0.8 + vary * 0.7, turn, false);
-        else if (roll < 0.5 && ring >= 2) stand("palm-tree", jitterX, jitterZ, 0.8 + vary * 0.4, turn, false);
-      } else if (ring <= 7) {
-        // Tall trees keep their distance, so the overhead view never looks through a crown.
-        if (roll < 0.1 && (x + z) % 2 === 0)
-          stand("canopy-tree", jitterX, jitterZ, 0.85 + vary * 0.4, turn, false);
-        else if (roll < 0.24) stand("undergrowth", jitterX, jitterZ, 0.9 + vary * 0.8, turn, false);
-        else if (roll < 0.3) stand("palm-tree", jitterX, jitterZ, 0.9 + vary * 0.5, turn, false);
-      } else if (roll < 0.11) stand("canopy-tree-far", jitterX, jitterZ, 0.9 + vary * 0.7, turn, false);
+        vary = hash(x, z, 5),
+        variant = Math.floor(hash(x, z, 6) * 3);
+      if (ring <= 4) {
+        // The edge of the clearing: a wall of undergrowth under trees that lean over the board.
+        if (roll < 0.14 && ring >= 2)
+          stand(models.jungleTree(variant, "near", false), jitterX, jitterZ, 0.9 + vary * 0.3, turn, true);
+        else if (roll < 0.2 && ring >= 2)
+          stand(models.palm(), jitterX, jitterZ, 0.8 + vary * 0.5, turn, false);
+        else if (roll < (ring <= 2 ? 0.74 : 0.5)) {
+          const [id, base, extra] = UNDERGROWTH[Math.floor(hash(x, z, 7) * UNDERGROWTH.length)];
+          stand(models.scenery(id), jitterX, jitterZ, base + vary * extra, turn, false);
+        } else if (roll < 0.8)
+          stand(
+            models.scenery(
+              (["rock-a", "rock-b", "rock-c", "rock-d"] as const)[variant + (vary < 0.3 ? 1 : 0)],
+            ),
+            jitterX,
+            jitterZ,
+            0.5 + vary * 0.7,
+            turn,
+            false,
+          );
+      } else if (ring <= 8) {
+        if (roll < 0.17)
+          stand(models.jungleTree(variant, "near", true), jitterX, jitterZ, 0.95 + vary * 0.45, turn, false);
+        else if (roll < 0.22) stand(models.palm(), jitterX, jitterZ, 0.9 + vary * 0.6, turn, false);
+        else if (roll < 0.3) {
+          const [id, base, extra] = UNDERGROWTH[Math.floor(hash(x, z, 7) * UNDERGROWTH.length)];
+          stand(models.scenery(id), jitterX, jitterZ, (base + vary * extra) * 1.3, turn, false);
+        }
+      } else if (roll < 0.2)
+        stand(models.jungleTree(variant, "far", true), jitterX, jitterZ, 1 + vary * 0.6, turn, false);
+    }
+
+  // Sunlight breaks through wherever the canopy has a gap. The columns lean with the sun.
+  const sun = new THREE.Vector3(...(JUNGLE_RAIN_SKY.sun.from ?? [0, 1, 0])).normalize(),
+    lean = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), sun),
+    spin = new THREE.Quaternion(),
+    beams = models.materials.shafts(),
+    column = shaftGeometry();
+  for (let z = -3; z < size + 3; z += 3)
+    for (let x = -3; x < size + 3; x += 3) {
+      if (hash(x, z, 90) > 0.32) continue;
+      const beam = new THREE.Mesh(column, beams);
+      beam.position.set(
+        at(x) + (hash(x, z, 91) - 0.5) * TILE_SIZE * 3,
+        -0.6,
+        at(z) + (hash(x, z, 92) - 0.5) * TILE_SIZE * 3,
+      );
+      beam.quaternion
+        .copy(lean)
+        .multiply(spin.setFromAxisAngle(new THREE.Vector3(0, 1, 0), hash(x, z, 93) * 3.14));
+      const width = 2.2 + hash(x, z, 94) * 3.4;
+      beam.scale.set(width, 17 + hash(x, z, 95) * 6, width);
+      // Drawn after the opaque scene and the rain, and never part of a shadow.
+      beam.renderOrder = 2;
+      root.add(beam);
     }
 }

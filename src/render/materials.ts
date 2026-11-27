@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { shaftMaterial } from "./jungle-flora";
 
 /** A texture set under `assets/surfaces`, optionally tinted. */
 interface Surface {
@@ -12,7 +13,18 @@ interface Surface {
   maplessNormal?: boolean;
   /** Thin geometry seen from both faces, such as leaves. */
   doubleSided?: boolean;
+  /** The colour map carries an outline in its alpha channel: leaves cut out of a card. */
+  cutout?: boolean;
+  /** The geometry brings a colour per vertex that tints the surface. */
+  tinted?: boolean;
 }
+/** A scanned plant: leaves cut out of their cards, seen from both sides. */
+const plant = (maps: string, color = "#ffffff"): Surface => ({
+  maps,
+  color,
+  cutout: true,
+  doubleSided: true,
+});
 const paint = (color: string): Surface => ({
   maps: "paint",
   diff: "paint-neutral",
@@ -58,13 +70,23 @@ const PALETTE: Record<string, Surface> = {
   "foliage-oak": { maps: "ground", color: "#8fa565", normal: 1.6 },
   "foliage-pine": { maps: "ground", color: "#5d7f6c", normal: 1.6 },
   // Rainforest
-  "foliage-jungle": { maps: "ground", color: "#527d48", normal: 1.6 },
   "jungle-bark": { maps: "jungle-bark", color: "#d2ccba" },
   "moss-rock": { maps: "moss-rock" },
   "ruin-stone": { maps: "ruin-stone", color: "#e6e0cf" },
   moss: { maps: "ground", color: "#7f9a45", normal: 1.4 },
   leaf: { maps: "leaf", color: "#a9bd94", doubleSided: true, normal: 0.8 },
   "leaf-dark": { maps: "leaf", color: "#74906a", doubleSided: true, normal: 0.8 },
+  fern: plant("fern"),
+  calathea: plant("calathea"),
+  anthurium: plant("anthurium"),
+  shrub: plant("shrub"),
+  "scan-rock": { maps: "scan-rock", normal: 1.5 },
+  // Trunks get cut off in the overhead views; see the `trunk` surface profile.
+  "jungle-trunk": { maps: "jungle-bark", color: "#a39c8a" },
+  // The cards carry both faces themselves, so that both shade with the same normal.
+  "jungle-crown": { diff: "jungle-crown", color: "#b4c29c", roughness: 0.85, cutout: true, tinted: true },
+  // The same leaves over the board: hidden from the overhead views by the `canopy` profile.
+  "jungle-canopy": { diff: "jungle-crown", color: "#b4c29c", roughness: 0.85, cutout: true, tinted: true },
   // Poolrooms
   "pool-tile": { maps: "pool-tile", color: "#f4f7f5", normal: 0.9 },
   // Backrooms
@@ -130,6 +152,8 @@ export class MaterialLibrary {
       roughness: surface.roughness ?? 1,
       metalness: surface.metalness ?? 0,
       side: surface.doubleSided ? THREE.DoubleSide : THREE.FrontSide,
+      alphaTest: surface.cutout ? 0.5 : 0,
+      vertexColors: !!surface.tinted,
     });
     const diff = surface.diff ?? surface.maps;
     if (diff) mat.map = this.texture(path(diff, "diff"), true);
@@ -329,6 +353,8 @@ export class MaterialLibrary {
         wxMudMap: { value: load("jungle-mud_diff", true) },
         wxMudNormal: { value: load("jungle-mud_nor") },
         wxMudRough: { value: load("jungle-mud_rough") },
+        wxLitterMap: { value: load("jungle-litter_diff", true) },
+        wxLitterNormal: { value: load("jungle-litter_nor") },
       };
       this.materials.set("soil", mat);
       this.soilMaterial = mat;
@@ -350,8 +376,8 @@ export class MaterialLibrary {
     if (this.grassMaterial) return this.grassMaterial;
     const mat = new THREE.MeshStandardMaterial({
       name: "grass-blades",
-      color: "#8fb35a",
-      roughness: 0.78,
+      color: "#ffffff",
+      roughness: 0.7,
       vertexColors: true,
     });
     mat.onBeforeCompile = (shader) => {
@@ -377,6 +403,12 @@ export class MaterialLibrary {
     this.materials.set("grass-blades", mat);
     this.grassMaterial = mat;
     return mat;
+  }
+  private shaftMaterial?: THREE.ShaderMaterial;
+  /** Shafts of sunlight in mist. They share the grass clock for their slow drift. */
+  shafts() {
+    this.shaftMaterial ??= shaftMaterial(this.grassTime, new THREE.Color("#ffdfae").multiplyScalar(0.085));
+    return this.shaftMaterial;
   }
   private surface(name: string, override?: SurfaceSet) {
     const loader = new THREE.TextureLoader(this.manager);
@@ -409,5 +441,6 @@ export class MaterialLibrary {
   dispose() {
     this.materials.forEach((m) => m.dispose());
     this.textures.forEach((t) => t.dispose());
+    this.shaftMaterial?.dispose();
   }
 }

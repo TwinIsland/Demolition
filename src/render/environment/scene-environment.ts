@@ -49,13 +49,14 @@ const WEATHER: Record<WeatherKind, Weather> = {
     lightning: true,
     mirror: true,
   },
-  // Warm rain under a forest canopy: the same sky, greener and with thicker ground mist.
+  // The rain is easing off under a forest canopy: everything is soaked, a drizzle still falls
+  // through the sunlight and mist hangs over the ground.
   monsoon: {
     sky: JUNGLE_RAIN_SKY,
     wet: 1,
-    rain: 0.8,
-    groundFog: [0.03, 0.3],
-    lightning: true,
+    rain: 0.5,
+    groundFog: [0.024, 0.2],
+    lightning: false,
     // Grass and mud do not mirror, and a second pass over a large arena costs too much.
     mirror: false,
   },
@@ -125,6 +126,18 @@ export class SceneEnvironment {
   /** Brightness of an office floor's ceiling panels, 0 to 1, for when they stutter. */
   set lampLevel(level: number) {
     this.uniforms.wxLampLevel.value = level;
+  }
+
+  /**
+   * Work lamps whose pools of light the surface shader paints: world position and strength.
+   * Up to four; a map without lamps passes none.
+   */
+  setWorkLamps(lamps: readonly { x: number; y: number; z: number; strength: number }[]) {
+    this.uniforms.wxWorkLamps.value.forEach((slot, index) => {
+      const lamp = lamps[index];
+      if (lamp) slot.set(lamp.x, lamp.y, lamp.z, lamp.strength);
+      else slot.set(0, 0, 0, 0);
+    });
   }
 
   /** Call when permanent walls moved, so rain keeps landing on their tops. */

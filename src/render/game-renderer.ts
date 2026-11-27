@@ -233,6 +233,7 @@ export class GameRenderer {
       state.tiles,
       this.arena.root,
     );
+    this.weather.setWorkLamps(this.arena.workLamps() ?? []);
     this.seed = state.seed;
     this.mapId = state.mapId;
     this.rig.reset();
@@ -276,6 +277,8 @@ export class GameRenderer {
       );
     this.feel.begin(state, localId, wallTime);
     const mapChanged = this.arena!.sync(state);
+    const workLamps = this.arena!.workLamps();
+    if (workLamps) this.weather.setWorkLamps(workLamps);
     this.feel.walls(state, this.arena!.wallLandings);
     if ((state.coverRevision ?? 0) !== this.wallRevision) {
       // A terrain reset may have moved permanent walls; rain lands on their tops.

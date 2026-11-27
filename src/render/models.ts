@@ -15,6 +15,7 @@ import { CoverModels, type SceneryId } from "./cover-models";
 import type { MapDefinition } from "../core/pack-api";
 import type { Obstacle } from "../core/obstacles";
 import { TILE_SIZE } from "../core/geometry";
+import { crownGeometry, palmFronds, palmTrunk, ruinWall, trunkGeometry } from "./jungle-flora";
 
 /** Height of the ceiling of a tiled hall above the deck. */
 export const POOL_CEILING = 5.7;
@@ -40,6 +41,9 @@ export class Models {
     this.covers = new CoverModels(manager, this.materials);
     // Request the rainforest's own surfaces now, so they load with everything else at startup.
     this.wall("rainforest");
+    this.jungleTree(0, "far", true);
+    this.jungleTree(0, "near", false);
+    this.palm();
     this.slab("rainforest", 0);
     this.materials.grass();
     this.materials.soil(new THREE.DataTexture(new Uint8Array(4), 1, 1), [0, 0, 1, 1]);
@@ -285,7 +289,7 @@ export class Models {
   slab(theme: MapDefinition["theme"], shade: number) {
     const material =
       theme === "rainforest"
-        ? this.materials.standard("floor", shade ? "#cfcbbd" : "#dedacb", "ceramic", "ruin-stone")
+        ? this.materials.standard("floor", shade ? "#d6cdb3" : "#e6dcc0", "ceramic", "ruin-stone")
         : this.materials.standard("floor", shade ? "#b1b3ae" : "#bdbdb5", "ceramic");
     return this.box(2.37, 0.18, 2.37, material, 0.03);
   }
@@ -317,7 +321,12 @@ export class Models {
    * ruined masonry, which is what the closing zone raises. A tiled hall has `pillar`, a column
    * that carries the ceiling.
    */
-  wall(theme: MapDefinition["theme"], variant: "block" | "broken" | "tree" | "rock" | "pillar" = "block") {
+  wall(
+    theme: MapDefinition["theme"],
+    variant: "block" | "broken" | "tree" | "rock" | "pillar" = "block",
+    /** Picks one of a variant's looks. The same seed always gives the same wall. */
+    seed = 0,
+  ) {
     if (theme === "poolrooms") {
       const g = new THREE.Group(),
         height = variant === "pillar" ? POOL_CEILING : 2.5;
@@ -365,35 +374,7 @@ export class Models {
       g.add(body, skirting, cap);
       return g;
     }
-    if (theme === "rainforest") {
-      if (variant === "tree" || variant === "rock")
-        return this.scenery(variant === "tree" ? "jungle-tree" : "jungle-rock");
-      const g = new THREE.Group();
-      const stone = (name: string, color: string) =>
-        this.materials.standard(name, color, "ceramic", "ruin-stone");
-      const mossy = this.materials.palette("df:moss")!;
-      if (variant === "broken") {
-        // A wall that lost its upper courses: a low base, one surviving block and fallen rubble.
-        const lower = this.box(2.3, 1.6, 2.3, stone("enamel", "#e4dfd0"), 0.13);
-        lower.position.y = 0.8;
-        const upper = this.box(1.3, 0.9, 1.5, stone("enamel", "#d6d1c1"), 0.13);
-        upper.position.set(-0.45, 2.05, 0.35);
-        const ledge = this.box(0.9, 0.1, 2.1, mossy);
-        ledge.position.set(0.66, 1.62, 0);
-        const top = this.box(1.2, 0.1, 1.4, mossy);
-        top.position.set(-0.45, 2.52, 0.35);
-        g.add(lower, upper, ledge, top);
-        return g;
-      }
-      const body = this.box(2.3, 2.46, 2.3, stone("enamel", "#e4dfd0"), 0.13);
-      body.position.y = 1.23;
-      g.add(body);
-      // Moss has taken the top of every block.
-      const moss = this.box(2.2, 0.1, 2.2, mossy);
-      moss.position.y = 2.48;
-      g.add(moss);
-      return g;
-    }
+    if (theme === "rainforest") return this.jungleWall(variant, seed);
     const midnight = theme === "midnight";
     const g = new THREE.Group(),
       color = midnight ? "#a3a8a6" : "#bcb8ab";
@@ -411,6 +392,124 @@ export class Models {
     const base = this.box(2.31, 0.15, 2.31, this.materials.standard("wall-base", "#444a48", "metal"));
     base.position.y = 0.12;
     g.add(base);
+    return g;
+  }
+  /** A plant or rock from the scans, stood at `x`, `z` of its parent. */
+  private flora(id: SceneryId, x: number, y: number, z: number, scale: number, turn: number) {
+    const model = this.scenery(id);
+    model.position.set(x, y, z);
+    model.rotation.y = turn;
+    model.scale.setScalar(scale);
+    return model;
+  }
+  /** Plain geometry with a shared material, without the cache key `box` and its kin need. */
+  private part(geometry: THREE.BufferGeometry, material: THREE.Material, shadows = true) {
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.castShadow = mesh.receiveShadow = shadows;
+    return mesh;
+  }
+  /**
+   * A rainforest tree: trunk, limbs and lianas, and a crown of leaf cards starting at `height`.
+   * `overhead` trees keep their crown in the overhead views; they belong outside the grid.
+   * The others lose it there and are cut off at wall height, so the board stays in sight.
+   */
+  jungleTree(variant: number, detail: "near" | "far", overhead: boolean) {
+    const g = new THREE.Group(),
+      height = [9.2, 10.6, 8.4][variant % 3],
+      girth = [0.4, 0.46, 0.36][variant % 3],
+      spread = [6, 6.8, 5.4][variant % 3];
+    g.add(
+      this.part(trunkGeometry(variant, height, girth, detail), this.materials.palette("df:jungle-trunk")!),
+    );
+    const crown = this.part(
+      crownGeometry(variant, height, spread, detail === "near" ? 72 : 26),
+      this.materials.palette(overhead ? "df:jungle-crown" : "df:jungle-canopy")!,
+    );
+    // The crown shades the ground but not itself: lit from every side, it reads as translucent.
+    crown.receiveShadow = false;
+    g.add(crown);
+    return g;
+  }
+  palm() {
+    const g = new THREE.Group(),
+      height = 6.4;
+    g.add(this.part(palmTrunk(height), this.materials.palette("df:jungle-trunk")!, false));
+    const fronds = this.part(palmFronds(height), this.materials.palette("df:fern")!, false);
+    fronds.position.set(0.9, 0, 0.2);
+    g.add(fronds);
+    return g;
+  }
+  /** A work lamp on a short post: the head glows and blooms; the light it throws is painted. */
+  workLamp() {
+    const g = new THREE.Group(),
+      dark = this.materials.palette("df:paint-graphite")!;
+    const post = this.box(0.06, 0.4, 0.06, dark, 0.01);
+    post.position.y = 0.2;
+    const head = this.box(0.42, 0.26, 0.12, dark, 0.02);
+    head.position.set(0, 0.5, 0);
+    const lens = this.box(0.36, 0.2, 0.02, this.materials.lamp("#ffc98a", 3.2), 0.004);
+    lens.position.set(0, 0.5, 0.07);
+    lens.castShadow = false;
+    g.add(post, head, lens);
+    return g;
+  }
+  /**
+   * A permanent wall of the rainforest. Trees and rocks fill their cell at the foot; the plain
+   * block is ruined masonry, which is also what the closing zone raises.
+   */
+  private jungleWall(variant: "block" | "broken" | "tree" | "rock" | "pillar", seed: number) {
+    const g = new THREE.Group(),
+      pick = (salt: number) => ((Math.imul(seed + salt * 7919, 2654435761) >>> 0) % 1000) / 1000;
+    if (variant === "tree") {
+      g.add(this.jungleTree(seed % 3, "near", false));
+      // Undergrowth between the buttress roots.
+      const plants = ["fern-a", "fern-b", "calathea-a", "anthurium-b"] as const;
+      for (let i = 0; i < 2; i++) {
+        const angle = pick(i) * 6.28,
+          reach = 0.75 + pick(i + 10) * 0.3;
+        g.add(
+          this.flora(
+            plants[Math.floor(pick(i + 20) * plants.length)],
+            Math.cos(angle) * reach,
+            0,
+            Math.sin(angle) * reach,
+            1.3 + pick(i + 30) * 0.8,
+            pick(i + 40) * 6.28,
+          ),
+        );
+      }
+      return g;
+    }
+    if (variant === "rock") {
+      // One big scanned rock stretched to wall height, with a smaller one leaning on it.
+      const rocks = ["rock-a", "rock-b", "rock-c", "rock-d"] as const;
+      const main = this.scenery(rocks[seed % 4]);
+      const bounds = new THREE.Box3().setFromObject(main),
+        size = bounds.getSize(new THREE.Vector3());
+      main.scale.set((TILE_SIZE * 0.98) / size.x, 2.5 / size.y, (TILE_SIZE * 0.98) / size.z);
+      g.add(main);
+      g.add(this.flora(rocks[(seed + 1) % 4], 0.55, 2.0, -0.2, 0.42, pick(1) * 6.28));
+      g.add(this.flora("fern-a", -0.3, 2.35, 0.3, 1.5, pick(2) * 6.28));
+      g.add(this.flora("fern-c", 0.9, 0, 0.95, 1.8, pick(3) * 6.28));
+      return g;
+    }
+    const { stone, moss } = ruinWall(seed % 3, variant === "broken");
+    g.add(
+      this.part(stone, this.materials.standard("enamel", "#e4dfd0", "ceramic", "ruin-stone")),
+      this.part(moss, this.materials.palette("df:moss")!),
+    );
+    // Something has taken root on most of them.
+    if (seed > 0 && pick(1) < 0.6)
+      g.add(
+        this.flora(
+          pick(2) < 0.5 ? "fern-b" : "shrub-a",
+          (pick(3) - 0.5) * 1.2,
+          variant === "broken" ? 0.84 : 2.46,
+          (pick(4) - 0.5) * 1.2,
+          pick(2) < 0.5 ? 1.3 : 2.6,
+          pick(5) * 6.28,
+        ),
+      );
     return g;
   }
   character(player: Player) {
