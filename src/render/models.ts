@@ -20,8 +20,8 @@ import { crownGeometry, palmFronds, palmTrunk, ruinWall, trunkGeometry } from ".
 
 /** Longest side of a modelled bomb finish, matching the height of the standard charge. */
 /** A modelled finish stands a little taller and wider than the body of the standard charge, at most. */
-const CHARGE_HEIGHT = 1.05;
-const CHARGE_WIDTH = 0.66;
+const CHARGE_HEIGHT = 1.15;
+const CHARGE_WIDTH = 0.72;
 /** Pack models are replaced in place, so their URL carries the build stamp past the browser cache. */
 const fresh = (url: string) =>
   /^(data|blob):/.test(url) ? url : url + (url.includes("?") ? "&" : "?") + "v=" + __ASSET_STAMP__;
@@ -602,10 +602,12 @@ export class Models {
       custom
         .then((asset) => {
           const model = asset.clone();
-          const { length, height } = asset.userData as { length: number; height: number };
+          const { length, height, depth } = asset.userData as Record<"length" | "height" | "depth", number>;
           // The GLB lies along X. Stand it on end, like the standard charge, centred on its cell.
           model.rotation.z = Math.PI / 2;
           model.position.set(height / 2, length / 2, 0);
+          // The standard charge sits to one side of its origin, outside the fist. A held model follows it.
+          if (held) model.position.set(-0.22, length / 2, depth * 0.3);
           lamp.position.set(0, length + 0.05, 0);
           group.add(model);
         })
@@ -655,7 +657,7 @@ export class Models {
         // One more level, so that a clone can be turned without losing the centring above.
         const root = new THREE.Group();
         root.add(holder);
-        root.userData = { length: size.x * scale, height: size.y * scale };
+        root.userData = { length: size.x * scale, height: size.y * scale, depth: size.z * scale };
         return root;
       });
       this.finishModels.set(finish.id, asset);
