@@ -29,6 +29,7 @@ export class StrikePanel implements HudView {
   private readonly title: HTMLElement;
   private readonly readout: HTMLElement;
   private readonly brief: HTMLElement;
+  private readonly confirmButton: HTMLButtonElement;
   private readonly listeners = new AbortController();
   private perk?: PerkDefinition;
   private cursor?: Vec2;
@@ -41,14 +42,29 @@ export class StrikePanel implements HudView {
     root.hidden = true;
     root.innerHTML = `<div class="strike-tablet"><header><span class="strike-title"></span><span class="strike-readout"></span></header>
       <div class="strike-screen"><canvas width="640" height="640"></canvas><i class="strike-sweep"></i></div>
-      <footer><span class="strike-brief"></span><span class="strike-keys"></span></footer></div>`;
+      <footer><span class="strike-brief"></span><span class="strike-keys"></span>
+      <div class="strike-actions"><button type="button" data-strike-cancel>取消</button><button type="button" data-strike-confirm>确认发射</button></div></footer></div>`;
     this.canvas = query<HTMLCanvasElement>(root, "canvas");
     this.title = query(root, ".strike-title");
     this.readout = query(root, ".strike-readout");
     this.brief = query(root, ".strike-brief");
+    this.confirmButton = query<HTMLButtonElement>(root, "[data-strike-confirm]");
     const { signal } = this.listeners;
+    root.addEventListener(
+      "click",
+      (event) => {
+        if (!this.isOpen || !(event.target instanceof Element)) return;
+        if (event.target.closest("[data-strike-cancel]")) {
+          event.stopPropagation();
+          this.actions.cancel();
+        } else if (event.target.closest("[data-strike-confirm]")) {
+          event.stopPropagation();
+          this.confirm();
+        }
+      },
+      { signal },
+    );
     this.canvas.addEventListener("mousemove", (event) => this.point(event), { signal });
-    this.canvas.addEventListener("mouseleave", () => this.aim(undefined), { signal });
     root.addEventListener(
       "mousedown",
       (event) => {
@@ -212,6 +228,7 @@ export class StrikePanel implements HudView {
       });
     }
     const cursor = this.cursor;
+    this.confirmButton.disabled = !strikeTargetValid(s, cursor);
     const radius = this.perk.stats?.radius ?? 0;
     if (!cursor) {
       setText(this.readout, "-- · --");

@@ -1,0 +1,122 @@
+#app .story-menu .gallery-modal {
+  max-width: 1060px;
+}
+.gallery-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.gallery-head small {
+  color: #c9a8f5;
+  font-size: 10px;
+  letter-spacing: 2px;
+}
+.gallery-head button {
+  padding: 8px;
+  background: transparent;
+}
+.gallery-preview {
+  margin: 0 0 20px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 200px;
+  height: min(40dvh, 420px);
+  border: 1px solid #c9a8f540;
+  background: #09090e;
+}
+.gallery-preview > img {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+}
+.gallery-preview figcaption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 22px 14px 10px;
+  font-size: 13px;
+  background: linear-gradient(transparent, #000c);
+  color: #f1e4ff;
+  pointer-events: none;
+}
+.gallery-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: #92919b;
+  font-size: 13px;
+}
+.gallery-empty .icon {
+  width: 36px;
+  height: 36px;
+}
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.gallery-tile {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  padding: 0;
+  min-width: 0;
+  text-align: left;
+  border: 1px solid #aaa3b633;
+  background: #14131b;
+  overflow: hidden;
+}
+.gallery-tile > img,
+.gallery-locked {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+.gallery-locked {
+  background: repeating-linear-gradient(135deg, #232329 0 6px, #202026 6px 12px);
+  color: #777781;
+}
+.gallery-locked .icon {
+  width: 26px;
+  height: 26px;
+}
+.gallery-caption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px;
+  color: #d0c5df;
+  font-size: 12px;
+}
+.gallery-caption small {
+  color: #94909e;
+  font: 10px monospace;
+}
+.gallery-tile:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.gallery-tile:disabled .gallery-caption {
+  color: #777781;
+}
+.gallery-tile[aria-pressed="true"],
+.gallery-tile:not(:disabled):hover {
+  border-color: #c9a8f5;
+  background: #39284d;
+}
+@media (max-width: 600px) {
+  .gallery-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .gallery-preview {
+    height: 30dvh;
+  }
+}

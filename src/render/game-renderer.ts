@@ -264,6 +264,15 @@ export class GameRenderer {
     this.terrainStale = false;
     this.post.setReplay(0);
   }
+  private needsRebuild(state: Readonly<GameSnapshot>) {
+    // Consecutive story acts can share terrain while introducing a different cast.
+    return (
+      this.seed !== state.seed ||
+      this.mapId !== state.mapId ||
+      this.avatars.size !== state.players.length ||
+      state.players.some((player) => !this.avatars.has(player.id))
+    );
+  }
   private rebuild(state: Readonly<GameSnapshot>, terrainOnly = false) {
     if (this.arena) {
       this.scene.remove(this.arena.root);
@@ -327,10 +336,14 @@ export class GameRenderer {
       this.performance.beginGpu();
       if (this.preview.backdrop.draw(this.renderer, wallTime, menuBeat)) return;
     }
-    if (this.seed !== state.seed || this.mapId !== state.mapId)
+    if (this.needsRebuild(state))
       this.rebuild(
         state,
-        this.mapId === state.mapId && state.mode === "practice" && state.phase === "playing",
+        this.mapId === state.mapId &&
+          state.mode === "practice" &&
+          state.phase === "playing" &&
+          this.avatars.size === state.players.length &&
+          state.players.every((player) => this.avatars.has(player.id)),
       );
     else if (this.terrainStale) this.rebuild(state, true);
     this.terrainStale = false;
@@ -573,7 +586,7 @@ export class GameRenderer {
     } else if (this.target.visible) {
       const lob = canLob(you.equipped);
       const throwMode = lob ? "lob" : "direct";
-      const cell = aimCell(you, aim.yaw, aim.pitch, you.equipped, state.time, throwMode);
+      const cell = aimCell(you, aim.yaw, aim.pitch, you.equipped, state.time, throwMode, state.size);
       const valid = canPlace(state, you, cell, you.equipped, throwMode);
       if (ITEMS[you.equipped]?.throwable) {
         this.throwGuide.root.visible = aim.previewThrows && (valid || lob);
@@ -751,7 +764,7 @@ export class GameRenderer {
     try {
       for (const map of maps) this.preview?.backdrop.preload(map);
       await Promise.all([this.models.preload(state.players, true), this.models.preloadCatalog()]);
-      if (this.seed !== state.seed || this.mapId !== state.mapId) this.rebuild(state);
+      if (this.needsRebuild(state)) this.rebuild(state);
       this.groundFire.warm(this.renderer);
       await this.assets.ready();
       this.assets.phase("Shaders");
@@ -764,7 +777,8 @@ export class GameRenderer {
     const stop = this.assets.watch(progress);
     try {
       await this.models.preload(state.players, includeDrops);
-      if (this.seed !== state.seed || this.mapId !== state.mapId) this.rebuild(state);
+      // A fresh round can reuse the same map, seed and cast after its terrain was demolished.
+      this.rebuild(state);
       await this.assets.ready();
       this.assets.phase("Shaders");
       await this.warmUp(state);

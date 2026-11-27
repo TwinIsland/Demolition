@@ -1,11 +1,12 @@
 import { STAFF } from "../../ui/credits-data";
 import type { Stage } from "../stage";
 import { ENDING_SKINS, type Ending } from "./unlocks";
+import { unlockIllustration } from "../gallery";
 
 export interface Roll {
   /** Resolves true when the roll has run out, false if it was disposed first. */
   readonly done: Promise<boolean>;
-  /** The action key: once to bring the reward up at once, again to leave. */
+  /** The action key leaves only after the full credits have finished. */
   act(): void;
   paused: boolean;
   dispose(): void;
@@ -30,7 +31,6 @@ const CAST: readonly [string, string][] = [
 const MUSIC: readonly [string, string][] = [
   ["电动少女 (8-Bit Remix)", "Chinese Football"],
   ["Share Friendship", "黒魔"],
-  ["You've Got to Have Freedom", "Pharoah Sanders"],
   ["Clumsy Communication", "黒魔"],
   ["献花の番人", "黒魔"],
   ["电动少女", "Chinese Football"],
@@ -54,6 +54,7 @@ export function rollCredits(
   backdrop: string | undefined,
   firstTime: boolean,
 ): Roll {
+  if (backdrop) unlockIllustration(backdrop);
   const layer = document.createElement("div");
   layer.className = "shutdown-credits";
   const reward = ENDING_SKINS[ending];
@@ -84,7 +85,8 @@ export function rollCredits(
   let offset = 0,
     last = 0,
     frame = 0,
-    heldAt = 0,
+    finished = false,
+    rewardTime = 0,
     over = false,
     settle: (finished: boolean) => void = () => {};
   const done = new Promise<boolean>((resolve) => (settle = resolve));
@@ -92,9 +94,7 @@ export function rollCredits(
     done,
     paused: false,
     act() {
-      // First press brings the reward up at once; the second leaves.
-      if (!heldAt) offset = Infinity;
-      else if (!over) {
+      if (finished && !roll.paused && !over) {
         over = true;
         settle(true);
       }
@@ -112,7 +112,7 @@ export function rollCredits(
     last = now;
     const height = layer.clientHeight;
     if (!height) return;
-    if (!heldAt) {
+    if (!finished) {
       offset += dt * SPEED * height;
       column.style.translate = `0 ${height - offset}px`;
       if (offset < height + column.offsetHeight) return;
@@ -120,10 +120,13 @@ export function rollCredits(
       column.hidden = true;
       card.hidden = false;
       stage.host.menu("accept");
-      heldAt = now;
-    } else if (!over && !roll.paused && now - heldAt > HOLD_MS * 4) {
-      over = true;
-      settle(true);
+      finished = true;
+    } else if (!over) {
+      rewardTime += dt;
+      if (rewardTime > (HOLD_MS * 4) / 1000) {
+        over = true;
+        settle(true);
+      }
     }
   };
   frame = requestAnimationFrame(tick);

@@ -1,4 +1,6 @@
 const ICON_PATHS: Record<string, string> = {
+  gallery:
+    '<rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8" cy="8" r="2"/><path d="m3 17 5-5 4 4 4-6 5 7"/>',
   collapse: '<path d="m2 13 10-5 10 5-10 5zM3 17l9 5 9-5M8 2l4 4 4-4m-4 4V1"/>',
   bandage:
     '<path d="m4 13 9-9a3 3 0 0 1 4 0l3 3a3 3 0 0 1 0 4l-9 9a3 3 0 0 1-4 0l-3-3a3 3 0 0 1 0-4z"/><path d="m8 9 7 7m-3-11 7 7m-12 3 1 1m7-9 1 1"/>',
@@ -36,6 +38,10 @@ const ICON_PATHS: Record<string, string> = {
   coin: '<circle cx="12" cy="12" r="9"/><path d="M12 6.5v11M15 9.2c-.6-1-1.7-1.5-3-1.5-1.7 0-3 .9-3 2.2 0 3 6 1.4 6 4.3 0 1.300-1.300 2.200-3 2.200-1.400 0-2.600-.600-3.200-1.600"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9 8c0-4 7-3 6 1-1 2-3 1-3 4m0 4h.01"/>',
   pause: '<path d="M8 5v14M16 5v14"/>',
+  music:
+    '<path d="M9 18V5l12-2v13M9 9l12-2"/><ellipse cx="6" cy="18" rx="3" ry="3"/><ellipse cx="18" cy="16" rx="3" ry="3"/>',
+  previous: '<path d="M5 5v14m14-14L8 12l11 7V5Z"/>',
+  next: '<path d="M19 5v14M5 5l11 7-11 7V5Z"/>',
   play: '<path d="m8 4 12 8-12 8V4Z"/>',
   close: '<path d="m6 6 12 12M18 6 6 18"/>',
   crown: '<path d="m3 6 4 4 5-7 5 7 4-4-2 13H5L3 6ZM5 22h14"/>',

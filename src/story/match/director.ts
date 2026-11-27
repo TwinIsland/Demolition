@@ -33,8 +33,8 @@ export interface Director {
   cut(change: () => void | Promise<unknown>): Promise<boolean>;
 }
 
-/** The match's four facings as yaw, for the overhead view: 0 looks south. */
-export const yawTo = (from: Vec2, to: Vec2) => Math.atan2(to.x - from.x, to.z - from.z);
+/** Match the camera and movement convention: yaw 0 faces north, along negative Z. */
+export const yawTo = (from: Vec2, to: Vec2) => Math.atan2(from.x - to.x, from.z - to.z);
 
 const VEIL_MS = 450;
 const SAFE_SECONDS = 2;

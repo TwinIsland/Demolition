@@ -3,7 +3,12 @@ import { preloadEverything } from "./preload";
 import { KeyboardAgent } from "../agents/keyboard-agent";
 import { CREDITS_MUSIC, MENU_MUSIC, Sound, STORY_MUSIC } from "../audio/sound";
 import { nextAct } from "../story/chapters";
-import type { StoryMatch, StoryMatchOptions } from "../story/stage";
+import {
+  storyHudShows,
+  type StoryMatch,
+  type StoryMatchOptions,
+  type StoryShopOptions,
+} from "../story/stage";
 import { loadStory } from "../story/save";
 import { finishLocked, knifeLocked, mapLocked } from "../story/unlocks";
 import { perkById } from "../core/content";
@@ -80,7 +85,11 @@ export class GameApp {
   /** The match story mode is staging, while there is one. */
   private storyMatch?: StoryMatch;
   /** The skill shop a story scene has open, and what to do once the hero deploys from it. */
-  private storyShop?: { dialog: HTMLElement; done: (deployed: boolean) => void };
+  private storyShop?: {
+    dialog: HTMLElement;
+    requiredSkills: readonly SkillId[];
+    done: (deployed: boolean) => void;
+  };
   private deathShown = false;
   private readonly feedback: FeedbackHud;
   private displayedLevel = 1;
@@ -163,6 +172,11 @@ export class GameApp {
   // --- Screen transitions ---
 
   openRoom() {
+    if (this.screens.is("story")) {
+      this.ui.restartStory();
+      this.sound.menu("accept");
+      return;
+    }
     this.dropReplay();
     this.releaseControls();
     this.sound.setMusic(MENU_MUSIC);
@@ -174,6 +188,7 @@ export class GameApp {
   }
 
   goHome() {
+    if (this.screens.is("story")) return this.closeStory();
     this.dropReplay();
     this.screens.transition("lobby");
     this.previewTerrain = false;
@@ -188,6 +203,13 @@ export class GameApp {
   }
 
   pause(audible = true) {
+    if (this.screens.is("story")) {
+      if (this.ui.storyMenuKind) return;
+      if (this.targeting) this.endTargeting(undefined, false);
+      this.ui.showPause();
+      if (audible) this.sound.menu("accept");
+      return;
+    }
     if (!this.screens.is("playing")) return;
     this.screens.transition("paused");
     this.releaseControls();
@@ -196,6 +218,11 @@ export class GameApp {
   }
 
   resume() {
+    if (this.screens.is("story") || (this.screens.is("lobby") && this.ui.storyMenuKind)) {
+      this.ui.closeStoryMenu();
+      this.sound.menu("back");
+      return;
+    }
     if (this.screens.is("help") && this.helpFromLobby) {
       this.goHome();
       return;
@@ -211,9 +238,10 @@ export class GameApp {
 
   /** Escape, or the pause key: steps one level out of the current screen. */
   back() {
-    if (this.screens.is("graphics")) this.closeGraphics();
+    if (this.ui.storyMenuKind) this.resume();
+    else if (this.screens.is("graphics")) this.closeGraphics();
     else if (this.screens.is("credits")) this.closeCredits();
-    else if (this.screens.is("story")) this.ui.toggleStoryExit();
+    else if (this.screens.is("story")) this.pause();
     else if (this.screens.is("room")) this.goHome();
     else if (this.screens.is("lobby")) {
       if (this.ui.lobbyBack()) this.sound.menu("back");
@@ -252,6 +280,11 @@ export class GameApp {
   }
 
   closeGraphics() {
+    if (this.screens.is("story")) {
+      this.ui.closeStoryMenu();
+      this.sound.menu("back");
+      return;
+    }
     if (!this.screens.is("graphics")) return;
     this.screens.transition("lobby");
     this.ui.hideOverlay();
@@ -302,13 +335,17 @@ export class GameApp {
   }
 
   /** Closes the tablet and hands control back; with a `target`, the perk is fired at it. */
-  endTargeting(target?: Vec2) {
+  endTargeting(target?: Vec2, restoreControl = true) {
     const id = this.targetingPerk;
     if (!id) return;
     this.targetingPerk = undefined;
     this.ui.strike.close();
     this.keyboard.clear();
-    this.keyboard.enabled = this.screens.is("playing") && this.viewer().alive;
+    this.keyboard.enabled =
+      restoreControl &&
+      this.viewer().alive &&
+      (this.screens.is("playing") ||
+        (this.screens.is("story") && !!this.storyMatch?.control && !this.storyMatch.paused));
     if (!this.keyboard.enabled) return;
     if (target) this.keyboard.queuePerk(id, target);
     else this.sound.menu("back");
@@ -328,6 +365,7 @@ export class GameApp {
 
   /** Takes the offered perk at `index`. Returns false when there is nothing to take. */
   chooseOffer(index: number): boolean {
+    if (this.storyMatch && !storyHudShows(this.storyMatch.hud, "perks")) return false;
     const viewer = this.viewer();
     const offer = viewer.offers[index];
     if (!viewer.alive || !offer) return false;
@@ -336,6 +374,7 @@ export class GameApp {
   }
 
   togglePerks() {
+    if (this.storyMatch && !storyHudShows(this.storyMatch.hud, "perks")) return;
     this.ui.togglePerks();
   }
 
@@ -436,30 +475,52 @@ export class GameApp {
       resume: () => this.resume(),
       goHome: () => this.goHome(),
       openHelp: () => this.openHelp(),
+      openMusicBox: () => {
+        const storyLobby = this.screens.is("lobby") && this.ui.lobbyTab === "story";
+        if ((!this.screens.is("story") && !storyLobby) || this.ui.storyMenuKind === "music") return;
+        if (this.targeting) this.endTargeting(undefined, false);
+        this.ui.showMusicBox(this.sound.openMusicPlayer(), (volume) => this.sound.setVolume("music", volume));
+        this.sound.menu("accept");
+      },
+      openGallery: () => {
+        if (!this.screens.is("lobby") || this.ui.lobbyTab !== "story" || this.ui.storyMenuKind === "gallery")
+          return;
+        this.ui.showGallery();
+        this.sound.menu("accept");
+      },
       openGraphics: () => {
+        if (this.screens.is("story")) {
+          if (this.targeting) this.endTargeting(undefined, false);
+          this.ui.showGraphics(this.renderer.graphics, this.sound.volumes);
+          this.sound.menu("accept");
+          return;
+        }
         if (!this.screens.is("lobby")) return;
         this.screens.transition("graphics");
         this.ui.showGraphics(this.renderer.graphics, this.sound.volumes);
         this.sound.menu("accept");
       },
       changeGraphics: (value) => {
-        if (!this.screens.is("graphics")) return;
+        if (!this.screens.is("graphics") && this.ui.storyMenuKind !== "graphics") return;
         this.renderer.setGraphics(value);
         saveGraphics(value);
       },
       closeGraphics: () => this.closeGraphics(),
       setVolume: (channel, position) => {
-        if (this.screens.is("graphics")) this.sound.setVolume(channel, position);
+        if (this.screens.is("graphics") || this.ui.storyMenuKind === "graphics")
+          this.sound.setVolume(channel, position);
       },
       previewVolume: (channel) => {
-        if (this.screens.is("graphics")) this.sound.previewVolume(channel);
+        if (this.screens.is("graphics") || this.ui.storyMenuKind === "graphics")
+          this.sound.previewVolume(channel);
       },
       openCredits: () => {
         if (!this.screens.is("lobby")) return;
+        const music = this.ui.lobbyTab === "story" ? STORY_MUSIC.opening : CREDITS_MUSIC;
         this.screens.transition("credits");
-        this.ui.showCredits(() => this.sound.creditsSpectrum());
+        this.ui.showCredits(() => this.sound.creditsSpectrum(music));
         this.sound.menu("accept");
-        this.sound.setMusic(CREDITS_MUSIC);
+        this.sound.setMusic(music);
       },
       closeCredits: () => this.closeCredits(),
       changeLobbyTab: () => {
@@ -499,6 +560,12 @@ export class GameApp {
   }
 
   private openHelp() {
+    if (this.screens.is("story")) {
+      if (this.targeting) this.endTargeting(undefined, false);
+      this.ui.showHelp(true);
+      this.sound.menu("accept");
+      return;
+    }
     if (this.screens.is("shop", "room", "credits", "story")) return;
     // Reopening the manual from itself keeps the place it was first opened from.
     this.helpFromLobby = this.screens.is("lobby") || (this.screens.is("help") && this.helpFromLobby);
@@ -509,7 +576,7 @@ export class GameApp {
   }
 
   private changeLanguage(value: Language) {
-    if (!this.screens.is("graphics", "paused")) return;
+    if (!this.screens.is("graphics", "paused") && !this.ui.storyMenuKind) return;
     setLanguage(value);
     localizeDocument();
     this.renderer.canvas.ariaLabel = t("3D 爆破战场");
@@ -518,7 +585,9 @@ export class GameApp {
     this.ui.setSound(this.sound.enabled);
     this.ui.setTerrainPreview(this.previewTerrain);
     // The open dialog is rebuilt in the new language, so focus has to be put back on the select.
-    if (this.screens.is("graphics")) this.ui.showGraphics(this.renderer.graphics, this.sound.volumes);
+    if (this.screens.is("graphics") || this.ui.storyMenuKind === "graphics")
+      this.ui.showGraphics(this.renderer.graphics, this.sound.volumes);
+    else if (this.ui.storyMenuKind === "help") this.ui.showHelp(true);
     else this.ui.showPause();
     queueMicrotask(() => this.ui.focusLanguageSelect());
   }
@@ -612,11 +681,16 @@ export class GameApp {
     const viewer = this.viewer();
     if (viewer.credits === before) this.sound.shop("deny");
     else this.sound.skillTrade(refund);
-    this.ui.showShop(viewer);
+    if (this.storyShop) this.ui.updateStoryShop(this.storyShop.dialog, viewer);
+    else this.ui.showShop(viewer);
   }
 
   private deploy() {
     if (this.storyShop) {
+      if (!this.storyShop.requiredSkills.every((id) => this.viewer().skills.includes(id))) {
+        this.sound.shop("deny");
+        return;
+      }
       this.sound.shop("close");
       this.endStoryShop(true);
       return;
@@ -637,9 +711,11 @@ export class GameApp {
     this.session.advance(0);
     // A further pending level refills the offer; keep control with the tray until none is left.
     if (this.viewer().offers.length) return;
-    this.ui.hideOverlay();
     this.ui.clearPerks();
     this.equipment.closeWheel();
+    // The story owns its overlay and control lock, including the next line after this choice.
+    if (this.storyMatch) return;
+    this.ui.hideOverlay();
     this.keyboard.enabled = true;
     void this.keyboard.lockPointer();
   }
@@ -683,7 +759,9 @@ export class GameApp {
     });
     await this.renderer.prepare(this.session.getSnapshot(), true, () => {});
     const { session, renderer, keyboard, ui } = this;
-    let hud = false;
+    const app = this;
+    let hud: StoryMatch["hud"] = false;
+    let control = false;
     ui.setStoryMatch(true);
     const viewer = () => this.viewer();
     const match: StoryMatch = {
@@ -697,16 +775,18 @@ export class GameApp {
       setAgent: (id, agent) => session.setAgent?.(id, agent),
       paused: true,
       get control() {
-        return keyboard.enabled;
+        return control;
       },
       set control(value) {
-        if (value === keyboard.enabled) return;
+        control = value;
+        const enabled = value && !app.targeting;
+        if (enabled === keyboard.enabled) return;
         keyboard.clear();
-        keyboard.enabled = value;
+        keyboard.enabled = enabled;
         // First person steers with the mouse; the overhead view leaves the pointer free.
         const state = session.getSnapshot();
-        if (value && !inTacticalView(viewer(), state.time)) void keyboard.lockPointer();
-        else if (!value && document.pointerLockElement) document.exitPointerLock();
+        if (enabled && !inTacticalView(viewer(), state.time)) void keyboard.lockPointer();
+        else if (!enabled && document.pointerLockElement) document.exitPointerLock();
       },
       get hud() {
         return hud;
@@ -716,6 +796,9 @@ export class GameApp {
         ui.setStoryHud(value);
       },
       live: false,
+      get mutationNoticePending() {
+        return ui.mutationNotice.pending;
+      },
       get look() {
         return { yaw: keyboard.yaw, pitch: keyboard.pitch };
       },
@@ -723,7 +806,7 @@ export class GameApp {
         keyboard.yaw = yaw;
         keyboard.pitch = pitch;
       },
-      shop: () => this.openStoryShop(match),
+      shop: (options) => this.openStoryShop(match, options),
     };
     this.displayedLevel = this.viewer().level;
     this.feedback.clear();
@@ -746,20 +829,29 @@ export class GameApp {
   }
 
   /** The game's own skill shop, laid over a story scene. The match stands still while it is open. */
-  private openStoryShop(match: StoryMatch): Promise<boolean> {
+  private openStoryShop(match: StoryMatch, options: StoryShopOptions = {}): Promise<boolean> {
     this.endStoryShop(false);
     const stage = document.querySelector<HTMLElement>(".story-stage");
     if (!stage || this.storyMatch !== match) return Promise.resolve(false);
     const held = { paused: match.paused, control: match.control };
     match.control = false;
     match.paused = true;
+    match.mutate((state) => {
+      state.storyShop = true;
+      state.storyShopSkills = options.requiredSkills ? [...options.requiredSkills] : undefined;
+    });
     this.session.advance(0);
     this.sound.shop("open");
     return new Promise((resolve) => {
       this.storyShop = {
-        dialog: this.ui.mountShop(stage, this.viewer()),
+        dialog: this.ui.mountShop(stage, this.viewer(), options),
+        requiredSkills: options.requiredSkills ?? [],
         done: (deployed) => {
           if (this.storyMatch === match) {
+            match.mutate((state) => {
+              delete state.storyShop;
+              delete state.storyShopSkills;
+            });
             match.paused = held.paused;
             match.control = held.control;
           }
@@ -868,7 +960,9 @@ export class GameApp {
 
   /** The perk offer when one arrives, and the banner for every level reached since the last one. */
   private announceProgress(state: Readonly<GameSnapshot>, viewer: Player, now: number) {
-    if (this.ui.offerPerks(viewer)) this.sound.perkReady();
+    const hud = this.storyMatch?.hud ?? true;
+    if (storyHudShows(hud, "perks") && this.ui.offerPerks(viewer)) this.sound.perkReady();
+    if (!storyHudShows(hud, "progression")) return;
     if (viewer.level <= this.displayedLevel) return;
     // The fixed gains of every level crossed since the banner last showed.
     const gains = state.events

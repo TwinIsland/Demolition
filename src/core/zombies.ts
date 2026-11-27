@@ -2,7 +2,7 @@ import { clearSight, laneDistances, SLIDE_STEP } from "./geometry";
 import { ZOMBIE_STATS } from "./loot";
 import { DIRECTIONS } from "./maps";
 import { ZOMBIE_RATES, type ZombieRate } from "./room";
-import { isCloaked } from "./types";
+import { isBystander, isCloaked } from "./types";
 import type { Bomb, GameSnapshot, Player, Vec2, Zombie } from "./types";
 import { zoneBurning } from "./zone";
 
@@ -17,6 +17,7 @@ interface Tracking {
 
 const atCell = (p: Vec2) => ({ x: Math.round(p.x), z: Math.round(p.z) });
 const same = (a: Vec2, b: Vec2) => a.x === b.x && a.z === b.z;
+const prey = (s: GameSnapshot, p: Player) => p.alive && !isBystander(p) && (!s.storyTutorial || !p.bot);
 const blocked = (s: GameSnapshot, p: Vec2) => s.tiles[p.z]?.[p.x] !== 0 || s.bombs.some((b) => same(b, p));
 
 export const SUMMON_TIME = 1.15;
@@ -87,16 +88,13 @@ export class ZombieDirector {
     const cadence = ZOMBIE_RATES[this.rate];
     // Pacing in the manner of an AI director: ease off while players are under pressure,
     // and bring the next wave sooner when the arena has gone quiet.
-    const alive = s.players.filter((p) => p.alive),
+    const alive = s.players.filter((p) => prey(s, p)),
       chasing = [...this.tracking.values()].filter((brain) => brain.visible).length,
       health = alive.reduce((sum, p) => sum + p.hp / p.maxHp, 0) / Math.max(1, alive.length);
     const pacing = chasing >= 2 || health < 0.45 ? 1.7 : chasing === 0 ? 0.75 : 1;
     this.nextSpawn = s.time + (cadence.min + random() * (cadence.max - cadence.min)) * pacing;
     if (s.zombies.length >= 6) return;
-    const distances = laneDistances(
-      s,
-      s.players.filter((p) => p.alive),
-    );
+    const distances = laneDistances(s, alive);
     const occupied = new Set(
       [...s.zombies, ...s.blasts, ...s.fires, ...s.items].map(
         (p) => Math.round(p.z) * s.size + Math.round(p.x),
@@ -121,7 +119,7 @@ export class ZombieDirector {
     let distance: number = ZOMBIE_STATS[enemy.level].sight;
     for (const p of s.players) {
       const d = Math.hypot(p.x - enemy.x, p.z - enemy.z);
-      if (p.alive && !isCloaked(p, s.time) && d <= distance && clearSight(s, enemy, p)) {
+      if (prey(s, p) && !isCloaked(p, s.time) && d <= distance && clearSight(s, enemy, p)) {
         nearest = p;
         distance = d;
       }
@@ -131,7 +129,7 @@ export class ZombieDirector {
       brain.lastSeen = { x: nearest.x, z: nearest.z };
       brain.targetId = nearest.id;
       brain.forgetAt = s.time + 1.4;
-    } else if (s.time >= brain.forgetAt || !s.players.some((p) => p.alive && p.id === brain.targetId)) {
+    } else if (s.time >= brain.forgetAt || !s.players.some((p) => prey(s, p) && p.id === brain.targetId)) {
       brain.lastSeen = undefined;
       brain.targetId = undefined;
     }
@@ -228,7 +226,8 @@ export class ZombieDirector {
         if (s.time >= impact && s.time - dt < impact) {
           const target = s.players.find((p) => p.id === attack.targetId);
           if (
-            target?.alive &&
+            target &&
+            prey(s, target) &&
             Math.hypot(target.x - enemy.x, target.z - enemy.z) < ZOMBIE_STRIKE.reach &&
             clearSight(s, enemy, target)
           )
@@ -257,7 +256,7 @@ export class ZombieDirector {
       if (!attack || s.time >= attack.at + ZOMBIE_STRIKE.interval) {
         const target = s.players.find(
           (p) =>
-            p.alive &&
+            prey(s, p) &&
             !isCloaked(p, s.time) &&
             Math.hypot(p.x - enemy.x, p.z - enemy.z) < ZOMBIE_STRIKE.reach &&
             clearSight(s, enemy, p),

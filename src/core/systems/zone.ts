@@ -60,21 +60,36 @@ function clearRoute(ctx: SimContext, ring: number, notify = false) {
   const s = ctx.state,
     size = s.size;
   let changed = notify;
+  const demolition = new Set<number>();
   for (let z = 0; z < size; z++)
     for (let x = 0; x < size; x++) {
       const depth = ringOf(size, { x, z });
       if (depth !== ring && depth !== ring + 1) continue;
-      const cell = z * size + x;
-      if (s.tiles[z][x] === 0) continue;
-      changed = true;
-      if (s.tiles[z][x] === 2) {
-        delete s.coverDamage?.[s.coverOrigins?.[cell] ?? cell];
-        delete s.coverOrigins?.[cell];
-        removeBuiltCrate(s, x, z);
-      }
-      s.tiles[z][x] = 0;
-      delete s.wallOrigins?.[cell];
+      demolition.add(z * size + x);
+      // Village buildings occupy several solid cells. Demolish the whole footprint together,
+      // so losing an outer wall cannot leave invisible collision cells inside a roofless shell.
+      if (s.tiles[z][x] !== 1) continue;
+      const [kind, footprint, part] = (ctx.map.featureAt?.(x, z, size) ?? "").split(":");
+      if (!footprint || !part || !["farmhouse", "dojo", "shop", "cottage", "shrine"].includes(kind)) continue;
+      const [columns, rows] = footprint.split("x").map(Number);
+      const [column, row] = part.split(",").map(Number);
+      for (let bz = z - row; bz < z - row + rows; bz++)
+        for (let bx = x - column; bx < x - column + columns; bx++)
+          if (ringOf(size, { x: bx, z: bz }) > (s.zone?.closed ?? 0)) demolition.add(bz * size + bx);
     }
+  for (const cell of demolition) {
+    const x = cell % size,
+      z = Math.floor(cell / size);
+    if (s.tiles[z][x] === 0) continue;
+    changed = true;
+    if (s.tiles[z][x] === 2) {
+      delete s.coverDamage?.[s.coverOrigins?.[cell] ?? cell];
+      delete s.coverOrigins?.[cell];
+      removeBuiltCrate(s, x, z);
+    }
+    s.tiles[z][x] = 0;
+    delete s.wallOrigins?.[cell];
+  }
   const swept = (p: Vec2) => ringOf(size, p) <= ring + 1;
   s.bombs = s.bombs.filter((bomb) => !swept(bomb));
   s.thrown = s.thrown.filter((item) => !swept(item));

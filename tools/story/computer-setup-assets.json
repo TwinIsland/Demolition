@@ -1,0 +1,31 @@
+{
+  "generator": "built-in image_gen",
+  "assets": {
+    "bedroom-empty": {
+      "prompt": "Use case: precise-object-edit. Edit target: this exact NIGHT pixel RPG bedroom. Change only the right-hand desk area for a point-and-click computer setup puzzle. REMOVE the CRT computer completely from the tabletop, leaving a clear empty rectangular wooden spot where it stood. Keep the desk outline, chair position, cups, controller, lamp, all room furniture, lighting, camera and floor clutter in exactly the same positions. ADD one small clearly recognizable white power strip with a red rocker switch on the FLOOR just below the desk, around logical320x180-stage coordinate (285,148). Its cord runs neatly along the right wall, no cord across walking paths. It has an empty socket ready for a computer. Keep power strip about12x5 stage pixels, never huge. Do NOT place any other monitor, laptop or computer on the desk. Keep the old cardboard computer box under the south edge of the bed for the player to discover. Preserve all walkable floor and furniture collision edges, exact16:9 framing, warm lamp/deep purple night color scheme, crisp 16-bit pixels. No people, labels, text, UI, or new decor.",
+      "generatedSource": "/Users/tianyi/.codex/generated_images/01a21e7d-0445-7082-8656-fcac0da412d1/exec-4e0fcbfb-d782-4a82-985c-ccdc3532d236.png",
+      "output": "src/story/assets/bedroom.png",
+      "processing": "Nearest-neighbor reduction to320x180. Night animation preview contains only the dust overlay; the desk starts empty."
+    },
+    "computer-setup": {
+      "prompt": "Use case: illustration-story. Asset type: transparent four-state pixel-art CRT computer sprite sheet for the reference bedroom's RIGHT-hand desk. Perfectly regular2x2 grid, four equal square cells, no gutters/lines/labels. The same SMALL beige old CRT monitor with a short desktop base in exactly the same position and same shape in every cell. Three-quarter side view, FRONT SCREEN FACES LEFT toward the chair, bulky vented back projects RIGHT. Match reference's purple/cream pixel art and camera. No desk, lamp, cups, keyboard or background. IMPORTANT states: TOP LEFT is the computer turned OFF, its glass nearly-black plum; TOP RIGHT, BOTTOM LEFT, BOTTOM RIGHT are the same computer powered ON with a steady soft cyan/violet screen glow and a tiny round bubble game icon with a small scanline moving slightly between the three ON frames. Only screen pixels and a tiny power LED change; body, scale, edges and screen alignment never move. Each cell must remain sharp and readable when downscaled to32x32 pixels. Computer centered in each cell, fills about75 percent cell width/height, same baseline, complete casing visible with generous transparent margin. True alpha-transparent background, no colored backdrop, no painted checkerboard, no bright edge fringe, no text or UI overlays.",
+      "generatedSource": "/Users/tianyi/.codex/generated_images/01a21e7d-0445-7082-8656-fcac0da412d1/exec-b741e31b-e499-4508-b45a-2ba5ede6c41e.png",
+      "output": "src/story/assets/computer-setup.png",
+      "inventoryIcon": "src/story/assets/computer-item.png",
+      "states": "2x2 cells, each32x32. Frame0 off, frames1-3 powered loop. Stage placement at(254,78).",
+      "processing": "Crop four equal source cells, each nearest-neighbor reduced to32x32, packed in a64x64 RGBA sheet; frame0 also saved as inventory icon. Loop frames1-3 at1.2seconds per cycle.",
+      "preview": "src/story/assets/room-frames/computer-setup-preview.gif"
+    }
+  },
+  "foregroundMasks": {
+    "crop": [
+      254,
+      68,
+      304,
+      138
+    ],
+    "occlusion": "Draw above the walker while feetY<138.",
+    "night": "src/story/assets/bedroom-desk.png",
+    "morning": "src/story/shutdown/art/bedroom-desk.png"
+  }
+}

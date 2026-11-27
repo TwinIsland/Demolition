@@ -9,6 +9,9 @@ export class MutationNotice {
   private active?: MutationId;
   private until = 0;
   private panel = document.createElement("aside");
+  get pending() {
+    return this.active !== undefined || this.queue.length > 0;
+  }
   constructor(hud: HTMLElement) {
     this.panel.className = "mutation-notice";
     this.panel.setAttribute("role", "status");

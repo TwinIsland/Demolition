@@ -12,7 +12,7 @@ export interface Room {
   /** Walking direction; (0, 0) stands still. Ignored while `frozen`. */
   move(x: number, y: number): void;
   frozen: boolean;
-  /** The hotspot in front of the player, if any. */
+  /** The reachable hotspot, in front or within its optional proximity radius. */
   readonly facing: Hotspot | undefined;
   /** Stops the room's clock while set. */
   paused: boolean;
@@ -55,9 +55,33 @@ export function openRoom(
     walkable(x - FEET.halfWidth, y - FEET.height) &&
     walkable(x + FEET.halfWidth, y - FEET.height);
   const hotspots = new Map(scene.hotspots.map((hotspot) => [hotspot.symbol, hotspot]));
+  const proximity = scene.hotspots
+    .filter((hotspot) => hotspot.interactionRadius !== undefined)
+    .map((hotspot) => ({
+      hotspot,
+      cells: rows.flatMap((row, z) =>
+        [...row].flatMap((symbol, x) =>
+          symbol === hotspot.symbol ? [{ x: left + x * cell, y: top + z * cell }] : [],
+        ),
+      ),
+    }));
 
   k.loadSprite("room", scene.background);
   k.add([k.sprite("room"), k.pos(0, 0)]);
+  for (const [index, animation] of (scene.animations ?? []).entries()) {
+    const id = `room-animation-${index}`;
+    k.loadSprite(id, animation.sprite, {
+      sliceX: animation.columns,
+      sliceY: animation.rows,
+      anims: { loop: { from: 0, to: animation.frames - 1, loop: true, speed: animation.fps } },
+    });
+    k.add([
+      k.sprite(id, { anim: "loop" }),
+      k.pos(animation.x, animation.y),
+      k.opacity(animation.opacity ?? 1),
+      k.z(1),
+    ]);
+  }
   loadZeroSprite(k);
   const spawnRow = rows.findIndex((row) => row.includes("@"));
   const zero = k.add([
@@ -66,6 +90,11 @@ export function openRoom(
     k.anchor("bot"),
     k.z(10),
   ]);
+  const foreground = (scene.foreground ?? []).map((layer, index) => {
+    const id = `room-foreground-${index}`;
+    k.loadSprite(id, layer.sprite);
+    return { layer, object: k.add([k.sprite(id), k.pos(layer.x, layer.y), k.z(20)]) };
+  });
 
   let heading: Facing = "down",
     walking = false,
@@ -99,6 +128,7 @@ export function openRoom(
     const anim = `${length ? "walk" : "idle"}-${heading}`;
     if (zero.curAnim() !== anim || walking !== !!length) zero.play(anim);
     walking = !!length;
+    for (const { layer, object } of foreground) object.hidden = zero.pos.y >= layer.feetY;
 
     const [hx, hz] = HEADING[heading];
     // Sideways the feet are wider than they are deep, so the reach starts from their edge.
@@ -108,7 +138,22 @@ export function openRoom(
       hotspots.get(
         symbolAt(zero.pos.x + hx * reach, zero.pos.y - FEET.height / 2 + hz * (reach + FEET.height / 2)),
       ) ?? hotspots.get(symbolAt(zero.pos.x, zero.pos.y - FEET.height / 2));
-    if (ahead !== facing) onFacing((facing = ahead));
+    // Large objects such as the dinner table work from any reachable edge, without pixel aiming.
+    let nearest = Infinity;
+    let nearby: Hotspot | undefined;
+    for (const { hotspot, cells } of proximity) {
+      for (const { x, y } of cells) {
+        const dx = Math.max(x - zero.pos.x, 0, zero.pos.x - (x + cell));
+        const dy = Math.max(y - zero.pos.y, 0, zero.pos.y - (y + cell));
+        const distance = dx * dx + dy * dy;
+        if (distance <= hotspot.interactionRadius! ** 2 && distance < nearest) {
+          nearest = distance;
+          nearby = hotspot;
+        }
+      }
+    }
+    const target = ahead ?? nearby;
+    if (target !== facing) onFacing((facing = target));
   });
   return room;
 }

@@ -27,6 +27,7 @@ export class RoundStatusView implements HudView {
   }
 
   update({ snapshot }: HudFrame) {
+    this.root.hidden = !!snapshot.story && !snapshot.storyBrawl;
     // Practice counts up. A match counts down to the zone reaching its minimum size; it does not
     // end at zero, the firestorm takes over until one player is left.
     const seconds =

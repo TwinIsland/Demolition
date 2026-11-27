@@ -1,4 +1,4 @@
-import type { GameSnapshot, PlayerAgent, PlayerInput, StorySetup } from "../core/types";
+import type { GameSnapshot, PlayerAgent, PlayerInput, SkillId, StorySetup } from "../core/types";
 import type { Camera, Object3D } from "three";
 import type { GameRenderer } from "../render/game-renderer";
 import type { Line } from "./script";
@@ -8,6 +8,27 @@ export type StoryCue = "place" | "blast" | "pickup" | "down" | "power" | "pull";
 
 /** Music the story can ask for, by the part it plays under. */
 export type StoryTrack = "opening" | "duel" | "ascension" | "lesson" | "shutdown" | "home";
+
+/** A lesson names only the HUD elements it needs; true is the full HUD for the final fight. */
+export type StoryHudPart =
+  | "crosshair"
+  | "stamina"
+  | "equipment"
+  | "shield"
+  | "health"
+  | "crates"
+  | "coins"
+  | "skills"
+  | "progression"
+  | "perks";
+export type StoryHud = boolean | readonly StoryHudPart[];
+export const storyHudShows = (hud: StoryHud, part: StoryHudPart) =>
+  typeof hud === "boolean" ? hud : hud.includes(part);
+
+export interface StoryShopOptions {
+  /** Highlight only these skills and require all of them before continuing. */
+  requiredSkills?: readonly SkillId[];
+}
 
 /**
  * A real match running under the story: the game's own simulation and renderer, with the story
@@ -37,20 +58,22 @@ export interface StoryMatch {
   gate?: (input: PlayerInput) => PlayerInput;
   /** Called once a frame, after the simulation, with the seconds it advanced (0 while paused). */
   onFrame?: (state: Readonly<GameSnapshot>, dt: number) => void;
-  /** Shows the match's own HUD (health, coins, equipment). Off by default. */
-  hud: boolean;
+  /** Shows the lesson's named HUD elements, or the whole match HUD with true. Off by default. */
+  hud: StoryHud;
   /**
    * The match answers the hero the way a real one does: combat feed, hit markers, the perk offer
    * after a level and its banner. Off by default, for scenes that only stage people.
    */
   live: boolean;
+  /** Whether an earned mutation is waiting to show or still displaying its acquisition card. */
+  readonly mutationNoticePending: boolean;
   /** Where the first-person camera looks, in radians. Set it to hand the view over from a cutscene. */
   look: { yaw: number; pitch: number };
   /**
    * Opens the game's own skill shop over the scene and resolves once the hero deploys from it,
    * false if the story was closed first. The world stands still meanwhile.
    */
-  shop(): Promise<boolean>;
+  shop(options?: StoryShopOptions): Promise<boolean>;
 }
 export interface StoryMatchOptions {
   mapId: string;
@@ -114,6 +137,8 @@ export interface Stage {
 
 /** A running scene, as the key handling sees it. */
 export interface ScenePlayer {
+  /** Resolves when an asynchronous scene has prepared its first world. */
+  readonly ready?: Promise<void>;
   /** Direction held on the movement keys; (0, 0) for none. */
   move(x: number, y: number): void;
   /** The action key, pressed while no conversation is open. */

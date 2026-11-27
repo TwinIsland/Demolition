@@ -1,6 +1,8 @@
 import "./ascend.css";
 import * as THREE from "three";
 import { perkById, SKILLS } from "../../core/content";
+import { MUTATIONS } from "../../core/mutations";
+import { STORY_TUTORIAL_REWARDS } from "../../core/story-rewards";
 import type { GameEvent, GameSnapshot, PlayerInput, Vec2 } from "../../core/types";
 import { field } from "../../i18n";
 import { bindings, equipmentBinding, skillBinding, type BindingId } from "../../input/bindings";
@@ -8,12 +10,13 @@ import { SPOTS } from "../../modules/maps/flatland-story/layout.js";
 import { world } from "../../render/arena";
 import { ASCENSION_GOALS as GOALS, ASCENSION_LINES as LINES } from "../acts/ascension";
 import { ASCENSION_ART } from "./assets";
-import type { Director } from "../match/director";
+import { yawTo, type Director } from "../match/director";
 import { playStagedMatch } from "../match/staged-match";
 import { reachCheckpoint } from "../save";
 import type { Line } from "../script";
 import type { ScenePlayer, Stage } from "../stage";
 import { ASCENSION_HIT, ASCENSION_SPREAD, AscensionShot } from "./ascension-shot";
+import { TargetHighlight } from "./target-highlight";
 
 const HERO = "you";
 const LULU = "lulu";
@@ -48,6 +51,10 @@ const PLACE = {
 const SKY_TURN = -0.28;
 /** How long the illustration holds at the hit, in milliseconds. */
 const PANEL_MS = 2400;
+/** Actual distance sprinted, in arena cells; turns and changes of direction all count. */
+const SPRINT_DISTANCE = 6;
+const BANDAGE_HEALTH = { current: 80, max: 100 } as const;
+const LESSON_SKILLS = ["scan", "kick"] as const;
 
 type Ability = "sprint" | "jump" | "use" | "equip" | "build" | "skill" | "perk";
 
@@ -107,6 +114,7 @@ export function playAscension(stage: Stage): ScenePlayer {
         spawn: PLACE.hero,
         yaw: SOUTH,
         overhead: true,
+        tutorial: true,
         cast: [
           {
             id: LULU,
@@ -117,7 +125,15 @@ export function playAscension(stage: Stage): ScenePlayer {
             yaw: SOUTH,
             passive: true,
           },
-          { id: DUMMY, name: "训练靶", color: "#9aa0a6", skin: "story-zhangsan", ...PLACE.dummy, yaw: 0 },
+          {
+            id: DUMMY,
+            name: "训练靶",
+            color: "#9aa0a6",
+            skin: "story-zhangsan",
+            ...PLACE.dummy,
+            yaw: 0,
+            passive: true,
+          },
         ],
       },
     },
@@ -129,6 +145,7 @@ export function playAscension(stage: Stage): ScenePlayer {
       }),
   );
   return {
+    ready: player.ready,
     get frozen() {
       return player.frozen;
     },
@@ -295,7 +312,7 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
     renderer.paintSky(texture, SKY_TURN);
   });
 
-  // The world breaks into blocks, the saxophone comes in, and for a moment it is a drawing.
+  // The world breaks into blocks, the ascension track comes in, and for a moment it is a drawing.
   if (!(await d.until(() => shot.time >= ASCENSION_HIT - 0.05))) return;
   rolling = false;
   flash();
@@ -337,7 +354,7 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   // --- 4.1 Looking, sprinting, jumping -------------------------------------------------------
 
   stage.host.music("lesson");
-  match.hud = true;
+  match.hud = ["crosshair"];
   match.live = true;
   if (!(await say(LINES.look))) return;
   stage.goal(GOALS.look);
@@ -352,10 +369,29 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   )
     return;
 
+  match.hud = ["stamina"];
   if (!(await say(LINES.sprint))) return;
   allowed.add("sprint");
-  stage.goal(GOALS.sprint);
-  if (!(await d.until((state) => state.players[0].stamina < 12))) return;
+  const sprintGoal = GOALS.sprint.replace("{sprint}", bindings.label("sprint"));
+  let sprinted = 0,
+    sprintProgress = -1,
+    lastSprintPosition = { x: d.hero.x, z: d.hero.z, alive: d.hero.alive };
+  if (
+    !(await d.until((state) => {
+      const you = state.players[0];
+      if (you.alive && lastSprintPosition.alive && you.sprinting)
+        sprinted += Math.hypot(you.x - lastSprintPosition.x, you.z - lastSprintPosition.z);
+      lastSprintPosition = { x: you.x, z: you.z, alive: you.alive };
+      const progress = Math.min(SPRINT_DISTANCE, Math.floor(sprinted));
+      if (progress !== sprintProgress) {
+        sprintProgress = progress;
+        stage.goal(`${sprintGoal} (${progress}/${SPRINT_DISTANCE})`);
+      }
+      return sprinted >= SPRINT_DISTANCE;
+    }))
+  )
+    return;
+  stage.goal();
   allowed.delete("sprint");
   if (!(await say(LINES.winded))) return;
   allowed.add("sprint").add("jump");
@@ -376,16 +412,43 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
       if (!(await d.walk(LULU, cell, 3.4))) return;
     d.face(LULU, PLACE.crate);
   })();
+  match.hud = ["crosshair", "equipment"];
   if (!(await say(LINES.hands))) return;
+  const knifeStarted = d.state.time;
   allowed.add("equip").add("use");
   anchor = PLACE.crateFront;
-  stage.goal(GOALS.knife);
-  if (!(await d.until((state) => state.tiles[PLACE.crate.z][PLACE.crate.x] === 0))) return;
+  const knifeGoal = (equipped: boolean) =>
+    stage.goal(
+      (equipped ? GOALS.knifeCut : GOALS.knife)
+        .replace("{gearWheel}", bindings.label("gearWheel"))
+        .replace("{use}", bindings.label("use")),
+    );
+  let knifeEquipped = d.hero.equipped === "knife";
+  knifeGoal(knifeEquipped);
+  // The lesson teaches cutting cover, so any cover the hero actually cuts with the knife counts.
+  if (
+    !(await d.until((state) => {
+      const equipped = state.players[0].equipped === "knife";
+      if (equipped !== knifeEquipped) {
+        knifeEquipped = equipped;
+        knifeGoal(equipped);
+      }
+      return since(state, knifeStarted).some((event) => event.type === "cover" && event.item === "knife");
+    }))
+  )
+    return;
+  stage.goal();
   if (!(await say(LINES.knifed))) return;
 
   if (!(await say(LINES.toWall))) return;
   if (!(await lead(PLACE.lane, PLACE.laneGuide))) return;
   give("grenade", 3);
+  hero((p) => (p.equipped = "grenade"));
+  const landing = { x: PLACE.lane.x, z: SPOTS.lowWall.from.z - 1 };
+  match.look = {
+    yaw: yawTo(d.hero, landing),
+    pitch: -Math.atan2(0.65, Math.hypot(landing.x - d.hero.x, landing.z - d.hero.z)),
+  };
   if (!(await say(LINES.grenade))) return;
   stage.goal(GOALS.grenade);
   // Beyond the wall means north of it; a grenade that falls short is handed back.
@@ -408,17 +471,24 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   // Nobody learns anything standing in a fire: wait it out.
   if (!(await d.until((state) => !state.fires.length))) return;
 
-  if (!(await say(LINES.shield))) return;
-  stage.goal(GOALS.shield);
-  for (;;) {
+  match.hud = ["crosshair", "equipment", "shield"];
+  const readyShield = () => {
     give("shield", 1);
     hero((p) => {
       p.hp = p.maxHp;
       p.shield = 0;
+      p.equipped = "shield";
     });
+  };
+  readyShield();
+  if (!(await say(LINES.shield))) return;
+  for (;;) {
+    stage.goal(GOALS.shield.replace("{use}", bindings.label("use")));
     if (!(await d.until((state) => state.players[0].shield > 0))) return;
     const raised = d.state.time;
-    void d.talk(fill(LINES.shieldUp), { live: true });
+    // Once raised, stage the demonstration without movement or another confirmation click.
+    d.lock(true);
+    stage.goal(GOALS.shieldHold);
     const here = cellOf(d.hero);
     const beside = [
       { x: here.x + 1, z: here.z },
@@ -427,27 +497,55 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
       { x: here.x, z: here.z - 1 },
     ].find((cell) => free(d.state, cell));
     const charge = plant(beside ?? here, 1.5);
-    if (!(await detonated(charge))) return;
-    stage.interrupt();
-    const held = since(d.state, raised).some(
-      (e) => (e.type === "shield-end" && e.reason === "broken") || (e.type === "hurt" && e.blocked),
-    );
+    let held = false;
+    if (
+      !(await d.until((state) => {
+        // Remember the block as it happens, even if its event is pruned before the fire clears.
+        held ||= since(state, raised).some(
+          (e) => (e.type === "shield-end" && e.reason === "broken") || (e.type === "hurt" && e.blocked),
+        );
+        return (
+          !state.bombs.some((bomb) => bomb.id === charge) &&
+          !state.blasts.some((blast) => blast.explosionId === charge)
+        );
+      }))
+    )
+      return;
     if (held) break;
+    readyShield();
     if (!(await say(LINES.shieldRetry))) return;
   }
-  if (!(await say(LINES.shieldDone))) return;
-  // The aftershock: scripted, and survivable by exactly one bandage.
+  stage.goal();
+  if (!(await say([...LINES.shieldUp, ...LINES.shieldDone]))) return;
+  // A controlled injury: one bandage visibly restores 80/100 to full health.
+  match.hud = ["equipment", "health"];
   stage.host.cue("blast");
   hero((p) => {
-    p.hp = Math.min(p.hp, 22);
+    p.maxHp = BANDAGE_HEALTH.max;
+    p.hp = BANDAGE_HEALTH.current;
     p.shield = 0;
+    p.equipped = "bandage";
   });
   give("bandage", 1);
+  const bandageStarted = d.state.time;
+  const bandageUsed = (state: Readonly<GameSnapshot>) =>
+    since(state, bandageStarted).some((event) => event.type === "equipment" && event.item === "bandage");
+  const holdBandageHealth = (state: Readonly<GameSnapshot>) => {
+    if (!bandageUsed(state))
+      hero((p) => {
+        p.maxHp = BANDAGE_HEALTH.max;
+        p.hp = BANDAGE_HEALTH.current;
+      });
+  };
+  steps.add(holdBandageHealth);
   if (!(await say(LINES.bleeding))) return;
-  stage.goal(GOALS.bandage);
-  if (!(await d.until((state) => state.players[0].hp > 22))) return;
+  stage.goal(GOALS.bandage.replace("{use}", bindings.label("use")));
+  if (!(await d.until(bandageUsed))) return;
+  steps.delete(holdBandageHealth);
+  stage.goal();
   if (!(await say(LINES.bandaged))) return;
 
+  match.hud = ["crosshair", "crates"];
   hero((p) => (p.crates = 3));
   if (!(await say(LINES.build))) return;
   allowed.add("build");
@@ -482,21 +580,42 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
 
   // --- 4.3 The skill shop and the first level ------------------------------------------------
 
+  match.hud = ["coins"];
   if (!(await say(LINES.toShop))) return;
   if (!(await lead(PLACE.shop, PLACE.shopGuide))) return;
-  hero((p) => (p.credits = 60));
+  hero((p) => (p.credits = LESSON_SKILLS.reduce((total, id) => total + SKILLS[id].price, 0)));
+  stage.goal(GOALS.shop);
   for (;;) {
-    if (!(await match.shop())) return;
-    if (d.hero.skills.length) break;
+    if (!(await match.shop({ requiredSkills: LESSON_SKILLS }))) return;
+    if (LESSON_SKILLS.every((id) => d.hero.skills.includes(id))) break;
     if (!(await say(LINES.shopEmpty))) return;
   }
-  const skill = SKILLS[d.hero.skills[0]];
+  stage.goal();
+  const skill = SKILLS.scan;
+  match.hud = ["crosshair", "skills"];
   allowed.add("skill");
+  if (
+    !(await say(LINES.castPassive, {
+      name: field(SKILLS.kick, "name"),
+      description: field(SKILLS.kick, "description"),
+    }))
+  )
+    return;
   if (skill.passive) {
-    if (!(await say(LINES.castPassive, { name: field(skill, "name") }))) return;
+    if (
+      !(await say(LINES.castPassive, {
+        name: field(skill, "name"),
+        description: field(skill, "description"),
+      }))
+    )
+      return;
   } else {
     if (
-      !(await say(LINES.cast, { skill: bindings.label(skillBinding(skill.id)), name: field(skill, "name") }))
+      !(await say(LINES.cast, {
+        skill: bindings.label(skillBinding(skill.id)),
+        name: field(skill, "name"),
+        description: field(skill, "description"),
+      }))
     )
       return;
     stage.goal(GOALS.cast);
@@ -505,24 +624,60 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
     if (!(await say(LINES.castDone))) return;
   }
 
-  d.face(DUMMY, PLACE.shop);
-  if (!(await say(LINES.target))) return;
-  stage.goal(GOALS.target);
-  if (!(await d.until((state) => !state.players.find((p) => p.id === DUMMY)?.alive))) return;
+  match.hud = ["crosshair", "equipment", "skills", "health", "progression"];
+  d.face(DUMMY, d.hero);
+  match.look = { yaw: yawTo(d.hero, d.actor(DUMMY)), pitch: 0 };
+  const targetHighlight = new TargetHighlight(match.scene);
+  const markTarget = (state: Readonly<GameSnapshot>) =>
+    targetHighlight.update(
+      state.players.find((p) => p.id === DUMMY),
+      state.size,
+    );
+  const clearTarget = () => {
+    steps.delete(markTarget);
+    targetHighlight.dispose();
+  };
+  markTarget(d.state);
+  steps.add(markTarget);
+  // Also release GPU resources if the player exits while the introduction dialogue is open.
+  void d.until(() => false).then(clearTarget);
+  try {
+    if (!(await say(LINES.target))) return;
+    match.mutate((state) => {
+      const dummy = state.players.find((p) => p.id === DUMMY)!;
+      dummy.invulnerableUntil = 0;
+    });
+    stage.goal(GOALS.target);
+    if (!(await d.until((state) => !state.players.find((p) => p.id === DUMMY)?.alive))) return;
+  } finally {
+    clearTarget();
+  }
   // Felling it is worth a level whatever it was felled with.
   hero((p) => (p.xp = Math.max(p.xp, p.nextLevel)));
   if (!(await d.until((state) => state.players[0].offers.length > 0))) return;
   allowed.add("perk");
+  match.hud = ["progression", "perks"];
   if (!(await say(LINES.levelled))) return;
   stage.goal(GOALS.perk);
   if (!(await d.until((state) => !state.players[0].offers.length && state.players[0].perks.length > 0)))
     return;
   const perk = perkById(d.hero.perks.at(-1)!);
-  if (!(await say(LINES.perk, { name: perk ? field(perk, "name") : "强化" }))) return;
-  reachCheckpoint("act4-skill", { act4Skill: skill.id, act4Perk: perk?.id ?? "" });
+  if (
+    !(await say(LINES.perk, {
+      name: perk ? field(perk, "name") : "强化",
+      description: perk ? field(perk, "description") : "选择后自动生效。",
+    }))
+  )
+    return;
+  reachCheckpoint("act4-skill", {
+    act4Skill: skill.id,
+    act4Skills: LESSON_SKILLS.join(","),
+    act4Perk: perk?.id ?? "",
+  });
 
   // --- 4.4 The ones who did not clear the game -----------------------------------------------
 
+  match.hud = ["crosshair", "equipment", "skills", "health", "stamina", "perks"];
   if (!(await say(LINES.toGraves))) return;
   stage.host.silence();
   if (!(await lead(PLACE.graves, PLACE.gravesGuide))) return;
@@ -556,14 +711,25 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   anchor = PLACE.gravesGuide;
   stage.goal(GOALS.zombies);
   if (!(await d.until((state) => state.zombies.length < 2))) return;
+  const fought = d.state.time;
   rise(open[2] ?? open[0] ?? PLACE.risen[2], 3, true);
   if (!(await d.seconds(1.3))) return;
   if (!(await d.talk(fill(LINES.mutant)))) return;
-  const fought = d.state.time;
   if (!(await d.until((state) => !state.zombies.length))) return;
   stage.goal();
   if (!(await d.seconds(1))) return;
-  if (since(d.state, fought).some((e) => e.type === "mutation") && !(await say(LINES.mutated))) return;
+  if (since(d.state, fought).some((e) => e.type === "mutation")) {
+    d.lock(true);
+    if (!(await d.until(() => !match.mutationNoticePending))) return;
+    const mutation = MUTATIONS[STORY_TUTORIAL_REWARDS.mutation];
+    if (
+      !(await say(LINES.mutated, {
+        name: field(mutation, "name"),
+        description: field(mutation, "description"),
+      }))
+    )
+      return;
+  }
   d.lock(true);
   stage.end("act4-done");
 }

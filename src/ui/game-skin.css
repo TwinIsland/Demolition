@@ -21,14 +21,14 @@
 }
 
 /* ---------- Backdrop behind dialogs ---------- */
-#app #overlay {
+#app :is(#overlay, .story-menu) {
   background:
     repeating-linear-gradient(0deg, #0000 0 2px, #00000021 2px 3px),
     radial-gradient(ellipse at center, #0c131480 0%, #070b0ce6 100%);
   backdrop-filter: blur(9px) saturate(0.72) brightness(0.82);
   animation: skin-veil 0.22s ease-out;
 }
-#app #overlay:has(.room-modal) {
+#app :is(#overlay, .story-menu):has(.room-modal) {
   background:
     linear-gradient(180deg, #0a1012f2 0%, #0b1214b8 30%, #0b1214c9 68%, #080d0ef5 100%),
     repeating-linear-gradient(0deg, #0000 0 2px, #0000001c 2px 3px),
@@ -42,7 +42,7 @@
 }
 
 /* ---------- Dialog chassis ---------- */
-#app #overlay .modal:not(.room-modal, .help-modal) {
+#app :is(#overlay, .story-menu) .modal:not(.room-modal, .help-modal) {
   position: relative;
   isolation: isolate;
   text-align: left;
@@ -68,7 +68,7 @@
   animation: skin-arrive 0.26s var(--skin-ease);
 }
 /* Hazard strip along the top edge, like a stencilled equipment case. */
-#app #overlay .modal:not(.room-modal, .help-modal)::before {
+#app :is(#overlay, .story-menu) .modal:not(.room-modal, .help-modal)::before {
   content: "";
   position: absolute;
   z-index: -1;
@@ -79,7 +79,7 @@
   opacity: 0.9;
 }
 /* Corner brackets. */
-#app #overlay .modal:not(.room-modal, .help-modal)::after {
+#app :is(#overlay, .story-menu) .modal:not(.room-modal, .help-modal)::after {
   content: "";
   position: absolute;
   z-index: -1;
@@ -100,7 +100,7 @@
   }
 }
 
-#app #overlay .modal h2 {
+#app :is(#overlay, .story-menu) .modal h2 {
   font-family: var(--font-hud, inherit);
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -108,7 +108,7 @@
   color: #f6efdc;
   text-shadow: 0 1px 0 #000a;
 }
-#app #overlay .modal:not(.room-modal, .help-modal) h2 {
+#app :is(#overlay, .story-menu) .modal:not(.room-modal, .help-modal) h2 {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -117,7 +117,7 @@
   font-size: clamp(22px, 2.3vw, 30px);
   border-bottom: 1px solid var(--skin-edge-soft);
 }
-#app #overlay .modal:not(.room-modal, .help-modal) h2::before {
+#app :is(#overlay, .story-menu) .modal:not(.room-modal, .help-modal) h2::before {
   content: "";
   flex: none;
   width: 5px;
@@ -125,10 +125,10 @@
   background: var(--skin-gold);
   box-shadow: 8px 0 0 -1px #e7bc7055;
 }
-#app #overlay .modal > p {
+#app :is(#overlay, .story-menu) .modal > p {
   color: var(--skin-dim);
 }
-#app #overlay .modal-kicker {
+#app :is(#overlay, .story-menu) .modal-kicker {
   color: var(--skin-gold);
   letter-spacing: 0.22em;
 }
@@ -186,14 +186,14 @@
   color: #191c17;
 }
 
-#app #overlay .modal-actions {
+#app :is(#overlay, .story-menu) .modal-actions {
   gap: 10px;
   margin-top: 14px;
 }
-#app #overlay .modal-actions button,
-#app #overlay .text-btn,
+#app :is(#overlay, .story-menu) .modal-actions button,
+#app :is(#overlay, .story-menu) .text-btn,
 #app .room-actions #home,
-#app #overlay .help-modal header button {
+#app :is(#overlay, .story-menu) .help-modal header button {
   flex: 1;
   padding: 10px 16px;
   border: 1px solid var(--skin-edge);
@@ -212,17 +212,17 @@
     transform 0.09s;
 }
 #app .room-actions #home,
-#app #overlay .help-modal header button {
+#app :is(#overlay, .story-menu) .help-modal header button {
   flex: none;
 }
-#app #overlay .modal-actions button:hover,
-#app #overlay .text-btn:hover,
+#app :is(#overlay, .story-menu) .modal-actions button:hover,
+#app :is(#overlay, .story-menu) .text-btn:hover,
 #app .room-actions #home:hover {
   color: var(--skin-gold-hot);
   border-color: var(--skin-gold);
   filter: brightness(1.25);
 }
-#app #overlay .modal-actions button:active,
+#app :is(#overlay, .story-menu) .modal-actions button:active,
 #app .room-actions #home:active {
   transform: translateY(1px);
 }
@@ -276,7 +276,7 @@
 }
 
 /* Checkboxes become mechanical toggle switches. */
-#app #overlay input[type="checkbox"]:not(.seat-switch input) {
+#app :is(#overlay, .story-menu) input[type="checkbox"]:not(.seat-switch input) {
   appearance: none;
   -webkit-appearance: none;
   position: relative;
@@ -291,7 +291,7 @@
   box-shadow: inset 0 2px 5px #000b;
   transition: border-color 0.15s;
 }
-#app #overlay input[type="checkbox"]:not(.seat-switch input)::before {
+#app :is(#overlay, .story-menu) input[type="checkbox"]:not(.seat-switch input)::before {
   content: "";
   position: absolute;
   top: 2px;
@@ -315,7 +315,7 @@
     translate 0.16s var(--skin-ease),
     background-color 0.16s;
 }
-#app #overlay input[type="checkbox"]:not(.seat-switch input)::after {
+#app :is(#overlay, .story-menu) input[type="checkbox"]:not(.seat-switch input)::after {
   content: "";
   position: absolute;
   top: 7px;
@@ -329,10 +329,10 @@
     box-shadow 0.16s,
     right 0.16s;
 }
-#app #overlay input[type="checkbox"]:not(.seat-switch input):checked {
+#app :is(#overlay, .story-menu) input[type="checkbox"]:not(.seat-switch input):checked {
   border-color: var(--skin-gold);
 }
-#app #overlay input[type="checkbox"]:not(.seat-switch input):checked::before {
+#app :is(#overlay, .story-menu) input[type="checkbox"]:not(.seat-switch input):checked::before {
   translate: 21px;
   background:
     linear-gradient(
@@ -347,19 +347,19 @@
     ),
     linear-gradient(180deg, #f3cf8c, #b98f45);
 }
-#app #overlay input[type="checkbox"]:not(.seat-switch input):checked::after {
+#app :is(#overlay, .story-menu) input[type="checkbox"]:not(.seat-switch input):checked::after {
   right: 33px;
   background: #9ff0b0;
   box-shadow: 0 0 6px #7be896;
 }
 
 /* ---------- Settings ---------- */
-#app #overlay .graphics-modal {
+#app :is(#overlay, .story-menu) .graphics-modal {
   width: min(860px, 100%);
 }
 #app #graphics-form label,
 #app #audio-settings label,
-#app #overlay .modal > .language-setting {
+#app :is(#overlay, .story-menu) .modal > .language-setting {
   min-height: 46px;
   margin: 0;
   padding: 0 2px;
@@ -375,10 +375,10 @@
   background: linear-gradient(90deg, #e7bc7014, #0000 70%);
 }
 #app #graphics-form select,
-#app #overlay .modal > .language-setting select {
+#app :is(#overlay, .story-menu) .modal > .language-setting select {
   min-width: 132px;
 }
-#app #overlay .modal > .language-setting {
+#app :is(#overlay, .story-menu) .modal > .language-setting {
   margin-bottom: 18px;
 }
 #app .graphics-footer {
@@ -390,52 +390,52 @@
 }
 
 /* ---------- Pause / eliminated / result ---------- */
-#app #overlay .modal .primary {
+#app :is(#overlay, .story-menu) .modal .primary {
   padding: 15px 20px;
 }
-#app #overlay .result-icon {
+#app :is(#overlay, .story-menu) .result-icon {
   color: var(--skin-gold);
 }
-#app #overlay .result-stats > div {
+#app :is(#overlay, .story-menu) .result-stats > div {
   border: 1px solid var(--skin-edge-soft);
   background: #0c121380;
 }
-#app #overlay .result-stats b {
+#app :is(#overlay, .story-menu) .result-stats b {
   color: #f6efdc;
 }
-#app #overlay .result-stats span {
+#app :is(#overlay, .story-menu) .result-stats span {
   color: var(--skin-dim);
 }
 
 /* ---------- Skill shop ---------- */
-#app #overlay .shop-modal {
+#app :is(#overlay, .story-menu) .shop-modal {
   width: min(660px, 94vw);
 }
-#app #overlay .shop-modal header {
+#app :is(#overlay, .story-menu) .shop-modal header {
   align-items: center;
   padding-bottom: 12px;
   margin-bottom: 4px;
   border-bottom: 1px solid var(--skin-edge-soft);
 }
-#app #overlay .modal.shop-modal:not(.room-modal, .help-modal) header h2 {
+#app :is(#overlay, .story-menu) .modal.shop-modal:not(.room-modal, .help-modal) header h2 {
   margin: 0;
   padding: 0;
   border: 0;
 }
-#app #overlay .shop-modal header > :not(h2) {
+#app :is(#overlay, .story-menu) .shop-modal header > :not(h2) {
   font-size: 12px;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--skin-dim);
 }
-#app #overlay .shop-grid .shop-card {
+#app :is(#overlay, .story-menu) .shop-grid .shop-card {
   transition:
     transform 0.14s var(--skin-ease),
     filter 0.14s,
     border-color 0.14s,
     box-shadow 0.14s;
 }
-#app #overlay .shop-grid .shop-card:not(:disabled):hover {
+#app :is(#overlay, .story-menu) .shop-grid .shop-card:not(:disabled):hover {
   transform: translateY(-2px);
   filter: brightness(1.22);
   border-color: var(--skin-gold);
@@ -443,10 +443,10 @@
     0 6px 18px #000a,
     inset 0 0 0 1px #e7bc7040;
 }
-#app #overlay .shop-grid .shop-card:not(:disabled):active {
+#app :is(#overlay, .story-menu) .shop-grid .shop-card:not(:disabled):active {
   transform: translateY(1px);
 }
-#app #overlay .shop-grid .shop-card.purchased {
+#app :is(#overlay, .story-menu) .shop-grid .shop-card.purchased {
   box-shadow:
     inset 3px 0 #9ff0b0,
     inset 0 0 22px #5fae7230;
@@ -601,8 +601,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #app #overlay,
-  #app #overlay .modal,
+  #app :is(#overlay, .story-menu),
+  #app :is(#overlay, .story-menu) .modal,
   #app .operator-card {
     animation: none;
   }
@@ -613,7 +613,7 @@
 }
 
 /* ---------- Second pass: result, feed, wheel, pickups ---------- */
-#app #overlay .result-icon {
+#app :is(#overlay, .story-menu) .result-icon {
   margin: 0 0 16px;
   width: 58px;
   height: 58px;
@@ -622,24 +622,24 @@
   background: #e7bc7014 var(--skin-plate) center / 200px;
   clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px));
 }
-#app #overlay .result-stats {
+#app :is(#overlay, .story-menu) .result-stats {
   gap: 8px;
   padding: 0;
   border: 0;
   margin-bottom: 20px;
 }
-#app #overlay .result-stats > div {
+#app :is(#overlay, .story-menu) .result-stats > div {
   flex: 1;
   padding: 12px 10px;
   text-align: center;
 }
-#app #overlay .result-stats b {
+#app :is(#overlay, .story-menu) .result-stats b {
   font-family: var(--font-hud, inherit);
   font-weight: 700;
   font-size: 26px;
   margin-bottom: 4px;
 }
-#app #overlay .result-stats span {
+#app :is(#overlay, .story-menu) .result-stats span {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   font-size: 10px;
@@ -845,8 +845,8 @@
 :lang(en) #app .operator-info h3 {
   letter-spacing: 0.06em;
 }
-:lang(en) #app #overlay .modal > p,
-:lang(en) #app #overlay .shop-card small {
+:lang(en) #app :is(#overlay, .story-menu) .modal > p,
+:lang(en) #app :is(#overlay, .story-menu) .shop-card small {
   letter-spacing: 0.015em;
   line-height: 1.45;
 }

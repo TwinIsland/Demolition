@@ -23,11 +23,12 @@ export function playStagedMatch(
   const sync = () => {
     const match = session?.director.match;
     if (!match) return;
-    match.paused = frozen || paused;
-    match.control = !frozen && !paused && !locked;
+    const shopping = !!match.state.storyShop;
+    match.paused = frozen || paused || shopping;
+    match.control = !frozen && !paused && !locked && !shopping;
   };
   stage.root.classList.add("veiled");
-  void stage.host.match.open(options).then((match) => {
+  const ready = stage.host.match.open(options).then((match) => {
     if (disposed) return;
     session = createDirector(stage, match, (on) => {
       locked = on;
@@ -40,6 +41,7 @@ export function playStagedMatch(
     void script(session.director);
   });
   return {
+    ready,
     get frozen() {
       return frozen;
     },

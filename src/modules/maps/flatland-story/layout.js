@@ -19,7 +19,7 @@ export const LAYOUT = [
   "#..Bwwwww.oT..#",
   "#.c......DDDD.#",
   "#c...Tt,tDDDD.#",
-  "#.o..o.,...o..#",
+  "#.o..c.,...o..#",
   "#..o.L+++LoLoL#",
   "#,,c,,+F+,,o,,#",
   "#....L+++Lt.SS#",

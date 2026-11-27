@@ -1,0 +1,105 @@
+/* A tutorial has no round clock, roster, supply shop or combat log. */
+#app[data-story-hud]:not([data-story-hud="full"])
+  #hud
+  :is(
+    .round-status,
+    #players,
+    .board-bomb-hint,
+    #countdown,
+    #supply-shop,
+    .combat-feed,
+    .arena-warnings,
+    .battle-heat,
+    .stat-values
+  ) {
+  display: none;
+}
+
+#app[data-story-hud]:not([data-story-hud="full"]):not([data-story-hud~="crosshair"]) #crosshair,
+#app[data-story-hud]:not([data-story-hud="full"]):not([data-story-hud~="stamina"]) #stamina,
+#app[data-story-hud]:not([data-story-hud="full"]):not([data-story-hud~="equipment"]) #equipment-wheel,
+#app[data-story-hud]:not([data-story-hud="full"]):not([data-story-hud~="shield"]) #hud .shield-count,
+#app[data-story-hud]:not([data-story-hud="full"]):not([data-story-hud~="health"])
+  #hud
+  :is(.hp-gauge, .health-icon, .health-row > b, .critical-veil),
+#app[data-story-hud]:not([data-story-hud="full"]):not([data-story-hud~="progression"])
+  #hud
+  :is(.xp-label, .xp-track, #rank-up),
+#app[data-story-hud]:not([data-story-hud="full"]):not([data-story-hud~="crates"]) #hud .wallet-crate,
+#app[data-story-hud]:not([data-story-hud="full"]):not([data-story-hud~="coins"])
+  #hud
+  :is(.wallet-coin, .wallet-amount, .wallet-deltas),
+#app[data-story-hud]:not([data-story-hud="full"]):not([data-story-hud~="skills"]) #hud .loadout,
+#app[data-story-hud]:not([data-story-hud="full"]):not([data-story-hud~="perks"])
+  :is(#perk-tray, .radar, .mutation-notice) {
+  display: none;
+}
+
+/* Do not leave empty frames around whichever individual meter is currently being taught. */
+#app[data-story-hud]:not([data-story-hud="full"]) #hud .player-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+}
+#app[data-story-hud]:not([data-story-hud="full"]) #hud :is(.bottom-hud, .wallet) {
+  border: 0;
+  background: none;
+  box-shadow: none;
+  clip-path: none;
+}
+#app[data-story-hud]:not([data-story-hud="full"]) #hud .bottom-hud {
+  width: min(360px, calc(100vw - 32px));
+}
+#app[data-story-hud]:not([data-story-hud="full"]) #hud .health-row {
+  min-height: 19px;
+}
+#app[data-story-hud]:not([data-story-hud="full"]):not([data-story-hud~="health"]):not(
+    [data-story-hud~="shield"]
+  )
+  .health-row,
+#app[data-story-hud]:not([data-story-hud="full"]):not([data-story-hud~="health"]):not(
+    [data-story-hud~="shield"]
+  ):not([data-story-hud~="stamina"]):not([data-story-hud~="progression"])
+  #player-stats,
+#app[data-story-hud]:not([data-story-hud="full"]):not([data-story-hud~="coins"]):not(
+    [data-story-hud~="crates"]
+  )
+  #wallet {
+  display: none;
+}
+
+/* Perks can be used after their lesson without also revealing the tactical minimap. */
+#app[data-story-hud]:not([data-story-hud="full"]) #hud .radar {
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+#app[data-story-hud]:not([data-story-hud="full"]) .radar > :not(#buffs) {
+  display: none;
+}
+
+/* The objective occupies the free top-left corner; HUD elements keep the bottom edge. */
+#app[data-story-hud]:not([data-story-hud="full"]) .story-stage[data-kind="staged"] .story-goal {
+  top: 16px;
+  bottom: auto;
+  left: 16px;
+  max-width: min(380px, calc(100% - 32px));
+  padding: 6px 10px;
+  font-size: clamp(14px, 1.4vw, 20px);
+}
+#app[data-story-hud] .story-stage[data-kind="staged"] .story-keys {
+  display: none;
+}
+.story-stage[data-tutorial="flatland"] .story-cutscene {
+  opacity: 1;
+  transition: opacity 0.3s ease-out;
+}
+.story-stage[data-tutorial="flatland"] .story-cutscene.leaving {
+  opacity: 0;
+}
+
+/* Dialogue already carries the current controls and needs the bottom of the screen to itself. */
+#app[data-story-hud]:has(.story-dialogue:not([hidden])) :is(#hud, #perk-tray) {
+  visibility: hidden;
+}

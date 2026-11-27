@@ -6,7 +6,7 @@ import { canEquip } from "../equipment";
 import { clearSight, firstBlocker } from "../geometry";
 import type { ItemDefinition } from "../module-api";
 import { canPlace } from "../placement";
-import type { Equipment, ItemId, Player, PlayerInput, Zombie } from "../types";
+import { areAllies, type Equipment, type ItemId, type Player, type PlayerInput, type Zombie } from "../types";
 import { SUMMON_TIME } from "../zombies";
 import { placeBomb } from "./bombs";
 import { BUILT_CRATE_SURFACE } from "../economy";
@@ -83,7 +83,7 @@ function swing(
     const player = "alive" in enemy;
     if (
       enemy === p ||
-      (player && !enemy.alive) ||
+      (player && (p.bot || !enemy.alive || areAllies(p, enemy))) ||
       (!player && enemy.spawnAt !== undefined && s.time < enemy.spawnAt + SUMMON_TIME)
     )
       continue;
@@ -104,8 +104,26 @@ function swing(
       x: p.x - Math.sin(yaw) * melee.reach,
       z: p.z - Math.cos(yaw) * melee.reach,
     });
-    if (block && block.fraction * melee.reach <= closest && s.tiles[block.z]?.[block.x] === 2) {
+    if (block && block.fraction * melee.reach <= closest) {
       const { x, z } = block;
+      if (s.tiles[z]?.[x] !== 2) {
+        if (s.tiles[z]?.[x] === 1) {
+          const feature = ctx.map.featureAt?.(x, z, s.size)?.split(":")[0];
+          const wooden = ["cherry", "torii", "farmhouse", "dojo", "shop", "cottage", "shrine", "notice"];
+          emit(
+            ctx,
+            p,
+            "击中掩体",
+            {
+              type: "cover-hit",
+              item: kind,
+              coverSurface: wooden.includes(feature ?? "") ? "wood" : "metal",
+            },
+            block,
+          );
+        }
+        return;
+      }
       if (builtCrateAt(s, x, z)) {
         emit(ctx, p, "击中掩体", { type: "cover-hit", item: kind, coverSurface: BUILT_CRATE_SURFACE }, block);
         if (damageBuiltCrate(s, x, z, melee.coverDamage)) {

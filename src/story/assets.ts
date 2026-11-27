@@ -8,7 +8,13 @@ const url = (file: string) => new URL(`./assets/${file}`, import.meta.url).href;
 const skin = (file: string) => new URL(`./assets/skins/${file}`, import.meta.url).href;
 
 export const STORY_ART = {
+  logo: url("logo-purple-8bit.png"),
   bedroom: url("bedroom.png"),
+  bedroomDesk: url("bedroom-desk.png"),
+  computer: url("computer-setup.png"),
+  computerItem: url("computer-item.png"),
+  bedroomCrt: url("bedroom-crt.png"),
+  bedroomDust: url("bedroom-dust.png"),
   comic1: url("comic-1.webp"),
   comic2: url("comic-2.webp"),
   /** Act 3: waking up in Flatland, and the moment before the button is pressed. */

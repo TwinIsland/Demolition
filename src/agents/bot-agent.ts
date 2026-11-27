@@ -4,7 +4,7 @@ import { blastCells, clearSight, KICK, slideBlocked } from "../core/geometry";
 import { DIRECTIONS, seededRandom } from "../core/maps";
 import { canPlace, placementRadius } from "../core/placement";
 import { SUMMON_TIME } from "../core/zombies";
-import { idleInput, inTacticalView, isCloaked } from "../core/types";
+import { areAllies, idleInput, inTacticalView, isBystander, isCloaked } from "../core/types";
 import type { Personality } from "./tactics";
 import type {
   AgentContext,
@@ -144,7 +144,10 @@ export class BotAgent implements PlayerAgent {
   }
   private observe(s: Readonly<GameSnapshot>, p: Player, limitedView: boolean, reaction: number) {
     for (const enemy of s.players) {
-      if (enemy.id === p.id) continue;
+      if (enemy.id === p.id || areAllies(p, enemy) || isBystander(enemy)) {
+        this.contacts.delete(enemy.id);
+        continue;
+      }
       const last = this.contacts.get(enemy.id);
       if (!enemy.alive) {
         this.contacts.delete(enemy.id);
@@ -176,6 +179,8 @@ export class BotAgent implements PlayerAgent {
       // A cloaked operator drops off the radar too.
       if (
         other.id !== p.id &&
+        !areAllies(p, other) &&
+        !isBystander(other) &&
         other.alive &&
         !isCloaked(other, s.time) &&
         (!nearest || dist(p, other) < dist(p, nearest))
@@ -312,10 +317,8 @@ export class BotAgent implements PlayerAgent {
       }
       const knife = ITEMS.knife?.melee;
       if (!overhead && !input.useEquipment && knife && (p.cooldowns["equipment:knife"] ?? 0) <= s.time) {
-        const contacts = normal ? enemies.filter((e) => e.seen === s.time) : enemies;
-        weaponAim = [...contacts, ...s.zombies].find(
-          (enemy) => dist(enemy, p) <= knife.reach && clearSight(s, p, enemy),
-        );
+        // Knives are for clearing zombies, never for rushing an operator.
+        weaponAim = s.zombies.find((enemy) => dist(enemy, p) <= knife.reach && clearSight(s, p, enemy));
         if (weaponAim) {
           input.equip = "knife";
           input.useEquipment = !normal || (p.equipped === "knife" && aimedAt(p, weaponAim));

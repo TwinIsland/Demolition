@@ -1,0 +1,82 @@
+{
+  "generator": "built-in image_gen",
+  "assets": {
+    "comic2": {
+      "prompt": "Use case: illustration-story. Asset type: replacement 16:9 manga illustration for chapter 2 Bubble X, 1672x941 composition. The two reference comics define the SAME young adult male character and ink art style, NOT a pose to copy. Same messy black hair, black hoodie and trousers, white-soled black sneakers, chain necklace, bandaged right forearm. Keep black-and-white manga crosshatching, screentone, sharp purple rim light and cyan square pixels, the modest cluttered bedroom with anime posters, bed with plush, desk and old CRT. CRITICAL new pose and composition: a comedic panicked SIDE VIEW of the character being yanked HEADFIRST HORIZONTALLY toward the glowing CRT on the RIGHT. His torso is nearly horizontal on a diagonal, head and shoulders closest to the monitor, back toward us, face visible in three-quarter profile with wide startled eyes and open mouth. One hand desperately hooks the desk edge while the OTHER hand clutches a game controller. Both knees are BENT sharply and his sneakers kick upward behind him toward the LEFT, hoodie and necklace trailing backward. His chair has rolled away left, chips and tissues lift off the floor in the vortex. Strong visual storytelling of losing control. NO arms spread, NO proud upright stance, NO hand reaching at camera, NO standing on bed, NO chest-forward superhero pose, NO similarity to the first comic's outstretched arm silhouette. Single clear body with exactly two arms and two legs, believable hand grip, dramatic readable silhouette. CRT cyan portal pixel vortex dominates right third. No text, no captions, no watermark.",
+      "references": [
+        "/Users/tianyi/Desktop/Demolition/src/story/assets/comic-1.webp",
+        "/Users/tianyi/Desktop/Demolition/src/story/assets/comic-2.webp"
+      ],
+      "generatedSource": "/Users/tianyi/.codex/generated_images/01a21e7d-0445-7082-8656-fcac0da412d1/exec-5d7901aa-5ae8-4276-ac27-1e882dfdf3d7.png",
+      "output": "src/story/assets/comic-2.webp",
+      "processing": "1672x941 WebP, quality90."
+    },
+    "logo": {
+      "prompt": "Use case: logo-brand. Asset type: a new purple 8-bit pixel-art story-mode logo emblem, transparent true alpha background. Use the attached existing Demolition logo only as an identity/shape reference: angular D-shaped crest interlocked with a lightning bolt. Reinterpret that emblem as clean genuine 8-bit game pixel art built from a strict square pixel grid, as if drawn on a 64x64 pixel canvas enlarged with nearest-neighbor sampling. Strong blocky stair-stepped diagonals, hard square corners, centered bold readable silhouette, small dark plum offset pixel shadow. Lightning bolt in bright lavender and lilac, D body in pale lavender/white with saturated violet edge. Palette limited to six flat purples and off-white, NO yellow or orange. Flat crisp pixel clusters, NO smooth vectors, NO anti-aliased rounded edges, NO gradients, NO glow haze, NO letters beyond the D-shaped emblem itself, NO title text, NO border or mockup. Keep good negative space around it; emblem fills about 80 percent square canvas. Output one isolated usable game logo on true transparency.",
+      "references": [
+        "/Users/tianyi/Desktop/Demolition/public/assets/menu/insignia.png"
+      ],
+      "generatedSource": "/Users/tianyi/.codex/generated_images/01a21e7d-0445-7082-8656-fcac0da412d1/exec-55314824-eaf7-425f-9c1a-64c96c39772a.png",
+      "output": "src/story/assets/logo-purple-8bit.png",
+      "processing": "Nearest-neighbor downsample to128x128; keep generated alpha."
+    },
+    "night": {
+      "prompt": "Use case: illustration-story. Asset type: replacement walkable 320x180 pixel RPG bedroom background, 16:9 landscape. The attached old bedroom is STYLE/PROP reference only: Chinese young adult's cluttered bedroom, 16-bit RPG pixel art, dark lavender at night. Regenerate with MUCH MORE PRECISE GAMEPLAY GEOMETRY. Fixed orthographic top-down three-quarter camera, no vanishing point, no trapezoid floor, horizontal and vertical furniture edges aligned to the 8-pixel tile grid. No characters. Treat the image as a 320x180 coordinate canvas: side walls x0..8 and312..320; back wall y0..48; broad walkable floor y56..168. Left BED x16..80, y56..128, pillow at north end, dark blue rumpled blanket, small blue-haired fairy plush on pillow-right. Clearly visible horizontal dark gap UNDER SOUTH EDGE OF BED at y128..136, an old cardboard computer box partly visible inside. Closed purple CURTAINS/WINDOW x32..112,y8..48. Two anime posters on BACK WALL at x136..168 and176..208, one red witch hat girl, one blue-haired girl. Tall MIRROR x216..240,y8..56. BOOKCASE x264..304,y8..56. Simple DESK flush to RIGHT wall at x264..304,y64..128, with desk lamp, three instant noodle cups, controller and a small CRT monitor with a DARK SCREEN, ALL inside desk footprint. Chair x248..264,y104..128. Cardboard moving box x16..40,y144..168. Door in SOUTH wall x144..176,y168..180. Small floor clutter: tissue at(96,80), alarm clock at(112,80), phone at(104,104), socks at(152,112) and(224,144), crisps packet at(112,144). Crucial: completely walkable clear middle corridor x88..240,y64..160, open access across south edge of bed and to the door; do NOT put a carpet or large clutter here. Pixel clusters should be sharp and coherent at exactly320x180, not a highly rendered painting. Cozy moody night palette: deep navy/plum, subdued wood brown, small warm lamp glow and a thin slit of moonlight. Readable furniture silhouettes even in darkness. No text, UI, humans, or extra furniture. Whole room as the game background, not framed mockup.",
+      "references": [
+        "src/story/assets/bedroom.png"
+      ],
+      "generatedSource": "/Users/tianyi/.codex/generated_images/01a21e7d-0445-7082-8656-fcac0da412d1/exec-e2f8ca5d-886e-4e07-a7a4-38652dbe3809.png",
+      "output": "src/story/assets/bedroom.png",
+      "preview": "src/story/assets/room-frames/night-preview.gif",
+      "finalOutput": "src/story/assets/bedroom.png"
+    },
+    "morning": {
+      "prompt": "Use case: lighting-weather. Edit target: this exact pixel-art bedroom background. Generate its MORNING version for returning home in the ending. CRITICAL invariants: identical 16:9 canvas, identical camera, ALL furniture edges, bed, plush, under-bed computer box, desk, CRT, chair, bookshelf, posters, mirror, floor clutter, side walls and bottom door remain in EXACTLY THE SAME PIXEL POSITIONS AND SHAPES. Do not rearrange, add, remove or scale any object. Change only the time of day and curtain/door state: draw the curtains open within the SAME window rectangle, revealing warm pale blue morning sky and a yellow apartment block outside; golden morning sunlight spills diagonally onto the central wooden floor, with soft readable pixel window-frame shadows. Bed blanket and room still recognizable dark blue/plum with warmer ambient fill. Desk lamp switched off, CRT remains black. Bottom-center door in the SAME opening is ajar with warm hallway light, do not change surrounding collision edges. Keep clear free walking corridor and exact orthographic tile-aligned layout. Warm ordinary homecoming feeling, clean crisp chunky 16-bit pixels suitable for320x180 display; no people, no new props, no text, no UI. Whole room only.",
+      "references": [
+        "generated night room"
+      ],
+      "generatedSource": "/Users/tianyi/.codex/generated_images/01a21e7d-0445-7082-8656-fcac0da412d1/exec-fa582717-ad94-42e8-9cf8-3ec9e325ae40.png",
+      "output": "src/story/shutdown/art/bedroom-morning.png",
+      "preview": "src/story/assets/room-frames/morning-preview.gif",
+      "finalOutput": "src/story/shutdown/art/bedroom-morning.png"
+    },
+    "crt": {
+      "prompt": "Use case: illustration-story. Asset type: exactly FOUR frames for the inner screen of a tiny CRT monitor in a 16-bit pixel RPG. A perfectly regular 2x2 contact sheet, each cell identical dimensions with NO gutters. The monitor screen rectangle itself fills each cell: 4:3 aspect screen, almost-black navy/purple base with sparse cyan and violet pixels forming a small round bubble in the middle, two faint horizontal scanlines. Frame1 bubble small, frame2 slightly larger, frame3 a tiny flicker with one pixel breaking away, frame4 back toward small; fixed screen edges and camera, no moving monitor, no CRT plastic casing. Crisp coarse grid suitable for EACH frame being only12x10 pixels in game. Extremely simple readable pixel clusters, no text at all, no labels, no title, no UI controls, no external background. Use dark plum and restrained turquoise, not a white flash. Loop seamlessly. Output just the 2x2 frame sheet.",
+      "references": [],
+      "generatedSource": "/Users/tianyi/.codex/generated_images/01a21e7d-0445-7082-8656-fcac0da412d1/exec-b054f9f2-91ee-466f-bb8c-b734490e09a1.png",
+      "output": "src/story/assets/bedroom-crt.png",
+      "frameSize": [
+        7,
+        14
+      ],
+      "processing": "Generated frames transformed onto the left-facing screen plane, four frames at stage (259,86), opacity0.65, 4fps."
+    },
+    "dust": {
+      "prompt": "Use case: illustration-story. Asset type: transparent four-frame animation sprite sheet of floating golden dust in a morning sunbeam for a tiny pixel RPG bedroom. Exactly FOUR equal cells in a perfectly regular 2 columns by 2 rows grid, no lines/gutters. Every cell is truly alpha-transparent except for a very sparse set of exactly seven tiny warm-ivory/gold square dust glints; each glint is a simple 1-to-3-pixel cluster at a logical low-resolution64x40 scale, some dim and some bright, softly rising just one pixel between frames and fading back into a SEAMLESS LOOP. Same spatial area and density in all frames. No sunlight beam shape or colored fog, no room, no furniture, no circles, no stars with many rays, no spark explosion, no texture, no text or labels. Clean genuine 16-bit pixels, subtle calm atmosphere. Output just this 2x2 four-frame true-alpha dust animation sheet.",
+      "references": [],
+      "generatedSource": "/Users/tianyi/.codex/generated_images/01a21e7d-0445-7082-8656-fcac0da412d1/exec-6a7c2916-cff3-4228-abdf-f6fb88b0e817.png",
+      "output": "src/story/assets/bedroom-dust.png",
+      "frameSize": [
+        64,
+        40
+      ],
+      "processing": "Four generated 64x40 frames, stage (88,64), opacity0.2 at night and0.65 in morning, 4fps."
+    },
+    "night-monitor": {
+      "prompt": "Use case: precise-object-edit. Edit target: this exact pixel RPG bedroom. FIX ONLY THE COMPUTER'S ORIENTATION on the right-hand desk. The desk's usable FRONT EDGE is its LEFT EDGE, and the chair is on the LEFT of the desk. The CRT must FACE LEFT TOWARD THE CHAIR, NOT DOWN toward the bottom of the picture. Draw a clear three-quarter SIDE VIEW of the CRT rotated ninety degrees on the tabletop: its glass screen is on its LEFT face and its bulky vented back projects toward the RIGHT wall. The dark screen should be visually readable from the chair. Position the monitor around stage coordinate (274,100) on a320x180 logical canvas so it is near the seated user's line of sight. You may slide the instant noodle cups a little toward the top/back of the SAME desk to make space, but keep the lamp and controller. Preserve EXACTLY all room boundaries, floor, bed, plush, under-bed box, desk OUTLINE, CHAIR position, bookshelf, posters, mirror, window/curtain state, lighting/time of day, bottom door, floor clutter and camera framing. NO other changes. Keep crisp 16-bit pixel art and the original16:9 composition. The correction must be unmistakable: screen faces left toward chair, back faces right wall. Screen remains dark. Do not add a person or any text.",
+      "references": [
+        "/Users/tianyi/.codex/generated_images/01a21e7d-0445-7082-8656-fcac0da412d1/exec-e2f8ca5d-886e-4e07-a7a4-38652dbe3809.png"
+      ],
+      "generatedSource": "/Users/tianyi/.codex/generated_images/01a21e7d-0445-7082-8656-fcac0da412d1/exec-4beee90e-110d-4d52-8300-79da04778e43.png",
+      "output": "src/story/assets/bedroom.png"
+    },
+    "morning-monitor": {
+      "prompt": "Use case: precise-object-edit. Edit target: this exact pixel RPG bedroom. FIX ONLY THE COMPUTER'S ORIENTATION on the right-hand desk. The desk's usable FRONT EDGE is its LEFT EDGE, and the chair is on the LEFT of the desk. The CRT must FACE LEFT TOWARD THE CHAIR, NOT DOWN toward the bottom of the picture. Draw a clear three-quarter SIDE VIEW of the CRT rotated ninety degrees on the tabletop: its glass screen is on its LEFT face and its bulky vented back projects toward the RIGHT wall. The dark screen should be visually readable from the chair. Position the monitor around stage coordinate (274,100) on a320x180 logical canvas so it is near the seated user's line of sight. You may slide the instant noodle cups a little toward the top/back of the SAME desk to make space, but keep the lamp and controller. Preserve EXACTLY all room boundaries, floor, bed, plush, under-bed box, desk OUTLINE, CHAIR position, bookshelf, posters, mirror, window/curtain state, lighting/time of day, bottom door, floor clutter and camera framing. NO other changes. Keep crisp 16-bit pixel art and the original16:9 composition. The correction must be unmistakable: screen faces left toward chair, back faces right wall. Screen remains dark. Do not add a person or any text.",
+      "references": [
+        "/Users/tianyi/.codex/generated_images/01a21e7d-0445-7082-8656-fcac0da412d1/exec-fa582717-ad94-42e8-9cf8-3ec9e325ae40.png"
+      ],
+      "generatedSource": "/Users/tianyi/.codex/generated_images/01a21e7d-0445-7082-8656-fcac0da412d1/exec-5e97bcb3-1a05-4fe1-9582-c576f151d266.png",
+      "output": "src/story/shutdown/art/bedroom-morning.png"
+    }
+  }
+}

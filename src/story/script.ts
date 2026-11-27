@@ -29,6 +29,19 @@ export interface Hotspot {
   cycle?: readonly { label: string; lines: readonly Line[] }[];
   /** Examining it ends the scene, once its lines are read. */
   ends?: boolean;
+  /** Optional proximity interaction in stage pixels, independent of the hero's facing. */
+  interactionRadius?: number;
+}
+
+export interface RoomAnimation {
+  sprite: string;
+  columns: number;
+  rows: number;
+  frames: number;
+  fps: number;
+  opacity?: number;
+  x: number;
+  y: number;
 }
 
 /**
@@ -41,6 +54,12 @@ export interface RoomScene {
   id: string;
   /** Painting of the whole room. The grid is centred on it. */
   background: string;
+  /** Optional room-specific interaction sequence, sharing the same room renderer. */
+  play?(stage: Stage): ScenePlayer;
+  /** Furniture masks occlude a walker whose feet are behind their front edge. */
+  foreground?: readonly { sprite: string; x: number; y: number; feetY: number }[];
+  /** Small looping sprite sheets, drawn over the room and paused with its clock. */
+  animations?: readonly RoomAnimation[];
   /** Pixels per layout cell. */
   cell: number;
   layout: readonly string[];

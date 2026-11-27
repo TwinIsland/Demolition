@@ -1,7 +1,11 @@
 export type SpectrumReader = () => { analyser: AnalyserNode; gain: number } | undefined;
 
 /** Draws the live music only while its closing card is visible. */
-export function mountCreditsSpectrum(canvas: HTMLCanvasElement, read: SpectrumReader) {
+export function mountCreditsSpectrum(
+  canvas: HTMLCanvasElement,
+  read: SpectrumReader,
+  visible = () => !!canvas.closest(".credits-finished"),
+) {
   const context = canvas.getContext("2d");
   if (!context) return () => {};
   let frame = 0;
@@ -12,7 +16,7 @@ export function mountCreditsSpectrum(canvas: HTMLCanvasElement, read: SpectrumRe
   const draw = (time: number) => {
     if (!canvas.isConnected) return;
     frame = requestAnimationFrame(draw);
-    if (!canvas.closest(".credits-finished")) return;
+    if (!visible()) return;
     const rect = canvas.getBoundingClientRect();
     if (time - lastPaint < (reducedMotion ? 200 : 1000 / 30)) return;
     lastPaint = time;

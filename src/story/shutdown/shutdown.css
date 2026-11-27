@@ -96,6 +96,9 @@
 }
 
 /* The story's credits, over the ending's last picture. */
+.story-stage:has(.shutdown-credits) :is(.story-keys, .story-pause-hint) {
+  display: none;
+}
 .shutdown-credits {
   position: absolute;
   inset: 0;

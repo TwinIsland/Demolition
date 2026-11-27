@@ -1,0 +1,92 @@
+.bedroom-furniture {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.bedroom-computer {
+  position: absolute;
+  left: 79.375%;
+  top: 43.3333%;
+  width: 10%;
+  height: 17.7778%;
+  background-size: 200% 200%;
+  background-position: 0 0;
+  image-rendering: pixelated;
+}
+.bedroom-computer.powered {
+  animation: bedroom-screen 1.2s steps(1) infinite;
+  filter: drop-shadow(0 0 3px #7a9eff8c);
+}
+@keyframes bedroom-screen {
+  0%,
+  100% {
+    background-position: 100% 0;
+  }
+  33% {
+    background-position: 0 100%;
+  }
+  66% {
+    background-position: 100% 100%;
+  }
+}
+.story-inventory {
+  position: absolute;
+  right: calc(var(--px) * 6);
+  bottom: calc(var(--px) * 5);
+  padding: calc(var(--px) * 3);
+  border: calc(var(--px) * 1) solid #a286c5;
+  background: #151020eb;
+  font-size: calc(var(--px) * 7);
+}
+.story-inventory small {
+  display: block;
+  color: #a99bbb;
+  font: inherit;
+}
+.story-inventory > span {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--px) * 3);
+}
+.story-inventory img {
+  width: calc(var(--px) * 20);
+  height: calc(var(--px) * 20);
+  image-rendering: pixelated;
+}
+.story-inventory b {
+  font: inherit;
+  color: #ffe387;
+}
+.bedroom-furniture.paused .bedroom-computer {
+  animation-play-state: paused;
+}
+.story-stage:has(.stage-art:not([hidden])) .bedroom-furniture {
+  visibility: hidden;
+}
+.story-stage:has(.story-dialogue:not([hidden])) .story-inventory {
+  bottom: calc(var(--px) * 66);
+}
+.story-stage.bedroom-cinematic .story-keys {
+  display: none;
+}
+.story-stage:has(.bedroom-furniture) .story-goal {
+  max-width: calc(100% - var(--px) * 85);
+  font-size: calc(var(--px) * 9);
+}
+.story-stage:has(.bedroom-furniture) .story-prompt {
+  top: calc(var(--px) * 31);
+  max-width: calc(100% - var(--px) * 10);
+  font-size: calc(var(--px) * 9);
+}
+.story-stage.bedroom-cinematic .story-cutscene {
+  z-index: 1;
+  animation: bedroom-approach-in 0.35s steps(5) both;
+}
+@keyframes bedroom-approach-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

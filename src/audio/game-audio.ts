@@ -5,6 +5,7 @@ import { SUMMON_TIME } from "../core/zombies";
 import { AudioEngine } from "./audio-engine";
 import type { PlayOptions } from "./audio-engine";
 import { BassPulse } from "./bass-pulse";
+import { MusicPlayer } from "./music-player";
 import { MAPS } from "../core/maps";
 import { groundAt, type GroundKind } from "../core/pack-api";
 import {
@@ -109,6 +110,8 @@ export class GameAudio {
   private countdownBeat?: string;
   private collapseBeat?: number;
   private aimedCell?: Vec2;
+  private musicPlayer?: MusicPlayer;
+  private afterMusicPlayer?: () => void;
   private lastEventId = 0;
   private nextBlastRing = 0;
   /** State of the previous snapshot, for the cues that mark a change rather than an event. */
@@ -152,6 +155,7 @@ export class GameAudio {
   setVolume(channel: VolumeChannel, position: number) {
     this.faders[channel] = Math.max(0, Math.min(1, position));
     this.applyVolume(channel);
+    this.musicPlayer?.syncVolume();
     saveVolumes(this.faders);
   }
 
@@ -174,6 +178,10 @@ export class GameAudio {
 
   /** Menu music resumes; credits decode like the menu, while field tracks stream. */
   setMusic(path: string) {
+    if (this.musicPlayer) {
+      this.afterMusicPlayer = () => this.setMusic(path);
+      return;
+    }
     const menu = path === MENU_MUSIC;
     // A map may ask for its own track to sit higher or lower in the mix.
     const gain = menu
@@ -190,7 +198,42 @@ export class GameAudio {
 
   /** Fades the music out; the next `setMusic` brings a track back. */
   stopMusic() {
+    if (this.musicPlayer) {
+      this.afterMusicPlayer = () => this.stopMusic();
+      return;
+    }
     this.engine.stopMusic();
+  }
+
+  openMusicPlayer() {
+    this.musicPlayer?.dispose();
+    const held = this.engine.holdMusic();
+    this.afterMusicPlayer = held.resume;
+    const player: MusicPlayer = new MusicPlayer(
+      held.url,
+      (url) => ({
+        level: MUSIC_VOLUME * (STORY_GAIN[url] ?? 1) * this.engine.busVolume("music"),
+        volume: this.faders.music,
+        muted: this.engine.muted || this.engine.masterVolume === 0 || this.engine.busVolume("music") === 0,
+      }),
+      () => {
+        if (!player.playing || player.loading || player.muted) return undefined;
+        const analyser = this.engine.spectrumTap();
+        const gain =
+          MUSIC_VOLUME *
+          (STORY_GAIN[player.track.url] ?? 1) *
+          this.engine.busVolume("music") *
+          this.engine.masterVolume;
+        return analyser && gain > 0 ? { analyser, gain } : undefined;
+      },
+      () => {
+        this.musicPlayer = undefined;
+        const resume = this.afterMusicPlayer;
+        this.afterMusicPlayer = undefined;
+        resume?.();
+      },
+    );
+    return (this.musicPlayer = player);
   }
 
   /** Effects of the story's 8-bit scenes. */
@@ -199,8 +242,8 @@ export class GameAudio {
   }
 
   /** Reuses the mixer tap for the live spectrum on the closing credits card. */
-  creditsSpectrum() {
-    if (!this.engine.isMusicAudible(CREDITS_MUSIC)) return undefined;
+  creditsSpectrum(track = CREDITS_MUSIC) {
+    if (!this.engine.isMusicAudible(track)) return undefined;
     const analyser = this.engine.spectrumTap();
     const gain = this.engine.musicGain() * this.engine.masterVolume;
     return analyser && gain > 0 ? { analyser, gain } : undefined;
@@ -269,6 +312,11 @@ export class GameAudio {
 
   /** Start countdown and the last five seconds before the zone is smallest, each announced once. */
   matchClock(state: Readonly<GameSnapshot>) {
+    // Non-combat story scenes have no round deadline, even when their match clock keeps advancing.
+    if (state.story && !state.storyBrawl) {
+      this.countdownBeat = undefined;
+      return;
+    }
     let beat: string | undefined;
     if (state.phase === "countdown") beat = "start-" + Math.ceil(state.countdown);
     else if (state.phase === "playing" && this.countdownBeat?.startsWith("start-")) beat = "go";
@@ -405,6 +453,7 @@ export class GameAudio {
   }
 
   dispose() {
+    this.musicPlayer?.dispose();
     this.reset();
     this.engine.dispose();
   }

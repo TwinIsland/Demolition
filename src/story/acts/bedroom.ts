@@ -1,19 +1,25 @@
 import { STORY_ART } from "../assets";
+import { playBedroom } from "../bedroom-play";
 import type { RoomScene } from "../script";
 
 /**
  * Act 1, "The mundane cage": the bedroom. Teaches walking and examining, and ends when the old
- * computer under the bed is switched on.
+ * computer is found under the bed, placed on the desk, and powered through the floor strip.
  *
  * The layout is traced over the painting in 8-pixel cells. Solid: # wall, W curtains, P and Q
  * the two posters, M mirror, S bookshelf, B bed, F the plush on it, b the gap under the bed,
  * N desk, D chair and bin, X cardboard box, = door. Walked over: t tissues, s socks, p phone,
- * c crisps, a alarm clock.
+ * c crisps, a alarm clock, e power strip.
  */
 export const BEDROOM: RoomScene = {
   kind: "room",
   id: "bedroom",
   background: STORY_ART.bedroom,
+  play: (stage) => playBedroom(stage, BEDROOM),
+  foreground: [{ sprite: STORY_ART.bedroomDesk, x: 254, y: 68, feetY: 138 }],
+  animations: [
+    { sprite: STORY_ART.bedroomDust, columns: 2, rows: 2, frames: 4, fps: 4, x: 88, y: 64, opacity: 0.2 },
+  ],
   cell: 8,
   layout: [
     "########################################",
@@ -22,24 +28,24 @@ export const BEDROOM: RoomScene = {
     "########################################",
     "########################################",
     "########################################",
-    "########################################",
-    "###########WWWWW#PPPP#QQQQMMMSSSS#######",
-    "##BBBBBBBFF.tt...................NNNNN##",
-    "##BBBBBBBFF...aa...............DDNNNNN##",
-    "##BBBBBBBFF.pp.................DDNNNNN##",
-    "##BBBBBBBBB......ss............DDNNNNN##",
-    "##BBBBBBBBB...........@........DDNNNNN##",
-    "##BBBBBBBBB.tt.................DDNNNNN##",
-    "##BBBBBBBBB...cc.................NNNNN##",
-    "##bbbbbbbbb...cc.................NNNNN##",
-    "##XXXX.....................ss.......DD##",
-    "##XXXX.tt......................tt.....##",
-    "##XXXX................................##",
-    "##################====##################",
-    "########################################",
+    "#####WWWWWWWWWWW##PPPP#QQQQ#MMM#SSSSS###",
+    "##.BBBBBBB............................##",
+    "##.BBBBFFB......................NNNNNN##",
+    "##.BBBBFFB......................NNNNNN##",
+    "##.BBBBBBB..t.a.................NNNNNN##",
+    "##.BBBBBBB......................NNNNNN##",
+    "##.BBBBBBB...p................DDNNNNNN##",
+    "##.BBBBBBB........s....@......DDNNNNNN##",
+    "##.BBBBBBB....................DDNNNNNN##",
+    "##.BBBBBBB....................DDNNNNNN##",
+    "##.bbbbbbb....................DDNNNNNN##",
+    "##.XXX........c....................ee.##",
+    "##.XXX.....................s..........##",
+    "##.XXX................................##",
+    "###################===##################",
     "########################################",
   ],
-  walkOver: "tspca",
+  walkOver: "tspcae",
   opening: {
     art: STORY_ART.comic1,
     lines: [
@@ -85,6 +91,7 @@ export const BEDROOM: RoomScene = {
     {
       id: "cirno",
       symbol: "F",
+      interactionRadius: 18,
       label: "琪露诺 fumo",
       lines: [
         { who: "zero", mood: "sincere", text: "冰之妖精……吾麾下最强的使魔。" },
@@ -104,6 +111,7 @@ export const BEDROOM: RoomScene = {
     {
       id: "shelf",
       symbol: "S",
+      interactionRadius: 28,
       label: "书架上的盒子",
       lines: [
         { who: "zero", mood: "smug", text: "安静点，吾的右手。时候还没到。" },
@@ -113,6 +121,7 @@ export const BEDROOM: RoomScene = {
     {
       id: "desk",
       symbol: "N",
+      interactionRadius: 24,
       label: "书桌",
       lines: [],
       cycle: [
@@ -149,6 +158,13 @@ export const BEDROOM: RoomScene = {
           ],
         },
       ],
+    },
+    {
+      id: "power-strip",
+      symbol: "e",
+      interactionRadius: 14,
+      label: "插线板",
+      lines: [{ who: "narrator", text: "桌子下面的插线板。空插口正好能接上那台旧电脑。" }],
     },
     {
       id: "tissues",
@@ -216,6 +232,7 @@ export const BEDROOM: RoomScene = {
     {
       id: "door",
       symbol: "=",
+      interactionRadius: 14,
       label: "房门",
       lines: [
         { who: "zero", mood: "flustered", text: "门的另一边是凡俗。吾不会踏出一步。" },
@@ -225,12 +242,12 @@ export const BEDROOM: RoomScene = {
     {
       id: "under-bed",
       symbol: "b",
+      interactionRadius: 14,
       label: "床底",
-      ends: true,
       lines: [
         { who: "zero", mood: "sincere", text: "这是……父亲大人遗留的魔导器！？" },
         { who: "narrator", text: "父亲健在。在客厅看电视。这是一台二手电脑。" },
-        { who: "zero", mood: "smug", text: "封印解除——！" },
+        { who: "zero", mood: "smug", text: "封印解除——！先把它搬到吾的祭坛上。" },
       ],
     },
   ],

@@ -6,6 +6,7 @@ import { loadSkinToCanvas } from "skinview-utils";
 export interface Cutscene {
   /** Resolves when it has played to its end, or was disposed. */
   readonly done: Promise<void>;
+  paused: boolean;
   dispose(): void;
 }
 
@@ -147,7 +148,10 @@ export function playFilm(
   const pose = direct(kit);
 
   let frame = 0,
-    started = 0,
+    last = 0,
+    elapsed = 0,
+    paused = false,
+    disposed = false,
     finished = false,
     finish = () => {};
   const done = new Promise<void>((resolve) => (finish = resolve));
@@ -158,11 +162,11 @@ export function playFilm(
     finish();
   };
   const tick = (now: number) => {
-    started ||= now;
-    const t = (now - started) / 1000;
-    pose(Math.min(t, length));
+    if (!paused && last) elapsed += Math.min(0.1, (now - last) / 1000);
+    last = now;
+    pose(Math.min(elapsed, length));
     renderer.render(scene, camera);
-    if (t >= length) stop();
+    if (elapsed >= length) stop();
     else frame = requestAnimationFrame(tick);
   };
   void Promise.all(pending).then(() => {
@@ -171,7 +175,15 @@ export function playFilm(
 
   return {
     done,
+    get paused() {
+      return paused;
+    },
+    set paused(value) {
+      paused = value;
+    },
     dispose() {
+      if (disposed) return;
+      disposed = true;
       stop();
       for (const item of owned) item.dispose();
       for (const rig of rigs)

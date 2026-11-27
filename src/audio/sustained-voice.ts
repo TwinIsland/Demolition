@@ -81,6 +81,13 @@ export class SustainedVoice {
     }, ms + 20);
   }
 
+  /** Holds the exact position while another player temporarily owns the music bus. */
+  pause() {
+    clearTimeout(this.pauseTimer);
+    this.active = false;
+    if (this.id !== undefined) this.howl.pause(this.id);
+  }
+
   dispose() {
     clearTimeout(this.pauseTimer);
     this.active = false;

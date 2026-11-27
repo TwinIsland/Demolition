@@ -22,6 +22,7 @@ export interface SimContext {
   /** One monotonic sequence shared by bombs, blasts, items, zombies and events. */
   readonly nextId: () => number;
   readonly undead: ZombieDirector;
+  readonly equipmentDrops: boolean;
   /** Consecutive empty crates per player; index into CRATE_CHANCES. */
   readonly crateMisses: Map<string, number>;
   readonly offerHistory: Map<string, OfferHistory>;

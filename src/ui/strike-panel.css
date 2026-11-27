@@ -9,12 +9,39 @@
   background: radial-gradient(circle at center, #0308068c 0, #030806d9 78%);
   cursor: crosshair;
   pointer-events: auto;
+  padding: 12px;
+  overflow: auto;
 }
 .strike-panel[hidden] {
   display: none;
 }
+/* The story is itself a full-screen overlay; its targeting tablet must sit above that pane. */
+#app:has(.story-stage[data-kind="staged"]) #strike-panel {
+  z-index: 70;
+}
+.strike-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  width: 100%;
+}
+.strike-actions button {
+  padding: 7px 16px;
+  border: 1px solid #5d7a6c;
+  background: #182a22;
+  color: #d8ffe9;
+}
+.strike-actions [data-strike-confirm] {
+  border-color: #ffb27a;
+  color: #ffcfac;
+}
+.strike-actions button:disabled {
+  opacity: 0.45;
+}
 .strike-tablet {
   width: min(78vh, 92vw, 720px);
+  max-height: calc(100dvh - 24px);
+  overflow: auto;
   padding: 14px 16px 12px;
   border: 2px solid #33473e;
   border-radius: 10px;

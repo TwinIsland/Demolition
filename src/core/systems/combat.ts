@@ -3,12 +3,21 @@ import { combatMessage } from "../combat-message";
 import { eachOwned } from "../content";
 import { ZOMBIE_STATS } from "../loot";
 import { grantMutation } from "../mutations";
-import { matchStats, type Blast, type GameSnapshot, type ItemId, type Player, type Zombie } from "../types";
+import {
+  areAllies,
+  matchStats,
+  type Blast,
+  type GameSnapshot,
+  type ItemId,
+  type Player,
+  type Zombie,
+} from "../types";
 import { COINS } from "../economy";
 import { gainCredits } from "./building";
 import type { SimContext } from "./context";
 import { emit } from "./events";
 import { dropZombieLoot } from "./loot";
+import { STORY_TUTORIAL_REWARDS } from "../story-rewards";
 import { gainScore } from "./progression";
 
 /** Longest pause between shield impact events; never extends immunity past shield expiry. */
@@ -59,13 +68,15 @@ export function hurt(
   item?: ItemId,
 ) {
   const s = ctx.state;
+  const attacker = s.players.find((a) => a.id === attackerId);
+  if (attacker && areAllies(attacker, p)) return;
   if (s.mode === "practice" && !p.bot) return;
   if (shieldBlocks(ctx, p)) return;
+  if (s.storyTutorial && !p.bot) return;
   p.invulnerableUntil = s.time + immunity;
   const damage = Math.min(p.hp, amount);
   p.hp = Math.max(0, p.hp - damage);
   matchStats(p).damageTaken += damage;
-  const attacker = s.players.find((a) => a.id === attackerId);
   if (attacker && attacker.id !== p.id) matchStats(attacker).damageDealt += damage;
   if (attacker && attacker.id !== p.id && attacker.alive) {
     const points = Math.max(1, Math.round(damage * DAMAGE_SCORE_RATE));
@@ -109,6 +120,8 @@ export function resolveBlastDamage(ctx: SimContext, p: Player) {
   let damage = 0;
   const contacts = new Set<number>();
   for (const blast of s.blasts) {
+    const owner = s.players.find((player) => player.id === blast.ownerId);
+    if (owner && areAllies(owner, p)) continue;
     if (Math.abs(blast.x - p.x) >= COMBAT.touchRadius || Math.abs(blast.z - p.z) >= COMBAT.touchRadius)
       continue;
     if (!blast.contactedBy?.includes(p.id)) contacts.add(explosionOf(blast));
@@ -155,8 +168,9 @@ export function rewardZombie(ctx: SimContext, zombie: Zombie, owner: Player, ite
     { type: "hit", item, zombie: { id: zombie.id, level: zombie.level, outcome: "killed" } },
     zombie,
   );
-  if (owner.alive && (zombie.gift || ctx.random() < mutationChance)) {
-    const mutation = grantMutation(owner, ctx.random);
+  const tutorial = !!ctx.state.storyTutorial && !owner.bot;
+  if (owner.alive && (tutorial ? zombie.gift : zombie.gift || ctx.random() < mutationChance)) {
+    const mutation = grantMutation(owner, ctx.random, tutorial ? STORY_TUTORIAL_REWARDS.mutation : undefined);
     emit(ctx, owner, combatMessage("获得{0}", mutation), { type: "mutation", mutation: mutation.id });
   }
   dropZombieLoot(ctx, zombie, owner);
@@ -167,6 +181,7 @@ function zombieAttack(ctx: SimContext, p: Player, damage: number) {
   const s = ctx.state;
   if (p.invulnerableUntil > s.time || (s.mode === "practice" && !p.bot)) return;
   if (shieldBlocks(ctx, p)) return;
+  if (s.storyTutorial && !p.bot) return;
   p.invulnerableUntil = s.time + COMBAT.hitImmunity;
   matchStats(p).damageTaken += Math.min(p.hp, damage);
   p.hp = Math.max(0, p.hp - damage);

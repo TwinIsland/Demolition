@@ -1,0 +1,45 @@
+#app {
+  --font-story: "Fusion Pixel 12px", "Noto Sans SC", sans-serif;
+}
+#app:has(#lobby[data-tab="story"]:not([hidden])),
+#app[data-story-mode],
+#app .story-menu {
+  --font-hud: var(--font-story);
+  --font-ui: var(--font-story);
+  font-family: var(--font-story);
+}
+#lobby[data-tab="story"] {
+  font-family: var(--font-story);
+}
+#lobby[data-tab="story"]
+  :is(.menu-title, .menu-tab, .menu-row, .play-label, .chapter-number, .chapter-name, .story-status dd) {
+  font-weight: 400;
+}
+#app .brand-mark-story {
+  display: none;
+  image-rendering: pixelated;
+}
+#app:has(#lobby[data-tab="story"]:not([hidden])) .brand-mark-default {
+  display: none;
+}
+#app:has(#lobby[data-tab="story"]:not([hidden])) .brand-mark-story {
+  display: block;
+}
+#app:has(#lobby[data-tab="story"]:not([hidden])) .brand {
+  color: #e3caff;
+  font-family: var(--font-story);
+  font-weight: 400;
+  letter-spacing: 1px;
+}
+#app
+  .story-menu
+  :is(
+    button,
+    select,
+    input,
+    .music-box-progress > div,
+    .gallery-caption small,
+    .music-box-tracks button > span:first-child
+  ) {
+  font-family: var(--font-story);
+}

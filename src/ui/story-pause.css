@@ -1,0 +1,127 @@
+/* The IDs keep the battle skin from repainting the story's pixel menu. */
+#app .story-menu:has(#resume) {
+  background: #080610c9;
+  backdrop-filter: none;
+  animation: none;
+}
+#app .story-menu:has(#resume) section.modal.pause-modal {
+  max-width: 420px;
+  padding: 28px;
+  border: 3px solid #dfd8f0;
+  border-radius: 0;
+  background: #151020;
+  color: #e9e6f5;
+  box-shadow:
+    0 0 0 3px #151020,
+    0 0 0 6px #65508b,
+    8px 8px 0 6px #05030bb3;
+  clip-path: none;
+  font-family: "Fusion Pixel 12px", "Noto Sans SC", sans-serif;
+  font-weight: 400;
+  text-align: left;
+  animation: none;
+}
+#app .story-menu:has(#resume) section.modal.pause-modal::before,
+#app .story-menu:has(#resume) section.modal.pause-modal::after,
+#app .story-menu:has(#resume) section.modal.pause-modal h2::before {
+  content: none;
+}
+.story-pause-heading {
+  display: grid;
+  justify-items: center;
+  gap: 15px;
+  padding-bottom: 24px;
+}
+.story-pause-glyph {
+  display: flex;
+  gap: 8px;
+  height: 24px;
+}
+.story-pause-glyph::before,
+.story-pause-glyph::after {
+  content: "";
+  width: 8px;
+  background: #e8b45a;
+  box-shadow: 3px 3px 0 #66472c;
+}
+#app .story-menu:has(#resume) section.modal.pause-modal h2 {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font:
+    400 28px / 1.25 "Fusion Pixel 12px",
+    "Noto Sans SC",
+    sans-serif;
+  letter-spacing: 4px;
+  text-shadow: 3px 3px 0 #644484;
+  text-align: center;
+}
+.story-pause-options {
+  display: grid;
+  gap: 10px;
+}
+.story-pause-option {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  padding: 10px 16px 10px 34px;
+  background: #21192e;
+  border: 2px solid #59466e;
+  color: #d1c6e0;
+  font:
+    400 18px / 1.25 "Fusion Pixel 12px",
+    "Noto Sans SC",
+    sans-serif;
+  border-radius: 0;
+  transition: none;
+}
+.story-pause-option::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  border: 5px solid transparent;
+  border-left: 7px solid #e8b45a;
+  opacity: 0;
+}
+.story-pause-option:is(:hover, :focus-visible) {
+  outline: none;
+  background: #47305f;
+  border-color: #e8b45a;
+  color: #fff2d9;
+}
+.story-pause-option:is(:hover, :focus-visible)::before {
+  opacity: 1;
+}
+.story-pause-option:active {
+  translate: 2px 2px;
+}
+.story-pause-option kbd {
+  padding: 3px 5px;
+  border: 1px solid #a591bd;
+  border-radius: 0;
+  background: #151020;
+  color: #e8b45a;
+  font: inherit;
+  font-size: 12px;
+}
+#app .story-menu:has(#resume) .pause-modal > .language-setting {
+  margin: 24px 0 0;
+  padding: 16px 0 0;
+  border-top: 2px solid #59466e;
+  color: #a99bbb;
+  font: inherit;
+}
+#app .story-menu:has(#resume) .pause-modal .language-setting select {
+  font: inherit;
+  color: #e9e6f5;
+  padding: 6px 8px;
+  border: 2px solid #65508b;
+  border-radius: 0;
+  background: #21192e;
+  clip-path: none;
+  box-shadow: none;
+}

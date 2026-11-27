@@ -10,12 +10,17 @@ import { destroyBuiltCrate, gainCredits } from "./building";
 import type { SimContext } from "./context";
 import { emit } from "./events";
 import { gainScore } from "./progression";
+import { STORY_TUTORIAL_REWARDS } from "../story-rewards";
 
 type DropOutcome = "dropped" | "missed" | "occupied";
 
 function dropItem(ctx: SimContext, x: number, z: number, chance: number, owner: Player): DropOutcome {
   const s = ctx.state;
   if (s.items.some((i) => i.x === x && i.z === z)) return "occupied";
+  if (s.storyTutorial && !owner.bot) {
+    s.items.push({ x, z, id: ctx.nextId(), kind: STORY_TUTORIAL_REWARDS.crateDrop });
+    return "dropped";
+  }
   const context = lootContext(s, { x, z }, owner);
   if (ctx.random() >= dropChance(chance, context)) return "missed";
   const kind = supplyDrop(context, ctx.random);
@@ -41,6 +46,7 @@ export function destroyCover(ctx: SimContext, owner: Player, x: number, z: numbe
     matchStats(owner).coverDestroyed++;
     gainCredits(owner, COINS.coverDestroyed);
   }
+  if (!ctx.equipmentDrops) return score;
   const misses = ctx.crateMisses.get(owner.id) ?? 0;
   const drop = dropItem(ctx, x, z, CRATE_CHANCES[misses], owner);
   // An occupied cell never rolled, so it neither resets nor advances the pity counter.
@@ -51,10 +57,15 @@ export function destroyCover(ctx: SimContext, owner: Player, x: number, z: numbe
 
 /** Zombie loot lands on its cell, or on the first free neighbour when that cell is taken. */
 export function dropZombieLoot(ctx: SimContext, zombie: Zombie, owner: Player) {
+  if (!ctx.equipmentDrops) return;
   const s = ctx.state,
     x = Math.round(zombie.x),
     z = Math.round(zombie.z);
-  for (const kind of zombieDrops(zombie.level, lootContext(s, zombie, owner), ctx.random)) {
+  const drops =
+    s.storyTutorial && !owner.bot
+      ? [zombie.gift ? STORY_TUTORIAL_REWARDS.mutantDrop : STORY_TUTORIAL_REWARDS.zombieDrop]
+      : zombieDrops(zombie.level, lootContext(s, zombie, owner), ctx.random);
+  for (const kind of drops) {
     const candidates = [{ x, z }, ...DIRECTIONS.map((d) => ({ x: x + d.x, z: z + d.z }))];
     const cell = candidates.find(
       (c) =>

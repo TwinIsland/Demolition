@@ -20,6 +20,7 @@ export class DangerOverlays {
   >();
   private geometry = new THREE.PlaneGeometry(2.32, 2.32);
   private textures: THREE.Texture[];
+  private storyTexture: THREE.Texture;
   private signature = "";
   constructor(
     private parent: THREE.Group,
@@ -29,12 +30,15 @@ export class DangerOverlays {
     this.textures = ["base", "boost", "heavy", "veil"].map((name) =>
       loader.load(`./assets/danger-${name}.svg`),
     );
+    this.storyTexture = loader.load("./assets/danger-story.svg");
   }
-  private material(tier: number) {
+  private material(tier: number, story = false) {
     return new THREE.MeshBasicMaterial({
-      map: this.textures[tier],
+      map: story && tier !== VEIL_TEXTURE ? this.storyTexture : this.textures[tier],
       transparent: true,
       opacity: 0.23,
+      toneMapped: !story,
+      fog: !story,
       depthWrite: false,
       polygonOffset: true,
       polygonOffsetFactor: -2,
@@ -45,8 +49,10 @@ export class DangerOverlays {
    * program whenever no bomb is down. These hold it, and upload the four path textures.
    */
   warmObjects(): THREE.Object3D[] {
-    return this.textures.map(
-      (_, tier) => new THREE.InstancedMesh(this.geometry, standIn(this.material(tier)), 1),
+    return [false, true].flatMap((story) =>
+      this.textures.map(
+        (_, tier) => new THREE.InstancedMesh(this.geometry, standIn(this.material(tier, story)), 1),
+      ),
     );
   }
   clear() {
@@ -76,7 +82,7 @@ export class DangerOverlays {
         if (!this.entries.has(bomb.id)) {
           const cells = blastCells(state, bomb),
             tier = bomb.concealed ? VEIL_TEXTURE : powerTier(bomb.power ?? 70);
-          const material = this.material(tier);
+          const material = this.material(tier, !!state.story);
           const mesh = new THREE.InstancedMesh(this.geometry, material, cells.length),
             matrix = new THREE.Matrix4(),
             rotation = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -Math.PI / 2);
@@ -116,10 +122,12 @@ export class DangerOverlays {
       // In the final countdown the path flashes harder and its peaks bleach towards white.
       entry.material.color
         .set(bombGuideColor(state.players, bomb.ownerId, viewerId))
-        .lerp(FLASH, 0.5 * final * Math.max(0, wave));
+        .lerp(FLASH, (state.story ? 0.2 : 0) + 0.5 * final * Math.max(0, wave));
       entry.material.opacity = Math.min(
         1,
-        0.42 + 0.2 * final + (0.14 + 0.05 * w.progress + 0.22 * final) * wave,
+        state.story
+          ? 0.84 + 0.08 * wave + 0.08 * final
+          : 0.42 + 0.2 * final + (0.14 + 0.05 * w.progress + 0.22 * final) * wave,
       );
     }
   }
@@ -127,5 +135,6 @@ export class DangerOverlays {
     this.clear();
     this.geometry.dispose();
     this.textures.forEach((t) => t.dispose());
+    this.storyTexture.dispose();
   }
 }

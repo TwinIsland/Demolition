@@ -182,7 +182,7 @@ export function playShutdown(
 
   /** The last fight, once. Resolves with how it ended; the won match stays up, held still. */
   const fight = async (attempt: number, opening: readonly Line[]) => {
-    const difficulty = attempt >= MERCY_AFTER ? "easy" : "normal";
+    const difficulty = "easy";
     const { part, result } = await staged<"won" | "lost">(
       {
         mapId: MAP,
@@ -190,7 +190,7 @@ export function playShutdown(
         setup: {
           spawn: spots.hero,
           yaw: NORTH,
-          cast: cast(spots.corners, { difficulty }),
+          cast: cast(spots.corners, { difficulty, team: "kings" }),
           brawl: { zoneDuration: script.zoneDuration },
         },
       },
@@ -205,9 +205,18 @@ export function playShutdown(
           const p = hero(state);
           for (const [item, count] of Object.entries(KIT)) p.inventory[item] = count;
           p.credits = Math.max(p.credits, COINS);
-          // The skill bought in act 4 comes along; the rest of that match stays behind.
-          const skill = loadStory().flags.act4Skill;
-          if (typeof skill === "string" && skill in SKILLS && !p.skills.includes(skill)) p.skills.push(skill);
+          for (const king of state.players.filter((actor) => actor.team === "kings")) {
+            king.hp = king.maxHp = attempt >= MERCY_AFTER ? 40 : 60;
+            king.attack = 45;
+            king.credits = 0;
+          }
+          // Both lesson skills carry into the fight; older saves may only contain one.
+          const flags = loadStory().flags;
+          const learned =
+            typeof flags.act4Skills === "string" ? flags.act4Skills.split(",") : [flags.act4Skill];
+          for (const skill of learned)
+            if (typeof skill === "string" && skill in SKILLS && !p.skills.includes(skill))
+              p.skills.push(skill);
         });
         stage.root.classList.remove("veiled");
         if (opening.length && !(await d.talk(opening))) return;
@@ -382,6 +391,7 @@ export function playShutdown(
     stage.mark(checkpoints.done);
     stage.goal();
     stage.prompt();
+    stage.root.dataset.kind = "film";
     const roll = rollCredits(stage, ending, SHUTDOWN_ART[ending], first);
     enter(roll);
     if (await roll.done) stage.host.finish();

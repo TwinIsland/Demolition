@@ -6,7 +6,7 @@
 .help-modal h2 {
   font-size: 28px;
 }
-#overlay .help-modal {
+:is(#overlay, .story-menu) .help-modal {
   max-height: min(88dvh, 800px);
   overflow-y: auto;
   border: 0;

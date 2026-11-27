@@ -94,6 +94,8 @@ export interface Player extends Vec2 {
   name: string;
   color: string;
   bot: boolean;
+  /** Story actors with the same team neither target nor damage each other. */
+  team?: string;
   difficulty?: Difficulty;
   skin?: Appearance["skin"];
   bombStyle?: Appearance["bombStyle"];
@@ -260,6 +262,8 @@ export const inTacticalView = (p: Readonly<Player>, time: number) =>
   (p.forcedViewUntil ?? 0) > time || !!p.tacticalView;
 /** A bystander the story put on the map: nothing ever hurts them (see `StoryActor.passive`). */
 export const isBystander = (p: Readonly<Player>) => p.invulnerableUntil >= Number.MAX_SAFE_INTEGER;
+export const areAllies = (a: Readonly<Player>, b: Readonly<Player>) =>
+  a.id !== b.id && a.team !== undefined && a.team === b.team;
 export const isCloaked = (p: Readonly<Player>, time: number) => (p.cloakUntil ?? 0) > time;
 /** Whether `viewer` is denied the blast path of this charge. */
 export const trailHidden = (bomb: Pick<Bomb, "concealed" | "ownerId">, viewerId: string) =>
@@ -287,8 +291,14 @@ export interface GameSnapshot {
   mode?: MatchMode;
   /** Staged by story mode: see `StorySetup`. */
   story?: boolean;
+  /** A protected story lesson: the human player takes no combat damage. */
+  storyTutorial?: boolean;
   /** A staged match that still closes its zone and drops supplies: see `StorySetup.brawl`. */
   storyBrawl?: boolean;
+  /** The story's skill shop is open; loadout trades are allowed while its match is paused. */
+  storyShop?: boolean;
+  /** Purchase whitelist while a guided story shop is open. */
+  storyShopSkills?: SkillId[];
   canResetTerrain?: boolean;
   /** Simulation time at which a map with `terrainShift` announces its next rearrangement. */
   terrainShiftAt?: number;
@@ -346,6 +356,7 @@ export interface StoryActor extends Vec2 {
   name: string;
   color: string;
   skin: string;
+  team?: string;
   yaw?: number;
   difficulty?: Difficulty;
   /** A bystander: nothing hurts them. */
@@ -359,6 +370,10 @@ export interface StorySetup {
   spawn: Vec2;
   yaw?: number;
   cast: StoryActor[];
+  /** Protect the human player from combat damage while teaching. */
+  tutorial?: boolean;
+  /** Disable random equipment drops while teaching the flat world's basic charges. */
+  equipmentDrops?: boolean;
   /** Everyone starts in the overhead view. */
   overhead?: boolean;
   /**

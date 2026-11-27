@@ -42,6 +42,7 @@ export function attachGlobalInput(app: GameApp, root: HTMLElement, canvas: HTMLC
   // Last unlocked pointer position, for wheel drags that start without pointer lock.
   let pointerX: number | undefined;
   let pointerY: number | undefined;
+  let pointerLocked = document.pointerLockElement === canvas;
 
   function onChatKey(event: KeyboardEvent) {
     // Enter that confirms an IME composition must not send the message.
@@ -53,13 +54,29 @@ export function attachGlobalInput(app: GameApp, root: HTMLElement, canvas: HTMLC
 
   function onKeyDown(event: KeyboardEvent) {
     if (app.screen === "loading") return;
+    if (app.targeting) {
+      // The tablet owns these keys in story mode too, before the story handles confirmations.
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const action = bindings.action(event.code);
+      const step = TARGET_STEPS[event.code] ?? (action ? TARGET_STEPS[action] : undefined);
+      if (event.code === "Escape" || action === "usePerk" || action === "pause") {
+        if (!event.repeat) app.endTargeting();
+      } else if (event.code === "Enter" || event.code === "Space") {
+        if (!event.repeat) app.confirmTargeting();
+      } else if (step) app.steerTargeting(step[0], step[1]);
+      return;
+    }
     if (app.chatting) {
       onChatKey(event);
       return;
     }
     if (app.screen === "story") {
-      // The story reads its own keys; only the way out is handled here.
-      if (event.code === "Escape" && !event.repeat) app.back();
+      if (event.code === "Escape" || bindings.action(event.code) === "pause") {
+        event.preventDefault();
+        if (!event.repeat) app.back();
+        return;
+      }
       // A scene that has handed over the hero plays like a match: gear, wheel and reward keys.
       if (app.storyControlled && !event.repeat && !event.altKey && !event.ctrlKey && !event.metaKey)
         onPlayKey(event, bindings.action(event.code));
@@ -74,17 +91,6 @@ export function attachGlobalInput(app: GameApp, root: HTMLElement, canvas: HTMLC
       return;
     }
     const action = bindings.action(event.code);
-    if (app.targeting) {
-      // The targeting tablet owns the keyboard: steer the cursor, fire, or put it away.
-      const step = TARGET_STEPS[event.code] ?? (action ? TARGET_STEPS[action] : undefined);
-      event.preventDefault();
-      if (event.code === "Escape" || action === "usePerk" || action === "pause") {
-        if (!event.repeat) app.endTargeting();
-      } else if (event.code === "Enter" || event.code === "Space") {
-        if (!event.repeat) app.confirmTargeting();
-      } else if (step) app.steerTargeting(step[0], step[1]);
-      return;
-    }
     if (action === "fullscreen" && !editable(event.target)) {
       event.preventDefault();
       if (!event.repeat) app.toggleFullscreen();
@@ -144,12 +150,20 @@ export function attachGlobalInput(app: GameApp, root: HTMLElement, canvas: HTMLC
 
   function onPointerLockChange() {
     pointerX = pointerY = undefined;
+    const locked = document.pointerLockElement === canvas;
+    const lostLock = pointerLocked && !locked;
+    pointerLocked = locked;
     // Losing the lock while playing means Esc or a focus change: pause, silently if the tab is away.
-    if (!document.pointerLockElement && app.storyControlled && !app.topDown) app.back();
-    else if (!document.pointerLockElement && app.controllingPlayer)
-      app.pause(document.hasFocus() && !document.hidden);
+    if (lostLock && app.controllingPlayer) app.pause(document.hasFocus() && !document.hidden);
   }
 
+  window.addEventListener(
+    "keydown",
+    (event) => {
+      if (app.targeting) onKeyDown(event);
+    },
+    { capture: true, signal },
+  );
   window.addEventListener("keydown", onKeyDown, { signal });
   window.addEventListener("keyup", (event) => app.equipment.releaseKey(event.code), { signal });
   window.addEventListener("mousemove", onMouseMove, { signal });

@@ -6,6 +6,7 @@ import { ACTS, actDone, actUnlocked, nextAct, type Act } from "../story/chapters
 import { loadStory, MAIN_STORY, resetStory, type StorySave } from "../story/save";
 import { query } from "./dom";
 import { icon } from "./icons";
+import { unlockedIllustrations } from "../story/gallery";
 import { rise } from "./lobby-motion";
 
 /**
@@ -39,7 +40,11 @@ type ActState = "done" | "current" | "locked";
 export const storyPanels = () => `
             <nav class="menu-panel" data-panel="story" aria-label="故事模式" hidden>
               <dl class="story-status"></dl>
-              <button type="button" class="story-play" data-story="continue">${icon("play")}<span class="play-text"><span class="play-label">继续</span><small class="play-note"></small></span><kbd>ENTER</kbd></button>
+              <div class="story-primary-actions">
+                <button type="button" class="story-play" data-story="continue">${icon("play")}<span class="play-text"><span class="play-label">继续</span><small class="play-note"></small></span><kbd>ENTER</kbd></button>
+                <button type="button" class="story-square" id="story-music-box" title="音乐盒">${icon("music")}<span>音乐盒</span></button>
+                <button type="button" class="story-square" id="story-gallery" title="收藏">${icon("gallery")}<span>收藏</span></button>
+              </div>
               <button type="button" class="menu-row" data-story="new"><span class="row-label">新游戏</span><span class="row-value" data-value="new"></span><i class="row-arrow"></i></button>
             </nav>`;
 
@@ -88,6 +93,8 @@ export class StoryMenu {
     /** `titled` opens the act on its title card: it was picked from the list, not played into. */
     private readonly start: (act: string, titled?: boolean) => void,
   ) {
+    // Preserve illustrations earned by saves made before the gallery existed.
+    unlockedIllustrations();
     this.strip = query(root, ".chapter-strip");
     this.dialog = query(root, ".story-confirm");
     const hover = (id: string | undefined) => {

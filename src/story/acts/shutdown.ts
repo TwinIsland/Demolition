@@ -1,12 +1,15 @@
 import { SPOTS } from "../../modules/maps/flatland-story/layout.js";
-import type { Hotspot, Line, StagedScene } from "../script";
+import type { Hotspot, Line, RoomScene, StagedScene } from "../script";
 import { SHUTDOWN_ART } from "../shutdown/art";
 import { playShutdown } from "../shutdown/play";
 import { BEDROOM } from "./bedroom";
+import { STORY_ART } from "../assets";
 
 /** A room of the "go back" ending: walked through once, towards the one thing that leaves it. */
 export interface HomeRoom {
   background: string;
+  foreground?: RoomScene["foreground"];
+  animations?: RoomScene["animations"];
   cell: number;
   layout: readonly string[];
   walkOver?: string;
@@ -166,6 +169,10 @@ export const SHUTDOWN_SCRIPT = {
  */
 export const MORNING_BEDROOM: HomeRoom = {
   background: SHUTDOWN_ART.bedroomMorning,
+  foreground: [{ sprite: SHUTDOWN_ART.bedroomDesk, x: 254, y: 68, feetY: 138 }],
+  animations: [
+    { sprite: STORY_ART.bedroomDust, columns: 2, rows: 2, frames: 4, fps: 4, x: 88, y: 64, opacity: 0.65 },
+  ],
   cell: BEDROOM.cell,
   layout: BEDROOM.layout,
   walkOver: BEDROOM.walkOver,
@@ -212,6 +219,7 @@ export const MORNING_BEDROOM: HomeRoom = {
     {
       id: "plush",
       symbol: "F",
+      interactionRadius: 18,
       label: "琪露诺",
       lines: [
         { who: "cirno", text: "⑨。" },
@@ -221,6 +229,7 @@ export const MORNING_BEDROOM: HomeRoom = {
     {
       id: "desk",
       symbol: "N",
+      interactionRadius: 24,
       label: "书桌",
       lines: [
         { who: "zero", mood: "sincere", text: "三桶泡面。今天不用开第四桶了。" },
@@ -231,12 +240,14 @@ export const MORNING_BEDROOM: HomeRoom = {
     {
       id: "bed",
       symbol: "b",
+      interactionRadius: 14,
       label: "床底",
       lines: [{ who: "zero", mood: "sincere", text: "魔导……旧电脑的箱子。先放着吧。" }],
     },
     {
       id: "door",
       symbol: "=",
+      interactionRadius: 14,
       label: "房门",
       lines: [{ who: "narrator", text: "门没有锁。它从来没有锁过。" }],
       ends: true,
@@ -247,10 +258,11 @@ export const MORNING_BEDROOM: HomeRoom = {
 /**
  * The dining room, traced over its painting in 8-pixel cells. Solid: # wall, R fridge, K the
  * cabinet with the rice cooker, W window, C calendar, L the hallway back, O the kitchen door,
- * T the table and its chairs.
+ * T the tabletop; chairs use solid # cells so the approaches stay aligned with the room art.
  */
 export const DINING_ROOM: HomeRoom = {
   background: SHUTDOWN_ART.dining,
+  animations: [{ sprite: SHUTDOWN_ART.diningMeal, columns: 2, rows: 2, frames: 4, fps: 4, x: 128, y: 86 }],
   cell: 8,
   layout: [
     "########################################",
@@ -259,25 +271,25 @@ export const DINING_ROOM: HomeRoom = {
     "########################################",
     "########################################",
     "########################################",
-    "########################################",
-    "########################################",
-    "########################################",
-    "############KKKKKWWWWWWWWW##CCCC########",
-    "#######.RRRR......TTTT...........#######",
-    "######L..........TTTTTTT.........O######",
-    "#####L.@......TTTTTTTTTTTT........O#####",
-    "#####L........TTTTTTTTTTTT........O#####",
-    "#####.........TTTTTTTTTTTT.........O####",
-    "#####.........TTTTTTTTTTTT.........#####",
-    "####..........TTTTTTTTTTTT..........####",
-    "####...............TTT..............####",
-    "###................TTT...............###",
-    "########################################",
-    "########################################",
+    "#################WWWWWWWWW####CCCC######",
+    "##...RRRRKKKKK........................##",
+    "##...RRRRKKKKK........................##",
+    "##...RRRRKKKKK.....##.................##",
+    "##.................##.................O#",
+    "##.............TTTTTTTTTT.............O#",
+    "##.............TTTTTTTTTT.............O#",
+    "##.............TTTTTTTTTT.............O#",
+    "#L.............TTTTTTTTTT.............O#",
+    "#L.............TTTTTTTTTT.............O#",
+    "#L....@............##.................O#",
+    "#L.................##.................O#",
+    "#L....................................##",
+    "##....................................##",
+    "##....................................##",
     "########################################",
   ],
   intro: [],
-  goal: "坐下吃饭",
+  goal: "走到餐桌旁，按 E 坐下吃饭",
   hotspots: [
     {
       id: "fridge",
@@ -324,7 +336,8 @@ export const DINING_ROOM: HomeRoom = {
     {
       id: "table",
       symbol: "T",
-      label: "餐桌",
+      label: "坐下吃饭",
+      interactionRadius: 18,
       lines: [{ who: "narrator", text: "一碗饭，一盘红烧肉，一双筷子。对面还摆着一副空碗筷。" }],
       ends: true,
     },

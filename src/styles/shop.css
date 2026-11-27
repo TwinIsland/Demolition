@@ -56,6 +56,21 @@
 .shop-card:disabled {
   opacity: 0.45;
 }
+#app .shop-grid .shop-card[data-tutorial-required] {
+  border: 2px solid #ffe387;
+  box-shadow:
+    0 0 0 2px #211d0e,
+    inset 0 0 18px #ffd65c20;
+}
+#app .shop-grid .shop-card[data-tutorial-required].purchased {
+  border-color: #8dffc3;
+}
+.shop-lesson {
+  padding: 9px 12px;
+  border-left: 3px solid #ffe387;
+  background: #292415;
+  color: #fff0b0;
+}
 .shop-card {
   transition:
     background-color var(--duration-base),

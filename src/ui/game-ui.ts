@@ -4,6 +4,10 @@ import "./deployment-menu.css";
 import "./feedback-hud.css";
 import "./strike-panel.css";
 import "./credits.css";
+import "./music-box.css";
+import "./story-gallery.css";
+import "./story-pause.css";
+import "./story-theme.css";
 // The visual skin overrides every surface, so it must stay the last stylesheet.
 import "./icon-art.css";
 import "./match-result.css";
@@ -22,8 +26,12 @@ import { CombatFeed } from "./combat-feed";
 import { mountControls } from "./control-settings";
 import { creditsMarkup, mountCredits } from "./credits";
 import type { SpectrumReader } from "./credits-spectrum";
+import type { MusicPlayer } from "../audio/music-player";
+import { mountMusicBox, musicBoxMarkup } from "./music-box";
+import { galleryMarkup, mountGallery } from "./story-gallery";
 import { mountStory, storyMarkup, type StoryHandle, type StoryHost } from "../story/story-view";
-import { StoryExitPrompt } from "./story-exit";
+import { STORY_ART } from "../story/assets";
+import type { StoryHud, StoryShopOptions } from "../story/stage";
 import { query } from "./dom";
 import { EquipmentWheel } from "./equipment-wheel";
 import { graphicsChange, graphicsForm, syncGraphics, syncVolumeRow } from "./graphics-options";
@@ -32,7 +40,7 @@ import { icon } from "./icons";
 import { KillcamView } from "./killcam";
 import { LobbyView } from "./lobby";
 import { manualMarkup } from "./manual";
-import { pauseMarkup } from "./match-menus";
+import { pauseMarkup, storyPauseMarkup } from "./match-menus";
 import { applyResultFrames, placement, resultKind, resultMarkup } from "./match-result";
 import { paintSkinHeads } from "./skin-heads";
 import { playResult } from "./match-result-motion";
@@ -60,7 +68,7 @@ export type { HudFrame } from "./view";
 /** Mount points only; each view fills in its own element. */
 const SHELL = `
       <div class="vignette"></div><div id="damage"></div>
-      <header class="topbar"><a class="brand" href="#" aria-label="爆破前线首页"><img class="brand-mark" src="./assets/menu/insignia.png" alt=""><span>爆破前线<small>DEMOLITION</small></span></a></header>
+      <header class="topbar"><a class="brand" href="#" aria-label="爆破前线首页"><img class="brand-mark brand-mark-default" src="./assets/menu/insignia.png" alt=""><img class="brand-mark brand-mark-story" src="${STORY_ART.logo}" alt=""><span>爆破前线<small>DEMOLITION</small></span></a></header>
         <div class="top-actions" role="group" aria-label="游戏控制"></div>
       <main id="lobby"></main>
       <div id="hud" hidden>
@@ -175,6 +183,7 @@ export class GameUI {
 
   /** Switches between the lobby shell and the in-match HUD, clearing per-match UI state. */
   setInGame(inGame: boolean) {
+    delete this.root.dataset.storyHud;
     this.mutationNotice.clear();
     document.body.classList.toggle("in-game", inGame);
     this.lobby.root.hidden = inGame;
@@ -278,8 +287,11 @@ export class GameUI {
     if (!on) this.setStoryHud(false);
   }
 
-  /** The match HUD under a story scene. */
-  setStoryHud(on: boolean) {
+  /** Show only the HUD elements named by the current lesson. */
+  setStoryHud(value: StoryHud) {
+    const on = typeof value === "boolean" ? value : value.length > 0;
+    if (on) this.root.dataset.storyHud = typeof value === "boolean" ? "full" : value.join(" ");
+    else delete this.root.dataset.storyHud;
     document.body.classList.toggle("in-game", on);
     this.hud.hidden = !on;
     if (on) return;
@@ -293,14 +305,20 @@ export class GameUI {
   }
 
   /** The skill shop as a dialog inside `parent`, for a scene that keeps the overlay to itself. */
-  mountShop(parent: HTMLElement, player: Player) {
+  mountShop(parent: HTMLElement, player: Player, options: StoryShopOptions = {}) {
     const shop = document.createElement("section");
     shop.className = "modal shop-modal";
     shop.setAttribute("role", "dialog");
-    shop.innerHTML = shopMarkup(player);
+    if (options.requiredSkills) shop.dataset.requiredSkills = options.requiredSkills.join(" ");
+    shop.innerHTML = shopMarkup(player, options);
     parent.append(shop);
     queueMicrotask(() => shop.querySelector<HTMLElement>("button")?.focus());
     return shop;
+  }
+
+  /** Refresh a shop inside the story without replacing its stage. */
+  updateStoryShop(shop: HTMLElement, player: Player) {
+    updateShop(shop, player);
   }
 
   showShop(player: Player) {
@@ -310,16 +328,32 @@ export class GameUI {
   }
 
   showPause() {
-    this.overlay.show(pauseMarkup());
+    if (this.story) this.storyDialog("pause", storyPauseMarkup(), "pause-modal");
+    else this.overlay.show(pauseMarkup());
   }
 
   showHelp(inGame: boolean) {
-    mountControls(this.overlay.show(manualMarkup(inGame), "help-modal", ".guide-section summary"));
+    const dialog = this.story
+      ? this.storyDialog("help", manualMarkup(true), "help-modal")
+      : this.overlay.show(manualMarkup(inGame), "help-modal", ".guide-section summary");
+    mountControls(dialog);
   }
 
   showGraphics(value: GraphicsSettings, volumes: Readonly<Volumes>) {
-    const dialog = this.overlay.show(graphicsForm(volumes), "graphics-modal");
+    const dialog = this.story
+      ? this.storyDialog("graphics", graphicsForm(volumes), "graphics-modal")
+      : this.overlay.show(graphicsForm(volumes), "graphics-modal");
     syncGraphics(query<HTMLFormElement>(dialog, "#graphics-form"), value);
+  }
+
+  showMusicBox(player: MusicPlayer, setVolume: (volume: number) => void) {
+    const dialog = this.storyDialog("music", musicBoxMarkup(), "music-box-modal");
+    this.stopStoryMenu = mountMusicBox(dialog, player, setVolume);
+  }
+
+  showGallery() {
+    const dialog = this.storyDialog("gallery", galleryMarkup(), "gallery-modal");
+    this.stopStoryMenu = mountGallery(dialog);
   }
 
   private stopCredits?: () => void;
@@ -333,22 +367,53 @@ export class GameUI {
   }
 
   private story?: StoryHandle;
-  private storyExit?: StoryExitPrompt;
+  private storyHost?: StoryHost;
+  private storyMenu?: HTMLElement;
+  private stopStoryMenu?: () => void;
+  storyMenuKind?: "pause" | "graphics" | "help" | "music" | "gallery";
 
-  showStory(host: StoryHost, act?: string, titled = false) {
-    this.story?.stop();
-    const screen = this.overlay.screen(storyMarkup(), "story-screen");
-    const story = (this.story = mountStory(screen, host, act, titled));
-    this.storyExit = new StoryExitPrompt(screen, {
-      pause: (on) => story.pause(on),
-      leave: () => host.finish(),
-      click: () => host.menu("click"),
-    });
+  private storyDialog(
+    kind: "pause" | "graphics" | "help" | "music" | "gallery",
+    html: string,
+    className: string,
+  ) {
+    this.stopStoryMenu?.();
+    this.stopStoryMenu = undefined;
+    this.storyMenu?.remove();
+    this.story?.pause(true);
+    this.storyMenuKind = kind;
+    const menu = document.createElement("div");
+    menu.className = "story-menu";
+    menu.innerHTML = `<section class="modal ${className}" role="dialog" aria-modal="true">${html}</section>`;
+    this.root.append(menu);
+    this.storyMenu = menu;
+    queueMicrotask(() => menu.querySelector<HTMLElement>("button,select")?.focus());
+    return menu.firstElementChild as HTMLElement;
   }
 
-  /** Escape in the story: asks before leaving, or withdraws the question. */
-  toggleStoryExit() {
-    this.storyExit?.toggle();
+  closeStoryMenu() {
+    this.stopStoryMenu?.();
+    this.stopStoryMenu = undefined;
+    this.storyMenu?.remove();
+    this.storyMenu = undefined;
+    this.storyMenuKind = undefined;
+    this.story?.pause(false);
+  }
+
+  showStory(host: StoryHost, act?: string, titled = false) {
+    this.stopStoryMenu?.();
+    this.stopStoryMenu = undefined;
+    this.story?.stop();
+    this.storyMenu?.remove();
+    this.storyMenu = this.storyMenuKind = undefined;
+    this.storyHost = host;
+    this.root.dataset.storyMode = "true";
+    const screen = this.overlay.screen(storyMarkup(), "story-screen");
+    this.story = mountStory(screen, host, act, titled);
+  }
+
+  restartStory() {
+    if (this.storyHost && this.story) this.showStory(this.storyHost, this.story.actId, true);
   }
 
   /**
@@ -369,10 +434,16 @@ export class GameUI {
   }
 
   hideOverlay() {
+    this.stopStoryMenu?.();
+    this.stopStoryMenu = undefined;
     this.stopCredits?.();
     this.stopCredits = undefined;
     this.story?.stop();
-    this.story = this.storyExit = undefined;
+    this.story = undefined;
+    this.storyHost = undefined;
+    this.storyMenu?.remove();
+    this.storyMenu = this.storyMenuKind = undefined;
+    delete this.root.dataset.storyMode;
     this.overlay.hide();
   }
 
@@ -437,6 +508,8 @@ export class GameUI {
   }
 
   dispose() {
+    this.stopStoryMenu?.();
+    this.stopStoryMenu = undefined;
     this.stopCredits?.();
     this.listeners.abort();
     this.topBar.dispose();
@@ -529,6 +602,13 @@ export class GameUI {
         return actions.openHelp();
       case "pause":
         return actions.pause();
+      case "story-music-box":
+        return actions.openMusicBox();
+      case "story-gallery":
+        return actions.openGallery();
+      case "gallery-close":
+      case "music-box-close":
+        return actions.resume();
       case "resume":
         return actions.resume();
       case "home":

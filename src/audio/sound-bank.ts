@@ -135,7 +135,7 @@ export const CREDITS_MUSIC = "./assets/credits-freedom.mp3";
 export const STORY_MUSIC = {
   opening: "./assets/story/electronic-girl-8bit.mp3",
   duel: "./assets/story/share-friendship.mp3",
-  ascension: CREDITS_MUSIC,
+  ascension: "./assets/story/kenka-no-bannin.mp3",
   lesson: "./assets/story/clumsy-communication.mp3",
   /** Act 5: the shutdown and the last fight. */
   shutdown: "./assets/story/kenka-no-bannin.mp3",

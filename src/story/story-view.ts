@@ -1,16 +1,20 @@
 import "./story.css";
+import "./hud.css";
 import { LULU_PORTRAITS, ZERO_PORTRAITS, ZHANGSAN_PORTRAITS } from "./assets";
 import { ACTS } from "./chapters";
 import { playArcade } from "./arcade-play";
 import { DialogueBox, dialogueMarkup } from "./dialogue";
 import { playRoom } from "./room-play";
 import { reachCheckpoint } from "./save";
+import { unlockIllustration } from "./gallery";
+import { t } from "../i18n";
 import type { ScenePlayer, Stage, StoryHost } from "./stage";
 
 export type { StoryHost } from "./stage";
 
 /** The running story, as the app holds it. */
 export interface StoryHandle {
+  readonly actId: string;
   /** Holds the story still under a dialog: no keys reach it and the scene's clock stops. */
   pause(on: boolean): void;
   stop(): void;
@@ -27,9 +31,10 @@ export const storyMarkup = () => `
     <div class="story-title" hidden><small></small><h2></h2></div>
     <div class="story-save" hidden><i></i><span>已保存</span></div>
     <div class="story-card" hidden><span>未完待续</span><small><kbd>E</kbd> 返回主菜单</small></div>
-    <div class="story-keys" data-for="room"><span><kbd>WASD</kbd> 移动</span><span><kbd>E</kbd> 调查 / 继续</span><span><kbd>ESC</kbd> 离开</span></div>
-    <div class="story-keys" data-for="staged"><span><kbd>WASD</kbd> 移动</span><span><kbd>空格</kbd> 放炸药</span><span><kbd>ESC</kbd> 离开</span></div>
-    <div class="story-keys" data-for="arcade"><span><kbd>WASD</kbd> 移动</span><span><kbd>空格</kbd> 放泡泡</span><span><kbd>ESC</kbd> 离开</span></div>
+    <div class="story-keys" data-for="room"><span><kbd>WASD</kbd> 移动</span><span><kbd>E</kbd> 调查 / 继续</span></div>
+    <div class="story-keys" data-for="staged"><span><kbd>WASD</kbd> 移动</span><span><kbd>空格</kbd> 放炸药</span></div>
+    <div class="story-keys" data-for="arcade"><span><kbd>WASD</kbd> 移动</span><span><kbd>空格</kbd> 放泡泡</span></div>
+    <div class="story-pause-hint"><kbd>ESC</kbd><span>${t("暂停")}</span></div>
   </div>`;
 
 const MOVES: Record<string, readonly [number, number]> = {
@@ -106,7 +111,7 @@ export function mountStory(
       }),
     goal(text) {
       goal.hidden = !text;
-      if (text) goal.textContent = `目标：${text}`;
+      if (text && goal.textContent !== `目标：${text}`) goal.textContent = `目标：${text}`;
     },
     prompt(text) {
       prompt.hidden = !text;
@@ -114,6 +119,7 @@ export function mountStory(
     },
     art(url) {
       if (url) {
+        unlockIllustration(url);
         art.classList.remove("leaving");
         art.src = url;
         art.hidden = false;
@@ -155,6 +161,7 @@ export function mountStory(
   const open = () => {
     const scene = act.scene!;
     root.dataset.kind = scene.kind;
+    delete root.dataset.tutorial;
     root.classList.remove("booting", "blackout", "pulling", "veiled");
     art.hidden = true;
     art.classList.remove("leaving");
@@ -165,7 +172,7 @@ export function mountStory(
     running.player = undefined;
     running.player =
       scene.kind === "room"
-        ? playRoom(stage, scene)
+        ? (scene.play?.(stage) ?? playRoom(stage, scene))
         : scene.kind === "arcade"
           ? playArcade(stage, scene)
           : scene.play(stage);
@@ -179,6 +186,8 @@ export function mountStory(
     running.player?.dispose();
     act = next;
     open();
+    await running.player?.ready;
+    if (!alive) return;
     if (await stage.wait(SWITCH_MS / 2)) root.classList.remove("switching");
   };
 
@@ -193,6 +202,8 @@ export function mountStory(
   };
   const onKeyDown = (event: KeyboardEvent) => {
     if (paused) return;
+    // Shop buttons keep their native keyboard activation while the story waits for deployment.
+    if (event.target instanceof HTMLElement && event.target.closest(".shop-modal")) return;
     if (event.code === "Escape" || event.metaKey || event.ctrlKey || event.altKey) return;
     if (!(event.code in MOVES) && !CONFIRM.has(event.code) && !/^Digit[1-9]$/.test(event.code)) return;
     event.preventDefault();
@@ -228,6 +239,8 @@ export function mountStory(
     title.hidden = false;
     if (!(await stage.wait(TITLE_MS))) return;
     open();
+    await running.player?.ready;
+    if (!alive) return;
     title.classList.add("leaving");
     if (await stage.wait(700)) title.hidden = true;
   };
@@ -239,6 +252,9 @@ export function mountStory(
   root.addEventListener("click", onClick);
 
   return {
+    get actId() {
+      return act.id;
+    },
     pause(on) {
       paused = on;
       if (running.player) running.player.paused = on;

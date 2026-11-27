@@ -54,6 +54,7 @@ export class Simulation {
       random,
       nextId: () => ++sequence,
       undead,
+      equipmentDrops: options.story?.equipmentDrops !== false,
       crateMisses: new Map(),
       offerHistory: new Map(),
       zoneBurn: new Map(),
@@ -72,13 +73,28 @@ export class Simulation {
     const ctx = this.ctx,
       s = this.state;
 
-    // 1. Menu commands: loadout during the countdown, perk choices at any time.
+    // 1. Menu commands: loadout before a match or in the story shop, perk choices at any time.
     //    These are accepted at dt=0 while the local game is paused by its UI.
     for (const p of s.players) {
       const command = inputs.get(p.id);
-      if (s.phase === "countdown" && command) {
-        if (command.equip && p.alive) equip(ctx, p, command.equip);
-        applyShopCommand(p, command);
+      if (command) {
+        if (s.phase === "countdown" && command.equip && p.alive) equip(ctx, p, command.equip);
+        if (s.phase === "countdown" || (s.story && s.storyShop && s.phase === "playing")) {
+          const allowed = s.storyShop ? s.storyShopSkills : undefined;
+          applyShopCommand(
+            p,
+            allowed
+              ? {
+                  buySkill:
+                    command.buySkill && allowed.includes(command.buySkill) ? command.buySkill : undefined,
+                  refundSkill:
+                    command.refundSkill && allowed.includes(command.refundSkill)
+                      ? command.refundSkill
+                      : undefined,
+                }
+              : command,
+          );
+        }
       }
       choosePerk(ctx, p, command?.choosePerk);
     }
@@ -167,12 +183,13 @@ function initialState(
   const story = options.story;
   const slots = options.opponents ?? defaultSlots(options.difficulty);
   const bots = story
-    ? story.cast.map(({ id, name, color, skin, difficulty }) => ({
+    ? story.cast.map(({ id, name, color, skin, difficulty, team }) => ({
         id,
         name,
         color,
         skin,
         difficulty,
+        team,
         bot: true,
       }))
     : BOT_PROFILES.flatMap((profile) => {
@@ -197,6 +214,7 @@ function initialState(
   return {
     mode,
     story: story ? true : undefined,
+    storyTutorial: story?.tutorial || undefined,
     storyBrawl: story?.brawl ? true : undefined,
     canResetTerrain: mode === "practice" && !!map.randomizeTerrain,
     seed: options.seed,

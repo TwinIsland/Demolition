@@ -43,6 +43,8 @@ export interface UIActions {
   goHome(): void;
   // Settings and chrome
   openHelp(): void;
+  openMusicBox(): void;
+  openGallery(): void;
   openGraphics(): void;
   changeGraphics(value: GraphicsSettings): void;
   closeGraphics(): void;

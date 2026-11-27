@@ -64,6 +64,8 @@ export class KeyboardAgent implements PlayerAgent {
   private skill?: SkillId;
   private supply?: ItemId;
   private dragging = false;
+  private escapeHeld = false;
+  private pointerLockQueued = false;
   private pointer = { x: 0, y: 0 };
   private listeners = new AbortController();
   constructor(
@@ -74,6 +76,7 @@ export class KeyboardAgent implements PlayerAgent {
     window.addEventListener(
       "keydown",
       (e) => {
+        if (e.code === "Escape") this.escapeHeld = true;
         if (
           !this.enabled ||
           e.isComposing ||
@@ -100,10 +103,25 @@ export class KeyboardAgent implements PlayerAgent {
       },
       { capture: true, signal },
     );
-    window.addEventListener("keyup", (e) => this.keys.delete(e.code), {
-      signal,
-    });
-    window.addEventListener("blur", () => this.clear(), { signal });
+    window.addEventListener(
+      "keyup",
+      (e) => {
+        this.keys.delete(e.code);
+        if (e.code !== "Escape") return;
+        this.escapeHeld = false;
+        if (this.pointerLockQueued && this.enabled) void this.lockPointer();
+        else this.pointerLockQueued = false;
+      },
+      { signal },
+    );
+    window.addEventListener(
+      "blur",
+      () => {
+        this.escapeHeld = false;
+        this.clear();
+      },
+      { signal },
+    );
     window.addEventListener(
       "mousemove",
       (e) => {
@@ -298,6 +316,13 @@ export class KeyboardAgent implements PlayerAgent {
     this.perkTarget = target;
   }
   async lockPointer() {
+    // Escape's browser default releases pointer lock. Reacquire only after that press ends,
+    // otherwise resuming a menu immediately produces another unlock and pauses again.
+    if (this.escapeHeld) {
+      this.pointerLockQueued = true;
+      return;
+    }
+    this.pointerLockQueued = false;
     try {
       await this.canvas.requestPointerLock();
     } catch {
@@ -305,6 +330,7 @@ export class KeyboardAgent implements PlayerAgent {
     }
   }
   clear() {
+    this.pointerLockQueued = false;
     this.plantHere = false;
     this.buildRequested = undefined;
     this.resetTerrain = false;
@@ -409,7 +435,7 @@ export class KeyboardAgent implements PlayerAgent {
       throwMode,
       aimTarget:
         shot && (selected === "bomb" || ITEMS[selected]?.throwable)
-          ? aimCell(self, shot.yaw, shot.pitch, selected, state.time, throwMode)
+          ? aimCell(self, shot.yaw, shot.pitch, selected, state.time, throwMode, state.size)
           : undefined,
     };
     this.jump = false;

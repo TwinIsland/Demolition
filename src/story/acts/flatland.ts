@@ -5,6 +5,8 @@ import { SPOTS } from "../../modules/maps/flatland-story/layout.js";
 import { playIntroCard } from "../cutscenes/intro-card";
 import { playLanding } from "../cutscenes/landing";
 import { playRelicDrop } from "../cutscenes/relic-drop";
+import type { Cutscene } from "../cutscenes/kit";
+import { LessonMarkers } from "../match/lesson-markers";
 import { STORY_ART, STORY_SKINS } from "../assets";
 import type { Director } from "../match/director";
 import { playStagedMatch } from "../match/staged-match";
@@ -47,7 +49,6 @@ const LINES = {
   walls: [
     { who: "lulu", mood: "pout", text: "听好了，我只说一遍。灰色的是墙，炸不掉。木头的是箱子，炸得掉。" },
     { who: "zero", mood: "smug", text: "吾之爆炎可以贯穿一切。" },
-    { who: "system", text: "按 [空格] 在脚下放置炸药。放下之后，请离开。" },
   ],
   wallHolds: [
     { who: "lulu", mood: "pout", text: "……" },
@@ -55,14 +56,14 @@ const LINES = {
     { who: "lulu", mood: "pout", text: "它就是一面墙。去炸箱子。" },
   ],
   coins: [
-    { who: "zero", mood: "sincere", text: "箱子里有金币。" },
-    { who: "lulu", mood: "pout", text: "对，拿好，之后可以买东西。" },
+    { who: "zero", mood: "sincere", text: "炸开箱子就有金币。" },
+    { who: "lulu", mood: "pout", text: "对，直接到账，看右下角。" },
     { who: "zero", mood: "smug", text: "呵，这个世界也被资本腐蚀了吗。" },
     { who: "lulu", mood: "pout", text: "不要的话给我。" },
     { who: "zero", mood: "flustered", text: "……吾先代为保管。" },
   ],
   range: [
-    { who: "lulu", mood: "pout", text: "炸药的火会往四个方向走，前、后、左、右。走多远看你的威力。" },
+    { who: "lulu", mood: "pout", text: "爆炸只沿四个方向走。" },
     { who: "zero", mood: "sincere", text: "那上面呢？" },
     { who: "lulu", mood: "pout", text: "……什么？" },
     { who: "zero", mood: "sincere", text: "上面。往上炸。" },
@@ -70,14 +71,22 @@ const LINES = {
     { who: "zero", mood: "flustered", text: "就是……上啊。（跳了一下，没跳起来）" },
     { who: "lulu", mood: "flustered", text: "你没事吧？要不要坐一会儿？" },
     { who: "narrator", text: "这个世界没有「上」。提起它的人，一般会被认为是累了。" },
-    { who: "lulu", mood: "pout", text: "算了。放两颗炸药，让一颗的火碰到另一颗。" },
+    {
+      who: "lulu",
+      mood: "pout",
+      text: "火线碰到另一颗炸药，会把它提前引爆。试试看。",
+    },
   ],
   chain: [
     { who: "zero", mood: "smug", text: "连锁……！这就是，无限爆炎制——" },
     { who: "lulu", mood: "pout", text: "叫「连锁」就行。" },
     { who: "zero", mood: "flustered", text: "让吾把名字起完。" },
     { who: "lulu", mood: "pout", text: "不行，文本框。" },
-    { who: "lulu", mood: "pout", text: "下一个。站在炸药外面顶着它往前走，可以把它踢出去。" },
+    {
+      who: "lulu",
+      mood: "pout",
+      text: "给你「滑踢」。退离炸药，再持续朝它走，就能踢出去。",
+    },
   ],
   kick: [
     { who: "zero", mood: "smug", text: "踢向敌人，再转身离去，不看爆炸。" },
@@ -92,7 +101,13 @@ const LINES = {
     { who: "lulu", mood: "impressed", text: "全都记得。很好笑。" },
     { who: "lulu", mood: "flustered", text: "才、才不是担心你才看着的！是我的工作！" },
   ],
-  duelCall: [{ who: "lulu", mood: "impressed", text: "理论讲完了，来打一场。出来吧，示例对手！" }],
+  duelCall: [
+    {
+      who: "lulu",
+      mood: "impressed",
+      text: "来场实战。出来吧，示例对手！",
+    },
+  ],
   duelIntro: [
     { who: "zhangsan", mood: "smile", text: "你好，我是【对手名称】。" },
     { who: "zero", mood: "sincere", text: "……他的台词是不是没填完。" },
@@ -125,10 +140,10 @@ const LINES = {
 } satisfies Record<string, readonly Line[]>;
 
 const GOALS = {
-  wall: "对着告示牌放一颗炸药",
+  wall: "试着炸开告示牌",
   crates: "炸开箱子",
-  chain: "用一颗炸药引爆另一颗",
-  kick: "顶着炸药往前走，把它踢出去",
+  chain: "触发一次连锁爆炸",
+  kick: "踢出一颗炸药",
   duel: "击败示例对手",
 };
 
@@ -138,8 +153,6 @@ const DUEL = SPOTS.dojo;
 const OFFSTAGE: Vec2 = { x: 13, z: 13 };
 const RESPAWN_SECONDS = 1.2;
 const CRATE_GOAL = 3;
-/** Less than his own blast costs him, until the duel. */
-const FRAGILE_HP = 10;
 const DUEL_HP = 100;
 
 /** How the sample opponent is held back: weak charges, slow feet, long pauses. */
@@ -177,188 +190,303 @@ class SampleOpponent implements PlayerAgent {
 
 async function script(d: Director) {
   const { stage, match } = d;
+  stage.root.dataset.tutorial = "flatland";
+  d.lock(true);
+  let finished = false,
+    stopped = false,
+    film: Cutscene | undefined;
+  let targets: (state: Readonly<GameSnapshot>) => readonly Vec2[] = () => [];
+  const markers = new LessonMarkers(match.scene);
+  void d
+    .until((state) => {
+      if (film) film.paused = match.paused;
+      markers.show(targets(state), state.size, state.time);
+      return finished;
+    })
+    .then((complete) => {
+      stopped = !complete;
+      film?.dispose();
+      markers.dispose();
+    });
   /** Conversations wait their turn: a death may want to speak while the lesson does. */
   let queue: Promise<boolean> = Promise.resolve(true);
   const say = (lines: readonly Line[]) => (queue = queue.then((ok) => ok && d.talk(lines)));
-  const cutscene = async (play: (canvas: HTMLCanvasElement) => { done: Promise<void>; dispose(): void }) => {
+  const cutscene = async (play: (canvas: HTMLCanvasElement) => Cutscene, reveal?: () => void) => {
     d.lock(true);
-    const scene = play(stage.overlay());
+    const canvas = stage.overlay();
+    const scene = (film = play(canvas));
     await scene.done;
+    if (stopped) return false;
+    reveal?.();
+    canvas.classList.add("leaving");
+    const open = await d.seconds(0.32);
     scene.dispose();
-    d.lock(false);
+    film = undefined;
+    return open;
+  };
+  const calm = async () => {
+    d.lock(true);
+    targets = () => [];
+    return (
+      (await d.until((state) => !state.bombs.length && !state.blasts.length && d.hero.alive)) &&
+      d.seconds(0.3)
+    );
   };
 
   // Death is part of the lesson: the hero comes back where the current lesson began.
   let home: Vec2 = SPOTS.arrival,
     died = false,
     over = false;
-  const lives = async () => {
-    while (!over) {
-      if (!(await d.until((state) => !state.players[0].alive))) return;
-      if (!(await d.seconds(RESPAWN_SECONDS)) || over) return;
-      d.revive("you", home);
-      if (!died) {
-        died = true;
-        void say(LINES.firstDeath);
+  try {
+    const lives = async () => {
+      while (!over) {
+        if (!(await d.until((state) => !state.players[0].alive))) return;
+        if (!(await d.seconds(RESPAWN_SECONDS)) || over) return;
+        d.revive("you", home);
+        if (!died) {
+          died = true;
+          void say(LINES.firstDeath);
+        }
       }
-    }
-  };
-  void lives();
+    };
+    void lives();
 
-  // The lessons are about charges and nothing else: no crates of his own, no other equipment.
-  match.gate = (input) => ({
-    ...input,
-    build: false,
-    buildTarget: undefined,
-    useEquipment: false,
-    equip: undefined,
-    resetTerrain: false,
-  });
-  stage.host.music("opening");
-  await cutscene(playLanding);
-  stage.art(STORY_ART.comic3);
-  stage.root.classList.remove("veiled");
-  if (!(await say(LINES.arrive))) return;
-  stage.art();
-  if (!(await say(LINES.wake))) return;
-  await cutscene((canvas) =>
-    playIntroCard(canvas, {
-      skin: STORY_SKINS["story-lulu"],
-      title: "露露",
-      note: "新手引导精灵 · 16×16",
-      tint: "#ff7a9a",
-    }),
-  );
-  d.put("lulu", SPOTS.guide);
-  d.face("lulu", SPOTS.arrival);
-  d.face("you", SPOTS.guide);
-  if (!(await say(LINES.meet))) return;
-  stage.mark("act3-arrive");
+    // The lessons are about charges and nothing else: no crates of his own, no other equipment.
+    match.gate = (input) => ({
+      ...input,
+      build: false,
+      buildTarget: undefined,
+      useEquipment: false,
+      equip: undefined,
+      resetTerrain: false,
+    });
+    stage.host.music("opening");
+    match.mutate((state) => {
+      for (const actor of state.players) if (actor.bot) actor.alive = false;
+    });
+    if (
+      !(await cutscene(playLanding, () => {
+        stage.art(STORY_ART.comic3);
+        stage.root.classList.remove("veiled");
+      }))
+    )
+      return;
+    if (!(await say(LINES.arrive))) return;
+    stage.art();
+    if (!(await d.seconds(0.7))) return;
+    if (!(await say(LINES.wake))) return;
+    if (
+      !(await cutscene(
+        (canvas) =>
+          playIntroCard(canvas, {
+            skin: STORY_SKINS["story-lulu"],
+            title: "露露",
+            note: "新手引导精灵 · 16×16",
+            tint: "#ff7a9a",
+          }),
+        () => {
+          match.mutate((state) => {
+            state.players.find((p) => p.id === "lulu")!.alive = true;
+          });
+          d.put("lulu", SPOTS.guide);
+          d.face("lulu", SPOTS.arrival);
+          d.face("you", SPOTS.guide);
+        },
+      ))
+    )
+      return;
+    if (!(await say(LINES.meet))) return;
+    stage.mark("act3-arrive");
 
-  // A newcomer is fragile: one mistake with his own charge is the lesson on dying.
-  const toughness = (hp: number) =>
+    // Health and the fixed starting kit stay predictable throughout the protected lesson.
+    const toughness = (hp: number) =>
+      match.mutate((state) => {
+        const hero = state.players[0];
+        hero.hp = hero.maxHp = hp;
+      });
+    toughness(DUEL_HP);
+    const baseline = d.hero.stats?.coverDestroyed ?? 0;
+    const opened = (state: Readonly<GameSnapshot>) =>
+      Math.min(CRATE_GOAL, (state.players[0].stats?.coverDestroyed ?? 0) - baseline);
+
+    // 3.1 Walls hold, crates do not.
+    if (!(await say(LINES.walls))) return;
+    stage.goal(GOALS.wall);
+    d.lock(false);
+    if (
+      !(await d.until((state) =>
+        state.blasts.some((blast) => {
+          if (blast.ownerId !== d.hero.id || blast.originX === undefined || blast.originZ === undefined)
+            return false;
+          const dx = SPOTS.notice.x - blast.originX,
+            dz = SPOTS.notice.z - blast.originZ;
+          return (
+            (!dx || !dz) &&
+            Math.abs(dx) + Math.abs(dz) <= (blast.range ?? d.hero.range) &&
+            blast.x === SPOTS.notice.x - Math.sign(dx) &&
+            blast.z === SPOTS.notice.z - Math.sign(dz)
+          );
+        }),
+      ))
+    )
+      return;
+    if (!(await calm())) return;
+    if (!(await say(LINES.wallHolds))) return;
+    // Work done by the first charge counts too; never ask for three additional crates.
+    stage.goal(`${GOALS.crates} ${opened(d.state)}/${CRATE_GOAL}`);
+    d.lock(false);
+    if (
+      !(await d.until((state) => {
+        stage.goal(`${GOALS.crates} ${opened(state)}/${CRATE_GOAL}`);
+        return opened(state) === CRATE_GOAL;
+      }))
+    )
+      return;
+    if (!(await calm())) return;
+    stage.goal();
+    match.hud = ["coins"];
+    if (!(await say(LINES.coins))) return;
+
+    // 3.2 Range, a chain, a kick.
+    const chainCells = [SPOTS.chainLane.from, { x: SPOTS.chainLane.from.x + 1, z: SPOTS.chainLane.from.z }];
+    targets = () => chainCells;
+    if (!(await say(LINES.range))) return;
+    stage.goal(GOALS.chain);
+    match.mutate((state) => {
+      state.players[0].capacity = Math.max(2, state.players[0].capacity);
+    });
+    // A charge that goes off well before its own fuse was set off by another.
+    const fuses = new Map<number, number>();
+    d.lock(false);
+    if (
+      !(await d.until((state) => {
+        const live = new Set(state.bombs.map((bomb) => bomb.id));
+        let chained = false;
+        for (const [id, at] of fuses)
+          if (!live.has(id)) {
+            chained ||= state.time < at - 0.05 && state.blasts.some((blast) => blast.explosionId === id);
+            fuses.delete(id);
+          }
+        for (const bomb of state.bombs)
+          if (bomb.ownerId === d.hero.id && !fuses.has(bomb.id)) fuses.set(bomb.id, bomb.detonateAt);
+        return chained;
+      }))
+    )
+      return;
+    if (!(await calm())) return;
+    stage.goal();
     match.mutate((state) => {
       const hero = state.players[0];
-      hero.hp = hero.maxHp = hp;
+      if (!hero.skills.includes("kick")) hero.skills.push("kick");
     });
-  toughness(FRAGILE_HP);
-
-  // 3.1 Walls hold, crates do not.
-  if (!(await say(LINES.walls))) return;
-  stage.goal(GOALS.wall);
-  if (!(await d.until((state) => state.blasts.length > 0))) return;
-  if (!(await d.until((state) => state.blasts.length === 0 && state.players[0].alive))) return;
-  if (!(await say(LINES.wallHolds))) return;
-  // Any three will do: he is free to pick his own.
-  const standing = (state: Readonly<GameSnapshot>) =>
-    state.tiles.reduce((sum, row) => sum + row.filter((tile) => tile === 2).length, 0);
-  const before = standing(d.state);
-  const opened = (state: Readonly<GameSnapshot>) => Math.min(CRATE_GOAL, before - standing(state));
-  if (
-    !(await d.until((state) => {
-      stage.goal(`${GOALS.crates} ${opened(state)}/${CRATE_GOAL}`);
-      return opened(state) === CRATE_GOAL && state.blasts.length === 0;
-    }))
-  )
-    return;
-  stage.goal();
-  if (!(await say(LINES.coins))) return;
-
-  // 3.2 Range, a chain, a kick.
-  if (!(await say(LINES.range))) return;
-  stage.goal(GOALS.chain);
-  // A charge that goes off well before its own fuse was set off by another.
-  const fuses = new Map<number, number>();
-  if (
-    !(await d.until((state) => {
-      const live = new Set(state.bombs.map((bomb) => bomb.id));
-      let chained = false;
-      for (const [id, at] of fuses)
-        if (!live.has(id)) {
-          chained ||= state.time < at - 0.25;
-          fuses.delete(id);
+    targets = () => [SPOTS.kickLane.from];
+    if (!(await say(LINES.chain))) return;
+    stage.goal(GOALS.kick);
+    const planted = new Map<number, Vec2>();
+    d.lock(false);
+    if (
+      !(await d.until((state) => {
+        // A kicked charge can reach a blocker and explode between two rendered frames.
+        for (const bomb of state.bombs) {
+          if (bomb.slide?.kickerId === d.hero.id) return true;
+          if (bomb.ownerId !== d.hero.id) continue;
+          const origin = planted.get(bomb.id);
+          if (origin && (origin.x !== bomb.x || origin.z !== bomb.z)) return true;
+          planted.set(bomb.id, { x: bomb.x, z: bomb.z });
         }
-      for (const bomb of state.bombs) fuses.set(bomb.id, bomb.detonateAt);
-      return chained;
-    }))
-  )
-    return;
-  stage.goal();
-  if (!(await d.until((state) => state.blasts.length === 0 && state.players[0].alive))) return;
-  if (!(await say(LINES.chain))) return;
-  match.mutate((state) => {
-    const hero = state.players[0];
-    if (!hero.skills.includes("kick")) hero.skills.push("kick");
-  });
-  stage.goal(GOALS.kick);
-  if (!(await d.until((state) => state.bombs.some((bomb) => bomb.slide)))) return;
-  stage.goal();
-  if (!(await d.until((state) => state.bombs.length === 0 && state.blasts.length === 0))) return;
-  if (!(await d.until((state) => state.players[0].alive))) return;
-  if (!(await say(LINES.kick))) return;
+        return state.blasts.some((blast) => {
+          if (blast.ownerId !== d.hero.id || blast.explosionId === undefined) return false;
+          const origin = planted.get(blast.explosionId);
+          return (
+            !!origin &&
+            blast.originX !== undefined &&
+            blast.originZ !== undefined &&
+            (origin.x !== blast.originX || origin.z !== blast.originZ)
+          );
+        });
+      }))
+    )
+      return;
+    if (!(await calm())) return;
+    stage.goal();
+    if (!(await say(LINES.kick))) return;
 
-  // 3.4 The sample opponent.
-  if (!(await say(LINES.duelCall))) return;
-  home = DUEL.hero;
-  toughness(DUEL_HP);
-  if (
-    !(await d.cut(() => {
-      d.put("you", DUEL.hero, Math.PI / 2);
-      d.put("lulu", DUEL.guide, Math.PI / 2);
-      d.put("zhangsan", DUEL.opponent, -Math.PI / 2);
-    }))
-  )
-    return;
-  await cutscene((canvas) =>
-    playIntroCard(canvas, {
-      skin: STORY_SKINS["story-zhangsan"],
-      title: "【对手名称】",
-      note: "示例对手 · 【在此填写简介】",
-      tint: "#9aa3b5",
-    }),
-  );
-  if (!(await say(LINES.duelIntro))) return;
-  stage.host.music("duel");
-  // He can be hurt from here on, and one good blast is enough.
-  match.mutate((state) => {
-    const rival = state.players.find((p) => p.id === "zhangsan")!;
-    rival.invulnerableUntil = 0;
-    rival.hp = rival.maxHp = 70;
-    // A sample has nothing but the basic charge, and a weak one.
-    rival.skills = [];
-    rival.perks = [];
-    rival.offers = [];
-    rival.capacity = 1;
-    rival.range = 1;
-    rival.attack = SAMPLE.attack;
-    rival.speed = SAMPLE.speed;
-  });
-  match.setAgent("zhangsan", new SampleOpponent("zhangsan"));
-  stage.goal(GOALS.duel);
-  if (!(await d.until((state) => !state.players.find((p) => p.id === "zhangsan")!.alive))) return;
-  over = true;
-  match.setAgent("zhangsan");
-  stage.goal();
-  // Whatever is still burning is let burn out; nothing may kill the winner on the way to the ending.
-  match.mutate((state) => {
-    state.bombs = [];
-    const hero = state.players[0];
-    hero.invulnerableUntil = state.time + 4;
-    if (!hero.alive) {
-      hero.alive = true;
-      hero.hp = hero.maxHp;
-      Object.assign(hero, { x: DUEL.hero.x, z: DUEL.hero.z });
-    }
-  });
-  stage.host.silence();
-  if (!(await d.seconds(1.2))) return;
-  if (!(await say(LINES.defeat))) return;
-  await cutscene(playRelicDrop);
-  stage.host.music("opening");
-  if (!(await say(LINES.relic))) return;
-  stage.art(STORY_ART.comic3b);
-  if (!(await say(LINES.press))) return;
-  stage.end("act3-done");
+    // 3.4 The sample opponent.
+    if (!(await say(LINES.duelCall))) return;
+    home = DUEL.hero;
+    toughness(DUEL_HP);
+    if (
+      !(await d.cut(() => {
+        d.put("you", DUEL.hero, Math.PI / 2);
+        d.put("lulu", DUEL.guide, Math.PI / 2);
+        d.put("zhangsan", DUEL.opponent, -Math.PI / 2);
+        match.mutate((state) => {
+          state.players.find((p) => p.id === "zhangsan")!.alive = true;
+        });
+      }))
+    )
+      return;
+    if (
+      !(await cutscene((canvas) =>
+        playIntroCard(canvas, {
+          skin: STORY_SKINS["story-zhangsan"],
+          title: "【对手名称】",
+          note: "示例对手 · 【在此填写简介】",
+          tint: "#9aa3b5",
+        }),
+      ))
+    )
+      return;
+    if (!(await say(LINES.duelIntro))) return;
+    stage.host.music("duel");
+    // He can be hurt from here on, and one good blast is enough.
+    match.mutate((state) => {
+      const rival = state.players.find((p) => p.id === "zhangsan")!;
+      rival.invulnerableUntil = 0;
+      rival.hp = rival.maxHp = 70;
+      // A sample has nothing but the basic charge, and a weak one.
+      rival.skills = [];
+      rival.perks = [];
+      rival.offers = [];
+      rival.capacity = 1;
+      rival.range = 1;
+      rival.attack = SAMPLE.attack;
+      rival.speed = SAMPLE.speed;
+    });
+    match.setAgent("zhangsan", new SampleOpponent("zhangsan"));
+    stage.goal(GOALS.duel);
+    d.lock(false);
+    if (!(await d.until((state) => !state.players.find((p) => p.id === "zhangsan")!.alive))) return;
+    over = true;
+    d.lock(true);
+    targets = () => [];
+    match.setAgent("zhangsan");
+    stage.goal();
+    // Whatever is still burning is let burn out; nothing may kill the winner on the way to the ending.
+    match.mutate((state) => {
+      state.bombs = [];
+      const hero = state.players[0];
+      hero.invulnerableUntil = state.time + 4;
+      if (!hero.alive) {
+        hero.alive = true;
+        hero.hp = hero.maxHp;
+        Object.assign(hero, { x: DUEL.hero.x, z: DUEL.hero.z });
+      }
+    });
+    stage.host.silence();
+    if (!(await d.seconds(1.2))) return;
+    if (!(await say(LINES.defeat))) return;
+    if (!(await cutscene(playRelicDrop, () => stage.art(STORY_ART.comic3b)))) return;
+    stage.host.music("opening");
+    if (!(await say(LINES.relic))) return;
+    if (!(await say(LINES.press))) return;
+    stage.end("act3-done");
+  } finally {
+    finished = true;
+    over = true;
+    film?.dispose();
+    markers.dispose();
+  }
 }
 
 /**
@@ -378,6 +506,8 @@ export const FLATLAND: StagedScene = {
           spawn: SPOTS.arrival,
           yaw: 0,
           overhead: true,
+          tutorial: true,
+          equipmentDrops: false,
           cast: [
             { id: "lulu", name: "露露", color: "#ff7a9a", skin: "story-lulu", passive: true, ...OFFSTAGE },
             {

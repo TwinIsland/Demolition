@@ -9,6 +9,7 @@ import { strikeTargetValid } from "./strikes";
 import type { SimContext } from "./context";
 import { emit } from "./events";
 import { effectContext } from "./match";
+import { STORY_TUTORIAL_REWARDS } from "../story-rewards";
 
 /** A run of all-silver offers this long guarantees a rarer card in the next one. */
 const SILVER_STREAK_LIMIT = 2;
@@ -25,21 +26,28 @@ function offerUpgrades(ctx: SimContext, p: Player) {
     p.level++;
     p.xp -= p.nextLevel;
     p.nextLevel += Math.round(COMBAT.upgradeScoreStep * modeRules(ctx.state.mode).upgradePace);
+    const storyGains = ctx.state.story && !p.bot ? applyLevelGains(p, p.level) : undefined;
     const history = ctx.offerHistory.get(p.id) ?? { previous: [], silverHands: 0 };
-    p.offers = rollPerks(
-      p,
-      ctx.random,
-      history.previous,
-      history.silverHands >= SILVER_STREAK_LIMIT,
-      !!ctx.map.randomizeTerrain,
-      !modeRules(ctx.state.mode).overhead,
-    );
+    p.offers =
+      ctx.state.story && !p.bot
+        ? STORY_TUTORIAL_REWARDS.perks.filter((id) => {
+            const perk = perkById(id);
+            return !!perk && (!perk.eligible || perk.eligible(p));
+          })
+        : rollPerks(
+            p,
+            ctx.random,
+            history.previous,
+            history.silverHands >= SILVER_STREAK_LIMIT,
+            !!ctx.map.randomizeTerrain,
+            !modeRules(ctx.state.mode).overhead,
+          );
     history.previous = p.offers;
     history.silverHands = p.offers.every((id) => perkById(id)?.tier === "silver")
       ? history.silverHands + 1
       : 0;
     ctx.offerHistory.set(p.id, history);
-    const gains = applyLevelGains(p, p.level);
+    const gains = storyGains ?? applyLevelGains(p, p.level);
     // Refill to the level's stock; salvaged crates above it are kept.
     p.crates = Math.max(p.crates, crateStock(p.level));
     const text = ["升到 Lv.{0}", ...gains.map((_, i) => `{${i + 1}}`)].join(" · ");

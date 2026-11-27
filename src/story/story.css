@@ -76,7 +76,7 @@
   color: #e8b45a;
 }
 .story-prompt {
-  top: calc(var(--px) * 5);
+  top: max(38px, calc(var(--px) * 5));
   right: calc(var(--px) * 5);
   display: flex;
   gap: calc(var(--px) * 4);
@@ -96,6 +96,22 @@
 .story-stage kbd {
   all: unset;
   color: #e8b45a;
+}
+.story-pause-hint {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: clamp(12px, 1.2vw, 18px);
+  color: #b9b4d0;
+  text-shadow:
+    0 1px 3px #000,
+    0 0 8px #000;
+  white-space: nowrap;
+  pointer-events: none;
 }
 .story-cutscene ~ .story-keys,
 .stage-art:not([hidden]) ~ .story-keys,
@@ -374,8 +390,15 @@
   opacity: 1;
 }
 /* The menu sits between the match and the stage, and the overlay frosts what is under it. */
-body:has(.story-stage[data-kind="staged"]) :is(#lobby, .topbar, .top-actions) {
+#app[data-story-mode] :is(#lobby, .topbar, .top-actions) {
   display: none;
+}
+#app .story-menu {
+  z-index: 80;
+}
+.story-menu > .modal {
+  max-height: 90dvh;
+  overflow: auto;
 }
 #app #overlay:has(.story-stage[data-kind="staged"]) {
   background: none;

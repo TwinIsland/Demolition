@@ -19,10 +19,22 @@ export function aimCell(
   equipment: Equipment = p.equipped,
   time = 0,
   mode: ThrowMode = "direct",
+  arenaSize?: number,
 ): Vec2 {
   const radius = reach(p, equipment, time, mode);
   const eyeHeight = 0.65 + (p.elevation ?? 0) / TILE_SIZE;
-  const distance = pitch < 0 ? Math.min(radius, eyeHeight / Math.tan(-pitch)) : radius;
+  let distance = pitch < 0 ? Math.min(radius, eyeHeight / Math.tan(-pitch)) : radius;
+  if (mode === "lob" && canLob(equipment) && arenaSize !== undefined) {
+    // A level throw near the boundary should land on the last interior cell, not outside the map.
+    for (const [origin, direction] of [
+      [p.x, -Math.sin(yaw)],
+      [p.z, -Math.cos(yaw)],
+    ]) {
+      if (Math.abs(direction) < 1e-6) continue;
+      const edge = direction > 0 ? arenaSize - 2 : 1;
+      distance = Math.min(distance, Math.max(0, (edge - origin) / direction));
+    }
+  }
   const dx = -Math.sin(yaw) * distance,
     dz = -Math.cos(yaw) * distance;
   const ox = Math.round(p.x),

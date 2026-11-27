@@ -196,6 +196,21 @@ export class AudioEngine {
     this.musicUrl = undefined;
   }
 
+  /** Borrows the music bus, keeping the story's position for the return from the music box. */
+  holdMusic() {
+    const url = this.musicUrl;
+    const level = this.currentTrack()?.level ?? 0;
+    clearTimeout(this.duckTimer);
+    for (const track of this.tracks.values()) track.voice.pause();
+    this.musicUrl = undefined;
+    return {
+      url,
+      resume: () => {
+        if (url) this.playMusic(url, { volume: level });
+      },
+    };
+  }
+
   /** True while `url` is the current track and is producing sound. */
   isMusicAudible(url: string) {
     return !this.isMuted && url === this.musicUrl && !!this.currentTrack()?.voice.audible;

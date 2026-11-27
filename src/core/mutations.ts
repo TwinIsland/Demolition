@@ -7,10 +7,12 @@ for (const mutation of mutations) assertValid("mutation", MutationDefinitionSche
 export const MUTATIONS = indexPacks(mutations, "mutation");
 const pool = Object.values(MUTATIONS);
 
-export function grantMutation(p: Player, random: () => number) {
+export function grantMutation(p: Player, random: () => number, preferred?: MutationId) {
   const useful = pool.filter((m) => !m.eligible || m.eligible(p));
   const choices = useful.length ? useful : pool;
-  const mutation = choices[Math.floor(random() * choices.length)];
+  const fixed = preferred ? MUTATIONS[preferred] : undefined;
+  const mutation =
+    fixed && (!fixed.eligible || fixed.eligible(p)) ? fixed : choices[Math.floor(random() * choices.length)];
   mutation.apply(p);
   const owned: Record<MutationId, number> = (p.mutations ??= {});
   owned[mutation.id] = (owned[mutation.id] ?? 0) + 1;

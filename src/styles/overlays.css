@@ -1,5 +1,6 @@
 /* Modal overlay shell, shared dialog buttons and the match result summary. */
-#overlay {
+#overlay,
+.story-menu {
   position: absolute;
   inset: 0;
   z-index: var(--z-overlay);
