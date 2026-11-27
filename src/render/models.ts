@@ -636,7 +636,6 @@ export class Models {
     let asset = this.finishModels.get(finish.id);
     if (!asset) {
       asset = new GLTFLoader(this.manager).loadAsync(fresh(finish.model)).then(({ scene }) => {
-        if (finish.spin) scene.rotation.x = finish.spin;
         const bounds = new THREE.Box3().setFromObject(scene);
         const size = bounds.getSize(new THREE.Vector3());
         const center = bounds.getCenter(new THREE.Vector3());
