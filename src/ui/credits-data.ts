@@ -89,6 +89,12 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
         license: "© Chinese Football",
       },
       {
+        title: "Share Friendship · Clumsy Communication",
+        use: ["故事模式", "Story mode"],
+        author: "黒魔",
+        license: "© 黒魔",
+      },
+      {
         title: "Dark Place (loop)",
         use: ["备用曲目", "Fallback track"],
         author: "OpenGameArt",
@@ -147,6 +153,14 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
       polyHaven("Mossy Sandstone"),
       polyHaven("Decrepit Wallpaper", "Rob Tuytel · Poly Haven"),
       polyHaven("Dirty Carpet", "Rohit Seervi · Poly Haven"),
+      polyHaven("Japanese Stone Wall", "Rico Cilliers, Charlotte Baglioni, Dario Barresi · Poly Haven"),
+      polyHaven("Roof 09", "Rob Tuytel · Poly Haven"),
+      polyHaven("Thatch Roof Angled", "Rob Tuytel, Dimitrios Savva · Poly Haven"),
+      polyHaven("White Plaster 02", "Rob Tuytel · Poly Haven"),
+      polyHaven("Japanese Cedar Planks", "Charlotte Baglioni, Rico Cilliers · Poly Haven"),
+      polyHaven("Stone Pathway", "Amal Kumar · Poly Haven"),
+      polyHaven("Cobblestone Floor 08", "Rob Tuytel · Poly Haven"),
+      polyHaven("Sakura Bark", "Charlotte Baglioni · Poly Haven"),
       { title: "Explosion", use: ["爆炸序列帧", "Blast flipbook"], author: "OpenGameArt", license: CC0 },
       {
         title: "Smoke",

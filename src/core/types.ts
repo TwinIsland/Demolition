@@ -281,6 +281,8 @@ export interface FireCell extends Vec2 {
 }
 export interface GameSnapshot {
   mode?: MatchMode;
+  /** Staged by story mode: see `StorySetup`. */
+  story?: boolean;
   canResetTerrain?: boolean;
   /** Simulation time at which a map with `terrainShift` announces its next rearrangement. */
   terrainShiftAt?: number;
@@ -332,7 +334,30 @@ export interface GameSnapshot {
   events: GameEvent[];
   winnerId: string | null;
 }
+/** Someone the story puts on the map beside the hero. */
+export interface StoryActor extends Vec2 {
+  id: string;
+  name: string;
+  color: string;
+  skin: string;
+  yaw?: number;
+  difficulty?: Difficulty;
+  /** A bystander: nothing hurts them. */
+  passive?: boolean;
+}
+/**
+ * A match staged by story mode instead of the lobby: a fixed cast on fixed cells, no countdown,
+ * no closing zone, no field supplies, and no ending of its own. The story decides what happens.
+ */
+export interface StorySetup {
+  spawn: Vec2;
+  yaw?: number;
+  cast: StoryActor[];
+  /** Everyone starts in the overhead view. */
+  overhead?: boolean;
+}
 export interface MatchOptions {
+  story?: StorySetup;
   mode?: MatchMode;
   zombieRate?: ZombieRate;
   appearance?: Appearance;
@@ -364,5 +389,12 @@ export interface MatchSession {
   getSnapshot(): Readonly<GameSnapshot>;
   getRenderSnapshot?(): Readonly<GameSnapshot>;
   restart(options: MatchOptions): void;
+  /**
+   * Story mode's hand on the world: edits the authoritative state between ticks. A local session
+   * only; a networked match has no such thing.
+   */
+  mutate?(change: (state: GameSnapshot) => void): void;
+  /** Gives a player to an agent, or takes it back. */
+  setAgent?(playerId: string, agent?: PlayerAgent): void;
   dispose(): void;
 }

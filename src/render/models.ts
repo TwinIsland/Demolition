@@ -59,6 +59,9 @@ export class Models {
     this.wall("poolrooms", "pillar");
     this.poolSlab();
     this.materials.standard("pool-floor", "#a9c3c8", "ceramic", "pool-mosaic");
+    // And for the village: the surfaces no model brings with it.
+    for (const key of ["sakura-crown", "village-path", "village-cobble", "village-writing"])
+      this.materials.palette("df:" + key);
   }
   async preload(players: readonly Player[], includeDrops: boolean) {
     for (const p of players)
@@ -321,6 +324,24 @@ export class Models {
   scenery(id: SceneryId) {
     return this.covers.scenery(id);
   }
+  /** One named piece of a scenery model that was exported cut up, such as one tile of a building. */
+  sceneryPart(id: SceneryId, name: string) {
+    return this.covers.part(id, name);
+  }
+  /**
+   * A cherry tree in bloom: the modelled trunk in its ring of stones, and a crown of blossom
+   * cards. `scale` 1 fits a tile; the trees outside the grid are larger.
+   */
+  cherryTree(variant: number) {
+    const g = this.scenery("village-cherry");
+    const crown = this.part(
+      crownGeometry(100 + (variant % 3), 2.55, [1.75, 1.6, 1.9][variant % 3], 46),
+      this.materials.palette("df:sakura-crown")!,
+    );
+    crown.receiveShadow = false;
+    g.add(crown);
+    return g;
+  }
   /** One floor slab. Natural maps only pave where the map asks for stone. */
   slab(theme: MapDefinition["theme"], shade: number) {
     const material =
@@ -411,6 +432,8 @@ export class Models {
       return g;
     }
     if (theme === "rainforest") return this.jungleWall(variant, seed);
+    // A village draws its landmarks itself; this is the plain pier that the closing zone raises.
+    if (theme === "village") return this.scenery("village-block");
     const midnight = theme === "midnight";
     const g = new THREE.Group(),
       color = midnight ? "#a3a8a6" : "#bcb8ab";

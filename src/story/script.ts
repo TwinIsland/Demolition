@@ -1,7 +1,8 @@
 import type { Mood } from "./assets";
+import type { ScenePlayer, Stage } from "./stage";
 
 /** Who a line belongs to. `narrator` and `system` have no portrait; `door` is a voice from off screen. */
-export type Speaker = "zero" | "door" | "narrator" | "system" | "aqua" | "cirno";
+export type Speaker = "zero" | "door" | "narrator" | "system" | "aqua" | "cirno" | "lulu" | "zhangsan";
 
 /** One step of a conversation: a spoken line, or a choice between replies. */
 export type Line =
@@ -98,7 +99,17 @@ export interface ArcadeScene {
   checkpoint: string;
 }
 
-export type Scene = RoomScene | ArcadeScene;
+/**
+ * A scene that brings its own player: the acts staged on the real game (see match/staged-match.ts)
+ * are written as a script of their own rather than as data for a shared one.
+ */
+export interface StagedScene {
+  kind: "staged";
+  id: string;
+  play(stage: Stage): ScenePlayer;
+}
+
+export type Scene = RoomScene | ArcadeScene | StagedScene;
 
 export const SPEAKER_NAMES: Record<Speaker, string> = {
   zero: "零",
@@ -107,6 +118,8 @@ export const SPEAKER_NAMES: Record<Speaker, string> = {
   system: "系统",
   aqua: "阿库娅",
   cirno: "琪露诺",
+  lulu: "露露",
+  zhangsan: "张三",
 };
 
 /** Size of the mini-game's canvas: the proportions of the old monitor's screen. */

@@ -1,5 +1,5 @@
 import { version } from "../../package.json";
-import { MAPS, generateMap, seededRandom } from "../core/maps";
+import { MAPS, ROOM_MAPS, generateMap, seededRandom } from "../core/maps";
 import { DEFAULT_MODE, MATCH_MODES, type MatchMode } from "../core/match-modes";
 import {
   BOMB_STYLES,
@@ -90,7 +90,7 @@ const lobbyMarkup = () => `
               ${MODE_IDS.map(modeRow).join("")}
             </nav>
             <nav class="menu-panel" data-panel="map" aria-label="作战区域" hidden>
-              ${MAPS.map((map) => `<button type="button" class="menu-row menu-choice" data-map="${map.id}" aria-pressed="false"><span class="row-label"></span><span class="row-value">${map.size} × ${map.size}</span><i class="row-check"></i></button>`).join("")}
+              ${ROOM_MAPS.map((map) => `<button type="button" class="menu-row menu-choice" data-map="${map.id}" aria-pressed="false"><span class="row-label"></span><span class="row-value">${map.size} × ${map.size}</span><i class="row-check"></i></button>`).join("")}
             </nav>
             <nav class="menu-panel" data-panel="outfit" aria-label="干员外观" hidden>
               <div class="menu-caption">角色皮肤</div>
@@ -116,7 +116,7 @@ const lobbyMarkup = () => `
         </section>
         <div id="lobby-avatar" tabindex="0" role="group" aria-label="角色预览，可拖动或按方向键旋转"></div>
         <aside class="menu-detail">
-          <button type="button" class="detail-art" data-open="map" aria-label="作战区域">${MAPS.map(
+          <button type="button" class="detail-art" data-open="map" aria-label="作战区域">${ROOM_MAPS.map(
             (map) =>
               `${map.artwork ? `<img data-art="${map.id}" src="${map.artwork}" alt="">` : ""}<canvas class="detail-miniature" data-miniature="${map.id}" width="${map.size}" height="${map.size}" aria-hidden="true"></canvas>`,
           ).join("")}</button>

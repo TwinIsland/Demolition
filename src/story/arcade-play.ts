@@ -3,7 +3,7 @@ import { STORY_ART } from "./assets";
 import { playPullIn, type PullIn } from "./pull-in";
 import { ARCADE_VIEW, type ArcadeScene, type Line } from "./script";
 import type { ScenePlayer, Stage } from "./stage";
-import { loadZeroSprite, walkSheet, type Facing } from "./zero-sprite";
+import { FACINGS, type Facing } from "./zero-sprite";
 
 const CELL = 16;
 /** Seconds from placing a bubble to its blast, and how long the blast stays deadly. */
@@ -21,6 +21,12 @@ const CPU_TIRED_AFTER = 45;
 const CPU_TIRED_REACTION = 2.1;
 const CPU_BOMB_COOLDOWN = 2.4;
 const CAPS = { speed: PLAYER_SPEED * 1.5, range: 4, capacity: 3 };
+
+/** The players' sheet: per row, three walk frames for each facing, a victory pose, and the trapped pose. */
+const CAST = ["zero", "rival"] as const;
+const CHIBI = { columns: 14, facings: ["down", "left", "right", "up"] as readonly Facing[], win: 12, ko: 13 };
+/** The sheet's frames are 32 px with the soles two pixels above the bottom edge. */
+const FEET_Y = 9;
 
 /** Frames of the "arcade" sheet (tools/story/make-arcade.py). */
 const FRAME = {
@@ -85,23 +91,26 @@ export function playArcade(stage: Stage, scene: ArcadeScene): ScenePlayer {
     sliceY: 2,
     anims: { bubble: { from: 5, to: 7, loop: true, pingpong: true, speed: 6 } },
   });
-  loadZeroSprite(k);
-  // The computer player is Zero's own sprite with the black of his clothes turned red.
-  const sheet = new Image();
-  sheet.src = STORY_ART.zeroWalk;
-  void sheet.decode().then(() => {
-    const canvas = document.createElement("canvas");
-    canvas.width = sheet.naturalWidth;
-    canvas.height = sheet.naturalHeight;
-    const context = canvas.getContext("2d")!;
-    context.drawImage(sheet, 0, 0);
-    const image = context.getImageData(0, 0, canvas.width, canvas.height);
-    for (let i = 0; i < image.data.length; i += 4) {
-      const luma = 0.3 * image.data[i] + 0.59 * image.data[i + 1] + 0.11 * image.data[i + 2];
-      if (luma < 70) image.data.set([150 + luma, 30 + luma * 0.3, 44 + luma * 0.3], i);
-    }
-    context.putImageData(image, 0, 0);
-    k.loadSprite("rival", canvas, walkSheet);
+  // Both players come from one sheet: a row each, cut by tools/story/make-chibi.py.
+  k.loadSprite("chibi", STORY_ART.chibi, {
+    sliceX: CHIBI.columns,
+    sliceY: CAST.length,
+    anims: Object.fromEntries(
+      CAST.flatMap((who, row) => {
+        const first = row * CHIBI.columns;
+        return [
+          ...FACINGS.flatMap((facing) => {
+            const at = first + CHIBI.facings.indexOf(facing) * 3;
+            return [
+              [`${who}-idle-${facing}`, at],
+              [`${who}-walk-${facing}`, { from: at + 1, to: at + 2, loop: true, speed: 7 }],
+            ];
+          }),
+          [`${who}-win`, first + CHIBI.win],
+          [`${who}-ko`, first + CHIBI.ko],
+        ];
+      }),
+    ),
   });
   const tile = (frame: number, x: number, y: number, z = 0, angle = 0) =>
     k.add([k.sprite("arcade", { frame }), k.pos(px(x), py(y)), k.anchor("center"), k.rotate(angle), k.z(z)]);
@@ -118,10 +127,11 @@ export function playArcade(stage: Stage, scene: ArcadeScene): ScenePlayer {
     }),
   );
 
-  const walker = ([x, y]: Cell, sprite: "zero" | "rival") => ({
+  const walker = ([x, y]: Cell, cast: (typeof CAST)[number]) => ({
+    cast,
     obj: k.add([
-      k.sprite(sprite, { anim: "idle-down" }),
-      k.pos(px(x), py(y) + 7),
+      k.sprite("chibi", { anim: `${cast}-idle-down` }),
+      k.pos(px(x), py(y) + FEET_Y),
       k.anchor("bot"),
       k.opacity(1),
       k.z(10),
@@ -279,7 +289,6 @@ export function playArcade(stage: Stage, scene: ArcadeScene): ScenePlayer {
     [who.x, who.y] = who.spawn;
     who.alive = true;
     who.shield = SHIELD;
-    who.obj.hidden = false;
     bubbles.get(key(...who.spawn))?.passers.add(who);
   };
   const showCrateGoal = () =>
@@ -334,7 +343,6 @@ export function playArcade(stage: Stage, scene: ArcadeScene): ScenePlayer {
   }
   const fall = (who: Walker) => {
     who.alive = false;
-    who.obj.hidden = true;
     stage.host.cue("down");
     if (who === cpu) {
       phase = "outro";
@@ -497,10 +505,16 @@ export function playArcade(stage: Stage, scene: ArcadeScene): ScenePlayer {
     }
     for (const who of walkers()) {
       who.obj.pos.x = px(who.x);
-      who.obj.pos.y = py(who.y) + 7;
+      who.obj.pos.y = py(who.y) + FEET_Y;
       who.obj.z = 10 + who.y;
       who.obj.opacity = who.shield && Math.floor(clock * 12) % 2 ? 0.3 : 1;
-      const anim = `${who.moving && !frozen ? "walk" : "idle"}-${who.heading}`;
+      // A fallen player sits trapped in a bubble; the one left standing cheers.
+      const pose = !who.alive
+        ? "ko"
+        : cpu && !cpu.alive
+          ? "win"
+          : `${who.moving && !frozen ? "walk" : "idle"}-${who.heading}`;
+      const anim = `${who.cast}-${pose}`;
       if (who.obj.curAnim() !== anim) who.obj.play(anim);
     }
   });

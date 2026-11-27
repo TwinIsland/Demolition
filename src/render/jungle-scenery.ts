@@ -20,7 +20,7 @@ import type { Models } from "./models";
  */
 
 /** Stable 0..1 hash of a cell and a salt, so scenery never changes between rebuilds of a map. */
-const hash = (x: number, z: number, salt: number) => {
+export const hash = (x: number, z: number, salt: number) => {
   let n = Math.imul(x * 374761393 + z * 668265263 + salt * 2147483647, 1274126177);
   n = Math.imul(n ^ (n >>> 13), 1274126177);
   return ((n ^ (n >>> 16)) >>> 0) / 4294967296;
@@ -28,7 +28,7 @@ const hash = (x: number, z: number, salt: number) => {
 
 let tuft: THREE.BufferGeometry | undefined;
 /** A patch of tapered blades. Normals point up so tufts shade like the ground they stand on. */
-function tuftGeometry() {
+export function tuftGeometry() {
   if (tuft) return tuft;
   const positions: number[] = [],
     normals: number[] = [],
@@ -70,7 +70,7 @@ let lawn: THREE.BufferGeometry | undefined;
 const GROUND_EXTENT = 300;
 /** Metres of ground covered by one repeat of the grass texture. */
 const GROUND_TEXEL = 3.2;
-function groundGeometry() {
+export function groundGeometry() {
   if (lawn) return lawn;
   lawn = new THREE.PlaneGeometry(GROUND_EXTENT, GROUND_EXTENT);
   lawn.rotateX(-Math.PI / 2);

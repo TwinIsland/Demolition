@@ -10,6 +10,11 @@ export interface MinecraftSkin {
   model: "default" | "slim";
 }
 
+/** Skins outside the lobby's list, such as the story's cast: looked up by id like any preset. */
+const EXTRA_SKINS = new Map<string, { texture: string; model: "default" | "slim" }>();
+export const registerSkin = (id: string, texture: string, model: "default" | "slim" = "default") =>
+  EXTRA_SKINS.set(id, { texture, model });
+
 /** Normalize legacy skin UVs and preserve the hat/jacket outer layer. */
 export class MinecraftSkins {
   private cache = new Map<string, Promise<MinecraftSkin>>();
@@ -32,6 +37,7 @@ export class MinecraftSkins {
       return Promise.resolve(this.custom);
     const profile =
       SKINS[preset ?? ""] ??
+      EXTRA_SKINS.get(preset ?? "") ??
       (playerId === "sunny" || playerId === "mint" ? SKINS.scout : undefined) ??
       DEFAULT_SKIN;
     const custom = (!preset || preset === "custom") && playerId === "you" && this.currentSource;

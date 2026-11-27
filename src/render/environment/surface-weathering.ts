@@ -29,7 +29,9 @@ export type SurfaceProfile =
   // An office floor: papered walls, carpet and a suspended ceiling.
   | "wallpaper"
   | "carpet"
-  | "ceiling";
+  | "ceiling"
+  // Stone paving laid in world space, so that it runs on from tile to tile.
+  | "paving";
 /**
  * 0: instance variation and plain wetness. 1: adds raindrop ripples and rivulets.
  * 2: adds grime, streaks, moss, cracks and a second ripple layer.
@@ -93,7 +95,8 @@ export function profileFor(material: THREE.Material): SurfaceProfile | undefined
   if (name === "wall-base" || name === "platform") return "metal";
   if (name === "df:jungle-trunk") return "trunk";
   if (name === "df:jungle-canopy") return "canopy";
-  if (name === "df:jungle-crown" || name === "df:scan-rock") return "matte";
+  if (name === "df:jungle-crown" || name === "df:scan-rock" || name === "df:sakura-crown") return "matte";
+  if (name === "df:village-path" || name === "df:village-cobble") return "paving";
   if (name.startsWith("df:")) return name === "df:glass" ? undefined : "prop";
   return undefined;
 }
@@ -204,6 +207,8 @@ uniform float wxLampLevel;
   // Natural ground: the base maps are grass, and these take over where the mask says mud.
   uniform sampler2D wxSoilMask;
   uniform vec4 wxSoilArea;
+  // x: how much of the ground is fallen leaves (0 for a kept lawn), y: brightness of the grass.
+  uniform vec2 wxSoilLook;
   uniform sampler2D wxMudMap;
   uniform sampler2D wxMudNormal;
   uniform sampler2D wxMudRough;
@@ -297,7 +302,9 @@ const FRAGMENT_MAP = /* glsl */ `
     // Broad patches of lusher and drier growth, so the lawn does not read as one flat colour.
     wxGrass.rgb *= mix(vec3(0.5, 0.68, 0.38), vec3(0.78, 0.92, 0.52), wxFbm(vWxPos.xz * 0.13 + 3.0));
     // Grass holds the clearings; between them the ground is a mat of fallen leaves.
-    wxLitter = smoothstep(0.4, 0.6, wxFbm(vWxPos.xz * 0.2 + 9.0) + (wxNoise(vWxPos.xz * 2.3) - 0.5) * 0.3);
+    wxGrass.rgb *= wxSoilLook.y;
+    wxLitter = wxSoilLook.x *
+      smoothstep(0.4, 0.6, wxFbm(vWxPos.xz * 0.2 + 9.0) + (wxNoise(vWxPos.xz * 2.3) - 0.5) * 0.3);
     vec4 wxLeaves = texture2D(wxLitterMap, vMapUv * 0.77 + wxWarp * 0.05) * vec4(1.3, 1.22, 1.1, 1.0);
     wxGrass = mix(wxGrass, wxLeaves, wxLitter);
     diffuseColor *= mix(wxGrass, texture2D(wxMudMap, vMapUv * 1.3) * vec4(1.55, 1.3, 1.05, 1.0), wxMud);
@@ -632,6 +639,8 @@ const DEFINES: Record<SurfaceProfile, string[]> = {
     "WX_WET_GLOSS 1.0",
   ],
   ceiling: ["WX_WORLD_UV 0.4166667", "WX_TONE 0.0", "WX_WET_DARKEN 1.0", "WX_WET_GLOSS 1.0"],
+  // One repeat of the paving is two cells across.
+  paving: ["WX_WORLD_UV 0.2083333", "WX_GLOW", "WX_TONE 0.0", "WX_WET_DARKEN 0.8", "WX_WET_GLOSS 0.7"],
 };
 /** Level surfaces that show the planar reflection when it is on. */
 const MIRRORS: ReadonlySet<SurfaceProfile> = new Set(["ground", "deck", "water"]);

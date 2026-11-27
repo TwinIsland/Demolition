@@ -103,6 +103,13 @@ preset("office-desk", "wood", 1.35, ["backrooms", "office"]);
 preset("water-cooler", "soft", 1.52, ["backrooms", "office"], 0.6);
 preset("partition", "soft", 1.63, ["backrooms", "office"]);
 
+// Village
+preset("sake-barrels", "wood", 1.75, ["village"], 0.84);
+preset("hay-bales", "soft", 1.55, ["village"], 0.9);
+preset("wood-fence", "wood", 1.35, ["village-fence"], 0.95);
+preset("handcart", "wood", 1.45, ["village"], 0.92);
+preset("pottery", "soft", 1.3, ["village"], 0.84);
+
 /** IDs accepted by maps written for earlier releases. */
 const LEGACY_IDS: Readonly<Record<string, string>> = { "low-bags": "bags" };
 const FALLBACK: readonly MapObstacle[] = [{ use: "set:storage", weight: 1 }];

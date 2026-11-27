@@ -76,7 +76,12 @@ export interface MapDefinition extends Pack {
    * no entry: a `minimap.webp` beside `index.js` is picked up. Defaults to a drawn surface.
    */
   minimap?: string;
-  theme: "garden" | "midnight" | "rainforest" | "poolrooms" | "backrooms";
+  theme: "garden" | "midnight" | "rainforest" | "poolrooms" | "backrooms" | "village";
+  /**
+   * Left out of the room's map list: the map is only reached from somewhere else, such as a
+   * chapter of the story.
+   */
+  hidden?: boolean;
   /** Cells between the boundary wall and each corner spawn. Defaults to 1, the corner itself. */
   spawnInset?: number;
   /**
@@ -91,10 +96,22 @@ export interface MapDefinition extends Pack {
   groundAt?(x: number, z: number, size: number): GroundKind | undefined;
   /**
    * Sky, fog and surface wetness, `indoor` for a lit hall with wet floors and no sky, or `office`
-   * for a dim windowless floor with damp carpet. Presentation only; the simulation never reads it.
+   * for a dim windowless floor with damp carpet, `spring` for a dry sunny morning with a low sun.
+   * Presentation only; the simulation never reads it.
    * Defaults to clear.
    */
-  weather?: "clear" | "rain" | "monsoon" | "indoor" | "office";
+  weather?: "clear" | "rain" | "monsoon" | "indoor" | "office" | "spring";
+  /**
+   * Names the landmark standing on a permanent wall cell, boundary included, for themes that draw
+   * more than one kind of wall. What the names mean is up to the theme. Presentation only.
+   */
+  featureAt?(x: number, z: number, size: number): string | undefined;
+  /**
+   * The obstacle a destructible cell always shows, as a preset ID from the map's own pool, turned
+   * by `turn` quarter circles. Cells it leaves out draw from the weighted pool. Presentation and
+   * strike sounds only.
+   */
+  obstacleAt?(x: number, z: number, size: number): { use: string; turn?: number } | undefined;
   /** Return a tile to override the default interior layout. Borders and spawns stay protected. */
   tileAt?(x: number, z: number, size: number, random: () => number): Tile | undefined;
   /** Supply layout preferences for moving surviving cover. Borders, walls and occupied cells stay protected. */
@@ -108,13 +125,17 @@ export type GroundKind = "slab" | "grass" | "mud" | "stone" | "water" | "carpet"
 /** The ground under a cell of a map, with the theme's default where the map does not say. */
 export const groundAt = (map: MapDefinition, x: number, z: number): GroundKind =>
   map.groundAt?.(Math.round(x), Math.round(z), map.size) ??
-  (map.theme === "rainforest" ? "grass" : map.theme === "backrooms" ? "carpet" : "slab");
+  (map.theme === "rainforest" || map.theme === "village"
+    ? "grass"
+    : map.theme === "backrooms"
+      ? "carpet"
+      : "slab");
 
 export const defineSkin = (config: SkinPack) => config;
 export const defineFinish = (config: BombFinish) => config;
 export const defineMap = (
   config: MapDefinition,
-  layout: Pick<MapDefinition, "tileAt" | "randomizeTerrain" | "groundAt"> = {},
+  layout: Pick<MapDefinition, "tileAt" | "randomizeTerrain" | "groundAt" | "featureAt" | "obstacleAt"> = {},
 ) => ({ ...config, ...layout });
 
 export function indexPacks<T extends Pack>(packs: T[], category: string) {

@@ -1,5 +1,5 @@
 import "./story.css";
-import { ZERO_PORTRAITS } from "./assets";
+import { LULU_PORTRAITS, ZERO_PORTRAITS, ZHANGSAN_PORTRAITS } from "./assets";
 import { ACTS } from "./chapters";
 import { playArcade } from "./arcade-play";
 import { DialogueBox, dialogueMarkup } from "./dialogue";
@@ -28,6 +28,7 @@ export const storyMarkup = () => `
     <div class="story-save" hidden><i></i><span>已保存</span></div>
     <div class="story-card" hidden><span>未完待续</span><small><kbd>E</kbd> 返回主菜单</small></div>
     <div class="story-keys" data-for="room"><span><kbd>WASD</kbd> 移动</span><span><kbd>E</kbd> 调查 / 继续</span><span><kbd>ESC</kbd> 离开</span></div>
+    <div class="story-keys" data-for="staged"><span><kbd>WASD</kbd> 移动</span><span><kbd>空格</kbd> 放炸药</span><span><kbd>ESC</kbd> 离开</span></div>
     <div class="story-keys" data-for="arcade"><span><kbd>WASD</kbd> 移动</span><span><kbd>空格</kbd> 放泡泡</span><span><kbd>ESC</kbd> 离开</span></div>
   </div>`;
 
@@ -69,7 +70,7 @@ export function mountStory(
     art = find<HTMLImageElement>(".story-art");
   const dialogue = new DialogueBox(
     root,
-    { zero: ZERO_PORTRAITS },
+    { zero: ZERO_PORTRAITS, lulu: LULU_PORTRAITS, zhangsan: ZHANGSAN_PORTRAITS },
     { tick: () => host.typeTick(), move: () => host.menu("click"), accept: () => host.menu("accept") },
   );
   const flags: Record<string, number> = {};
@@ -127,6 +128,14 @@ export function mountStory(
       art.before(canvas);
       return canvas;
     },
+    mark(checkpoint) {
+      reachCheckpoint(checkpoint, flags);
+      saved.hidden = true;
+      // Restart the mark's own fade if the last one is still up.
+      void saved.offsetWidth;
+      saved.hidden = false;
+      void stage.wait(SAVE_NOTE_MS).then(() => (saved.hidden = true));
+    },
     end(checkpoint) {
       reachCheckpoint(checkpoint, flags);
       goal.hidden = prompt.hidden = true;
@@ -146,7 +155,7 @@ export function mountStory(
   const open = () => {
     const scene = act.scene!;
     root.dataset.kind = scene.kind;
-    root.classList.remove("booting", "blackout", "pulling");
+    root.classList.remove("booting", "blackout", "pulling", "veiled");
     art.hidden = true;
     art.classList.remove("leaving");
     const canvas = document.createElement("canvas");
@@ -154,7 +163,12 @@ export function mountStory(
     stage.canvas.replaceWith(canvas);
     // The scene starts out frozen, and its first conversation releases it.
     running.player = undefined;
-    running.player = scene.kind === "room" ? playRoom(stage, scene) : playArcade(stage, scene);
+    running.player =
+      scene.kind === "room"
+        ? playRoom(stage, scene)
+        : scene.kind === "arcade"
+          ? playArcade(stage, scene)
+          : scene.play(stage);
     running.player.paused = paused;
     steer();
   };
