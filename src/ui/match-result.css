@@ -24,8 +24,8 @@
   display: grid;
   grid-template-rows: auto minmax(0, auto) auto auto;
   align-content: center;
-  gap: calc(var(--u) * 22);
-  padding: calc(var(--u) * 40) calc(var(--u) * 96) calc(var(--u) * 44);
+  gap: calc(var(--u) * 16);
+  padding: calc(var(--u) * 26) calc(var(--u) * 96) calc(var(--u) * 28);
   overflow: hidden;
   color: var(--text-soft);
   font-family: var(--font-ui);
@@ -817,7 +817,7 @@
   clip-path: none;
 }
 .result-screen[data-frames~="panel"] .outcome-badge-slot {
-  width: calc(var(--u) * 140);
+  width: calc(var(--u) * 124);
 }
 /* The row art has a steel cap on its leading edge; the columns start after it. */
 .result-screen[data-frames~="row"] :is(.rs-board-head, .rs-row) {
