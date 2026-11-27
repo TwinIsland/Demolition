@@ -20,6 +20,8 @@ function serveManifest(middlewares, root, base) {
 
 export default defineConfig({
   base: "./",
+  // Pack assets keep their file names between releases; this stamp keeps a browser from reusing a stale copy.
+  define: { __ASSET_STAMP__: JSON.stringify(Date.now().toString(36)) },
   build: {
     // A release directory may already contain mods installed by its owner.
     emptyOutDir: false,

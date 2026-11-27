@@ -19,7 +19,12 @@ import { TILE_SIZE } from "../core/geometry";
 import { crownGeometry, palmFronds, palmTrunk, ruinWall, trunkGeometry } from "./jungle-flora";
 
 /** Longest side of a modelled bomb finish, matching the height of the standard charge. */
-const CHARGE_LENGTH = 1.25;
+/** A modelled finish stands as tall and as wide as the body of the standard charge, at most. */
+const CHARGE_HEIGHT = 0.95;
+const CHARGE_WIDTH = 0.6;
+/** Pack models are replaced in place, so their URL carries the build stamp past the browser cache. */
+const fresh = (url: string) =>
+  /^(data|blob):/.test(url) ? url : url + (url.includes("?") ? "&" : "?") + "v=" + __ASSET_STAMP__;
 /** Height of the ceiling of a tiled hall above the deck. */
 export const POOL_CEILING = 5.7;
 /** Height of the suspended ceiling of an office floor. Its walls reach it. */
@@ -623,16 +628,16 @@ export class Models {
     return group;
   }
   private finishModels = new Map<string, Promise<THREE.Group>>();
-  /** The GLB of a modelled bomb finish, scaled to the standard charge's length and resting on the floor. */
+  /** The GLB of a modelled bomb finish, scaled to the standard charge's body. */
   private finishModel(finish: BombFinish | undefined) {
     if (!finish?.model) return undefined;
     let asset = this.finishModels.get(finish.id);
     if (!asset) {
-      asset = new GLTFLoader(this.manager).loadAsync(finish.model).then(({ scene }) => {
+      asset = new GLTFLoader(this.manager).loadAsync(fresh(finish.model)).then(({ scene }) => {
         const bounds = new THREE.Box3().setFromObject(scene);
         const size = bounds.getSize(new THREE.Vector3());
         const center = bounds.getCenter(new THREE.Vector3());
-        const scale = CHARGE_LENGTH / Math.max(size.x, size.y, size.z);
+        const scale = Math.min(CHARGE_HEIGHT / size.x, CHARGE_WIDTH / Math.max(size.y, size.z));
         const holder = new THREE.Group();
         holder.add(scene);
         holder.scale.setScalar(scale);
@@ -686,7 +691,7 @@ export class Models {
     let asset = this.pickupAssets.get(key);
     if (!asset) {
       asset = new GLTFLoader(this.manager)
-        .loadAsync(cosmetic?.model ?? ITEMS[kind].model ?? "./assets/pickups/capacity.glb")
+        .loadAsync(fresh(cosmetic?.model ?? ITEMS[kind].model ?? "./assets/pickups/capacity.glb"))
         .then(({ scene }) => {
           const bounds = new THREE.Box3().setFromObject(scene);
           const size = bounds.getSize(new THREE.Vector3());
