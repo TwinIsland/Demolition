@@ -89,6 +89,12 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
         license: "© Chinese Football",
       },
       {
+        title: "Share Friendship · Clumsy Communication",
+        use: ["故事模式", "Story mode"],
+        author: "黒魔",
+        license: "© 黒魔",
+      },
+      {
         title: "Dark Place (loop)",
         use: ["备用曲目", "Fallback track"],
         author: "OpenGameArt",

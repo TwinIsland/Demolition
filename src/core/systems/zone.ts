@@ -20,7 +20,7 @@ const BURN_EVENT_INTERVAL = 0.6;
  */
 export function stepZone(ctx: SimContext, dt: number) {
   const s = ctx.state;
-  if (s.mode === "practice") return;
+  if (s.mode === "practice" || s.story) return;
   const before = s.zone?.closed ?? 0,
     cleared = s.zone?.clearingRing;
   const zone = (s.zone = zoneAt(s.size, s.time, s.duration));

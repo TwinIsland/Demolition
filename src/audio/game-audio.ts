@@ -36,6 +36,12 @@ const STORY_CUES: Record<StoryCue, string> = {
   power: "room-shift",
   pull: "missile-incoming",
 };
+/** Story tracks are mastered hotter than the game's own music. */
+const STORY_GAIN: Record<string, number> = {
+  [STORY_MUSIC.opening]: 0.6,
+  [STORY_MUSIC.duel]: 0.6,
+  [STORY_MUSIC.lesson]: 0.6,
+};
 const STRIDE_LENGTH = 0.85;
 const BLAST_RING_COOLDOWN = 1.45;
 /** Footstep cue family for each kind of ground; paving and slabs share the hard step. */
@@ -170,8 +176,8 @@ export class GameAudio {
     // A map may ask for its own track to sit higher or lower in the mix.
     const gain = menu
       ? 1
-      : path === STORY_MUSIC.opening
-        ? 0.6
+      : STORY_GAIN[path] !== undefined
+        ? STORY_GAIN[path]
         : (MAPS.find((map) => map.bgm === path)?.bgmGain ?? 1);
     this.engine.playMusic(path, {
       volume: Math.min(1, MUSIC_VOLUME * gain),
