@@ -69,7 +69,7 @@
 .rs-backdrop[data-art]::before {
   background: var(--rs-art) center / cover no-repeat;
   opacity: 0.72;
-  mask-image: linear-gradient(180deg, #000 30%, #0005 78%);
+  mask-image: linear-gradient(180deg, #000 45%, #0006 88%);
 }
 .outcome-draw .rs-backdrop::before {
   filter: grayscale(1) brightness(1.1);
