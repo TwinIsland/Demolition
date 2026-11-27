@@ -369,23 +369,25 @@
 /* Personal figures */
 .rs-figures {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: calc(var(--u) * 6) calc(var(--u) * 8);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: calc(var(--u) * 6);
   margin: 0;
 }
 .rs-figures > div {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: calc(var(--u) * 8);
-  padding: calc(var(--u) * 8) calc(var(--u) * 12);
+  flex-direction: column-reverse;
+  gap: calc(var(--u) * 5);
+  min-width: 0;
+  padding: calc(var(--u) * 7) calc(var(--u) * 10);
   border-left: calc(var(--u) * 3) solid color-mix(in srgb, var(--outcome) 60%, #0000);
   background: #ffffff0a;
 }
 .rs-figures dt {
+  overflow: hidden;
   color: var(--skin-dim, #a9b4ac);
-  font-size: var(--rs-small);
-  letter-spacing: 0.08em;
+  font-size: max(10px, calc(var(--u) * 15));
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 .rs-figures dd {
@@ -666,17 +668,38 @@
   gap: calc(var(--u) * 44);
 }
 .rs-emblem {
+  position: relative;
   flex: none;
   width: calc(var(--u) * 104);
   height: calc(var(--u) * 104);
-  object-fit: contain;
+  background: var(--art) center / contain no-repeat;
   filter: drop-shadow(0 calc(var(--u) * 6) calc(var(--u) * 12) #000b);
-  user-select: none;
+  animation: rs-badge-pulse 2.6s ease-in-out infinite;
+}
+/* Rays turning behind the emblem. */
+.rs-emblem::before {
+  content: "";
+  position: absolute;
+  inset: -42%;
+  z-index: -1;
+  background: repeating-conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--outcome) 85%, #fff) 0deg 3deg,
+    #0000 3deg 15deg
+  );
+  mask-image: radial-gradient(circle, #0000 35%, #000 40%, #0000 62%);
+  opacity: 0.55;
+  mix-blend-mode: screen;
+  animation: rs-badge-rays 14s linear infinite;
+}
+.rs-emblem + h2 + .rs-emblem::before {
+  animation-direction: reverse;
 }
 .rs-medal[data-art] {
+  position: relative;
   width: calc(var(--u) * 40);
   height: calc(var(--u) * 40);
-  background: center / contain no-repeat;
+  background: var(--art) center / contain no-repeat;
   clip-path: none;
   filter: drop-shadow(0 calc(var(--u) * 2) calc(var(--u) * 4) #000a);
 }
@@ -684,6 +707,98 @@
   width: calc(var(--u) * 72);
   height: calc(var(--u) * 72);
   margin: calc(var(--u) * -8) 0;
+  animation: rs-badge-pulse 2.6s ease-in-out infinite;
+}
+
+/*
+ * Shine: a hard band of light sweeps every badge, clipped to the badge's own silhouette, and a
+ * four-point glint flashes on its shoulder. `--i` staggers neighbours so they fire in sequence.
+ */
+:is(.rs-medal, .rs-emblem)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+      105deg,
+      #0000 38%,
+      #fff6 45%,
+      #fff 50%,
+      color-mix(in srgb, var(--outcome) 60%, #fff) 54%,
+      #0000 62%
+    )
+    220% 0 / 260% 100% no-repeat;
+  mix-blend-mode: screen;
+  animation: rs-badge-sweep 2.6s calc(var(--i, 0) * 0.22s) cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+:is(.rs-medal, .rs-emblem)[style*="--art"]::after {
+  mask: var(--art) center / contain no-repeat;
+}
+.rs-card .rs-medal::before,
+.rs-row[data-self] .rs-medal::before {
+  content: "";
+  position: absolute;
+  top: -12%;
+  right: -12%;
+  z-index: 1;
+  width: 46%;
+  aspect-ratio: 1;
+  background: #fff;
+  clip-path: polygon(50% 0, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0 50%, 42% 42%);
+  filter: drop-shadow(0 0 calc(var(--u) * 4) #fff);
+  scale: 0;
+  animation: rs-badge-glint 2.6s calc(var(--i, 0) * 0.22s + 0.55s) ease-out infinite;
+  pointer-events: none;
+}
+.rs-medal:not([data-art]) {
+  position: relative;
+}
+:is(.rs-medals, .rs-cards) > :nth-child(2) {
+  --i: 1;
+}
+:is(.rs-medals, .rs-cards) > :nth-child(3) {
+  --i: 2;
+}
+:is(.rs-medals, .rs-cards) > :nth-child(4) {
+  --i: 3;
+}
+.rs-emblem + h2 + .rs-emblem {
+  --i: 2;
+}
+@keyframes rs-badge-sweep {
+  0%,
+  20% {
+    background-position: 220% 0;
+  }
+  55%,
+  100% {
+    background-position: -120% 0;
+  }
+}
+@keyframes rs-badge-glint {
+  0%,
+  100% {
+    scale: 0;
+    rotate: 0deg;
+  }
+  12% {
+    scale: 1;
+    rotate: 45deg;
+  }
+  28% {
+    scale: 0;
+    rotate: 90deg;
+  }
+}
+@keyframes rs-badge-pulse {
+  50% {
+    filter: drop-shadow(0 0 calc(var(--u) * 14) color-mix(in srgb, var(--outcome) 90%, #fff)) brightness(1.18);
+  }
+}
+@keyframes rs-badge-rays {
+  to {
+    rotate: 360deg;
+  }
 }
 
 /* ---------- Painted frames (optional art, see ui/match-result.ts) ---------- */
@@ -695,14 +810,14 @@
 }
 .result-screen[data-frames~="panel"] .rs-operator {
   gap: calc(var(--u) * 10);
-  padding: calc(var(--u) * 30) calc(var(--u) * 40) calc(var(--u) * 46);
+  padding: calc(var(--u) * 30) calc(var(--u) * 44) calc(var(--u) * 50);
   border: 1px solid #0000;
   border-image: var(--rs-frame-panel) 190 fill / calc(var(--u) * 52) stretch;
   background: none;
   clip-path: none;
 }
 .result-screen[data-frames~="panel"] .outcome-badge-slot {
-  width: calc(var(--u) * 156);
+  width: calc(var(--u) * 140);
 }
 /* The row art has a steel cap on its leading edge; the columns start after it. */
 .result-screen[data-frames~="row"] :is(.rs-board-head, .rs-row) {
@@ -754,7 +869,12 @@
   opacity: 0;
 }
 @media (prefers-reduced-motion: reduce) {
-  .rs-banner h2::after {
+  .rs-banner h2::after,
+  .rs-emblem,
+  .rs-emblem::before,
+  .rs-card .rs-medal,
+  .rs-medal::before,
+  :is(.rs-medal, .rs-emblem)::after {
     animation: none;
   }
 }

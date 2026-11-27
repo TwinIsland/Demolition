@@ -13,7 +13,9 @@ const METALS = [
 
 const IDLE_SPIN = 0.55;
 const ENTRANCE = 0.9;
-const SPARKS = 90;
+const SPARKS = 70;
+/** Seconds between glints crossing the medal. */
+const GLINT_PERIOD = 2.6;
 
 function starShape(points: number, outer: number, inner: number) {
   const shape = new THREE.Shape();
@@ -71,11 +73,15 @@ function raysMaterial() {
       varying vec2 vUv;
       void main() {
         float r = length(vUv), a = atan(vUv.y, vUv.x);
-        float beams = pow(0.5 + 0.5 * sin(a * 9.0 + time * 0.5), 3.0) * 0.6
-                    + pow(0.5 + 0.5 * sin(a * 14.0 - time * 0.33), 4.0) * 0.4;
-        float halo = exp(-r * r * 5.0);
-        float glow = halo * 0.55 + rays * beams * smoothstep(1.0, 0.25, r) * smoothstep(0.1, 0.4, r) * 0.5;
-        glow *= 0.85 + 0.15 * sin(time * 2.3);
+        // Thin, hard-edged beams in two counter-rotating sets, so they cross and flicker.
+        float beams = pow(0.5 + 0.5 * sin(a * 12.0 + time * 0.45), 14.0) * 0.7
+                    + pow(0.5 + 0.5 * sin(a * 7.0 - time * 0.3), 24.0) * 0.5;
+        float reach = smoothstep(0.92, 0.3, r) * smoothstep(0.2, 0.36, r);
+        // A tight halo behind the medal and a ring that pulses outward.
+        float halo = exp(-r * r * 16.0) * 0.4;
+        float phase = fract(time * 0.42);
+        float ring = exp(-pow((r - 0.22 - phase * 0.7) * 22.0, 2.0)) * (1.0 - phase) * 0.45;
+        float glow = (halo + rays * beams * reach + mix(0.35, 1.0, rays) * ring) * smoothstep(1.0, 0.82, r);
         gl_FragColor = vec4(color * glow, glow);
       }`,
   });
@@ -100,20 +106,24 @@ function sparkMaterial() {
         float life = fract(seed.w + time * (0.18 + 0.22 * seed.z));
         vLife = life;
         float angle = seed.x * 6.2832 + time * (seed.z - 0.5) * 0.8;
-        float radius = 0.55 + seed.y * 0.95 + life * 0.25;
+        float radius = 0.5 + seed.y * 0.7 + life * 0.2;
         // Victory sparks climb; defeat embers sink and drift.
-        vec3 p = vec3(cos(angle) * radius, mix(-1.3, 1.5, life) * rise + sin(angle * 3.0) * 0.1, sin(angle) * radius * 0.5);
+        vec3 p = vec3(cos(angle) * radius, mix(-1.1, 1.25, life) * rise + sin(angle * 3.0) * 0.1, sin(angle) * radius * 0.5);
         vec4 view = modelViewMatrix * vec4(p, 1.0);
-        gl_PointSize = scale * (2.0 + 5.0 * seed.z) * sin(3.1416 * life) / -view.z;
+        // scale is half the canvas height in pixels; a spark spans 0.1 to 0.24 world units.
+        gl_PointSize = max(2.0, scale * 3.73 * (0.1 + 0.14 * seed.z) * sin(3.1416 * life) / -view.z);
         gl_Position = projectionMatrix * view;
       }`,
     fragmentShader: /* glsl */ `
       uniform vec3 color;
       varying float vLife;
       void main() {
-        float d = length(gl_PointCoord - 0.5);
-        float a = smoothstep(0.5, 0.0, d) * sin(3.1416 * vLife);
-        gl_FragColor = vec4(color * a * 1.6, a);
+        // A four-point glint: a hard core with thin arms, not a soft blob.
+        vec2 p = abs(gl_PointCoord - 0.5);
+        float core = exp(-dot(p, p) * 160.0);
+        float arms = exp(-p.x * 60.0 - p.y * 9.0) + exp(-p.y * 60.0 - p.x * 9.0);
+        float a = min(1.0, core + arms * 0.55) * sin(3.1416 * vLife) * smoothstep(0.5, 0.36, max(p.x, p.y));
+        gl_FragColor = vec4(mix(color, vec3(1.0), core) * a * 1.5, a);
       }`,
   });
 }
@@ -171,7 +181,7 @@ export class OutcomeBadge {
     this.key.position.set(1.6, 1.2, 2.6);
     this.scene.add(lamp, this.key, this.medal);
 
-    const glow = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 5.6), this.rays);
+    const glow = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), this.rays);
     glow.position.z = -1.2;
     const seeds = new Float32Array(SPARKS * 4);
     for (let i = 0; i < seeds.length; i++) seeds[i] = (Math.sin(i * 127.1 + 3.7) * 43758.5453) % 1;
@@ -318,7 +328,10 @@ export class OutcomeBadge {
     this.medal.scale.setScalar(Math.max(0.001, eased * overshoot));
     this.medal.rotation.set(this.pitch, (this.still ? 0.35 : this.yaw) + (1 - eased) * Math.PI * 4, 0);
     this.medal.position.y = this.still ? 0 : Math.sin(age * 1.4) * 0.04;
-    this.key.intensity = 14 + 60 * Math.max(0, 1 - age / 1.2) ** 2;
+    // The key light crosses the face every few seconds, which reads as a glint running over the metal.
+    const sweep = this.still ? 0.5 : (age % GLINT_PERIOD) / GLINT_PERIOD;
+    this.key.position.x = -3.2 + 6.4 * sweep;
+    this.key.intensity = 10 + 46 * Math.sin(Math.PI * sweep) ** 2 + 60 * Math.max(0, 1 - age / 1.2) ** 2;
     this.rays.uniforms.time.value = this.sparks.uniforms.time.value = this.still ? 0 : age;
     this.renderer.render(this.scene, this.camera);
   };

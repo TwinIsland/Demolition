@@ -156,7 +156,7 @@ const head = (p: Player) =>
 const medal = ({ accolade }: Awarded) => {
   const art = MEDALS[accolade.id];
   return art
-    ? `<i class="rs-medal" data-medal="${accolade.id}" data-art title="${t(accolade.name)}" style="background-image:url('${art}')"></i>`
+    ? `<i class="rs-medal" data-medal="${accolade.id}" data-art title="${t(accolade.name)}" style="--art:url('${art}')"></i>`
     : `<i class="rs-medal" data-medal="${accolade.id}" title="${t(accolade.name)}">${icon(accolade.glyph)}</i>`;
 };
 
@@ -185,7 +185,9 @@ function bannerMarkup(snapshot: Readonly<GameSnapshot>, kind: ResultKind) {
     clock(snapshot.time),
   ];
   const emblemArt = MEDALS[kind === "eliminated" ? "defeat" : kind];
-  const emblem = emblemArt ? `<img class="rs-emblem" src="${emblemArt}" alt="" draggable="false" />` : "";
+  const emblem = emblemArt
+    ? `<i class="rs-emblem" aria-hidden="true" style="--art:url('${emblemArt}')"></i>`
+    : "";
   return `<header class="rs-banner">
       <i class="rs-ghost" aria-hidden="true"><span>${ghost}</span></i>
       <i class="rs-band" aria-hidden="true"></i>
