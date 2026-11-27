@@ -4,6 +4,22 @@ import type { Models } from "./models";
 import type { Appearance } from "../core/room";
 import { MapBackdrop } from "./map-backdrop";
 
+/** How the preview's head follows the pointer. Angles in radians. */
+const GAZE = {
+  /** World distance in front of the avatar of the plane the pointer is imagined on. */
+  depth: 1.5,
+  /** Height of the head centre above the avatar's feet. */
+  headHeight: 1.6,
+  maxYaw: 1.05,
+  maxUp: 0.5,
+  maxDown: 0.65,
+  /** Past this body turn the pointer is behind the avatar, and the head stops following. */
+  blindYaw: 2.1,
+  /** Damping rates: of the head towards its target, and of following switching on and off. */
+  follow: 9,
+  engage: 5,
+} as const;
+
 /** A second scene drawn into a clipped region of the existing WebGL surface. */
 export class LobbyPreview {
   private scene = new THREE.Scene();
@@ -45,6 +61,11 @@ export class LobbyPreview {
         }`,
     }),
   );
+  /** Last pointer position in client pixels; unset until the pointer moves over the page. */
+  private pointer?: { x: number; y: number };
+  private dragging = false;
+  /** Smoothed head turn towards the pointer, and how strongly it replaces the idle motion. */
+  private gaze = { yaw: 0, pitch: 0, weight: 0 };
   constructor(
     private models: Models,
     private surface: HTMLElement,
@@ -71,6 +92,7 @@ export class LobbyPreview {
         surface.setPointerCapture(e.pointerId);
         pointer = e.pointerId;
         lastX = e.clientX;
+        this.dragging = true;
       },
       options,
     );
@@ -87,9 +109,20 @@ export class LobbyPreview {
       "lostpointercapture",
       () => {
         pointer = undefined;
+        this.dragging = false;
       },
       options,
     );
+    window.addEventListener(
+      "pointermove",
+      (e) => {
+        if (e.pointerType === "mouse" || e.pointerType === "pen")
+          this.pointer = { x: e.clientX, y: e.clientY };
+      },
+      options,
+    );
+    // The pointer left the page: let the head drift back to its idle motion.
+    document.documentElement.addEventListener("pointerleave", () => (this.pointer = undefined), options);
     surface.addEventListener(
       "keydown",
       (e) => {
@@ -120,13 +153,20 @@ export class LobbyPreview {
       inspect = (1 + Math.cos(time * 0.83)) ** 5 / 32;
     this.avatar.rotation.y = this.yaw;
     const body = this.avatar.rig.skin;
-    body.head.rotation.set(0.15 * inspect, 0.17 * Math.sin(time * 0.68) - 0.2 * inspect, 0);
+    const aspect = rect.width / rect.height,
+      half = Math.max(1.11, 0.9 / aspect);
+    this.followPointer(rect, half, dt);
+    const idle = 1 - 0.85 * this.gaze.weight;
+    body.head.rotation.order = "YXZ";
+    body.head.rotation.set(
+      0.15 * inspect * idle + this.gaze.pitch * this.gaze.weight,
+      (0.17 * Math.sin(time * 0.68) - 0.2 * inspect) * idle + this.gaze.yaw * this.gaze.weight,
+      0,
+    );
     body.rightArm.rotation.set(-0.82 - 0.38 * inspect, -0.1, -0.13);
     body.leftArm.rotation.set(0.09 * breathe, 0, -0.09 - 0.02 * breathe);
     body.rightLeg.rotation.x = 0.045 * breathe;
     body.leftLeg.rotation.x = -0.045 * breathe;
-    const aspect = rect.width / rect.height,
-      half = Math.max(1.11, 0.9 / aspect);
     this.camera.top = half;
     this.camera.bottom = -half;
     this.camera.left = -half * aspect;
@@ -157,6 +197,34 @@ export class LobbyPreview {
     renderer.setViewport(this.viewport);
     renderer.setScissor(this.scissor);
     renderer.setScissorTest(clipped);
+  }
+  /**
+   * Turns the head towards the pointer. `half` is half the height of the view in world units.
+   * The pointer is taken to lie on a plane in front of the avatar, so the turn grows smoothly
+   * with distance and is clamped to what a neck can do.
+   */
+  private followPointer(rect: DOMRect, half: number, dt: number) {
+    const { clamp, damp } = THREE.MathUtils;
+    // Body turn away from the camera, wrapped to [-PI, PI]; the rig itself is mounted facing backwards.
+    const bodyYaw = Math.atan2(Math.sin(this.yaw - Math.PI), Math.cos(this.yaw - Math.PI));
+    let yaw = 0,
+      pitch = 0,
+      following = false;
+    if (this.pointer && !this.dragging && Math.abs(bodyYaw) < GAZE.blindYaw) {
+      const worldPerPixel = (2 * half) / rect.height;
+      // The camera looks at y = 0.88, which lands on the middle of the surface.
+      const headY = rect.top + rect.height / 2 - (GAZE.headHeight - 0.88) / worldPerPixel;
+      const dx = (this.pointer.x - (rect.left + rect.width / 2)) * worldPerPixel;
+      const dy = (this.pointer.y - headY) * worldPerPixel;
+      yaw = clamp(Math.atan2(dx, GAZE.depth) - bodyYaw, -GAZE.maxYaw, GAZE.maxYaw);
+      pitch = clamp(Math.atan2(dy, GAZE.depth), -GAZE.maxUp, GAZE.maxDown);
+      following = true;
+    }
+    this.gaze.weight = damp(this.gaze.weight, following ? 1 : 0, GAZE.engage, dt);
+    // While disengaging the last direction is kept, so the head eases out instead of snapping.
+    if (!following) return;
+    this.gaze.yaw = damp(this.gaze.yaw, yaw, GAZE.follow, dt);
+    this.gaze.pitch = damp(this.gaze.pitch, pitch, GAZE.follow, dt);
   }
   dispose() {
     this.controller.abort();
