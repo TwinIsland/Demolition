@@ -11,6 +11,8 @@ export const STORY_ART = {
   zeroSkin: url("zero-skin.png"),
   /** Sprite sheet of the act 2 mini-game; tools/story/make-arcade.py documents its frame order. */
   arcade: url("arcade.png"),
+  /** The two players of the mini-game; tools/story/make-chibi.py documents its frame order. */
+  chibi: url("chibi.png"),
 } as const;
 
 /** Zero's dialogue portraits, by mood. */
