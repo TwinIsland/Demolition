@@ -315,7 +315,8 @@ export class GameAudio {
     const pan = own ? 0 : panTo(self, event);
     // Damage dealt to another operator, by any means, ticks; an elimination rings over it. A kill
     // credited to someone who is down was their own charge or a zombie, and earns nothing.
-    if (own && event.type === "hit" && !event.zombie) this.play("hit-marker", { priority: true });
+    if (own && event.type === "hit" && !event.zombie)
+      this.play(`player-attack-${event.id % 3}`, { priority: true });
     if (own && event.type === "kill" && self.alive) this.play("kill-confirm", { priority: true });
     if (event.type === "hit" && event.zombie && distance < 9) {
       const voice = event.zombie.outcome === "hurt" ? `zombie-hurt-${1 + (event.id % 2)}` : "zombie-death";
@@ -424,9 +425,9 @@ export class GameAudio {
       }
       case "hurt":
         if (event.blocked) return this.play("shield-block");
-        // Any damage that gets through, whatever dealt it: the blow, and the operator's grunt.
+        // Any damage that gets through, whatever dealt it: the blow under the hurt cue.
         this.play("hurt");
-        return this.play(`hurt-voice-${event.id % 2}`, { priority: true });
+        return this.play(`player-hurt-${event.id % 3}`, { priority: true });
       case "hit": {
         const sound = event.item ? ITEMS[event.item]?.melee?.hitSound : undefined;
         return this.play(sound ?? "hit", { level: LEVEL.meleeHit, priority: true });

@@ -79,9 +79,13 @@ const CUES = {
   "pickup-confirm": sfx(0.34),
   "skill-cast": sfx(0.42),
   hurt: sfx(0.62, { pitchJitter: 0.04 }),
-  // The listener's own voice: on the interface bus so no blast or fire bed can bury it.
-  "hurt-voice-0": ui(0.7, { voices: 2, minInterval: 0.25, pitchJitter: 0.07 }),
-  "hurt-voice-1": ui(0.7, { voices: 2, minInterval: 0.25, pitchJitter: 0.07 }),
+  // Damage taken and damage dealt: on the interface bus so no blast or fire bed can bury them.
+  "player-hurt-0": ui(0.8, { voices: 2, minInterval: 0.2, pitchJitter: 0.08 }),
+  "player-hurt-1": ui(0.8, { voices: 2, minInterval: 0.2, pitchJitter: 0.08 }),
+  "player-hurt-2": ui(0.8, { voices: 2, minInterval: 0.2, pitchJitter: 0.08 }),
+  "player-attack-0": ui(0.65, { voices: 3, minInterval: 0.04, pitchJitter: 0.06 }),
+  "player-attack-1": ui(0.65, { voices: 3, minInterval: 0.04, pitchJitter: 0.06 }),
+  "player-attack-2": ui(0.65, { voices: 3, minInterval: 0.04, pitchJitter: 0.06 }),
   "shield-block": sfx(0.62, { pitchJitter: 0.04 }),
   hit: sfx(0.6, { minInterval: 0.05, pitchJitter: 0.04 }),
   "zombie-death": sfx(0.5, { pitchJitter: 0.04 }),
@@ -100,7 +104,6 @@ const CUES = {
   "body-fall": sfx(0.7, { voices: 2, minInterval: 0.1, pitchJitter: 0.04 }),
   "zone-wall": sfx(0.8, { voices: 1, minInterval: 0.5 }),
   "kill-confirm": ui(0.72, { voices: 2, minInterval: 0.1 }),
-  "hit-marker": ui(0.6, { voices: 3, minInterval: 0.04, pitchJitter: 0.03 }),
 } satisfies Record<string, CueDef>;
 
 export type CueId = keyof typeof CUES;

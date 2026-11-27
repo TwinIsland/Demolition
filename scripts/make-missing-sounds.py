@@ -197,40 +197,7 @@ place(body, load(RPG + "dropLeather.ogg"), 0.16, 0.45)
 place(body, load(RPG + "clothBelt.ogg"), 0.2, 0.25)
 write("public/assets/body-fall.ogg", body, 0.85, 0.06)
 
-# Taking damage: a short voiced "oof" over a body thud. The voice is additive formant synthesis:
-# harmonics of a falling pitch, each weighted by a vowel envelope that closes from "o" to "u".
-def oof(f_start, f_end, length, breath):
-    x = t(length)
-    u = x / length
-    f0 = f_end + (f_start - f_end) * np.exp(-u * 3.2)
-    phase = 2 * np.pi * np.cumsum(f0) / SR
-    f1 = 520 - 190 * u
-    f2 = 900 - 180 * u
-    voice = np.zeros(len(x))
-    for k in range(1, 28):
-        fk = k * f0
-        env = (
-            1.0 * np.exp(-(((fk - f1) / 110) ** 2))
-            + 0.55 * np.exp(-(((fk - f2) / 150) ** 2))
-            + 0.1 * np.exp(-(((fk - 2500) / 320) ** 2))
-            + 0.05
-        )
-        voice += env / k**0.7 * np.sin(k * phase + 0.3 * k)
-    # A hard glottal onset and a quick, slightly rough decay.
-    amp = np.clip(x / 0.012, 0, 1) * np.exp(-u * 3.4) * (1 - u) ** 0.6
-    voice *= amp * (1 + 0.12 * np.sin(2 * np.pi * 31 * x))
-    air = noise(length)
-    air = onepole(air - onepole(air, 0.12), 0.35)
-    return voice / np.max(np.abs(voice)) + breath * air * np.exp(-u * 6) * np.clip(x / 0.004, 0, 1)
-
-
-for n, (f_start, f_end, length, thud) in enumerate(((182, 104, 0.27, "000"), (166, 96, 0.3, "004"))):
-    o = np.zeros(int(SR * (length + 0.08)))
-    place(o, load(IMPACT + f"impactPunch_heavy_{thud}.ogg"), 0, 0.5)
-    place(o, oof(f_start, f_end, length, 0.1), 0.012, 1.0)
-    write(f"public/assets/hurt-voice-{n}.ogg", o, 0.85, 0.04)
-
-# Hit marker: a dry, bright double tick, the first one harder. Short enough to stack on rapid hits.
+# A dry, bright tick with a snap of noise on its attack.
 def tick(f0, length=0.07, decay=75):
     b = t(length)
     ring = np.sin(2 * np.pi * f0 * b) + 0.5 * np.sin(2 * np.pi * f0 * 1.51 * b) + 0.3 * np.sin(2 * np.pi * f0 * 2.76 * b)
@@ -239,12 +206,7 @@ def tick(f0, length=0.07, decay=75):
     return (ring * np.exp(-b * decay) + 0.8 * snap * np.exp(-b * 260)) * np.clip(b / 0.0008, 0, 1)
 
 
-h = np.zeros(int(SR * 0.13))
-place(h, tick(2350), 0, 1.0)
-place(h, tick(3100, 0.05, 95), 0.045, 0.5)
-write("public/assets/hit-marker.ogg", h, 0.85, 0.01)
-
-# Elimination confirmed: the hit marker's tick dropped onto a low knock, then two rising bell
+# Elimination confirmed: a bright tick dropped onto a low knock, then two rising bell
 # notes that ring on. Clearly a different, bigger event than a hit.
 d = 0.85
 x = t(d)

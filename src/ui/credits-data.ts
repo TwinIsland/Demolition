@@ -103,7 +103,7 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
         license: "CC BY 3.0",
       },
       {
-        title: "Zombie hurt & death",
+        title: "Zombie hurt & death, player hurt & attack",
         author: "Mojang Studios · Minecraft: Java Edition",
         license: "© Mojang Studios",
       },
