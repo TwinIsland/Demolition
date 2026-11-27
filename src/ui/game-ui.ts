@@ -203,6 +203,11 @@ export class GameUI {
     return this.lobby.confirm();
   }
 
+  /** The main menu's open top-level tab. */
+  get lobbyTab() {
+    return this.lobby.tab;
+  }
+
   /** Re-reads the story save, after the story wrote to it. */
   refreshStory() {
     this.lobby.refreshStory();
