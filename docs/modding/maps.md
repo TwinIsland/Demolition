@@ -8,7 +8,7 @@ A map is one `defineMap` call in `maps/<id>/index.js`. Types are in `src/core/pa
 | Rainforest | `rainforest` | 31 × 31 | Grass and mud ground, temple ruins in the centre, inset spawns, longer zone timer |
 | Warehouse | `night-lab` | 17 × 17 | Night, close quarters |
 | Pool | `poolrooms` | 21 × 21 | Indoor tiled hall, shallow pools kept open, columns on a fixed grid |
-| Backrooms | `backrooms` | 21 × 21 | Windowless office floor: fixed partitions and doorways in four-fold symmetry, carpet, low ceiling of light panels; stray walls and furniture move every 32 s after a 4 s warning |
+| Backrooms | `backrooms` | 21 × 21 | Windowless office floor: fixed partitions and doorways in four-fold symmetry, carpet, low ceiling of light panels; stray walls and furniture move every 32 s without warning |
 
 ## Setup
 
@@ -45,7 +45,7 @@ export default defineMap(
 | `density` | 0 to 1. Chance that an open interior tile starts with destructible cover |
 | `wallDensity` | 0 to 1. Share of interior tiles turned into permanent walls. Omit for the classic pillar grid |
 | `wallShuffle` | 0 to 1. Share of generated walls that move on a terrain reshuffle. Needs `wallDensity`. Default 0 |
-| `terrainShift` | `{ every, warning }` in seconds. The map rearranges itself on that interval, after a countdown of `warning` seconds (default 4) during which the HUD counts down and the lights stutter. Needs `randomizeTerrain`; add `wallShuffle` for walls to move. Used by Backrooms |
+| `terrainShift` | `{ every, warning }` in seconds. The map rearranges itself on that interval, after a countdown of `warning` seconds (default 4) during which the HUD counts down and the lights stutter; with `warning: 0` it moves at once, unannounced. Needs `randomizeTerrain`; add `wallShuffle` for walls to move. Used by Backrooms |
 | `theme` | `"garden"` (daylight, outdoor), `"midnight"` (night, industrial), `"rainforest"` (grass ground, forest scenery, tree and rock walls) or `"poolrooms"` (white tile hall under a ceiling of light panels, shallow water, walls on every fourth cell become columns) or `"backrooms"` (yellow papered walls up to a low suspended ceiling with a light panel over every second cell, one carpet across the floor; meant for a size whose middle cell is an even number of cells from the edge, such as 21) |
 | `weather` | `"clear"` (default), `"rain"`, `"monsoon"` (rain with thicker, greener mist) `"indoor"` (no sky or rain, wet reflective floor) or `"office"` (dim windowless floor, damp patches in the carpet). Presentation only |
 | `spawnInset` | Cells between the boundary wall and each of the four spawns, measured along the diagonal. Default 1, the corners. Use a larger value on big maps so operators meet sooner |

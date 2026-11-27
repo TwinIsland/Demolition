@@ -42,13 +42,19 @@ function flatten(s: GameSnapshot, view: NonNullable<GameSnapshot["arenaView"]>) 
 
 /** Returns true when the terrain was rearranged this tick; the rest of the tick is then skipped. */
 export function updateTerrainReset(ctx: SimContext, inputs: ReadonlyMap<string, PlayerInput>) {
-  const s = ctx.state,
-    reset = s.terrainReset;
+  const s = ctx.state;
   // A map that rearranges itself. The interval has to be a real one, or it would never stop.
   const shift =
     ctx.map.randomizeTerrain && ctx.map.terrainShift && ctx.map.terrainShift.every >= 5
       ? ctx.map.terrainShift
       : undefined;
+  // With no warning the rooms move in this very tick, announced by nothing.
+  if (shift && !s.terrainReset && s.time >= (s.terrainShiftAt ?? shift.every)) {
+    const warning = Math.max(0, shift.warning ?? SHIFT_WARNING);
+    s.terrainReset = { id: ctx.nextId(), ownerId: "", shift: true, at: s.time + warning };
+    s.terrainShiftAt = s.time + warning + shift.every;
+  }
+  const reset = s.terrainReset;
   const practiceReset =
     !reset && s.canResetTerrain && s.players.some((p) => !p.bot && p.alive && inputs.get(p.id)?.resetTerrain);
   if (practiceReset || (reset && reset.completedAt === undefined && s.time >= reset.at)) {
@@ -61,12 +67,6 @@ export function updateTerrainReset(ctx: SimContext, inputs: ReadonlyMap<string, 
     // Any rearrangement, whoever called it, restarts the map's own clock.
     if (shift) s.terrainShiftAt = s.time + shift.every;
     return true;
-  }
-  if (shift && !reset && s.time >= (s.terrainShiftAt ?? shift.every)) {
-    const warning = shift.warning ?? SHIFT_WARNING;
-    s.terrainReset = { id: ctx.nextId(), ownerId: "", shift: true, at: s.time + warning };
-    s.terrainShiftAt = s.time + warning + shift.every;
-    return false;
   }
   if (reset && reset.completedAt === undefined && !reset.wallPlan && s.time >= reset.at - WALL_WARNING)
     reset.wallPlan = planWalls(s, ctx.map, ctx.random);

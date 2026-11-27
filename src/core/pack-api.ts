@@ -43,7 +43,7 @@ export interface MapDefinition extends Pack {
   wallShuffle?: number;
   /**
    * The map rearranges itself without anyone asking: every `every` seconds it announces a terrain
-   * reset and carries it out `warning` seconds later (default 4). Needs `randomizeTerrain`; set
+   * reset and carries it out `warning` seconds later (default 4; 0 moves at once, unannounced). Needs `randomizeTerrain`; set
    * `wallShuffle` as well for walls to move.
    */
   terrainShift?: { every: number; warning?: number };
