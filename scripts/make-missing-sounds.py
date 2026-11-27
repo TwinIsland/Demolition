@@ -197,17 +197,33 @@ place(body, load(RPG + "dropLeather.ogg"), 0.16, 0.45)
 place(body, load(RPG + "clothBelt.ogg"), 0.2, 0.25)
 write("public/assets/body-fall.ogg", body, 0.85, 0.06)
 
-# Elimination confirmed: a dry low knock under two short rising notes. Kept small on purpose.
-d = 0.5
+# Hit marker: a dry, bright double tick, the first one harder. Short enough to stack on rapid hits.
+def tick(f0, length=0.07, decay=75):
+    b = t(length)
+    ring = np.sin(2 * np.pi * f0 * b) + 0.5 * np.sin(2 * np.pi * f0 * 1.51 * b) + 0.3 * np.sin(2 * np.pi * f0 * 2.76 * b)
+    snap = noise(length)
+    snap = snap - onepole(snap, 0.5)
+    return (ring * np.exp(-b * decay) + 0.8 * snap * np.exp(-b * 260)) * np.clip(b / 0.0008, 0, 1)
+
+
+h = np.zeros(int(SR * 0.13))
+place(h, tick(2350), 0, 1.0)
+place(h, tick(3100, 0.05, 95), 0.045, 0.5)
+write("public/assets/hit-marker.ogg", h, 0.85, 0.01)
+
+# Elimination confirmed: the hit marker's tick dropped onto a low knock, then two rising bell
+# notes that ring on. Clearly a different, bigger event than a hit.
+d = 0.85
 x = t(d)
 q = np.zeros(len(x))
-b = t(0.16)
-place(q, sweep(170 * np.exp(-b * 22) + 60) * np.exp(-b * 24), 0, 1.0)
-for at, f0 in ((0.05, 880), (0.14, 1320)):
-    b = t(0.3)
-    note = (np.sin(2 * np.pi * f0 * b) + 0.25 * np.sin(2 * np.pi * 2 * f0 * b)) * np.exp(-b * 13)
-    place(q, note * np.clip(b / 0.003, 0, 1), at, 0.42)
-write("public/assets/kill-confirm.ogg", q, 0.7, 0.05)
+place(q, tick(1900, 0.09, 55), 0, 0.9)
+b = t(0.22)
+place(q, sweep(190 * np.exp(-b * 20) + 55) * np.exp(-b * 17), 0, 1.3)
+for at, f0, g in ((0.07, 1046.5, 0.55), (0.17, 1568.0, 0.6)):
+    b = t(d - at)
+    note = np.sin(2 * np.pi * f0 * b) + 0.35 * np.sin(2 * np.pi * 2 * f0 * b) + 0.15 * np.sin(2 * np.pi * 3.01 * f0 * b)
+    place(q, note * np.exp(-b * 7.5) * np.clip(b / 0.002, 0, 1), at, g)
+write("public/assets/kill-confirm.ogg", q, 0.85, 0.08)
 
 # The zone wall locking into place: stone grinding to a stop on a deep slam.
 d = 1.6

@@ -96,7 +96,8 @@ const CUES = {
   "cover-break-1": sfx(0.6, { minInterval: 0.05, pitchJitter: 0.06 }),
   "body-fall": sfx(0.7, { voices: 2, minInterval: 0.1, pitchJitter: 0.04 }),
   "zone-wall": sfx(0.8, { voices: 1, minInterval: 0.5 }),
-  "kill-confirm": ui(0.5, { voices: 1, minInterval: 0.15 }),
+  "kill-confirm": ui(0.72, { voices: 2, minInterval: 0.1 }),
+  "hit-marker": ui(0.6, { voices: 3, minInterval: 0.04, pitchJitter: 0.03 }),
 } satisfies Record<string, CueDef>;
 
 export type CueId = keyof typeof CUES;

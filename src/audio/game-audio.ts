@@ -53,8 +53,6 @@ const EARSHOT = { action: 7, kick: 8, fall: 10, zombie: 8, groan: 6 } as const;
 /** Seconds between idle groans from the zombies around the listener, shortest to longest. */
 const GROAN_GAP = [3.5, 8] as const;
 const GROANS = 3;
-/** Seconds back from a snapshot in which a kill event still belongs to the operator who just fell. */
-const KILL_WINDOW = 0.25;
 
 interface Stride extends Vec2 {
   travel: number;
@@ -311,10 +309,14 @@ export class GameAudio {
     }
   }
 
-  private worldEvent(event: GameEvent, self: Listener & { id: string }) {
+  private worldEvent(event: GameEvent, self: Player) {
     const distance = distanceTo(self, event);
     const own = event.playerId === self.id;
     const pan = own ? 0 : panTo(self, event);
+    // Damage dealt to another operator, by any means, ticks; an elimination rings over it. A kill
+    // credited to someone who is down was their own charge or a zombie, and earns nothing.
+    if (own && event.type === "hit" && !event.zombie) this.play("hit-marker", { priority: true });
+    if (own && event.type === "kill" && self.alive) this.play("kill-confirm", { priority: true });
     if (event.type === "hit" && event.zombie && distance < 9) {
       const voice = event.zombie.outcome === "hurt" ? `zombie-hurt-${1 + (event.id % 2)}` : "zombie-death";
       this.play(voice, { gain: falloff(distance, 10), pan: panTo(self, event), priority: own });
@@ -450,14 +452,9 @@ export class GameAudio {
         distance = distanceTo(self, p);
       if (!p.alive) {
         fallen.add(p.id);
-        if (audible && !seen.fallen.has(p.id)) {
-          if (own || distance < EARSHOT.fall) this.play("body-fall", own ? {} : placed(p, EARSHOT.fall));
-          // The kill feed names the killer; a zombie's or one's own victim earns no confirmation.
-          const credited = state.events.some(
-            (e) => e.type === "kill" && e.playerId === self.id && e.at > state.time - KILL_WINDOW,
-          );
-          if (!own && self.alive && credited) this.play("kill-confirm", { priority: true });
-        }
+        // The last operator to fall ends the match in the same snapshot, and is still heard.
+        if (seen.primed && this.enabled && !seen.fallen.has(p.id) && (own || distance < EARSHOT.fall))
+          this.play("body-fall", own ? {} : placed(p, EARSHOT.fall));
         continue;
       }
       for (const id of p.skills) {

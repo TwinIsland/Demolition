@@ -224,7 +224,7 @@ Built by `scripts/make-missing-sounds.py` from CC0 recordings in the [open-game-
 
 | File | Source | Author | License | Changes |
 | --- | --- | --- | --- | --- |
-| `src/modules/skills/cloak/deactivate.ogg`, `src/modules/skills/veil/deactivate.ogg`, `src/modules/skills/scan/activate.ogg`, `src/modules/skills/medic/activate.ogg`, `public/assets/kill-confirm.ogg` | Synthesised for this project | Project | CC0 1.0 | — |
+| `src/modules/skills/cloak/deactivate.ogg`, `src/modules/skills/veil/deactivate.ogg`, `src/modules/skills/scan/activate.ogg`, `src/modules/skills/medic/activate.ogg`, `public/assets/kill-confirm.ogg`, `public/assets/hit-marker.ogg` | Synthesised for this project | Project | CC0 1.0 | — |
 | `src/modules/skills/detonator/activate.ogg` | `metalLatch`, Kenney [RPG Audio](https://kenney.nl/assets/rpg-audio), with a synthesised double chirp | Kenney, Project | CC0 1.0 | Mixed |
 | `src/modules/items/bandage/use.ogg` | `cloth1`, `cloth3`, `clothBelt2`, Kenney RPG Audio | Kenney | CC0 1.0 | Sequenced into one take |
 | `public/assets/glass-shatter.ogg` | `impactGlass_heavy_001`, `impactGlass_medium_001`, `impactGlass_light_002`, Kenney [Impact Sounds](https://kenney.nl/assets/impact-sounds); `glass_004`, Kenney [Interface Sounds](https://kenney.nl/assets/interface-sounds); synthesised shards | Kenney, Project | CC0 1.0 | Layered |
