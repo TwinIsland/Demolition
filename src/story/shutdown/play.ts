@@ -28,7 +28,7 @@ interface Part {
   dispose(): void;
 }
 
-const MAP = "flatland";
+const MAP = "flatland-story";
 const HERO_SKIN = "story-zero";
 /** What the hero carries into the last fight: a little of everything act 4 taught. */
 const KIT = { bandage: 2, grenade: 2, molotov: 1, shield: 1 } as const;
@@ -113,12 +113,14 @@ export function playShutdown(
           // Never resolves by itself: it is the sky's frame callback for as long as the match lives.
           void d.until((state) => (sky.update(state, performance.now()), false)).then(() => sky.dispose());
           d.lock(true);
+          // Every part of this act opens looking the way the hero was stood.
+          d.match.look = { yaw: options.setup.yaw ?? SOUTH, pitch: 0 };
           resolve({ part, result: await scene(d, sky) });
         }),
       );
     });
   const cast = (at: readonly Vec2[], extra: Partial<StoryActor>): StoryActor[] =>
-    kings.map((king, index) => ({ ...king, ...at[index], yaw: Math.PI, ...extra }));
+    kings.map((king, index) => ({ ...king, ...at[index], yaw: SOUTH, ...extra }));
 
   /** The voice from the sky, the bar, and the three who drop in: a match where nothing can be hurt. */
   const prologue = async () => {
@@ -129,7 +131,7 @@ export function playShutdown(
         skin: HERO_SKIN,
         setup: {
           spawn: spots.hero,
-          yaw: SOUTH,
+          yaw: NORTH,
           cast: [
             {
               id: "lulu",
@@ -187,7 +189,7 @@ export function playShutdown(
         skin: HERO_SKIN,
         setup: {
           spawn: spots.hero,
-          yaw: SOUTH,
+          yaw: NORTH,
           cast: cast(spots.corners, { difficulty }),
           brawl: { zoneDuration: script.zoneDuration },
         },
@@ -212,6 +214,8 @@ export function playShutdown(
         for (const king of kings) match.setAgent(king.id, new BotAgent(king.id));
         stage.host.music("shutdown");
         match.hud = true;
+        // The real match's feed, hit markers, level-ups and perk offers.
+        match.live = true;
         stage.goal(goals.fight);
         d.lock(false);
         // Lessons of the act, said by the objective chip so that nothing stops the fight.
@@ -231,6 +235,7 @@ export function playShutdown(
         for (const king of kings) match.setAgent(king.id);
         if (!decided) return;
         match.hud = false;
+        match.live = false;
         d.lock(true);
         stage.goal();
         if (!hero(d.state).alive) {
