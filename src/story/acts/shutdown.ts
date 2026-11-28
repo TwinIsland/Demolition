@@ -39,16 +39,6 @@ export const SHUTDOWN_SCRIPT = {
       { x: 7, z: 8 },
       { x: 8, z: 8 },
     ],
-    /** The goodbye before the choice: side by side at the south edge of the plaza, facing the gate. */
-    farewell: {
-      hero: { x: 7.4, z: 8.6 },
-      lulu: { x: 6.6, z: 8.6 },
-      /** Cover the camera would otherwise stand in. */
-      cleared: [
-        { x: 6, z: 9 },
-        { x: 8, z: 10 },
-      ],
-    },
     /** The "stay" ending: where the next player comes down, and the two who wait under the gate. */
     newcomer: { x: 7, z: 6 },
     guides: [
@@ -213,8 +203,8 @@ export const SHUTDOWN_SCRIPT = {
       { who: "narrator", text: "他第一次没有用「吾」。没有人指出这一点。" },
     ],
     /**
-     * The goodbye, said after `won` and before the choice, one group to a picture: the sky, the
-     * village coming apart, the bandage let go, and their faces at 98%.
+     * The goodbye, said after `won` and before the choice, one group to a picture of the film
+     * (cutscenes/farewell.ts): the sky, the island coming apart, the bandage let go, their faces at 98%.
      */
     farewell: {
       sky: [

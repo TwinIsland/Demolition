@@ -199,15 +199,6 @@ export class ShutdownSky {
     this.write(FIRST);
   }
 
-  /** Puts the sky straight into a state it reached earlier, for a scene that opens on it. */
-  settle(percent: number, glory: boolean) {
-    this.percent = percent;
-    this.glory = glory;
-    this.visible = true;
-    this.shown = 1;
-    this.glow = glory ? 1 : 0;
-  }
-
   /** Lets the message and the wall appear; until then the sky is the one act 4 left. */
   show() {
     this.visible = true;
