@@ -70,8 +70,9 @@ const modeRow = (id: MatchMode) => {
 const tile = (attribute: string, id: string, lockable = false) =>
   `<button type="button" class="menu-row menu-tile menu-choice${attribute === "knife" ? " knife-tile" : ""}" data-${attribute}="${id}" aria-pressed="false"><span class="row-label"></span>${lockable ? icon("lock") : ""}</button>`;
 const UNLOCK_HINT = "完成故事模式后解锁";
-/** How long the hint under a grid stays after a click on a locked tile. */
-const HINT_MS = 3200;
+/** What a locked choice is called in the dialog that explains it. */
+const LOCKED_KINDS = { map: "作战区域", finish: "炸药涂装", knife: "小刀皮肤" } as const;
+type LockedKind = keyof typeof LOCKED_KINDS;
 
 const lobbyMarkup = () => `
         <div class="lobby-scrim"></div>${storyChrome()}
@@ -97,7 +98,6 @@ const lobbyMarkup = () => `
             </nav>
             <nav class="menu-panel" data-panel="map" aria-label="作战区域" hidden>
               ${ROOM_MAPS.map((map) => `<button type="button" class="menu-row menu-choice" data-map="${map.id}" aria-pressed="false"><span class="row-label"></span><span class="row-value">${map.size} × ${map.size}</span>${icon("lock")}<i class="row-check"></i></button>`).join("")}
-              <small class="unlock-hint" data-hint="map" role="status"></small>
             </nav>
             <nav class="menu-panel" data-panel="outfit" aria-label="干员外观" hidden>
               <div class="menu-caption">角色皮肤</div>
@@ -111,12 +111,10 @@ const lobbyMarkup = () => `
               <div class="menu-grid three">${Object.keys(BOMB_STYLES)
                 .map((id) => tile("finish", id, true))
                 .join("")}</div>
-              <small class="unlock-hint" data-hint="finish" role="status"></small>
               <div class="menu-caption">小刀皮肤</div>
               <div class="menu-grid three">${Object.keys(KNIFE_STYLES)
                 .map((id) => tile("knife", id, true))
                 .join("")}</div>
-              <small class="unlock-hint" data-hint="knife" role="status"></small>
             </nav>${storyPanels()}
           </div>
         </section>
@@ -138,6 +136,17 @@ const lobbyMarkup = () => `
           <div class="menu-hints"><span><kbd>ENTER</kbd><span class="hint-versus">开始对局</span><span class="hint-story">进入故事</span></span><span class="hint-back"><kbd>ESC</kbd><span>返回</span></span></div>
           <div class="design-credit"><span class="credit-line" lang="en">Game Design by <a href="https://tianyihuang.com" target="_blank" rel="noopener noreferrer">TwinIsland</a></span><button type="button" id="credits" class="credit-open">${creditsLabel()}</button><span>v${version}</span></div>
         </footer>
+        <div class="unlock-dialog" role="alertdialog" aria-modal="true" aria-labelledby="unlock-dialog-title" hidden>
+          <div class="confirm-box">
+            <small class="detail-kicker">${icon("lock")}<span class="unlock-kind"></span></small>
+            <h2 id="unlock-dialog-title"></h2>
+            <p class="confirm-text"></p>
+            <div class="confirm-actions">
+              <button type="button" class="menu-row" data-unlock="close"><span class="row-label"></span><kbd>ESC</kbd></button>
+              <button type="button" class="menu-row" data-unlock="story"><span class="row-label"></span><i class="row-arrow"></i></button>
+            </div>
+          </div>
+        </div>
       `;
 
 /**
@@ -169,12 +178,17 @@ export class LobbyView {
   private readonly armSetting: HTMLElement;
   private readonly terrainButton: HTMLButtonElement;
   private readonly story: StoryMenu;
-  private hintTimer = 0;
+  private readonly unlockDialog: HTMLElement;
+  /** The locked row that opened the dialog; focus returns to it. */
+  private lockedRow?: HTMLElement;
   private readonly listeners = new AbortController();
 
   constructor(
     readonly root: HTMLElement,
-    private readonly actions: Pick<UIActions, "changeOutfit" | "importSkin" | "openStory" | "changeLobbyTab">,
+    private readonly actions: Pick<
+      UIActions,
+      "changeOutfit" | "importSkin" | "openStory" | "changeLobbyTab" | "selectMap"
+    >,
   ) {
     root.innerHTML = lobbyMarkup();
     root.dataset.view = this.view;
@@ -188,6 +202,7 @@ export class LobbyView {
     this.skinStatus = query(root, "#skin-status");
     this.armSetting = query(root, ".arm-setting");
     this.terrainButton = query<HTMLButtonElement>(root, "#terrain-preview");
+    this.unlockDialog = query(root, ".unlock-dialog");
     this.drawMiniatures();
     this.render();
 
@@ -198,7 +213,7 @@ export class LobbyView {
     root.addEventListener("focusin", (event) => this.onHover(event.target as HTMLElement), { signal });
     root.addEventListener("keydown", (event) => this.onKeyDown(event), { signal });
     for (const panel of root.querySelectorAll<HTMLElement>(".menu-panel"))
-      panel.addEventListener("pointerleave", () => this.setHovered(undefined), { signal });
+      panel.addEventListener("pointerleave", () => this.setHovered(this.focusedChoice()), { signal });
   }
 
   /** `customSkin` reports whether a PNG has been imported and with which arm model. */
@@ -232,6 +247,7 @@ export class LobbyView {
 
   /** Steps out of a dialog or sub-menu. Returns false on a tab's root panel, where there is nothing to leave. */
   back(): boolean {
+    if (this.closeUnlockDialog()) return true;
     if (this.story.back()) return true;
     if (isRoot(this.view)) return false;
     this.show(TABS[tabOf(this.view)].root);
@@ -240,6 +256,8 @@ export class LobbyView {
 
   /** Enter on a tab with its own primary action. Returns false on the versus tab, which opens the room. */
   confirm(): boolean {
+    // Enter belongs to the dialog while it is up, and must not open the room behind it.
+    if (!this.unlockDialog.hidden) return true;
     if (tabOf(this.view) !== "story") return false;
     this.story.primary();
     return true;
@@ -259,6 +277,7 @@ export class LobbyView {
   /** Returns to the open tab's root panel without animating, for when the lobby is not on screen. */
   reset() {
     const root = TABS[tabOf(this.view)].root;
+    this.unlockDialog.hidden = true;
     this.story.back();
     for (const panel of this.root.querySelectorAll<HTMLElement>(".menu-panel")) {
       panel.hidden = panel.dataset.panel !== root;
@@ -343,15 +362,19 @@ export class LobbyView {
   private onClick(target: HTMLElement) {
     const button = target.closest<HTMLButtonElement>("button");
     if (!button || button.disabled) return;
-    const { open, tab, skin, finish, knife, arm, mode, map } = button.dataset;
-    if (tab) this.show(TABS[tab as Tab].root);
+    const { open, tab, skin, finish, knife, arm, mode, map, unlock } = button.dataset;
+    if (unlock) {
+      this.closeUnlockDialog();
+      if (unlock === "story") this.show("story");
+    } else if (button === this.terrainButton) this.choosePreviewedMap();
+    else if (tab) this.show(TABS[tab as Tab].root);
     else if (open) this.show(open as View);
     else if (this.story.click(button)) return;
     else if ("back" in button.dataset) this.back();
     // GameUI routes the choice itself; picking one closes the sub-menu.
-    // A locked choice explains itself and changes nothing.
+    // A locked choice explains itself in a dialog and changes nothing.
     else if (button.classList.contains("locked"))
-      this.showUnlockHint(map ? "map" : finish ? "finish" : "knife");
+      this.openUnlockDialog(button, map ? "map" : finish ? "finish" : "knife");
     else if (mode || map) this.show("home");
     else if (skin) {
       this.look.skin = skin;
@@ -379,6 +402,23 @@ export class LobbyView {
     if (row && !row.matches(":disabled")) this.setHovered(row.dataset.mode ?? row.dataset.map);
   }
 
+  /** The mode or map row that holds keyboard focus in the open panel, if any. */
+  private focusedChoice() {
+    const row = document.activeElement?.closest<HTMLElement>("[data-mode], [data-map]");
+    if (!row || row.matches(":disabled") || !this.panel(this.view).contains(row)) return undefined;
+    return row.dataset.mode ?? row.dataset.map;
+  }
+
+  /**
+   * The terrain preview shows the selected map, while the card can be on another row of the map
+   * list (pointer or arrow keys). Opening the preview from there selects the map the card shows.
+   */
+  private choosePreviewedMap() {
+    const opening = this.terrainButton.getAttribute("aria-pressed") !== "true";
+    const id = this.view === "map" ? this.hovered : undefined;
+    if (opening && id && id !== this.mapId && !mapLocked(id)) this.actions.selectMap(id);
+  }
+
   private setHovered(id: string | undefined) {
     if (id === this.hovered) return;
     this.hovered = id;
@@ -388,7 +428,8 @@ export class LobbyView {
   /** Up and Down walk the buttons of the open panel, like a console menu. */
   private onKeyDown(event: KeyboardEvent) {
     if (event.code !== "ArrowDown" && event.code !== "ArrowUp") return;
-    const buttons = [...this.panel(this.view).querySelectorAll<HTMLElement>("button:not(:disabled)")].filter(
+    const scope = this.unlockDialog.hidden ? this.panel(this.view) : this.unlockDialog;
+    const buttons = [...scope.querySelectorAll<HTMLElement>("button:not(:disabled)")].filter(
       (button) => button.offsetParent,
     );
     if (!buttons.length) return;
@@ -528,16 +569,30 @@ export class LobbyView {
     }
   }
 
-  /** Says under the grid why a locked tile did nothing. */
-  private showUnlockHint(grid: "map" | "finish" | "knife") {
-    clearTimeout(this.hintTimer);
-    for (const hint of this.root.querySelectorAll<HTMLElement>(".unlock-hint")) {
-      const shown = hint.dataset.hint === grid;
-      hint.textContent = shown ? t(UNLOCK_HINT) : "";
-    }
-    this.hintTimer = window.setTimeout(() => {
-      for (const hint of this.root.querySelectorAll<HTMLElement>(".unlock-hint")) hint.textContent = "";
-    }, HINT_MS);
+  /** Says why a locked choice did nothing, and offers the way to the story. */
+  private openUnlockDialog(row: HTMLElement, kind: LockedKind) {
+    const dialog = this.unlockDialog;
+    this.lockedRow = row;
+    query(dialog, ".unlock-kind").textContent = t("尚未解锁");
+    query(dialog, "h2").textContent = query(row, ".row-label").textContent;
+    query(dialog, ".confirm-text").textContent = t(
+      "这项{0}是故事模式的通关奖励。先完成故事模式，就能在对战中使用。",
+      t(LOCKED_KINDS[kind]),
+    );
+    query(dialog, '[data-unlock="close"] .row-label').textContent = t("知道了");
+    query(dialog, '[data-unlock="story"] .row-label').textContent = t("前往故事模式");
+    dialog.hidden = false;
+    rise([query(dialog, ".confirm-box")], 0, 18);
+    query<HTMLElement>(dialog, '[data-unlock="story"]').focus({ preventScroll: true });
+  }
+
+  /** Returns false when the dialog was not open. */
+  private closeUnlockDialog(): boolean {
+    if (this.unlockDialog.hidden) return false;
+    this.unlockDialog.hidden = true;
+    this.lockedRow?.focus({ preventScroll: true });
+    this.lockedRow = undefined;
+    return true;
   }
 
   // --- Skin import ---

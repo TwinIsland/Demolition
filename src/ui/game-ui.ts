@@ -629,6 +629,8 @@ export class GameUI {
         return actions.toggleSound();
     }
     const { mode, trade, map, perk, usePerk, skill } = button.dataset;
+    // A locked lobby choice only opens its dialog (see LobbyView) and sounds refused.
+    if (button.matches("#lobby .locked")) return actions.playLocked();
     if (!button.matches("[data-skill],[data-perk]")) actions.playClick();
     if (mode) {
       if (MATCH_MODES[mode as MatchMode]?.available) actions.selectMode(mode as MatchMode);

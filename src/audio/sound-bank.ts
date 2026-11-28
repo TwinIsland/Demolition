@@ -41,6 +41,7 @@ const CUES = {
   "ui-click": ui(0.42),
   "ui-accept": ui(0.42),
   "ui-back": ui(0.42),
+  "ui-locked": ui(0.5, { minInterval: 0.15 }),
   "aim-step": ui(0.26, { minInterval: 0.055 }),
   "clock-pulse": ui(0.5, { minInterval: 0.1 }),
   "deploy-signal": ui(0.5, { minInterval: 0.1 }),

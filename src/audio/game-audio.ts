@@ -28,7 +28,7 @@ import { faderGain, loadVolumes, saveVolumes, type VolumeChannel, type Volumes }
 import type { Listener } from "./spatial";
 import type { StoryCue } from "../story/stage";
 
-const MENU_CUES = { click: "ui-click", accept: "ui-accept", back: "ui-back" } as const;
+const MENU_CUES = { click: "ui-click", accept: "ui-accept", back: "ui-back", locked: "ui-locked" } as const;
 const STORY_CUES: Record<StoryCue, string> = {
   place: "bomb-place",
   blast: "blast",

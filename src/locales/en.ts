@@ -110,6 +110,11 @@ export const EN_MESSAGES: Readonly<Record<string, string>> = {
   覆盖并开始: "Overwrite and start",
   再点一次进入: "Click again to enter",
   完成故事模式后解锁: "Finish the story to unlock",
+  尚未解锁: "Locked",
+  "这项{0}是故事模式的通关奖励。先完成故事模式，就能在对战中使用。":
+    "This {0} is a reward for finishing the story. Clear story mode first to use it in versus.",
+  知道了: "Got it",
+  前往故事模式: "Go to story mode",
   继续游戏: "Keep playing",
   重玩本章: "Restart chapter",
   退出: "Quit",

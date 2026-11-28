@@ -555,6 +555,7 @@ export class GameApp {
         this.sound.menu();
       },
       playClick: () => this.playClick(),
+      playLocked: () => this.sound.menu("locked"),
       skipReplay: () => this.skipReplay(),
     };
   }
