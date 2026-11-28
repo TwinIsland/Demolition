@@ -272,6 +272,11 @@ export class GameAudio {
     this.play(MENU_CUES[name], { priority: true });
   }
 
+  /** The story menu's cheat code: a fanfare for unlocking, a shutter for wiping. */
+  cheat(unlocked: boolean) {
+    this.play(unlocked ? "level-up" : "shop-close", { priority: true });
+  }
+
   confirmEquipment() {
     this.play("gear-equip", { priority: true });
   }

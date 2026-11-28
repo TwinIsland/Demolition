@@ -447,6 +447,46 @@
   opacity: 0.45;
 }
 
+/* ---------- Cheat code toast ---------- */
+.story-cheat {
+  position: absolute;
+  top: calc(var(--u) * 150);
+  right: var(--menu-edge);
+  z-index: calc(var(--z-topbar) + 1);
+  width: calc(var(--u) * 520);
+  display: grid;
+  gap: calc(var(--u) * 6);
+  padding: calc(var(--u) * 20) calc(var(--u) * 26);
+  border: 1px solid var(--line);
+  border-left: calc(var(--u) * 4) solid var(--gold-400);
+  background: linear-gradient(180deg, #171022f2, #0c0913f2);
+  box-shadow: 0 calc(var(--u) * 16) calc(var(--u) * 50) #000a;
+  pointer-events: none;
+}
+.story-cheat[hidden] {
+  display: none;
+}
+.story-cheat[data-kind="wipe"] {
+  border-left-color: #e0564f;
+}
+.story-cheat small {
+  font-size: var(--menu-small);
+  letter-spacing: 0.18em;
+  color: var(--gold-200);
+}
+.story-cheat[data-kind="wipe"] small {
+  color: #f0938d;
+}
+.story-cheat strong {
+  font-size: calc(var(--u) * 30);
+  letter-spacing: 0.04em;
+}
+.story-cheat span {
+  font-size: var(--menu-small);
+  line-height: 1.5;
+  opacity: 0.78;
+}
+
 /* ---------- Overwrite dialog ---------- */
 .story-confirm,
 .unlock-dialog {

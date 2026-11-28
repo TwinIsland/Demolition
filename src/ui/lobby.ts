@@ -187,13 +187,17 @@ export class LobbyView {
     readonly root: HTMLElement,
     private readonly actions: Pick<
       UIActions,
-      "changeOutfit" | "importSkin" | "openStory" | "changeLobbyTab" | "selectMap"
+      "changeOutfit" | "importSkin" | "openStory" | "changeLobbyTab" | "selectMap" | "storyCheat"
     >,
   ) {
     root.innerHTML = lobbyMarkup();
     root.dataset.view = this.view;
     root.dataset.tab = tabOf(this.view);
-    this.story = new StoryMenu(root, (chapter, titled) => actions.openStory(chapter, titled));
+    this.story = new StoryMenu(
+      root,
+      (chapter, titled) => actions.openStory(chapter, titled),
+      (unlocked) => actions.storyCheat(unlocked),
+    );
     this.title = query(root, ".menu-title");
     this.kicker = query(root, ".menu-kicker");
     this.backButton = query<HTMLButtonElement>(root, ".menu-back");

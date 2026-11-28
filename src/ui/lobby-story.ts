@@ -2,6 +2,7 @@ import { ASCENSION_ART } from "../story/ascend/assets";
 import { SHUTDOWN_ART } from "../story/shutdown/art";
 import { language, t } from "../i18n";
 import { STORY_ART } from "../story/assets";
+import { CheatCode, toggleStoryCheat } from "../story/cheat";
 import { ACTS, actDone, actUnlocked, nextAct, type Act } from "../story/chapters";
 import { loadStory, MAIN_STORY, resetStory, type StorySave } from "../story/save";
 import { query } from "./dom";
@@ -61,6 +62,7 @@ export const storyChrome = () => `
           <header class="menu-caption"><span>章节选择</span><span class="chapters-count"></span></header>
           <div class="chapter-strip">${ACTS.map(chapterPanel).join("")}</div>
         </section>
+        <div class="story-cheat" role="status" aria-live="polite" hidden><small></small><strong></strong><span></span></div>
         <div class="story-confirm" role="alertdialog" aria-modal="true" aria-labelledby="story-confirm-title" hidden>
           <div class="confirm-box">
             <small class="detail-kicker">新游戏</small>
@@ -87,12 +89,20 @@ export class StoryMenu {
   private selected?: string;
   /** Image the backdrop shows now; its two layers take turns so a change crossfades. */
   private cover = "";
+  private readonly cheat = new CheatCode();
+  private readonly toast: HTMLElement;
+  private toastTimer = 0;
 
   constructor(
     private readonly root: HTMLElement,
     /** `titled` opens the act on its title card: it was picked from the list, not played into. */
     private readonly start: (act: string, titled?: boolean) => void,
+    /** The cheat code went through: `unlocked` tells whether it opened everything or wiped it. */
+    private readonly cheated: (unlocked: boolean) => void,
   ) {
+    this.toast = query(root, ".story-cheat");
+    // On the window, in the capture phase: the code has to be heard whatever holds the focus.
+    window.addEventListener("keydown", (event) => this.onCheatKey(event), true);
     // Preserve illustrations earned by saves made before the gallery existed.
     unlockedIllustrations();
     this.strip = query(root, ".chapter-strip");
@@ -111,6 +121,33 @@ export class StoryMenu {
     this.strip.addEventListener("pointerleave", () => hover(undefined));
     this.strip.addEventListener("focusout", () => hover(undefined));
     this.strip.addEventListener("keydown", (event) => this.onKeyDown(event));
+  }
+
+  /** Feeds the cheat code while the story tab is what the player is looking at. */
+  private onCheatKey(event: KeyboardEvent) {
+    const panel = this.root.querySelector<HTMLElement>('[data-panel="story"]');
+    const listening = !!panel && !panel.hidden && this.dialog.hidden && this.root.getClientRects().length > 0;
+    if (!listening || event.ctrlKey || event.metaKey || event.altKey) return this.cheat.reset();
+    if (event.repeat || !this.cheat.press(event.code)) return;
+    const unlocked = toggleStoryCheat();
+    this.cheated(unlocked);
+    this.announce(unlocked);
+  }
+
+  private announce(unlocked: boolean) {
+    const [kicker, title, text] = [...this.toast.children];
+    kicker.textContent = t("秘籍生效");
+    title.textContent = t(unlocked ? "全部故事已解锁" : "故事进度已清空");
+    text.textContent = t(
+      unlocked
+        ? "所有章节、结局奖励与收藏均已开放。再输入一次可清空。"
+        : "存档与全部解锁内容已清除。再输入一次可重新解锁。",
+    );
+    this.toast.dataset.kind = unlocked ? "unlock" : "wipe";
+    this.toast.hidden = false;
+    rise([this.toast], 0, 18);
+    clearTimeout(this.toastTimer);
+    this.toastTimer = window.setTimeout(() => (this.toast.hidden = true), 4200);
   }
 
   /** Left and Right walk the chapter panels. */

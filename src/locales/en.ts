@@ -106,6 +106,13 @@ export const EN_MESSAGES: Readonly<Record<string, string>> = {
   完成度: "Progress",
   "完成度 {0}%": "{0}% complete",
   "覆盖现有存档？": "Overwrite your save?",
+  秘籍生效: "Cheat activated",
+  全部故事已解锁: "Whole story unlocked",
+  故事进度已清空: "Story progress wiped",
+  "所有章节、结局奖励与收藏均已开放。再输入一次可清空。":
+    "Every chapter, ending reward and gallery picture is open. Enter the code again to wipe it all.",
+  "存档与全部解锁内容已清除。再输入一次可重新解锁。":
+    "Your save and everything it unlocked are gone. Enter the code again to unlock it all.",
   "当前进度（{0}，{1}）将被清除，无法恢复。": "Your progress ({0}, {1}) will be erased for good.",
   覆盖并开始: "Overwrite and start",
   再点一次进入: "Click again to enter",

@@ -28,3 +28,6 @@ const STORY_MAPS: ReadonlySet<string> = new Set(["flatland"]);
 export const mapLocked = (id: string) => STORY_MAPS.has(id) && !storyCleared();
 export const finishLocked = (id: string) => !!BOMB_STYLES[id]?.model && !storyCleared();
 export const knifeLocked = (id: string) => id !== DEFAULT_KNIFE.id && !storyCleared();
+
+/** Takes the versus rewards back. Only the menu's cheat code does this. */
+export const forgetStoryCleared = () => cleared.clear();
