@@ -38,7 +38,16 @@ const STORY_CUES: Record<StoryCue, string> = {
   pull: "missile-incoming",
   goal: "story-goal",
   mark: "ui-accept",
+  relicFall: "relic-fall",
+  relicLand: "relic-land",
+  relicBounce: "relic-bounce",
+  relicRise: "relic-rise",
+  relicReveal: "relic-reveal",
+  ascendCharge: "ascend-charge",
+  ascendHit: "ascend-hit",
 };
+/** Beats of a cutscene: nothing else may take their voice. */
+const PRIORITY_STORY_CUES = new Set<StoryCue>(["power", "pull", "relicLand", "relicReveal", "ascendHit"]);
 /** Story tracks are mastered hotter than the game's own music. */
 const STORY_GAIN: Record<string, number> = {
   [STORY_MUSIC.opening]: 0.6,
@@ -240,7 +249,7 @@ export class GameAudio {
 
   /** Effects of the story's 8-bit scenes. */
   storyCue(name: StoryCue) {
-    this.play(STORY_CUES[name], { priority: name === "power" || name === "pull" });
+    this.play(STORY_CUES[name], { priority: PRIORITY_STORY_CUES.has(name) });
   }
 
   /** Reuses the mixer tap for the live spectrum on the closing credits card. */
