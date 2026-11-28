@@ -123,7 +123,7 @@ export const SHUTDOWN_SCRIPT = {
       { who: "zero", mood: "sincere", text: "……" },
       { who: "zero", mood: "sincere", text: "我其实，没有什么封印。" },
       { who: "lulu", mood: "impressed", text: "我知道。" },
-      { who: "zero", mood: "sincere", text: "右手是被猫抓的。" },
+      { who: "zero", mood: "sincere", text: "绷带下面，什么也没有。" },
       { who: "lulu", mood: "impressed", text: "我知道。存档里写了。" },
       { who: "narrator", text: "他第一次没有用「吾」。没有人指出这一点。" },
     ],

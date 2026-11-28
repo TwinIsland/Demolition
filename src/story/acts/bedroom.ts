@@ -80,7 +80,7 @@ export const BEDROOM: RoomScene = {
       label: "书架上的盒子",
       lines: [
         { who: "zero", mood: "smug", text: "安静点，吾的右手。时候还没到。" },
-        { who: "narrator", text: "盒子里是备用的绷带。绷带下面是上周被猫抓的。" },
+        { who: "narrator", text: "盒子里是备用的绷带。右手的绷带下面，什么也没有。" },
       ],
     },
     {
