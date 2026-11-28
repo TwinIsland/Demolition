@@ -16,6 +16,8 @@ import { reachCheckpoint } from "../save";
 import type { Line } from "../script";
 import type { ScenePlayer, Stage } from "../stage";
 import { ASCENSION_HIT, ASCENSION_SPREAD, AscensionShot } from "./ascension-shot";
+import { GraveShot } from "./grave-shot";
+import { JumpShot } from "./jump-shot";
 import { TargetHighlight } from "./target-highlight";
 
 const HERO = "you";
@@ -194,11 +196,11 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   };
 
   /** Per-frame work of the act's own, run after the director's. */
-  const steps = new Set<(state: Readonly<GameSnapshot>, dt: number) => void>();
+  const steps = new Set<(state: Readonly<GameSnapshot>, dt: number, real: number) => void>();
   const directed = match.onFrame;
-  match.onFrame = (state, dt) => {
-    directed?.(state, dt);
-    for (const step of [...steps]) step(state, dt);
+  match.onFrame = (state, dt, real) => {
+    directed?.(state, dt, real);
+    for (const step of [...steps]) step(state, dt, real);
   };
 
   /** A conversation with the world still moving, for lines that are staged; the hero stands by. */
@@ -408,7 +410,31 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   const jump = async () =>
     (await d.until((state) => state.players[0].elevation > 0.35)) &&
     (await d.until((state) => state.players[0].elevation === 0));
-  if (!(await jump())) return;
+  // The first one is held: the camera leaves his eyes and goes once round him in the air.
+  if (!(await d.until((state) => state.players[0].elevation > 0.08))) return;
+  {
+    const leap = new JumpShot(match.look);
+    const hud = match.hud;
+    const hold = (state: Readonly<GameSnapshot>, _: number, real: number) => {
+      leap.advance(real, state);
+      match.rate = leap.rate;
+    };
+    d.lock(true);
+    stage.goal();
+    match.hud = false;
+    steps.add(hold);
+    renderer.stagedShot = leap;
+    stage.root.classList.add("ascend-bars");
+    const open = await d.until(() => leap.done);
+    steps.delete(hold);
+    match.rate = 1;
+    if (!open) return;
+    renderer.stagedShot = undefined;
+    stage.root.classList.remove("ascend-bars");
+    match.hud = hud;
+    d.lock(false);
+    if (!(await d.until((state) => state.players[0].elevation === 0))) return;
+  }
   if (!(await say(LINES.jumped))) return;
   stage.goal(GOALS.jumpAgain);
   if (!(await jump())) return;
@@ -713,8 +739,33 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   rise(open[1] ?? PLACE.risen[1], 1);
   if (!(await d.seconds(1.3))) return;
   stage.art(ASCENSION_ART.risen);
-  if (!(await d.talk(fill(LINES.risen)))) return;
+  // The world holds its breath from here until the narrator has had his line.
+  match.rate = 0;
+  if (!(await d.talk(fill(LINES.risen.slice(0, 5))))) return;
   stage.art();
+  if (!(await stage.wait(700))) return;
+  {
+    // Nobody answers her. The camera goes up, and the ground shows who lies in it.
+    const shot = new GraveShot(match.scene, d.state, SPOTS.graves[3], match.look);
+    const hud = match.hud;
+    const roll = (_state: Readonly<GameSnapshot>, _dt: number, real: number) => {
+      shot.time += real;
+      stage.root.classList.toggle("ascend-hush", shot.hush);
+    };
+    match.hud = false;
+    steps.add(roll);
+    renderer.stagedShot = shot;
+    stage.root.classList.add("ascend-bars");
+    const open = await d.until(() => shot.done);
+    steps.delete(roll);
+    shot.dispose();
+    if (!open) return;
+    renderer.stagedShot = undefined;
+    stage.root.classList.remove("ascend-bars", "ascend-hush");
+    match.hud = hud;
+  }
+  if (!(await d.talk(fill(LINES.risen.slice(5))))) return;
+  match.rate = 1;
   if (!(await d.talk(fill(LINES.fight)))) return;
   d.lock(false);
   anchor = PLACE.gravesGuide;

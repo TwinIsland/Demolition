@@ -56,8 +56,16 @@ export interface StoryMatch {
   control: boolean;
   /** Passes over the hero's input every tick: a lesson uses it to allow one ability at a time. */
   gate?: (input: PlayerInput) => PlayerInput;
-  /** Called once a frame, after the simulation, with the seconds it advanced (0 while paused). */
-  onFrame?: (state: Readonly<GameSnapshot>, dt: number) => void;
+  /**
+   * How fast the world runs: 1 is the game's own pace, less is slow motion, and 0 holds it still
+   * while the scene's own clock (`real` in `onFrame`) goes on. For a shot that plays with time.
+   */
+  rate: number;
+  /**
+   * Called once a frame, after the simulation, with the seconds the world advanced and the
+   * seconds that really passed. Both are 0 while paused.
+   */
+  onFrame?: (state: Readonly<GameSnapshot>, dt: number, real: number) => void;
   /** Shows the lesson's named HUD elements, or the whole match HUD with true. Off by default. */
   hud: StoryHud;
   /**

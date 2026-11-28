@@ -459,9 +459,10 @@ export class GameRenderer {
     // Renders the floor reflection, so the camera must be final here.
     this.weather.update(rig.camera, wallTime, [rig.held]);
     // Held just above zero through the wide view, so the pass does not join the chain mid-shot.
+    const lens = mode === "replay" ? undefined : this.stagedShot?.lens;
     this.post.setReplay(
-      mode === "replay" ? Math.max(0.002, this.replayShot?.grade ?? 0) : 0,
-      rig.focusDistance,
+      mode === "replay" ? Math.max(0.002, this.replayShot?.grade ?? 0) : (lens?.grade ?? 0),
+      lens?.focus ?? rig.focusDistance,
     );
     this.post.render();
     if (scanning) {

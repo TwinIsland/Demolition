@@ -66,7 +66,8 @@ export interface RoomScene {
   /** Symbols the player can walk across: clutter on the floor, examined while standing on or at it. */
   walkOver?: string;
   /** A full-screen illustration with lines read over it, before the room appears. */
-  opening?: { art: string; lines: readonly Line[] };
+  /** `over` is how many of the lines are read before the picture, over whatever the player shows first. */
+  opening?: { art: string; lines: readonly Line[]; over?: number };
   /** Played in the room before the player may move. */
   intro: readonly Line[];
   /** Objective shown once the intro is over. */
