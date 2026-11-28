@@ -421,6 +421,8 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   renderer.stagedShot = shot;
   renderer.dimension = shot.look;
   stage.host.silence();
+  // The device winds up over the lead-in, in the hush before the track.
+  stage.host.cue("ascendCharge");
   stage.root.classList.add("ascend-bars");
   void skyReady.then((texture) => texture && renderer.paintSky(texture, SKY_TURN));
 
@@ -430,6 +432,7 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   flash();
   stage.host.music("ascension");
   stage.host.cue("pull");
+  stage.host.cue("ascendHit");
   void stage.art(ASCENSION_ART.panel, { cut: true });
   stage.root.querySelector(".stage-art")?.classList.add("ascend-push");
   if (!(await stage.wait(PANEL_MS))) return;

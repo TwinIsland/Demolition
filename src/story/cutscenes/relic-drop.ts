@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { STORY_ART } from "../assets";
+import type { StoryCue } from "../stage";
 import { pick, playFilm, ramp, type Cutscene } from "./kit";
 
 const LENGTH = 5.6;
@@ -8,12 +9,21 @@ const REVEAL = 3.9;
 const MOTES = 90;
 /** When it first touches the ground. */
 const TOUCH = 1.3;
+/** The film's sound, by the moment each thing in the picture happens. The bounce is a seventh of a turn of `sin` long. */
+const SOUNDS: readonly (readonly [number, StoryCue])[] = [
+  [0, "relicFall"],
+  [TOUCH, "relicLand"],
+  [TOUCH + Math.PI / 7, "relicBounce"],
+  [TOUCH + 0.9, "relicRise"],
+  [REVEAL, "relicReveal"],
+];
 
 /**
  * The reward of act 3: the Ascension Striker falls onto the flat world. Everything about it is
  * as flat as the place it lands in, except the arrow on its button, which points up and means it.
+ * `cue` is called once for each sound as the film reaches it, so a paused film stays in step.
  */
-export function playRelicDrop(canvas: HTMLCanvasElement): Cutscene {
+export function playRelicDrop(canvas: HTMLCanvasElement, cue: (name: StoryCue) => void): Cutscene {
   return playFilm(canvas, LENGTH, (kit) => {
     const { scene, camera } = kit;
     scene.background = new THREE.Color("#07060f");
@@ -73,8 +83,10 @@ export function playRelicDrop(canvas: HTMLCanvasElement): Cutscene {
     camera.add(name);
     name.position.set(0, -0.95, -3);
     const at = new THREE.Vector3();
+    let heard = 0;
 
     return (t) => {
+      while (heard < SOUNDS.length && t >= SOUNDS[heard][0]) cue(SOUNDS[heard++][1]);
       // Down fast, two bounces, then it lifts a little and turns in its own light.
       const drop = Math.min(1, t / TOUCH) ** 2;
       const bounce = t < TOUCH ? 0 : Math.abs(Math.sin((t - TOUCH) * 7)) * 0.7 * Math.exp(-(t - TOUCH) * 3.2);
