@@ -324,10 +324,12 @@ export function playShutdown(
         let cheated = false;
         const typed = (event: KeyboardEvent) => {
           if (event.ctrlKey || event.metaKey || event.altKey) return code.reset();
-          if (!event.repeat && code.press(event.code)) cheated = true;
+          if (code.press(event.code)) cheated = true;
         };
-        window.addEventListener("keydown", typed, true);
-        void d.until(() => false).then(() => window.removeEventListener("keydown", typed, true));
+        // Releases, not presses: in a match the arrows (overhead view) and B (the supply wheel)
+        // are taken by listeners that let nothing past them, and nobody stops a key coming up.
+        window.addEventListener("keyup", typed, true);
+        void d.until(() => false).then(() => window.removeEventListener("keyup", typed, true));
         // One goes down, says so, and whoever is left answers; the last one down gets up once.
         let left = up(d.state),
           reborn = false;
@@ -408,7 +410,7 @@ export function playShutdown(
           stage.goal(goals.last);
           d.lock(false);
         }
-        window.removeEventListener("keydown", typed, true);
+        window.removeEventListener("keyup", typed, true);
         rest();
         match.hud = false;
         match.live = false;
