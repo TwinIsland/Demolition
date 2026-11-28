@@ -555,7 +555,7 @@ export class GameApp {
             menu: (name) => this.sound.menu(name),
             cue: (name) => this.sound.storyCue(name),
             silence: () => this.sound.stopMusic(),
-            music: (track) => this.sound.setMusic(STORY_MUSIC[track]),
+            music: (track, level) => this.sound.setMusic(STORY_MUSIC[track], level),
             match: {
               open: (options) => this.openStoryMatch(options),
               close: () => this.closeStoryMatch(),

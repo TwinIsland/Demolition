@@ -1,6 +1,7 @@
 import "./shutdown.css";
 import { BotAgent } from "../../agents/bot-agent";
 import { SKILLS } from "../../core/content";
+import { TILE_SIZE } from "../../core/geometry";
 import type { GameSnapshot, StoryActor, Vec2 } from "../../core/types";
 import type { HomeRoom, SHUTDOWN_SCRIPT } from "../acts/shutdown";
 import type { Director } from "../match/director";
@@ -42,9 +43,17 @@ const PARKED = 300,
 const FADE_MS = 450;
 /** Easier opponents after this many defeats: the story should end, sooner or later. */
 const MERCY_AFTER = 2;
-const SOUTH = 0,
-  EAST = Math.PI / 2,
-  NORTH = Math.PI;
+// Yaw 0 looks north, along negative Z, and grows turning left (see match/director.ts `yawTo`).
+const NORTH = 0,
+  EAST = -Math.PI / 2,
+  SOUTH = Math.PI;
+/**
+ * Where the hero's eyes go in the opening, in radians above the horizon: the writing round the
+ * sky, the wall of fire under it, and the highest he follows the three on their way down.
+ */
+const GAZE = { sky: 0.5, wall: 0.14, drop: 0.95 };
+/** Share of its usual volume the music plays at under the opening, before the fight brings it up. */
+const UNDER = 0.4;
 /** Whoever comes next wears the game's own default; only their hand is ever seen. */
 const NEWCOMER_SKIN = "sapper";
 /** The newcomer's way down: from how high, and for how long. */
@@ -158,19 +167,38 @@ export function playShutdown(
                 p.verticalSpeed = 0;
               }
           });
+        /** Eases the hero's eyes to `pitch` over `seconds` of match time; he keeps facing north. */
+        const gaze = (pitch: number, seconds: number) => {
+          const from = d.match.look.pitch,
+            start = d.state.time;
+          return d.until((state) => {
+            const t = Math.min(1, (state.time - start) / seconds);
+            d.match.look = { yaw: NORTH, pitch: from + (pitch - from) * t * t * (3 - 2 * t) };
+            return t === 1;
+          });
+        };
         lift(PARKED);
         // Gravity would bring them down the moment the world runs, so they are held up until their cue.
         void d.until(() => (parked && lift(PARKED), !parked));
         stage.root.classList.remove("veiled");
-        if (!(await d.seconds(0.8)) || !(await d.talk(lines.voice))) return;
+        // The voice comes from above, and so does everything after it: he looks up before it speaks.
+        if (!(await d.seconds(0.8)) || !(await gaze(GAZE.sky, 1.6)) || !(await d.talk(lines.voice))) return;
         sky.show();
+        stage.host.music("shutdown", UNDER);
         if (!(await d.seconds(1.8)) || !(await d.talk(lines.bar.slice(0, 1)))) return;
+        if (!(await gaze(GAZE.wall, 1.4))) return;
         if (!(await over(SHUTDOWN_ART.wall, lines.bar.slice(1, 4))) || !(await d.talk(lines.bar.slice(4))))
           return;
+        if (!(await gaze(GAZE.drop, 0.7))) return;
         parked = false;
         lift(DROP);
-        const landed = (state: Readonly<GameSnapshot>) =>
-          kings.every((king) => state.players.find((p) => p.id === king.id)?.elevation === 0);
+        // His eyes come down with them: the angle to the middle one, two cells ahead, until it lands.
+        const ahead = (spots.hero.z - spots.landing[1].z) * TILE_SIZE;
+        const landed = (state: Readonly<GameSnapshot>) => {
+          const heights = kings.map((king) => state.players.find((p) => p.id === king.id)?.elevation ?? 0);
+          d.match.look = { yaw: NORTH, pitch: Math.min(GAZE.drop, Math.atan2(Math.max(...heights), ahead)) };
+          return heights.every((height) => height === 0);
+        };
         if (!(await d.until(landed))) return;
         stage.host.cue("blast");
         if (!(await d.seconds(0.7))) return;

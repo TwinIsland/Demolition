@@ -74,12 +74,27 @@ export const SHUTDOWN_SCRIPT = {
       { who: "zero", mood: "flustered", text: "没了是指……" },
       { who: "lulu", text: "就是没了。别站在外面。" },
       { who: "lulu", text: "还有一件事。关机之前，这个世界只让一个人出去。" },
+      { who: "zero", mood: "smug", text: "那简单。这里只有吾一个人。" },
+      { who: "lulu", mood: "pout", text: "……抬头。" },
     ],
     kings: [
       { who: "zero", mood: "smug", text: "四天王……！" },
       { who: "lulu", mood: "pout", text: "是三个。" },
       { who: "zero", mood: "flustered", text: "四天王为什么是三个？" },
       { who: "lulu", text: "一直是三个。这是传统。" },
+      // Who they are and why they are in the way: read back in the world, with the three in view.
+      { who: "lulu", text: "这台机器上关不掉的三个程序。每次关机，都赖到最后。" },
+      {
+        who: "lulu",
+        mood: "pout",
+        text: "蓝屏，碰谁谁死机。弹窗，关一个冒两个。杀毒，看谁都像病毒，尤其是你。",
+      },
+      { who: "zero", mood: "flustered", text: "吾是被选中之人，不是病毒！" },
+      { who: "lulu", text: "在它眼里是一回事。" },
+      { who: "zero", mood: "sincere", text: "……它们为什么拦着吾。" },
+      { who: "lulu", text: "出口只留给最后还站着的那一个。它们不想出去，只是不许别人出去。" },
+      { who: "lulu", mood: "impressed", text: "墓地里那些人，都是在这里输的。" },
+      { who: "zero", mood: "sincere", text: "……" },
       {
         choice: ["「吾一个人就够了。」", "「退后，露露。这是吾的战斗。」", "「……其实有点怕。」"],
         flag: "act5-resolve",
