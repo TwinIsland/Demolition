@@ -318,7 +318,7 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   flash();
   stage.host.music("ascension");
   stage.host.cue("pull");
-  stage.art(ASCENSION_ART.panel);
+  void stage.art(ASCENSION_ART.panel, { cut: true });
   stage.root.querySelector(".stage-art")?.classList.add("ascend-push");
   if (!(await stage.wait(PANEL_MS))) return;
   flash();

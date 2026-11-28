@@ -122,8 +122,13 @@ export interface Stage {
   goal(text?: string): void;
   /** Sets or clears the "examine" prompt. */
   prompt(text?: string): void;
-  /** Shows a full-screen illustration, or fades the current one out. */
-  art(url?: string): void;
+  /**
+   * Shows a full-screen illustration, or fades the current one out. A picture comes in after a
+   * short hold on whatever was showing, slowly, and one picture dissolves into the next; `cut` is
+   * for a picture that lands on a beat. Resolves once it has settled, false if the story was
+   * closed in the meantime. A conversation waits for it by itself.
+   */
+  art(url?: string, options?: { cut?: boolean }): Promise<boolean>;
   /** Adds a canvas covering the stage, above the scene and below the text box, for a cutscene. */
   overlay(): HTMLCanvasElement;
   /** Saves a checkpoint in the middle of an act and shows the save mark; the scene goes on. */
