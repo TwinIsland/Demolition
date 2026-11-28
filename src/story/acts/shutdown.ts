@@ -198,7 +198,7 @@ const MORNING_BEDROOM: HomeRoom = {
       label: "镜子",
       lines: [
         { who: "zero", mood: "sincere", text: "……" },
-        { who: "narrator", text: "镜子里的人四天没洗头。他决定吃完饭就去洗。" },
+        { who: "narrator", text: "镜子里的人今天没有摆姿势。他看了一会儿，就走开了。" },
       ],
     },
     {

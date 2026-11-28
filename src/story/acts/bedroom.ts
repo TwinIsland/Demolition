@@ -72,7 +72,7 @@ export const BEDROOM: RoomScene = {
       label: "镜子",
       lines: [
         { who: "zero", mood: "sincere", text: "镜中之人……你也在哭泣吗。" },
-        { who: "narrator", text: "镜子里的人没有哭。镜子里的人三天没洗头。" },
+        { who: "narrator", text: "镜子里的人没有哭。镜子里的人在摆姿势。" },
       ],
     },
     {
