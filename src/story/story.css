@@ -7,6 +7,21 @@
   place-items: center;
   background: #000;
 }
+/*
+ * What a window wider or taller than 16:9 shows beside the stage: a dim plum checker of stage
+ * pixels, darker toward the edges. It is its own layer so that it can come and go over a match.
+ */
+.story-screen::before {
+  --px: calc(min(100vw, 100vh * 16 / 9) / 320);
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at center, #07061000 35%, #070610 100%),
+    repeating-conic-gradient(#191533 0 25%, #130f27 0 50%) center / calc(var(--px) * 16) calc(var(--px) * 16);
+  pointer-events: none;
+  transition: opacity 0.4s steps(6);
+}
 .story-stage {
   position: relative;
   width: min(100vw, calc(100vh * 16 / 9));
@@ -424,6 +439,17 @@
 }
 .story-stage[data-kind="staged"] {
   background: none;
+}
+/* The match fills the window; whatever covers the stage must not leave it showing at the sides. */
+.story-screen:has(.story-stage[data-kind="staged"])::before {
+  opacity: 0;
+}
+.story-screen:has(.story-stage[data-kind="staged"].veiled)::before,
+.story-screen:has(
+    .story-stage[data-kind="staged"] > :is(.stage-art, .story-title):not([hidden]),
+    .story-stage[data-kind="staged"] > .story-cutscene
+  )::before {
+  opacity: 1;
 }
 .story-stage[data-kind="staged"] .story-canvas {
   display: none;
