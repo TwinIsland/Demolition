@@ -83,7 +83,6 @@ export default defineConfig({
         text: "Development",
         items: [
           { text: "Developer guide", link: "/developer-guide" },
-          { text: "Desktop build", link: "/desktop" },
           { text: "Architecture (中文)", link: "/architecture" },
           { text: "Performance (中文)", link: "/performance" },
         ],

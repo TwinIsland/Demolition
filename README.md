@@ -12,7 +12,6 @@
 <p align="center">
   <a href="https://twinisland.github.io/Demolition/"><img src="https://img.shields.io/badge/%E2%96%B6%20PLAY%20NOW-in%20your%20browser-e8b23a?style=for-the-badge&labelColor=14181b" alt="Play now in your browser" /></a>
   <a href="https://twinisland.github.io/Demolition/wiki/"><img src="https://img.shields.io/badge/WIKI-rules%20%26%20content-7fa98f?style=for-the-badge&labelColor=14181b" alt="Wiki" /></a>
-  <a href="https://github.com/TwinIsland/Demolition/releases/latest"><img src="https://img.shields.io/badge/DESKTOP-Windows%20%C2%B7%20macOS-8fb4c9?style=for-the-badge&labelColor=14181b" alt="Desktop builds" /></a>
 </p>
 
 <p align="center">
@@ -211,7 +210,6 @@ Maps, skins, bomb finishes, skills, items, perks and mutations are all self-cont
 - [Wiki](docs/README.md): game rules, drop rates, and a page for every skill, item, perk and mutation.
 - [Modding guide](docs/modding/README.md): make your own maps and content packs.
 - [Developer guide](docs/developer-guide.md): working on the game itself.
-- [Desktop build](docs/desktop.md): Windows and macOS apps built with Tauri, released from GitHub Actions.
 
 ## Credits
 

@@ -8,6 +8,3 @@ package-lock.json
 tools
 docs/tools
 docs/.vitepress/cache
-.desktop-build
-src-tauri/target
-src-tauri/gen

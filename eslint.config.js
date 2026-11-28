@@ -12,8 +12,6 @@ export default tseslint.config(
       "tools",
       "node_modules",
       "dist",
-      ".desktop-build",
-      "src-tauri",
       ".pages-build",
       "public",
     ],
