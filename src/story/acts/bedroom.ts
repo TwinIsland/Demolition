@@ -22,7 +22,7 @@ export const BEDROOM: RoomScene = {
     over: 2,
     lines: [
       { who: "narrator", text: "公元二零二六年。世界平静得令人作呕。" },
-      { who: "narrator", text: "至少有一个人是这么认为的。" },
+      { who: "narrator", text: "少年の名は「零」。被世界放逐的「選ばれし者」，右手に封印を宿す者。" },
       { who: "zero", mood: "smug", text: "呵……又是这样无聊的一天。这个世界，果然容不下吾。" },
     ],
   },
@@ -72,7 +72,7 @@ export const BEDROOM: RoomScene = {
       label: "镜子",
       lines: [
         { who: "zero", mood: "sincere", text: "镜中之人……你也在哭泣吗。" },
-        { who: "narrator", text: "镜子里的人没有哭。镜子里的人三天没洗头。" },
+        { who: "narrator", text: "镜子里的人没有哭。镜子里的人在摆姿势。" },
       ],
     },
     {
@@ -80,7 +80,7 @@ export const BEDROOM: RoomScene = {
       label: "书架上的盒子",
       lines: [
         { who: "zero", mood: "smug", text: "安静点，吾的右手。时候还没到。" },
-        { who: "narrator", text: "盒子里是备用的绷带。绷带下面是上周被猫抓的。" },
+        { who: "narrator", text: "盒子里是备用的绷带。右手的绷带下面，什么也没有。" },
       ],
     },
     {
