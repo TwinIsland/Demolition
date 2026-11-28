@@ -19,11 +19,10 @@ export const BEDROOM: RoomScene = {
   play: (stage) => playBedroom(stage, BEDROOM),
   opening: {
     art: STORY_ART.comic1,
-    over: 3,
+    over: 2,
     lines: [
       { who: "narrator", text: "公元二零二六年。世界平静得令人作呕。" },
       { who: "narrator", text: "少年の名は「零」。被世界放逐的「選ばれし者」，右手に封印を宿す者。" },
-      { who: "narrator", text: "……という設定である。十六岁，不出门。" },
       { who: "zero", mood: "smug", text: "呵……又是这样无聊的一天。这个世界，果然容不下吾。" },
     ],
   },
