@@ -902,6 +902,8 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   if (!(await d.talk(fill(LINES.risen.slice(5))))) return;
   match.rate = 1;
   if (!(await d.talk(fill(LINES.fight)))) return;
+  // The hush was for the graves: the fight itself has music again, until the act ends.
+  stage.host.music("duel");
   d.lock(false);
   anchor = PLACE.gravesGuide;
   goal(GOALS.zombies);
