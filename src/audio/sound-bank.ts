@@ -149,6 +149,8 @@ export const STORY_MUSIC = {
   lesson: "./assets/story/clumsy-communication.mp3",
   /** Act 5: the shutdown and the last fight. */
   shutdown: "./assets/story/kenka-no-bannin.mp3",
+  /** Act 5, once the fight is won: the goodbye and the choice. */
+  farewell: "./assets/story/human-lost.mp3",
   /** The "go back" ending: the song the 8-bit theme was made from. */
   home: "./assets/story/electronic-girl.mp3",
 } as const;

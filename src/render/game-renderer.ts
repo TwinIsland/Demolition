@@ -29,7 +29,7 @@ import { ZombieAsh, ZOMBIE_FALL_DURATION } from "./zombie-ash";
 import type { MinecraftAvatar } from "./minecraft-avatar";
 import { bombGuideColor, bombWarning, OWN_BOMB_COLOR } from "../core/bomb-warning";
 import { SLIDE_STEP } from "../core/geometry";
-import { OutdoorLighting, type StageLight } from "./outdoor-lighting";
+import { OutdoorLighting } from "./outdoor-lighting";
 import { dimPanels, lampLevel } from "./backrooms-hall";
 import { SceneEnvironment, type ThunderCue } from "./environment/scene-environment";
 import { MAPS } from "../core/maps";
@@ -59,7 +59,7 @@ const MAX_PIXEL_RATIO = 1.5;
 const basePixelRatio = (settings: GraphicsSettings) =>
   Math.min(devicePixelRatio, MAX_PIXEL_RATIO) * settings.scale;
 
-export type { CameraMode, StagedShot, DimensionLook, StageLight };
+export type { CameraMode, StagedShot, DimensionLook };
 
 /** Per-frame view inputs shared by the entity sync steps. */
 interface FrameView {
@@ -86,10 +86,6 @@ export class GameRenderer {
   /** Swaps the visible sky for an equirectangular painting, turned by `turn` radians; undefined undoes it. */
   paintSky(texture?: THREE.Texture, turn = 0) {
     this.environment.paint(texture, turn);
-  }
-  /** Lights the world for a story shot at another hour; undefined gives the light back to the weather. */
-  relight(light?: StageLight) {
-    this.environment.relight(light);
   }
   /** A replay is about to show terrain from before the present: the arena has to be rebuilt for it. */
   private terrainStale = false;

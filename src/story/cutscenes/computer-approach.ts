@@ -1,6 +1,18 @@
 import * as THREE from "three";
 import { BUBBLE_X } from "../acts/bubble-x";
+import { STORY_ART } from "../assets";
 import { playFilm, ramp, type Cutscene } from "./kit";
+
+const CELL = 16;
+const FEET_Y = 9;
+/** Frames of the arcade sheet (tools/story/make-arcade.py) that stand on a cell. */
+const PROPS: Record<string, number> = { "#": 2, c: 3, g: 4 };
+
+const sheet = (url: string) => {
+  const image = new Image();
+  image.src = url;
+  return image.decode().then(() => image);
+};
 
 /** The powered CRT becomes the screen the next chapter is played on. */
 export function playComputerApproach(canvas: HTMLCanvasElement): Cutscene {
@@ -32,23 +44,43 @@ export function playComputerApproach(canvas: HTMLCanvasElement): Cutscene {
     pixels.width = 256;
     pixels.height = 180;
     const ink = pixels.getContext("2d")!;
-    ink.fillStyle = "#080914";
+    ink.imageSmoothingEnabled = false;
+    ink.fillStyle = "#05060c";
     ink.fillRect(0, 0, 256, 180);
-    const rows = BUBBLE_X.layout;
-    const cell = 14,
-      left = (256 - rows[0].length * cell) / 2,
-      top = (180 - rows.length * cell) / 2;
-    rows.forEach((row, z) =>
-      [...row].forEach((symbol, x) => {
-        ink.fillStyle = symbol === "#" ? "#8d8caf" : "#395f58";
-        ink.fillRect(left + x * cell, top + z * cell, cell - 1, cell - 1);
-        if ("cg".includes(symbol)) {
-          ink.fillStyle = "#b98760";
-          ink.fillRect(left + x * cell + 2, top + z * cell + 2, cell - 5, cell - 5);
-        }
-      }),
-    );
     const texture = kit.keep(new THREE.CanvasTexture(pixels));
+    // The board as act 2 opens on it: the same sheets and frames arcade-play.ts draws with.
+    const rows = BUBBLE_X.layout;
+    const left = (256 - rows[0].length * CELL) / 2,
+      top = (180 - rows.length * CELL) / 2;
+    void Promise.all([sheet(STORY_ART.arcade), sheet(STORY_ART.chibi)]).then(([tiles, cast]) => {
+      const tile = (frame: number, x: number, y: number) =>
+        ink.drawImage(tiles, frame * CELL, 0, CELL, CELL, left + x * CELL, top + y * CELL, CELL, CELL);
+      rows.forEach((row, y) =>
+        [...row].forEach((symbol, x) => {
+          tile((x + y) % 2 ? 1 : 0, x, y);
+          const prop = PROPS[symbol];
+          if (prop !== undefined) tile(prop, x, y);
+        }),
+      );
+      rows.forEach((row, y) => {
+        const x = row.indexOf("@");
+        if (x < 0) return;
+        // Zero, standing and facing the viewer; feet as the game anchors them.
+        const size = CELL * 2;
+        ink.drawImage(
+          cast,
+          0,
+          0,
+          size,
+          size,
+          left + x * CELL + CELL / 2 - size / 2,
+          top + y * CELL + CELL / 2 + FEET_Y - size,
+          size,
+          size,
+        );
+      });
+      texture.needsUpdate = true;
+    });
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.magFilter = texture.minFilter = THREE.NearestFilter;
     const material = kit.keep(new THREE.MeshBasicMaterial({ map: texture, toneMapped: false }));
