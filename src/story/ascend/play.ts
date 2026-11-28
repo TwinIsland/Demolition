@@ -14,6 +14,7 @@ import { yawTo, type Director } from "../match/director";
 import { LessonMarkers } from "../match/lesson-markers";
 import { SpotBeacon } from "../match/spot-beacon";
 import { playStagedMatch } from "../match/staged-match";
+import { seeFilm } from "../films";
 import { reachCheckpoint } from "../save";
 import type { Line } from "../script";
 import type { ScenePlayer, Stage } from "../stage";
@@ -127,7 +128,8 @@ function route(state: Readonly<GameSnapshot>, from: Vec2, to: Vec2): Vec2[] {
   return path;
 }
 
-export function playAscension(stage: Stage): ScenePlayer {
+/** `replay` is the collection's showing of the ascension alone: it ends once he has spoken. */
+export function playAscension(stage: Stage, replay = false): ScenePlayer {
   let sky: THREE.Texture | undefined;
   let film: Cutscene | undefined;
   const player = playStagedMatch(
@@ -171,6 +173,7 @@ export function playAscension(stage: Stage): ScenePlayer {
           if (next) next.paused = player.paused;
           return next as never;
         },
+        replay,
       ).catch((error) => {
         // A scene that throws must not leave the player in front of a frozen picture.
         console.error(error);
@@ -209,6 +212,7 @@ async function act(
   keepSky: (texture: THREE.Texture) => void,
   /** Hands the player a film laid over the match, to pause and close with it; undefined takes it back. */
   showing: <T extends Cutscene | undefined>(film?: T) => T,
+  replay: boolean,
 ) {
   const { stage, match } = d;
   const { renderer } = match;
@@ -468,6 +472,7 @@ async function act(
     fx.classList.add("flash");
   };
 
+  seeFilm("ascension");
   const shot = new AscensionShot(at(PLACE.hero).x, at(PLACE.hero).z, SOUTH, at(PLACE.lulu));
   let rolling = true;
   const roll = (_: Readonly<GameSnapshot>, dt: number) => {
@@ -505,6 +510,7 @@ async function act(
   stage.root.classList.remove("ascend-bars");
 
   if (!(await say(LINES.arrive))) return;
+  if (replay) return stage.end("act4-done");
   // She turns on the spot, after a back she cannot get in front of.
   let spin = 0;
   const chase = (_: Readonly<GameSnapshot>, dt: number) => {
@@ -940,6 +946,7 @@ async function act(
     // Nobody answers her. What answers is a film: everyone who ever called for a status window.
     const hud = match.hud;
     match.hud = false;
+    seeFilm("status-queue");
     const film = showing(playStatusQueue(stage.overlay()));
     await film.done;
     // It ends in the dark; the graveyard comes back up out of the same dark.

@@ -120,3 +120,78 @@
     height: 30dvh;
   }
 }
+
+/* The two shelves: illustrations, and the films that can be played again. */
+.gallery-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #c9a8f533;
+}
+.gallery-tabs button {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 9px 16px;
+  margin-bottom: -1px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  background: transparent;
+  color: #a79fb6;
+  font-size: 14px;
+}
+.gallery-tabs button small {
+  color: #94909e;
+  font: 10px monospace;
+}
+.gallery-tabs button:hover {
+  color: #f1e4ff;
+}
+.gallery-tabs button[aria-selected="true"] {
+  border-color: #c9a8f566;
+  background: #39284d;
+  color: #f1e4ff;
+}
+.gallery-note {
+  margin: 0 0 14px;
+  color: #92919b;
+  font-size: 12px;
+}
+.gallery-reel {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #09090e;
+  overflow: hidden;
+}
+.gallery-reel img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.55) saturate(0.8);
+  transition: filter 0.15s;
+}
+.gallery-reel i {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #f1e4ff;
+}
+.gallery-reel .icon {
+  width: 34px;
+  height: 34px;
+  padding: 9px;
+  border: 1px solid #f1e4ffb3;
+  border-radius: 50%;
+  background: #09090e99;
+  box-sizing: content-box;
+}
+.gallery-film:not(:disabled):hover .gallery-reel img {
+  filter: none;
+}
+.gallery-act {
+  margin-left: auto;
+  white-space: nowrap;
+}

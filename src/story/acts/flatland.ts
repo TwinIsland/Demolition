@@ -7,6 +7,7 @@ import { playRelicDrop } from "../cutscenes/relic-drop";
 import type { Cutscene } from "../cutscenes/kit";
 import { LessonMarkers } from "../match/lesson-markers";
 import { STORY_ART, STORY_SKINS } from "../assets";
+import { seeFilm } from "../films";
 import type { Director } from "../match/director";
 import { playStagedMatch } from "../match/staged-match";
 import type { Line, StagedScene } from "../script";
@@ -139,6 +140,9 @@ const LINES = {
   ],
 } satisfies Record<string, readonly Line[]>;
 
+/** For the collection, which replays the act's films with the lines read around them. */
+export { LINES as FLATLAND_LINES };
+
 const GOALS = {
   wall: "在告示牌旁发光的格子上放炸药",
   crates: "炸开黄框标出的箱子",
@@ -239,7 +243,7 @@ async function script(d: Director) {
       for (const actor of state.players) if (actor.bot) actor.alive = false;
     });
     if (
-      !(await cutscene(playLanding, async () => {
+      !(await cutscene((seeFilm("landing"), playLanding), async () => {
         const shown = await stage.art(STORY_ART.comic3);
         stage.root.classList.remove("veiled");
         return shown;
@@ -250,6 +254,7 @@ async function script(d: Director) {
     stage.art();
     if (!(await d.seconds(0.7))) return;
     if (!(await say(LINES.wake))) return;
+    seeFilm("lulu-card");
     if (
       !(await cutscene(
         (canvas) =>
@@ -417,6 +422,7 @@ async function script(d: Director) {
       }))
     )
       return;
+    seeFilm("rival-card");
     if (
       !(await cutscene((canvas) =>
         playIntroCard(canvas, {
@@ -467,6 +473,7 @@ async function script(d: Director) {
     stage.host.silence();
     if (!(await d.seconds(1.2))) return;
     if (!(await say(LINES.defeat))) return;
+    seeFilm("relic");
     if (
       !(await cutscene(
         (canvas) => playRelicDrop(canvas, (name) => stage.host.cue(name)),

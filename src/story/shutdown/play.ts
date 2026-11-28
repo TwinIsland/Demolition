@@ -7,6 +7,7 @@ import type { HomeRoom, SHUTDOWN_SCRIPT } from "../acts/shutdown";
 import type { Director } from "../match/director";
 import { playStagedMatch } from "../match/staged-match";
 import { CheatCode } from "../cheat";
+import { seeFilm } from "../films";
 import { hasCheckpoint, loadStory } from "../save";
 import type { Line } from "../script";
 import type { ScenePlayer, Stage, StoryMatchOptions } from "../stage";
@@ -373,6 +374,7 @@ export function playShutdown(
           stage.host.silence();
           if (!(await d.seconds(1.1)) || !(await d.talk(lines.rise))) return;
           stage.host.cue("power");
+          seeFilm("final-form");
           const rising = screen(playApocalypse(stage.overlay(), last.color));
           // Under the film: it is whole again and stronger, and the sky is no longer the afternoon's.
           match.mutate((state) => {
@@ -440,6 +442,7 @@ export function playShutdown(
     let scene!: Farewell;
     const raise = () => {
       leave(previous);
+      seeFilm("farewell");
       scene = enter(playFarewell(stage.overlay()));
     };
     if (!(await fade(raise)) || !(await stage.wait(2200)) || !(await stage.talk(lines.won))) return undefined;
@@ -458,6 +461,7 @@ export function playShutdown(
   const goHome = async (previous: Part) => {
     if (!(await stage.talk(lines.home.parting))) return false;
     stage.root.dataset.kind = "film";
+    seeFilm("pull-out");
     const out = enter(playPullOut(stage.overlay()));
     leave(previous);
     stage.host.cue("power");
@@ -482,6 +486,7 @@ export function playShutdown(
     const outside = () => {
       leave(front);
       stage.root.dataset.kind = "film";
+      seeFilm("window-morning");
       morning = enter(playWindow(stage.overlay(), "morning"));
     };
     if (!(await fade(outside)) || !(await stage.wait(3600))) return false;
@@ -502,6 +507,7 @@ export function playShutdown(
     let evening!: Evening;
     const raise = () => {
       leave(previous);
+      seeFilm("evening");
       evening = enter(playEvening(stage.overlay()));
     };
     stage.host.music("opening");

@@ -7,11 +7,12 @@ export function pauseMarkup() {
 }
 
 /** Story mode keeps the pixel-game menu separate from the battle's metal panels. */
-export function storyPauseMarkup() {
+/** `replay` is the menu over a film from the collection: it leads back there, not to a chapter. */
+export function storyPauseMarkup(replay = false) {
   return `<header class="story-pause-heading"><i class="story-pause-glyph" aria-hidden="true"></i><h2>${t("暂停")}</h2></header>
     <nav class="story-pause-options" aria-label="${t("游戏菜单")}">
-      <button type="button" class="story-pause-option" id="resume"><span>${t("继续游戏")}</span><kbd>ESC</kbd></button>
-      <button type="button" class="story-pause-option" id="restart"><span>${t("重玩本章")}</span></button>
-      <button type="button" class="story-pause-option" id="home"><span>${t("返回首页")}</span></button>
+      <button type="button" class="story-pause-option" id="resume"><span>${t(replay ? "继续播放" : "继续游戏")}</span><kbd>ESC</kbd></button>
+      <button type="button" class="story-pause-option" id="restart"><span>${t(replay ? "从头播放" : "重玩本章")}</span></button>
+      <button type="button" class="story-pause-option" id="home"><span>${t(replay ? "返回收藏" : "返回首页")}</span></button>
     </nav>${languageSelect()}`;
 }

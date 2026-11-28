@@ -351,6 +351,11 @@
   opacity: 1;
 }
 
+/* A film replayed from the collection is only watched. */
+.story-stage[data-replay] .story-keys {
+  display: none;
+}
+
 /* Act 2: the mini-game plays inside the old monitor's screen. */
 .story-crt {
   position: absolute;

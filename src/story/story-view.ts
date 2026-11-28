@@ -6,7 +6,9 @@ import { playArcade } from "./arcade-play";
 import { DialogueBox, dialogueMarkup } from "./dialogue";
 import { playRoom } from "./room-play";
 import { reachCheckpoint } from "./save";
+import type { FilmId } from "./films";
 import { unlockIllustration } from "./gallery";
+import { playReplay } from "./replay";
 import { t } from "../i18n";
 import type { ScenePlayer, Stage, StoryHost } from "./stage";
 
@@ -15,6 +17,8 @@ export type { StoryHost } from "./stage";
 /** The running story, as the app holds it. */
 export interface StoryHandle {
   readonly actId: string;
+  /** Set when this is a film replayed from the collection, not an act. */
+  readonly filmId?: FilmId;
   /** Holds the story still under a dialog: no keys reach it and the scene's clock stops. */
   pause(on: boolean): void;
   stop(): void;
@@ -65,13 +69,18 @@ const ART_OUT_MS = 1000;
  * Plays an act inside `screen` (the element holding `storyMarkup`) and returns the function that
  * stops it. An act that is not built yet falls back to the first one. This is the stage: the text
  * box, the chips, the keys and the save. What happens on it is up to the scene's player.
+ *
+ * With `film`, the stage shows that one film from the collection instead of an act: nothing is
+ * saved or unlocked, and it returns to the menu when the film is through.
  */
 export function mountStory(
   screen: HTMLElement,
   host: StoryHost,
   actId?: string,
   titled = false,
+  film?: FilmId,
 ): StoryHandle {
+  const replay = film && playReplay(film);
   let act = ACTS.find((candidate) => candidate.id === actId && candidate.scene) ?? ACTS[0];
   const find = <T extends HTMLElement>(selector: string) => screen.querySelector<T>(selector)!;
   const root = find(".story-stage"),
@@ -159,7 +168,7 @@ export function mountStory(
         }
         return (artSettled = Promise.resolve(alive));
       }
-      unlockIllustration(url);
+      if (!replay) unlockIllustration(url);
       const shown = !art.hidden;
       dropGhost();
       art.classList.remove("entering", "leaving");
@@ -196,6 +205,7 @@ export function mountStory(
       return canvas;
     },
     mark(checkpoint) {
+      if (replay) return;
       reachCheckpoint(checkpoint, flags);
       saved.hidden = true;
       // Restart the mark's own fade if the last one is still up.
@@ -204,6 +214,11 @@ export function mountStory(
       void stage.wait(SAVE_NOTE_MS).then(() => (saved.hidden = true));
     },
     end(checkpoint) {
+      if (replay) {
+        root.classList.add("switching");
+        void stage.wait(SWITCH_MS / 2).then((ok) => ok && host.finish());
+        return;
+      }
       reachCheckpoint(checkpoint, flags);
       goal.hidden = prompt.hidden = true;
       if (running.player) running.player.frozen = true;
@@ -221,8 +236,9 @@ export function mountStory(
   /** Starts the act's scene on a fresh canvas: a scene's engine does not give its canvas back. */
   const open = () => {
     const scene = act.scene!;
-    root.dataset.kind = scene.kind;
+    root.dataset.kind = replay?.kind ?? scene.kind;
     delete root.dataset.tutorial;
+    root.toggleAttribute("data-replay", !!replay);
     root.classList.remove("booting", "blackout", "pulling", "veiled");
     artTurn++;
     artSettled = Promise.resolve(true);
@@ -235,8 +251,9 @@ export function mountStory(
     // The scene starts out frozen, and its first conversation releases it.
     running.player = undefined;
     opening = true;
-    running.player =
-      scene.kind === "room"
+    running.player = replay
+      ? replay.play(stage)
+      : scene.kind === "room"
         ? (scene.play?.(stage) ?? playRoom(stage, scene))
         : scene.kind === "arcade"
           ? playArcade(stage, scene)
@@ -321,6 +338,7 @@ export function mountStory(
     get actId() {
       return act.id;
     },
+    filmId: film,
     pause(on) {
       paused = on;
       if (running.player) running.player.paused = on;

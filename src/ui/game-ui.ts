@@ -28,7 +28,8 @@ import { creditsMarkup, mountCredits } from "./credits";
 import type { SpectrumReader } from "./credits-spectrum";
 import type { MusicPlayer } from "../audio/music-player";
 import { mountMusicBox, musicBoxMarkup } from "./music-box";
-import { galleryMarkup, mountGallery } from "./story-gallery";
+import { galleryMarkup, mountGallery, type GalleryTab } from "./story-gallery";
+import type { FilmId } from "../story/films";
 import { mountStory, storyMarkup, type StoryHandle, type StoryHost } from "../story/story-view";
 import { STORY_ART } from "../story/assets";
 import type { StoryHud, StoryShopOptions } from "../story/stage";
@@ -331,7 +332,7 @@ export class GameUI {
   }
 
   showPause() {
-    if (this.story) this.storyDialog("pause", storyPauseMarkup(), "pause-modal");
+    if (this.story) this.storyDialog("pause", storyPauseMarkup(!!this.story.filmId), "pause-modal");
     else this.overlay.show(pauseMarkup());
   }
 
@@ -354,9 +355,14 @@ export class GameUI {
     this.stopStoryMenu = mountMusicBox(dialog, player, setVolume);
   }
 
-  showGallery() {
-    const dialog = this.storyDialog("gallery", galleryMarkup(), "gallery-modal");
-    this.stopStoryMenu = mountGallery(dialog);
+  showGallery(tab: GalleryTab = "art") {
+    const dialog = this.storyDialog("gallery", galleryMarkup(tab), "gallery-modal");
+    this.stopStoryMenu = mountGallery(dialog, (film) => this.actions.playFilm(film));
+  }
+
+  /** The collection film on the stage, while one is being replayed. */
+  get storyFilm() {
+    return this.story?.filmId;
   }
 
   private stopCredits?: () => void;
@@ -403,7 +409,7 @@ export class GameUI {
     this.story?.pause(false);
   }
 
-  showStory(host: StoryHost, act?: string, titled = false) {
+  showStory(host: StoryHost, act?: string, titled = false, film?: FilmId) {
     this.stopStoryMenu?.();
     this.stopStoryMenu = undefined;
     this.story?.stop();
@@ -412,11 +418,14 @@ export class GameUI {
     this.storyHost = host;
     this.root.dataset.storyMode = "true";
     const screen = this.overlay.screen(storyMarkup(), "story-screen");
-    this.story = mountStory(screen, host, act, titled);
+    this.story = mountStory(screen, host, act, titled, film);
   }
 
+  /** Plays the act again from its title card, or the film being replayed from its start. */
   restartStory() {
-    if (this.storyHost && this.story) this.showStory(this.storyHost, this.story.actId, true);
+    if (!this.storyHost || !this.story) return;
+    const { actId, filmId } = this.story;
+    this.showStory(this.storyHost, actId, !filmId, filmId);
   }
 
   /**
