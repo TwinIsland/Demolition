@@ -261,11 +261,20 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
 
   /** What the lesson points at: the cell to stand on, and the cells to throw or build on. */
   const beacon = new SpotBeacon(match.scene);
-  const area = new LessonMarkers(match.scene, "#22e06a");
-  let spot: Vec2 | undefined;
+  const mark = () => stage.host.cue("mark");
+  const area = new LessonMarkers(match.scene, "#22e06a", mark);
+  const framed = new LessonMarkers(match.scene, undefined, mark);
+  /** The cell to stand on, and things to act on: each framed for as long as it still stands. */
+  let spot: Vec2 | undefined,
+    targets: readonly Vec2[] = [];
   steps.add((state) => {
     beacon.show(spot, state.size, state.time);
     area.show(throwZone ?? (buildSite ? [buildSite] : []), state.size, state.time);
+    framed.show(
+      targets.filter((cell) => state.tiles[cell.z]?.[cell.x] === 2),
+      state.size,
+      state.time,
+    );
   });
   // Released when the story is closed, whichever lesson it was in.
   void d
@@ -273,6 +282,7 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
     .then(() => {
       beacon.dispose();
       area.dispose();
+      framed.dispose();
     });
   /** Lights a cell and waits until the hero stands on it: the next step starts nowhere else. */
   const standOn = async (cell: Vec2, text: string) => {
@@ -545,6 +555,7 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   if (!(await standOn(PLACE.crateFront, GOALS.crateSpot))) return;
   const knifeStarted = d.state.time;
   allowed.add("use");
+  targets = [PLACE.crate];
   const knifeGoal = (equipped: boolean) =>
     goal(
       (equipped ? GOALS.knifeCut : GOALS.knife)
@@ -565,6 +576,7 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
     }))
   )
     return;
+  targets = [];
   goal();
   if (!(await say(LINES.knifed))) return;
 

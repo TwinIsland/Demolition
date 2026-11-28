@@ -141,7 +141,7 @@ const LINES = {
 
 const GOALS = {
   wall: "在告示牌旁发光的格子上放炸药",
-  crates: "炸开箱子",
+  crates: "炸开黄框标出的箱子",
   chain: "在两个发光的格子上各放一颗炸药，触发连锁",
   kick: "在发光的格子上放炸药，再把它踢出去",
   duel: "击败示例对手",
@@ -196,7 +196,7 @@ async function script(d: Director) {
     stopped = false,
     film: Cutscene | undefined;
   let targets: (state: Readonly<GameSnapshot>) => readonly Vec2[] = () => [];
-  const markers = new LessonMarkers(match.scene);
+  const markers = new LessonMarkers(match.scene, undefined, () => stage.host.cue("mark"));
   void d
     .until((state) => {
       if (film) film.paused = match.paused;
@@ -347,6 +347,12 @@ async function script(d: Director) {
       return;
     if (!(await calm())) return;
     if (!(await say(LINES.wallHolds))) return;
+    // Every crate left on the map is a fair target, and each is framed until it is opened.
+    targets = (state) => {
+      const crates: Vec2[] = [];
+      state.tiles.forEach((row, z) => row.forEach((tile, x) => tile === 2 && crates.push({ x, z })));
+      return crates;
+    };
     // Work done by the first charge counts too; never ask for three additional crates.
     stage.goal(`${GOALS.crates} ${opened(d.state)}/${CRATE_GOAL}`);
     d.lock(false);
