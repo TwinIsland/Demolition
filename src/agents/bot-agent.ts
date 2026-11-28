@@ -33,6 +33,7 @@ import {
   PERSONALITIES,
   targetWeight,
   threatField,
+  walkField,
 } from "./tactics";
 import { safeRoute } from "./tactical-route";
 
@@ -41,7 +42,14 @@ const BOT_SETTINGS: Record<Exclude<Difficulty, "adaptive">, BotSettings> = {
   easy: { think: 0.48, depth: 5, candidates: 1, recovery: 1.6, throwDelay: 1.4 },
   normal: { think: 0.38, depth: 7, candidates: 2, recovery: 1.45, throwDelay: 1.3 },
   hard: { think: 0.18, depth: 10, candidates: 5, recovery: 0.65, throwDelay: 0.7 },
+  // Lessons: easy with the knife, throws, skills, perks, shop and building taken away, and no urge to close in.
+  tutorial: { think: 0.4, depth: 6, candidates: 1, recovery: 5, throwDelay: 1.4 },
 };
+/**
+ * The tutorial tier strolls from one spot to the next instead of hunting: each spot is at least
+ * `stride` steps away and `berth` cells from the human, and is given up after `patience` seconds.
+ */
+const WANDER = { stride: 3, berth: 3, patience: 8 };
 /** The adaptive tier slides between these as the human falls behind or pulls ahead. */
 const ADAPTIVE_RANGE = { low: BOT_SETTINGS.easy, high: { ...BOT_SETTINGS.hard, think: 0.24, recovery: 0.8 } };
 function adaptiveSettings(skill: number): BotSettings {
@@ -124,6 +132,9 @@ export class BotAgent implements PlayerAgent {
   private fleeing = false;
   /** Adaptive tier: smoothed estimate of how well the human is doing, 0..1. */
   private humanLead = 0.5;
+  /** Tutorial tier: the spot it is strolling to, and when it gives up on it. */
+  private wanderGoal?: Vec2;
+  private wanderUntil = 0;
   private readonly personality: Personality;
   constructor(readonly playerId: string) {
     this.personality = PERSONALITIES[playerId] ?? DEFAULT_PERSONALITY;
@@ -141,6 +152,45 @@ export class BotAgent implements PlayerAgent {
     this.sprintUntil = this.nextSprint = 0;
     this.fleeing = false;
     this.humanLead = 0.5;
+    this.wanderGoal = undefined;
+    this.wanderUntil = 0;
+  }
+  /**
+   * Tutorial tier: walking distance to the current stroll spot, picking a new one once it is reached,
+   * cut off, timed out or crowded by the human. Always on the move, never towards anyone.
+   */
+  private wander(s: Readonly<GameSnapshot>, p: Player, human: Player | undefined) {
+    const here = cell(p),
+      at = (c: Vec2) => c.z * s.size + c.x,
+      crowded = (c: Vec2) => !!human?.alive && dist(human, c) < WANDER.berth;
+    let goal = this.wanderGoal,
+      field = goal && walkField(s, goal);
+    if (
+      !goal ||
+      !field ||
+      same(here, goal) ||
+      field[at(here)] === Infinity ||
+      s.time >= this.wanderUntil ||
+      crowded(goal)
+    ) {
+      const reach = walkField(s, here),
+        spots: Vec2[] = [],
+        fallback: Vec2[] = [];
+      for (let z = 0; z < s.size; z++)
+        for (let x = 0; x < s.size; x++) {
+          const steps = reach[z * s.size + x];
+          if (steps === Infinity || steps < 1) continue;
+          fallback.push({ x, z });
+          if (steps >= WANDER.stride && !crowded({ x, z })) spots.push({ x, z });
+        }
+      const pool = spots.length ? spots : fallback;
+      const seat = s.players.findIndex((other) => other.id === p.id);
+      const roll = seededRandom(s.seed ^ Math.imul(seat + 1, 2654435761) ^ Math.round(s.time / RULES.step))();
+      goal = this.wanderGoal = pool[Math.floor(roll * pool.length)];
+      this.wanderUntil = s.time + WANDER.patience;
+      field = goal && walkField(s, goal);
+    }
+    return field;
   }
   private observe(s: Readonly<GameSnapshot>, p: Player, limitedView: boolean, reaction: number) {
     for (const enemy of s.players) {
@@ -195,9 +245,15 @@ export class BotAgent implements PlayerAgent {
       difficulty = p.difficulty ?? s.difficulty ?? "normal",
       human = s.players.find((other) => !other.bot),
       config = difficulty === "adaptive" ? adaptiveSettings(this.humanLead) : BOT_SETTINGS[difficulty];
+    // The tutorial tier only walks and plants: no perks, skills, shop, knife, throws or building.
+    const tutorial = difficulty === "tutorial";
     let weaponAim: Vec2 | undefined;
-    if (p.offers.length) input.choosePerk = upgrade(p);
-    input.usePerk = p.perks.find((id) => perkById(id)?.aiShouldUse?.(p, s));
+    if (tutorial) {
+      if (s.phase !== "playing") return input;
+    } else {
+      if (p.offers.length) input.choosePerk = upgrade(p);
+      input.usePerk = p.perks.find((id) => perkById(id)?.aiShouldUse?.(p, s));
+    }
     if (s.phase === "countdown") {
       // Leave enough coins for one crate; everything else goes on the seat's favourite skills.
       const taste = SHOP_TASTE[this.playerId] ?? {},
@@ -215,7 +271,7 @@ export class BotAgent implements PlayerAgent {
       return input;
     }
     if (s.phase !== "playing") return input;
-    input.buyItem = supplyWish(p, s);
+    if (!tutorial) input.buyItem = supplyWish(p, s);
     // Normal and adaptive bots see, turn and react like a person; easy and hard keep their own rules.
     const normal = difficulty === "normal" || difficulty === "adaptive";
     const overhead = inTacticalView(p, s.time);
@@ -253,7 +309,14 @@ export class BotAgent implements PlayerAgent {
       const approach =
         s.size >= LARGE_ARENA && navigationContacts.length ? approachField(s, navigationContacts) : undefined;
       const reach = Math.max(15, approach ? s.size * 1.5 : 0);
+      const stroll = tutorial ? this.wander(s, p, human) : undefined;
       const value = (c: Vec2) => {
+        if (stroll)
+          // Head for the stroll spot, and step around the human rather than through them.
+          return (
+            -Math.min(40, stroll[c.z * s.size + c.x]) * 1.2 -
+            (human?.alive ? Math.max(0, 2 - dist(human, c)) * 3 : 0)
+          );
         const item = s.items.find((i) => same(i, c));
         const loot = item ? (ITEMS[item.kind].aiPickupValue?.(p) ?? 19) : 0;
         const cover = DIRECTIONS.filter((d) => s.tiles[c.z + d.z]?.[c.x + d.x] === 2).length;
@@ -282,7 +345,7 @@ export class BotAgent implements PlayerAgent {
         ) ??
         here;
       // Targeted perks aim at what the bot has actually seen, so a cloaked operator is safe from them.
-      for (const id of new Set(p.perks)) {
+      for (const id of tutorial ? [] : new Set(p.perks)) {
         const perk = perkById(id);
         const aim = perk?.targeted && (!perk.canUse || perk.canUse(p, s)) && perk.aiTarget?.(p, s, enemies);
         if (aim) {
@@ -293,7 +356,7 @@ export class BotAgent implements PlayerAgent {
       }
       const ready = (id: SkillId) => p.skills.includes(id) && p.cooldowns[id] <= s.time;
       let bestPriority = 0;
-      for (const id of p.skills) {
+      for (const id of tutorial ? [] : p.skills) {
         const skill = SKILLS[id];
         if (!ready(id) || !skill?.aiCastPriority || (skill.canActivate && !skill.canActivate(p, s.time)))
           continue;
@@ -308,7 +371,9 @@ export class BotAgent implements PlayerAgent {
         this.sprintUntil = s.time + 0.6 + 0.22 * variation;
         this.nextSprint = this.sprintUntil + 1.2;
       }
-      if (!overhead && this.fleeing && !p.shield && p.inventory.shield > 0 && ITEMS.shield?.onUse) {
+      if (tutorial) {
+        // No shield, no bandage.
+      } else if (!overhead && this.fleeing && !p.shield && p.inventory.shield > 0 && ITEMS.shield?.onUse) {
         input.equip = "shield";
         input.useEquipment = true;
       } else if (!overhead && p.maxHp - p.hp >= 30 && p.inventory.bandage > 0) {
@@ -316,7 +381,13 @@ export class BotAgent implements PlayerAgent {
         input.useEquipment = true;
       }
       const knife = ITEMS.knife?.melee;
-      if (!overhead && !input.useEquipment && knife && (p.cooldowns["equipment:knife"] ?? 0) <= s.time) {
+      if (
+        !tutorial &&
+        !overhead &&
+        !input.useEquipment &&
+        knife &&
+        (p.cooldowns["equipment:knife"] ?? 0) <= s.time
+      ) {
         // Knives are for clearing zombies, never for rushing an operator.
         weaponAim = s.zombies.find((enemy) => dist(enemy, p) <= knife.reach && clearSight(s, p, enemy));
         if (weaponAim) {
@@ -330,9 +401,10 @@ export class BotAgent implements PlayerAgent {
         s.time >= this.nextBomb &&
         !f.burning(here.x, here.z, 0, 0.7)
       ) {
-        const plan = overhead
-          ? undefined
-          : this.planThrow(s, p, enemies, config.throwDelay + 0.18 * variation);
+        const plan =
+          overhead || tutorial
+            ? undefined
+            : this.planThrow(s, p, enemies, config.throwDelay + 0.18 * variation);
         this.pendingThrow = plan;
         if (plan) {
           input.equip = plan.kind;
@@ -363,7 +435,7 @@ export class BotAgent implements PlayerAgent {
           if (input.useEquipment || input.plantHere || tactic.kick) this.nextBomb = s.time + recovery;
         }
       } else this.pendingThrow = undefined;
-      const site = this.planBuild(s, p, enemies, f);
+      const site = tutorial ? undefined : this.planBuild(s, p, enemies, f);
       if (site && !input.useEquipment && !input.plantHere) {
         weaponAim = site;
         input.build = true;
@@ -465,7 +537,8 @@ export class BotAgent implements PlayerAgent {
     const here = cell(p),
       hard = difficulty === "hard",
       overhead = inTacticalView(p, s.time);
-    const radius = difficulty === "easy" ? 0 : Math.floor(placementRadius(p, s.time));
+    const tutorial = difficulty === "tutorial";
+    const radius = difficulty === "easy" || tutorial ? 0 : Math.floor(placementRadius(p, s.time));
     // Overhead the only legal cell is the one underfoot.
     const placements: Vec2[] = [];
     if (overhead) placements.push(here);
@@ -511,7 +584,8 @@ export class BotAgent implements PlayerAgent {
         detonateAt: s.time + modifiedStat(p, "bombFuse", RULES.fuse, s.time),
         passThrough: x === here.x && z === here.z ? [p.id] : [],
       };
-      const score = scoreHit(blastCells(s, bomb));
+      // The tutorial tier plants on a steady beat whether or not anything is in reach, as a demonstration.
+      const score = scoreHit(blastCells(s, bomb)) + (tutorial ? 1 : 0);
       if (score > 0) choices.push({ bomb, kick: false, score });
     }
     if (hard && p.skills.includes("kick"))

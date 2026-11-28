@@ -240,8 +240,11 @@ export type GameEvent =
   | (EventBase<"mutation"> & { mutation: MutationId })
   | (EventBase<"perk" | "perk-use"> & { perk: PerkId })
   | (EventBase<"skill"> & { skill: SkillId });
-/** `adaptive` follows how the human is doing; it changes decision quality only, never health or damage. */
-export type Difficulty = "easy" | "normal" | "hard" | "adaptive";
+/**
+ * `adaptive` follows how the human is doing; it changes decision quality only, never health or damage.
+ * `tutorial` is for lessons only: easy with everything but walking and planting taken away.
+ */
+export type Difficulty = "easy" | "normal" | "hard" | "adaptive" | "tutorial";
 export interface Zombie extends Vec2 {
   hurtAt?: number;
   hp?: number;
