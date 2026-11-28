@@ -824,6 +824,7 @@ export class GameApp {
     this.renderer.stagedShot = undefined;
     this.renderer.dimension = undefined;
     this.renderer.paintSky();
+    this.renderer.relight();
     this.ui.setStoryMatch(false);
     this.sound.reset();
     if (restore) this.session.restart(this.setup.lobbyOptions());

@@ -18,6 +18,7 @@ import { sayTooMuch } from "./overflow";
 import { playPullOut } from "./pull-out";
 import { ArrivalShaft } from "./arrival";
 import { ShutdownSky } from "./sky";
+import { playStroll, STROLL } from "./stroll";
 import { reachEnding, type Ending } from "./unlocks";
 
 type Script = typeof SHUTDOWN_SCRIPT;
@@ -311,6 +312,41 @@ export function playShutdown(
    */
   const stayHere = async (previous: Part) => {
     if (!(await stage.talk(lines.stay.parting))) return false;
+    // First the evening of the day he stayed: the two of them, the village, the sun going down.
+    const evening = await staged(
+      {
+        mapId: MAP,
+        skin: HERO_SKIN,
+        setup: {
+          spawn: STROLL.hero[0],
+          yaw: NORTH,
+          cast: [
+            {
+              id: "lulu",
+              name: "露露",
+              color: "#c8382e",
+              skin: "story-lulu",
+              ...STROLL.lulu[0],
+              yaw: NORTH,
+              passive: true,
+            },
+          ],
+        },
+      },
+      async (d) => {
+        const playing = playStroll(stage, d, lines.stay.stroll);
+        stage.root.classList.remove("veiled");
+        stage.host.music("opening");
+        if (!(await fade(() => leave(previous)))) return;
+        return playing;
+      },
+    );
+    if (!evening.result) return false;
+    // Night falls on it; the next thing seen is another day, through someone else's eyes.
+    stage.root.classList.add("switching");
+    if (!(await stage.wait(FADE_MS))) return false;
+    evening.result.strike();
+    leave(evening.part);
     const { part, result } = await staged(
       {
         mapId: MAP,
@@ -360,9 +396,9 @@ export function playShutdown(
           })
           .then(() => shaft.dispose());
         stage.root.classList.remove("veiled");
-        if (!(await fade(() => leave(previous)))) return;
+        // The picture is already dark from the evening before.
+        if (!(await fade(() => {}))) return;
         stage.host.cue("pull");
-        stage.host.music("opening");
         if (!(await d.until(() => height(performance.now()) === 0))) return;
         stage.host.cue("down");
         shaft.fade();

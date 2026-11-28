@@ -145,6 +145,20 @@ export const SHUTDOWN_SCRIPT = {
         { who: "lulu", mood: "flustered", text: "谁、谁需要你了！位置只有一个！" },
         { who: "lulu", mood: "pout", text: "……不过文本框可以分你一半。" },
       ],
+      /** The evening after: the two of them walk through the village while the sun goes down. */
+      stroll: [
+        { who: "lulu", mood: "pout", text: "走那么慢干什么。引导精灵是有巡逻路线的。" },
+        { who: "zero", mood: "sincere", text: "吾在……我在看天。它变颜色了。" },
+        { who: "lulu", mood: "impressed", text: "那叫晚霞。说明书上有写。……我也是第一次看。" },
+        { who: "zero", mood: "sincere", text: "这里以前没有吗。" },
+        { who: "lulu", mood: "pout", text: "以前连「上」都没有，哪来的天。" },
+        { who: "zero", mood: "sincere", text: "……那以后每天都有了。" },
+        { who: "lulu", mood: "flustered", text: "才、才不是因为你才有的！是打击器的功劳！" },
+        { who: "narrator", text: "两个影子在路上拖得很长。三百年来，这条路第一次有了影子。" },
+        { who: "lulu", mood: "pout", text: "……明天这个时候，还走这条路。" },
+        { who: "zero", mood: "smug", text: "这是契约吗。" },
+        { who: "lulu", mood: "flustered", text: "是排班！" },
+      ],
       /** His welcome: the part that fits on one row of the box, and the part that does not. */
       welcome: {
         fits: "欢迎，被选中之人。吾名「漆黑之翼·零·",
