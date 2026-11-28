@@ -5,7 +5,7 @@ import { join, relative } from "node:path";
 import ts from "typescript";
 
 const root = new URL("../src/story/", import.meta.url).pathname;
-const HAN = /[぀-ヿ一-鿿]/;
+const HAN = /[\u3000-\u30ff\u4e00-\u9fff\uff00-\uffef…]/;
 const files = readdirSync(root, { recursive: true })
   .map((name) => join(root, String(name)))
   .filter((file) => file.endsWith(".ts") && !file.includes("/locales/"));
@@ -31,7 +31,7 @@ for (const file of files) {
       const { line } = source.getLineAndCharacterOfPosition(node.getStart());
       // An act's title is its ordinal and its name, shown apart.
       for (const text of node.text.split("\u3000"))
-        if (!found.has(text)) found.set(text, `${relative(root, file)}:${line + 1}`);
+        if (text && !found.has(text)) found.set(text, `${relative(root, file)}:${line + 1}`);
     } else if (
       ts.isTemplateExpression(node) &&
       [node.head, ...node.templateSpans.map((span) => span.literal)].some((part) => HAN.test(part.text))

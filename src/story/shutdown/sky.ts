@@ -255,7 +255,13 @@ export class ShutdownSky {
     pen.textBaseline = "middle";
     pen.fillStyle = "#f4fbff";
     pen.font = `150px ${FONT}`;
-    pen.fillText(t(this.message), 70, 190);
+    // The notice is a line of twelve characters in Chinese; a longer one is set smaller to leave the number its room.
+    const message = t(this.message),
+      room = width - 140 - pen.measureText("100% ").width,
+      wide = pen.measureText(message).width;
+    if (wide > room) pen.font = `${Math.floor((150 * room) / wide)}px ${FONT}`;
+    pen.fillText(message, 70, 190);
+    pen.font = `150px ${FONT}`;
     pen.textAlign = "right";
     pen.fillStyle = "#7df0ff";
     pen.fillText(`${percent}%`, width - 70, 190);

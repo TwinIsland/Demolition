@@ -333,9 +333,7 @@ export function playShutdown(
           reborn = false;
         for (;;) {
           const count = left.length;
-          const running = await d.until(
-            (state) => cheated || !hero(state).alive || up(state).length < count,
-          );
+          const running = await d.until((state) => cheated || !hero(state).alive || up(state).length < count);
           if (!running) {
             rest();
             return;
