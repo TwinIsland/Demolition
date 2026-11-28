@@ -395,9 +395,9 @@ export function playShutdown(
           const retries = lines.retries;
           return (await d.talk(retries[attempt % retries.length])) ? "lost" : undefined;
         }
-        // 97%: the bar stops one step short, and the song for everything that is left to say begins.
+        // 97%: the bar stops one step short, and it is quiet for the first time since it started.
         sky.percent = 97;
-        stage.host.music("farewell");
+        stage.host.silence();
         return (await d.seconds(1.8)) ? "won" : undefined;
       },
     );
@@ -447,6 +447,9 @@ export function playShutdown(
         const shown = async (cut: FarewellCut, words: readonly Line[], before = () => {}) =>
           (await fade(() => (before(), scene.cut(cut)))) && (await stage.wait(1400)) && (await d.talk(words));
         if (!(await stage.wait(1200)) || !(await d.talk(lines.won))) return;
+        // What he admits is said into the quiet. The song comes in as the camera turns to the sky:
+        // its first minute is soft, and it has grown by the time the choice is on the table.
+        stage.host.music("farewell");
         if (!(await shown("sky", said.sky)) || !(await shown("village", said.village))) return;
         if (!(await shown("ribbon", said.ribbon))) return;
         if (!(await shown("faces", said.end, () => (sky.percent = 98)))) return;
