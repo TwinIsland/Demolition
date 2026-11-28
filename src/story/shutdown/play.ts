@@ -22,7 +22,7 @@ import { ArrivalShaft } from "./arrival";
 import { playFarewell, type FarewellCut } from "./farewell";
 import type { Film } from "./kit";
 import { ShutdownSky } from "./sky";
-import { playStroll, STROLL } from "./stroll";
+import { playEvening, type Evening } from "../cutscenes/evening";
 import { reachEnding, type Ending } from "./unlocks";
 
 type Script = typeof SHUTDOWN_SCRIPT;
@@ -505,41 +505,26 @@ export function playShutdown(
    */
   const stayHere = async (previous: Part) => {
     if (!(await stage.talk(lines.stay.parting))) return false;
-    // First the evening of the day he stayed: the two of them, the village, the sun going down.
-    const evening = await staged(
-      {
-        mapId: MAP,
-        skin: HERO_SKIN,
-        setup: {
-          spawn: STROLL.hero[0],
-          yaw: NORTH,
-          cast: [
-            {
-              id: "lulu",
-              name: "露露",
-              color: "#c8382e",
-              skin: "story-lulu",
-              ...STROLL.lulu[0],
-              yaw: NORTH,
-              passive: true,
-            },
-          ],
-        },
-      },
-      async (d) => {
-        const playing = playStroll(stage, d, lines.stay.stroll);
-        stage.root.classList.remove("veiled");
-        stage.host.music("opening");
-        if (!(await fade(() => leave(previous)))) return;
-        return playing;
-      },
-    );
-    if (!evening.result) return false;
+    // First the evening of the day he stayed, as a film: the road at sunset, then supper.
+    let evening!: Evening;
+    const raise = () => {
+      leave(previous);
+      evening = enter(playEvening(stage.overlay()));
+    };
+    stage.host.music("opening");
+    if (!(await fade(raise)) || !(await stage.wait(4800))) return false;
+    if (!(await stage.talk(lines.stay.evening.road))) return false;
+    const { away, table, toast } = lines.stay.evening;
+    if (!(await fade(() => evening.cut("away"))) || !(await stage.wait(2600))) return false;
+    if (!(await stage.talk(away)) || !(await stage.wait(1200))) return false;
+    if (!(await fade(() => evening.cut("table"))) || !(await stage.wait(2800))) return false;
+    if (!(await stage.talk(table))) return false;
+    evening.cheers();
+    if (!(await stage.wait(2400)) || !(await stage.talk(toast)) || !(await stage.wait(3200))) return false;
     // Night falls on it; the next thing seen is another day, through someone else's eyes.
     stage.root.classList.add("switching");
     if (!(await stage.wait(FADE_MS))) return false;
-    evening.result.strike();
-    leave(evening.part);
+    leave(evening);
     const { part, result } = await staged(
       {
         mapId: MAP,
