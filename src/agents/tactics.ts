@@ -117,6 +117,27 @@ export function humanAdvantage(s: Readonly<GameSnapshot>, human: Player | undefi
   return clamp01(0.5 + 0.5 * hp + 0.6 * score);
 }
 
+/** Steps over open floor from `from` to every cell; cells that cannot be walked to keep `Infinity`. */
+export function walkField(s: Readonly<GameSnapshot>, from: Vec2) {
+  const size = s.size,
+    field = new Float32Array(size * size).fill(Infinity),
+    start = Math.round(from.z) * size + Math.round(from.x),
+    queue = [start];
+  field[start] = 0;
+  for (let i = 0; i < queue.length; i++) {
+    const cell = queue[i],
+      x = cell % size,
+      z = Math.floor(cell / size);
+    for (const d of DIRECTIONS) {
+      const next = cell + d.z * size + d.x;
+      if (s.tiles[z + d.z]?.[x + d.x] !== 0 || field[next] !== Infinity) continue;
+      field[next] = field[cell] + 1;
+      queue.push(next);
+    }
+  }
+  return field;
+}
+
 /** Arenas up to this size are small enough that straight-line distance finds the fight. */
 export const LARGE_ARENA = 23;
 

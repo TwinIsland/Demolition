@@ -1,6 +1,5 @@
 import { BotAgent } from "../../agents/bot-agent";
-import { idleInput } from "../../core/types";
-import type { AgentContext, GameSnapshot, PlayerAgent, PlayerInput, Vec2 } from "../../core/types";
+import type { GameSnapshot, Vec2 } from "../../core/types";
 import { SPOTS } from "../../modules/maps/flatland-story/layout.js";
 import { playIntroCard } from "../cutscenes/intro-card";
 import { playLanding } from "../cutscenes/landing";
@@ -155,38 +154,8 @@ const RESPAWN_SECONDS = 1.2;
 const CRATE_GOAL = 3;
 const DUEL_HP = 100;
 
-/** How the sample opponent is held back: weak charges, slow feet, long pauses. */
-const SAMPLE = { attack: 30, speed: 1.7, bombEvery: 5, actFor: 1.6, restFor: 1.4 };
-
-/**
- * The sample opponent: the game's own bot with everything but walking and planting taken away,
- * who stops to think every few steps and plants one charge at a time, rarely.
- */
-class SampleOpponent implements PlayerAgent {
-  private readonly bot: BotAgent;
-  private nextBomb = 0;
-  constructor(readonly playerId: string) {
-    this.bot = new BotAgent(playerId);
-  }
-  decide(context: AgentContext): PlayerInput {
-    const wish = this.bot.decide(context),
-      time = context.state.time,
-      resting = time % (SAMPLE.actFor + SAMPLE.restFor) > SAMPLE.actFor;
-    const input = idleInput(wish.yaw);
-    if (resting) return input;
-    input.moveX = wish.moveX;
-    input.moveZ = wish.moveZ;
-    input.preferAxis = wish.preferAxis;
-    if ((wish.plantHere || wish.useEquipment) && time >= this.nextBomb) {
-      input.plantHere = true;
-      this.nextBomb = time + SAMPLE.bombEvery;
-    }
-    return input;
-  }
-  reset() {
-    this.bot.reset?.();
-  }
-}
+/** How the sample opponent is held back, on top of the tutorial difficulty: weak charges, slow feet. */
+const SAMPLE = { attack: 30, speed: 1.7 };
 
 async function script(d: Director) {
   const { stage, match } = d;
@@ -474,7 +443,7 @@ async function script(d: Director) {
       rival.attack = SAMPLE.attack;
       rival.speed = SAMPLE.speed;
     });
-    match.setAgent("zhangsan", new SampleOpponent("zhangsan"));
+    match.setAgent("zhangsan", new BotAgent("zhangsan"));
     stage.goal(GOALS.duel);
     d.lock(false);
     if (!(await d.until((state) => !state.players.find((p) => p.id === "zhangsan")!.alive))) return;
@@ -542,7 +511,7 @@ export const FLATLAND: StagedScene = {
               name: "张三",
               color: "#9aa3b5",
               skin: "story-zhangsan",
-              difficulty: "easy",
+              difficulty: "tutorial",
               // Parked out of the way, and out of harm's, until the duel.
               passive: true,
               x: OFFSTAGE.x - 1,
