@@ -19,6 +19,7 @@ import { sayTooMuch } from "./overflow";
 import { playPullOut } from "./pull-out";
 import { playApocalypse } from "./apocalypse";
 import { ArrivalShaft } from "./arrival";
+import { playFarewell, type FarewellCut } from "./farewell";
 import type { Film } from "./kit";
 import { ShutdownSky } from "./sky";
 import { playStroll, STROLL } from "./stroll";
@@ -56,8 +57,6 @@ const NORTH = 0,
 const GAZE = { sky: 0.5, wall: 0.14, drop: 0.95 };
 /** Share of its usual volume the music plays at under the opening, before the fight brings it up. */
 const UNDER = 0.4;
-/** And after the fight is won, under the last conversation and the choice. */
-const AFTER = 0.3;
 /** The last of the three, once it has got up again. */
 const FINAL = { hp: 110, mercyHp: 70, attack: 55, spare: 30 };
 /**
@@ -396,18 +395,68 @@ export function playShutdown(
           const retries = lines.retries;
           return (await d.talk(retries[attempt % retries.length])) ? "lost" : undefined;
         }
-        // 97%: the bar stops one step short for as long as the two of them have things to say,
-        // and the music stays, far off, under them.
+        // 97%: the bar stops one step short, and the tune the story opened with comes back for
+        // everything that is left to say.
         sky.percent = 97;
-        stage.host.music("shutdown", AFTER);
-        if (!(await d.seconds(1.2))) return;
-        held = true;
-        sync();
-        return (await d.talk(lines.won)) ? "won" : undefined;
+        stage.host.music("opening");
+        return (await d.seconds(1.8)) ? "won" : undefined;
       },
     );
     if (result === "lost" && !(await fade(() => leave(part)))) return undefined;
     return result && { part, result };
+  };
+
+  /**
+   * What the two of them say once it is won, as a film in the village itself: a match of its own
+   * with nobody left to fight, under the last sky, seen by the story's camera. It stays up, held
+   * still, behind the choice.
+   */
+  const farewell = async (previous: Part) => {
+    stage.root.classList.add("switching");
+    if (!(await stage.wait(FADE_MS))) return undefined;
+    leave(previous);
+    const place = spots.farewell,
+      said = lines.farewell;
+    const { part, result } = await staged(
+      {
+        mapId: MAP,
+        skin: HERO_SKIN,
+        setup: {
+          spawn: place.hero,
+          yaw: NORTH,
+          cast: [
+            {
+              id: "lulu",
+              name: "露露",
+              color: "#c8382e",
+              skin: "story-lulu",
+              ...place.lulu,
+              yaw: NORTH,
+              passive: true,
+            },
+          ],
+        },
+      },
+      async (d, sky) => {
+        for (const cell of place.cleared) d.tile(cell, 0);
+        sky.settle(97, true);
+        const scene = playFarewell(d, place.hero, place.lulu);
+        void d.until(() => (scene.update(performance.now()), false)).then(() => scene.dispose());
+        stage.root.classList.remove("veiled");
+        if (!(await stage.wait(FADE_MS))) return;
+        stage.root.classList.remove("switching");
+        const shown = async (cut: FarewellCut, words: readonly Line[], before = () => {}) =>
+          (await fade(() => (before(), scene.cut(cut)))) && (await stage.wait(1400)) && (await d.talk(words));
+        if (!(await stage.wait(1200)) || !(await d.talk(lines.won))) return;
+        if (!(await shown("sky", said.sky)) || !(await shown("village", said.village))) return;
+        if (!(await shown("ribbon", said.ribbon))) return;
+        if (!(await shown("faces", said.end, () => (sky.percent = 98)))) return;
+        held = true;
+        sync();
+        return true;
+      },
+    );
+    return result ? part : undefined;
   };
 
   /** The room in the morning, breakfast, and the first ordinary sentence of the year. */
@@ -569,7 +618,8 @@ export function playShutdown(
     for (let attempt = 0; !won; attempt++) {
       const round = await fight(attempt, resumed && !attempt ? lines.resume : []);
       if (!round) return;
-      if (round.result === "won") won = round.part;
+      if (round.result === "won") won = await farewell(round.part);
+      if (round.result === "won" && !won) return;
     }
 
     const choice = enter(playChoice(stage));

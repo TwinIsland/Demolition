@@ -39,6 +39,16 @@ export const SHUTDOWN_SCRIPT = {
       { x: 7, z: 8 },
       { x: 8, z: 8 },
     ],
+    /** The goodbye before the choice: side by side at the south edge of the plaza, facing the gate. */
+    farewell: {
+      hero: { x: 7.4, z: 8.6 },
+      lulu: { x: 6.6, z: 8.6 },
+      /** Cover the camera would otherwise stand in. */
+      cleared: [
+        { x: 6, z: 9 },
+        { x: 8, z: 10 },
+      ],
+    },
     /** The "stay" ending: where the next player comes down, and the two who wait under the gate. */
     newcomer: { x: 7, z: 6 },
     guides: [
@@ -202,6 +212,40 @@ export const SHUTDOWN_SCRIPT = {
       { who: "lulu", mood: "impressed", text: "我知道。存档里写了。" },
       { who: "narrator", text: "他第一次没有用「吾」。没有人指出这一点。" },
     ],
+    /**
+     * The goodbye, said after `won` and before the choice, one group to a picture: the sky, the
+     * village coming apart, the bandage let go, and their faces at 98%.
+     */
+    farewell: {
+      sky: [
+        { who: "zero", mood: "sincere", text: "露露。游戏通关以后，里面的人去哪。" },
+        { who: "lulu", mood: "pout", text: "哪也不去。存档停在最后一格，等人回来读。" },
+        { who: "zero", mood: "sincere", text: "要是没人回来呢。" },
+        { who: "lulu", mood: "impressed", text: "那就一直是最后一格。……也不坏。最后一格里，天是亮的。" },
+      ],
+      village: [
+        {
+          who: "zero",
+          mood: "sincere",
+          text: "我以前一直在等。等一个任务，一个预言，一个告诉我「你是被选中的」的声音。",
+        },
+        { who: "lulu", mood: "pout", text: "没有那种东西。这里连剧情都是我现编的。" },
+        { who: "zero", mood: "sincere", text: "……那我这一路算什么。" },
+        { who: "lulu", mood: "impressed", text: "算你自己走的。没人选你，所以每一步都是你的。" },
+      ],
+      ribbon: [
+        { who: "narrator", text: "他解下绷带，松开手。风把它带到了天上。" },
+        { who: "lulu", mood: "impressed", text: "那它封印的到底是什么。" },
+        { who: "zero", mood: "sincere", text: "一个借口吧。有了它，就可以一直不开始。" },
+      ],
+      end: [
+        { who: "system", text: "正在关机。98%。" },
+        { who: "lulu", mood: "pout", text: "喂。不管你按不按，这个世界都要关了。结果是一样的。" },
+        { who: "zero", mood: "sincere", text: "嗯。结果一样。" },
+        { who: "zero", mood: "sincere", text: "可我放过的每一颗炸药，都是真的响过。" },
+        { who: "narrator", text: "所有的游戏都有片尾。但没有人是为了看片尾才按下开始的。" },
+      ],
+    },
     home: {
       parting: [
         { who: "zero", mood: "sincere", text: "我走了。" },
