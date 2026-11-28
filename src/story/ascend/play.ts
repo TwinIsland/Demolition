@@ -1,6 +1,6 @@
 import "./ascend.css";
 import * as THREE from "three";
-import { perkById, SKILLS } from "../../core/content";
+import { ITEMS, perkById, SKILLS } from "../../core/content";
 import { MUTATIONS } from "../../core/mutations";
 import { STORY_TUTORIAL_REWARDS } from "../../core/story-rewards";
 import type { GameEvent, GameSnapshot, PlayerInput, Vec2 } from "../../core/types";
@@ -11,6 +11,8 @@ import { world } from "../../render/arena";
 import { ASCENSION_GOALS as GOALS, ASCENSION_LINES as LINES } from "../acts/ascension";
 import { ASCENSION_ART } from "./assets";
 import { yawTo, type Director } from "../match/director";
+import { LessonMarkers } from "../match/lesson-markers";
+import { SpotBeacon } from "../match/spot-beacon";
 import { playStagedMatch } from "../match/staged-match";
 import { reachCheckpoint } from "../save";
 import type { Line } from "../script";
@@ -37,6 +39,16 @@ const PLACE = {
   /** The lane south of the low wall: throw from here into the street beyond it. */
   lane: { x: 6, z: 3 },
   laneGuide: { x: 8, z: 3 },
+  /** The street beyond the low wall, where the grenade has to land. */
+  grenadeZone: [5, 6, 7, 8].map((x) => ({ x, z: SPOTS.lowWall.from.z - 1 })),
+  /** The stretch of road west of the lane that the fire is to close. */
+  fireZone: [
+    { x: 3, z: 3 },
+    { x: 4, z: 3 },
+  ],
+  /** The crate is built one step west of the lane, and tested by a charge one step further. */
+  buildSite: { x: 5, z: 3 },
+  buildCharge: { x: 4, z: 3 },
   shop: SPOTS.shop.customer,
   shopGuide: { x: 2, z: 8 },
   /** In the farm plot, down the alley west of the shop. */
@@ -55,6 +67,10 @@ const PANEL_MS = 2400;
 const SPRINT_DISTANCE = 6;
 const BANDAGE_HEALTH = { current: 80, max: 100 } as const;
 const LESSON_SKILLS = ["scan", "kick"] as const;
+/** How close to the middle of a marked cell counts as standing on it, in cells. */
+const ON_SPOT = 0.5;
+/** How long a correction stays on the objective chip, in seconds. */
+const NUDGE_SECONDS = 2.6;
 
 type Ability = "sprint" | "jump" | "use" | "equip" | "build" | "skill" | "perk";
 
@@ -178,6 +194,10 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   // --- The strings this act pulls -----------------------------------------------------------
 
   const allowed = new Set<Ability>();
+  /** The only cells a throw may land on, and the only cell a crate may be built on, when set. */
+  let throwZone: readonly Vec2[] | undefined, buildSite: Vec2 | undefined;
+  const within = (cells: readonly Vec2[], cell?: Vec2) =>
+    !!cell && cells.some((c) => c.x === cell.x && c.z === cell.z);
   match.gate = (input: PlayerInput) => {
     const out = { ...input };
     if (!allowed.has("sprint")) out.sprint = false;
@@ -190,6 +210,27 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
     // The supply shop and the practice reset belong to a real match.
     delete out.buyItem;
     out.resetTerrain = false;
+    // A lesson with a marked area takes nothing outside it, and says why.
+    const you = match.state.players[0];
+    if (
+      throwZone &&
+      out.useEquipment &&
+      ITEMS[you.equipped]?.throwable &&
+      !within(throwZone, out.aimTarget)
+    ) {
+      out.useEquipment = false;
+      nudge(GOALS.throwOutside);
+    }
+    if (buildSite && out.build) {
+      if (out.buildTarget && !within([buildSite], out.buildTarget)) {
+        out.build = false;
+        nudge(GOALS.buildOutside);
+      } else if (Math.abs(you.x - buildSite.x) < 0.9 && Math.abs(you.z - buildSite.z) < 0.9) {
+        // A crate cannot go up on the cell the builder is standing in.
+        out.build = false;
+        nudge(GOALS.buildTooClose);
+      } else out.buildTarget = buildSite;
+    }
     return out;
   };
 
@@ -199,6 +240,53 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   match.onFrame = (state, dt) => {
     directed?.(state, dt);
     for (const step of [...steps]) step(state, dt);
+  };
+
+  /** The objective chip, and a correction that takes its place for a moment. */
+  let goalText: string | undefined,
+    nudged = 0;
+  const goal = (text?: string) => {
+    goalText = text;
+    if (nudged <= 0) stage.goal(text);
+  };
+  const nudge = (text: string) => {
+    if (nudged <= 0) stage.goal(text);
+    nudged = NUDGE_SECONDS;
+  };
+  steps.add((_, dt) => {
+    if (nudged > 0 && (nudged -= dt) <= 0) stage.goal(goalText);
+  });
+
+  /** What the lesson points at: the cell to stand on, and the cells to throw or build on. */
+  const beacon = new SpotBeacon(match.scene);
+  const area = new LessonMarkers(match.scene, "#7dffb0");
+  let spot: Vec2 | undefined;
+  steps.add((state) => {
+    beacon.show(spot, state.size, state.time);
+    area.show(throwZone ?? (buildSite ? [buildSite] : []), state.size, state.time);
+  });
+  // Released when the story is closed, whichever lesson it was in.
+  void d
+    .until(() => false)
+    .then(() => {
+      beacon.dispose();
+      area.dispose();
+    });
+  /** Lights a cell and waits until the hero stands on it: the next step starts nowhere else. */
+  const standOn = async (cell: Vec2, text: string) => {
+    spot = cell;
+    goal(text);
+    const open = await d.until((state) => state.players[0].alive && near(state.players[0], cell, ON_SPOT));
+    spot = undefined;
+    return open;
+  };
+  /** Limits throws to the open cells of `cells`, or lifts the limit. */
+  const aimAt = (cells?: readonly Vec2[]) => {
+    throwZone = cells?.filter((cell) => d.state.tiles[cell.z]?.[cell.x] === 0);
+    match.mutate((state) => {
+      if (throwZone) state.storyThrowZone = throwZone.map((cell) => ({ ...cell }));
+      else delete state.storyThrowZone;
+    });
   };
 
   /** A conversation with the world still moving, for lines that are staged; the hero stands by. */
@@ -229,7 +317,8 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
 
   /** The guide walks ahead over open floor, never far from the hero, and waits at `guide`. */
   const lead = async (to: Vec2, guide: Vec2) => {
-    stage.goal(GOALS.follow);
+    spot = to;
+    goal(GOALS.follow);
     anchor = to;
     const walk = (async () => {
       for (const cell of route(d.state, cellOf(d.actor(LULU)), guide)) {
@@ -238,10 +327,12 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
       }
       return true;
     })();
-    if (!(await d.until((state) => near(state.players[0], to, 1.3)))) return false;
+    if (!(await d.until((state) => state.players[0].alive && near(state.players[0], to, ON_SPOT))))
+      return false;
+    spot = undefined;
     if (!(await walk)) return false;
     d.face(LULU, d.hero);
-    stage.goal();
+    goal();
     return true;
   };
 
@@ -366,7 +457,7 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   match.hud = ["crosshair"];
   match.live = true;
   if (!(await say(LINES.look))) return;
-  stage.goal(GOALS.look);
+  goal(GOALS.look);
   let turned = 0,
     lastYaw = match.look.yaw;
   if (
@@ -394,23 +485,23 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
       const progress = Math.min(SPRINT_DISTANCE, Math.floor(sprinted));
       if (progress !== sprintProgress) {
         sprintProgress = progress;
-        stage.goal(`${sprintGoal} (${progress}/${SPRINT_DISTANCE})`);
+        goal(`${sprintGoal} (${progress}/${SPRINT_DISTANCE})`);
       }
       return sprinted >= SPRINT_DISTANCE;
     }))
   )
     return;
-  stage.goal();
+  goal();
   allowed.delete("sprint");
   if (!(await say(LINES.winded))) return;
   allowed.add("sprint").add("jump");
-  stage.goal(GOALS.jump);
+  goal(GOALS.jump);
   const jump = async () =>
     (await d.until((state) => state.players[0].elevation > 0.35)) &&
     (await d.until((state) => state.players[0].elevation === 0));
   if (!(await jump())) return;
   if (!(await say(LINES.jumped))) return;
-  stage.goal(GOALS.jumpAgain);
+  goal(GOALS.jumpAgain);
   if (!(await jump())) return;
   if (!(await say(LINES.jumpedAgain))) return;
 
@@ -423,11 +514,13 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   })();
   match.hud = ["crosshair", "equipment"];
   if (!(await say(LINES.hands))) return;
-  const knifeStarted = d.state.time;
-  allowed.add("equip").add("use");
+  allowed.add("equip");
   anchor = PLACE.crateFront;
+  if (!(await standOn(PLACE.crateFront, GOALS.crateSpot))) return;
+  const knifeStarted = d.state.time;
+  allowed.add("use");
   const knifeGoal = (equipped: boolean) =>
-    stage.goal(
+    goal(
       (equipped ? GOALS.knifeCut : GOALS.knife)
         .replace("{gearWheel}", bindings.label("gearWheel"))
         .replace("{use}", bindings.label("use")),
@@ -446,7 +539,7 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
     }))
   )
     return;
-  stage.goal();
+  goal();
   if (!(await say(LINES.knifed))) return;
 
   if (!(await say(LINES.toWall))) return;
@@ -459,7 +552,8 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
     pitch: -Math.atan2(0.65, Math.hypot(landing.x - d.hero.x, landing.z - d.hero.z)),
   };
   if (!(await say(LINES.grenade))) return;
-  stage.goal(GOALS.grenade);
+  aimAt(PLACE.grenadeZone);
+  goal(GOALS.grenade.replace("{use}", bindings.label("use")));
   // Beyond the wall means north of it; a grenade that falls short is handed back.
   const wall = SPOTS.lowWall.from.z;
   const refill = (state: Readonly<GameSnapshot>) => {
@@ -471,10 +565,22 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   if (!(await d.seconds(0.6))) return;
   if (!(await say(LINES.grenadeDone))) return;
 
+  aimAt();
   give("molotov", 2);
+  hero((p) => (p.equipped = "molotov"));
+  {
+    const road = PLACE.fireZone[0];
+    match.look = {
+      yaw: yawTo(d.hero, road),
+      pitch: -Math.atan2(0.65, Math.max(1, Math.hypot(road.x - d.hero.x, road.z - d.hero.z))),
+    };
+  }
   if (!(await say(LINES.molotov))) return;
-  stage.goal(GOALS.molotov);
+  aimAt(PLACE.fireZone);
+  goal(GOALS.molotov.replace("{use}", bindings.label("use")));
   if (!(await d.until((state) => state.fires.length > 0))) return;
+  aimAt();
+  goal();
   if (!(await d.seconds(0.8))) return;
   if (!(await say(LINES.molotovDone))) return;
   // Nobody learns anything standing in a fire: wait it out.
@@ -492,12 +598,12 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   readyShield();
   if (!(await say(LINES.shield))) return;
   for (;;) {
-    stage.goal(GOALS.shield.replace("{use}", bindings.label("use")));
+    goal(GOALS.shield.replace("{use}", bindings.label("use")));
     if (!(await d.until((state) => state.players[0].shield > 0))) return;
     const raised = d.state.time;
     // Once raised, stage the demonstration without movement or another confirmation click.
     d.lock(true);
-    stage.goal(GOALS.shieldHold);
+    goal(GOALS.shieldHold);
     const here = cellOf(d.hero);
     const beside = [
       { x: here.x + 1, z: here.z },
@@ -524,7 +630,7 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
     readyShield();
     if (!(await say(LINES.shieldRetry))) return;
   }
-  stage.goal();
+  goal();
   if (!(await say([...LINES.shieldUp, ...LINES.shieldDone]))) return;
   // A controlled injury: one bandage visibly restores 80/100 to full health.
   match.hud = ["equipment", "health"];
@@ -548,22 +654,39 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   };
   steps.add(holdBandageHealth);
   if (!(await say(LINES.bleeding))) return;
-  stage.goal(GOALS.bandage.replace("{use}", bindings.label("use")));
+  goal(GOALS.bandage.replace("{use}", bindings.label("use")));
   if (!(await d.until(bandageUsed))) return;
   steps.delete(holdBandageHealth);
-  stage.goal();
+  goal();
   if (!(await say(LINES.bandaged))) return;
 
   match.hud = ["crosshair", "crates"];
   hero((p) => (p.crates = 3));
   if (!(await say(LINES.build))) return;
+  // Built from the lane onto the one lit cell, so the charge that tests it has a place prepared.
+  const guided = free(d.state, PLACE.buildSite) && free(d.state, PLACE.buildCharge);
+  if (guided) {
+    anchor = PLACE.lane;
+    if (!(await standOn(PLACE.lane, GOALS.buildSpot))) return;
+    buildSite = PLACE.buildSite;
+    match.look = { yaw: yawTo(d.hero, PLACE.buildSite), pitch: -0.45 };
+  }
   allowed.add("build");
-  stage.goal(GOALS.build);
+  goal(GOALS.build.replace("{build}", bindings.label("build")));
   const before = d.state.builtCrates?.length ?? 0;
   if (!(await d.until((state) => (state.builtCrates?.length ?? 0) > before))) return;
+  buildSite = undefined;
   const crate = d.state.builtCrates!.at(-1)!;
   if (!(await say(LINES.built))) return;
-  {
+  if (guided) {
+    // Behind the crate means the lane cell: the fire line stops one step short of it.
+    if (!(await standOn(PLACE.lane, GOALS.hide))) return;
+    goal();
+    d.lock(true);
+    hero((p, state) => (p.invulnerableUntil = state.time + 4));
+    if (free(d.state, PLACE.buildCharge) && !(await detonated(plant(PLACE.buildCharge, 1.6)))) return;
+    d.lock(false);
+  } else {
     // A charge on the far side of the crate from the hero: the crate takes the fire line.
     const you = cellOf(d.hero),
       dx = Math.sign(crate.x - you.x),
@@ -593,13 +716,13 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   if (!(await say(LINES.toShop))) return;
   if (!(await lead(PLACE.shop, PLACE.shopGuide))) return;
   hero((p) => (p.credits = LESSON_SKILLS.reduce((total, id) => total + SKILLS[id].price, 0)));
-  stage.goal(GOALS.shop);
+  goal(GOALS.shop);
   for (;;) {
     if (!(await match.shop({ requiredSkills: LESSON_SKILLS }))) return;
     if (LESSON_SKILLS.every((id) => d.hero.skills.includes(id))) break;
     if (!(await say(LINES.shopEmpty))) return;
   }
-  stage.goal();
+  goal();
   const skill = SKILLS.scan;
   match.hud = ["crosshair", "skills"];
   allowed.add("skill");
@@ -627,7 +750,7 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
       }))
     )
       return;
-    stage.goal(GOALS.cast);
+    goal(GOALS.cast);
     const asked = d.state.time;
     if (!(await d.until((state) => since(state, asked).some((e) => e.type === "skill")))) return;
     if (!(await say(LINES.castDone))) return;
@@ -656,7 +779,7 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
       const dummy = state.players.find((p) => p.id === DUMMY)!;
       dummy.invulnerableUntil = 0;
     });
-    stage.goal(GOALS.target);
+    goal(GOALS.target);
     if (!(await d.until((state) => !state.players.find((p) => p.id === DUMMY)?.alive))) return;
   } finally {
     clearTarget();
@@ -667,7 +790,7 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   allowed.add("perk");
   match.hud = ["progression", "perks"];
   if (!(await say(LINES.levelled))) return;
-  stage.goal(GOALS.perk);
+  goal(GOALS.perk);
   if (!(await d.until((state) => !state.players[0].offers.length && state.players[0].perks.length > 0)))
     return;
   const perk = perkById(d.hero.perks.at(-1)!);
@@ -718,14 +841,14 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   if (!(await d.talk(fill(LINES.fight)))) return;
   d.lock(false);
   anchor = PLACE.gravesGuide;
-  stage.goal(GOALS.zombies);
+  goal(GOALS.zombies);
   if (!(await d.until((state) => state.zombies.length < 2))) return;
   const fought = d.state.time;
   rise(open[2] ?? open[0] ?? PLACE.risen[2], 3, true);
   if (!(await d.seconds(1.3))) return;
   if (!(await d.talk(fill(LINES.mutant)))) return;
   if (!(await d.until((state) => !state.zombies.length))) return;
-  stage.goal();
+  goal();
   if (!(await d.seconds(1))) return;
   if (since(d.state, fought).some((e) => e.type === "mutation")) {
     d.lock(true);

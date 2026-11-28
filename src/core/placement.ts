@@ -76,6 +76,9 @@ export function canPlace(
     (s.zone && (zoneBurning(s.size, target, s.zone) || zoneClearing(s.size, target, s.zone)))
   )
     return false;
+  // A story lesson marks where a throw may land; the aim marker stays red anywhere else.
+  if (equipment !== "bomb" && s.storyThrowZone && !s.storyThrowZone.some((c) => c.x === x && c.z === z))
+    return false;
   if (mode === "lob") return canLob(equipment) && p.inventory[equipment] > 0;
   if (s.bombs.some((b) => b.x === x && b.z === z)) return false;
   // A charge planted into live fire would go off at once and free its slot, so every further
