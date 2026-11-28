@@ -261,7 +261,7 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
 
   /** What the lesson points at: the cell to stand on, and the cells to throw or build on. */
   const beacon = new SpotBeacon(match.scene);
-  const area = new LessonMarkers(match.scene, "#7dffb0");
+  const area = new LessonMarkers(match.scene, "#22e06a");
   let spot: Vec2 | undefined;
   steps.add((state) => {
     beacon.show(spot, state.size, state.time);

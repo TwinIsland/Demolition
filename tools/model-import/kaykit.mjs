@@ -52,7 +52,9 @@ const OUTPUTS = {
   [SCENERY + "wall"]: [one("wall_straight", [1.2, 2.0, 1.7])],
   [SCENERY + "gate"]: [one("wall_straight_gate", [1.2, 2.0, 1.7])],
   [SCENERY + "block"]: [one("wall_straight", [1.2, 2.0, 2.95])],
-  [SCENERY + "low-wall"]: [one("fence_stone_straight", [2.4, 3.3, 2.09], 0, 0.1, 0, 90)],
+  // The pack draws a fence along one edge of its tile, one unit off the origin: the offset brings
+  // it back onto the middle of the cell it blocks, and the width makes it read as a wall from above.
+  [SCENERY + "low-wall"]: [one("fence_stone_straight", [6.5, 3.3, 2.09], 0, 0.1, -6.5, 90)],
   // Landmarks of one cell.
   [SCENERY + "lantern"]: [one("fence_pillar", [1, 0.58, 1]), one("lantern_standing", 0.95, 0, 1.27, 0)],
   [SCENERY + "notice"]: [one("shrine", 0.95)],
