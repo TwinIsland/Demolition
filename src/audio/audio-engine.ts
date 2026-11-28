@@ -179,7 +179,16 @@ export class AudioEngine {
 
   /** Crossfades to `url`; a no-op when it is already the current track. */
   playMusic(url: string, { volume, stream = false, restart = false }: MusicOptions) {
-    if (url === this.musicUrl) return;
+    if (url === this.musicUrl) {
+      // The same track asked for at another level: it plays on and eases there.
+      const playing = this.currentTrack();
+      if (playing && playing.level !== volume) {
+        clearTimeout(this.duckTimer);
+        playing.level = volume;
+        playing.voice.setVolume(this.musicGain(), CROSSFADE_MS);
+      }
+      return;
+    }
     clearTimeout(this.duckTimer);
     this.currentTrack()?.voice.fadeOut(CROSSFADE_MS);
     const track = this.track(url, stream);

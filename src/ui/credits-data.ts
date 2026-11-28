@@ -84,7 +84,7 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
         license: "© Pharoah Sanders",
       },
       {
-        title: "电动少女 · 电动少女 (8-Bit Remix)",
+        title: "电动少女 · 电动少女 (8-Bit Remix) · 人间失格 Human Lost",
         use: ["故事模式", "Story mode"],
         author: "Chinese Football",
         license: "© Chinese Football",

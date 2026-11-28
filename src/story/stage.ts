@@ -22,7 +22,7 @@ export type StoryCue =
   | "ascendHit";
 
 /** Music the story can ask for, by the part it plays under. */
-type StoryTrack = "opening" | "duel" | "ascension" | "lesson" | "shutdown" | "home";
+type StoryTrack = "opening" | "duel" | "ascension" | "lesson" | "shutdown" | "farewell" | "home";
 
 /** A lesson names only the HUD elements it needs; true is the full HUD for the final fight. */
 export type StoryHudPart =
@@ -112,7 +112,8 @@ export interface StoryHost {
   cue(name: StoryCue): void;
   /** Fades the story music out, until the story is left or `music` is called. */
   silence(): void;
-  music(track: StoryTrack): void;
+  /** `level` scales the track's usual volume; asking for the playing track again only changes it. */
+  music(track: StoryTrack, level?: number): void;
   match: {
     /** Builds the match behind whatever the stage shows; resolves once it can be drawn. */
     open(options: StoryMatchOptions): Promise<StoryMatch>;

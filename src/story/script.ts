@@ -3,7 +3,20 @@ import type { RpgMap } from "./rpg/map";
 import type { ScenePlayer, Stage } from "./stage";
 
 /** Who a line belongs to. `narrator` and `system` have no portrait; `door` is a voice from off screen. */
-export type Speaker = "zero" | "door" | "narrator" | "system" | "aqua" | "cirno" | "lulu" | "zhangsan";
+export type Speaker =
+  | "zero"
+  | "door"
+  | "narrator"
+  | "system"
+  | "aqua"
+  | "cirno"
+  | "lulu"
+  | "zhangsan"
+  /** Act 5's three, and `unknown` for one of them not yet seen for who it is. */
+  | "bluescreen"
+  | "popup"
+  | "antivirus"
+  | "unknown";
 
 /** One step of a conversation: a spoken line, or a choice between replies. */
 export type Line =
@@ -115,6 +128,10 @@ export const SPEAKER_NAMES: Record<Speaker, string> = {
   cirno: "琪露诺",
   lulu: "露露",
   zhangsan: "张三",
+  bluescreen: "蓝屏",
+  popup: "弹窗",
+  antivirus: "杀毒",
+  unknown: "？？？",
 };
 
 /** Size of the mini-game's canvas: the proportions of the old monitor's screen. */
