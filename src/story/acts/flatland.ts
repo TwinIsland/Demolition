@@ -211,13 +211,17 @@ async function script(d: Director) {
   /** Conversations wait their turn: a death may want to speak while the lesson does. */
   let queue: Promise<boolean> = Promise.resolve(true);
   const say = (lines: readonly Line[]) => (queue = queue.then((ok) => ok && d.talk(lines)));
-  const cutscene = async (play: (canvas: HTMLCanvasElement) => Cutscene, reveal?: () => void) => {
+  const cutscene = async (
+    play: (canvas: HTMLCanvasElement) => Cutscene,
+    reveal?: () => void | Promise<boolean>,
+  ) => {
     d.lock(true);
     const canvas = stage.overlay();
     const scene = (film = play(canvas));
     await scene.done;
     if (stopped) return false;
-    reveal?.();
+    // A picture fades in over the film's last frame; the film leaves only once it is covered.
+    if ((await reveal?.()) === false) return false;
     canvas.classList.add("leaving");
     const open = await d.seconds(0.32);
     scene.dispose();
@@ -265,9 +269,10 @@ async function script(d: Director) {
       for (const actor of state.players) if (actor.bot) actor.alive = false;
     });
     if (
-      !(await cutscene(playLanding, () => {
-        stage.art(STORY_ART.comic3);
+      !(await cutscene(playLanding, async () => {
+        const shown = await stage.art(STORY_ART.comic3);
         stage.root.classList.remove("veiled");
+        return shown;
       }))
     )
       return;

@@ -355,7 +355,7 @@ export function playShutdown(
       },
     );
     if (!result) return false;
-    if (SHUTDOWN_ART.stay) stage.art(SHUTDOWN_ART.stay);
+    if (SHUTDOWN_ART.stay && !(await stage.art(SHUTDOWN_ART.stay))) return false;
     const { fits, spill } = lines.stay.welcome;
     const gag = enter(sayTooMuch(stage, "零", fits, spill, !!SHUTDOWN_ART.stay));
     if (!(await gag.finished)) return false;

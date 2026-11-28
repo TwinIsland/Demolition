@@ -39,8 +39,17 @@
   height: 100%;
   object-fit: cover;
 }
+/* A picture waits out a hold on the scene before it, then comes in slowly (story-view.ts). */
+.stage-art.entering {
+  animation: story-art-in var(--art-in, 1.3s) ease-in-out var(--art-hold, 0s) both;
+}
 .stage-art.leaving {
-  animation: story-art-out 0.7s steps(6) forwards;
+  animation: story-art-out 1s ease-in-out forwards;
+}
+@keyframes story-art-in {
+  from {
+    opacity: 0;
+  }
 }
 @keyframes story-art-out {
   to {
