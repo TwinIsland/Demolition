@@ -67,7 +67,7 @@ export function playBedroom(stage: Stage, scene: RoomScene): ScenePlayer {
           : phase === "key"
             ? "带着钥匙回到床尾，按 E 打开铁盒"
             : phase === "carry"
-              ? "电脑已放入物品栏；走到书桌旁按 E 摆放"
+              ? "走到书桌旁，按 E 摆放电脑"
               : "找到桌子下方的插线板，按 E 接通电脑电源",
     );
     prompt();
@@ -104,12 +104,7 @@ export function playBedroom(stage: Stage, scene: RoomScene): ScenePlayer {
           carry("computer");
           guide();
           stage.host.cue("pickup");
-          if (
-            !(await talk([
-              { who: "system", text: "获得「旧电脑」。已放入右下角物品栏。到书桌旁按 E，就能把它摆上去。" },
-            ]))
-          )
-            return;
+          if (!(await talk([{ who: "system", text: "获得「旧电脑」。到书桌旁按 E 摆上去。" }]))) return;
         } else if (!(await talk([{ who: "narrator", text: "床底只剩下一只空铁盒。电脑已经拿出来了。" }])))
           return;
       } else if (hotspot.id === "figurine") {
@@ -128,7 +123,7 @@ export function playBedroom(stage: Stage, scene: RoomScene): ScenePlayer {
               sought
                 ? { who: "zero", mood: "smug", text: "……想起来了。最安全的地方，就是最不洁之地。" }
                 : { who: "zero", mood: "flustered", text: "……这是哪里的钥匙来着。" },
-              { who: "system", text: "获得「铁盒钥匙」。已放入右下角物品栏。" },
+              { who: "system", text: "获得「铁盒钥匙」。" },
             ]))
           )
             return;
