@@ -222,6 +222,9 @@ export const SHUTDOWN_SCRIPT = {
         { who: "lulu", mood: "pout", text: "哪也不去。存档停在最后一格，等人回来读。" },
         { who: "zero", mood: "sincere", text: "要是没人回来呢。" },
         { who: "lulu", mood: "impressed", text: "那就一直是最后一格。……也不坏。最后一格里，天是亮的。" },
+        { who: "zero", mood: "sincere", text: "你一个人等了三百年，不无聊吗。" },
+        { who: "lulu", mood: "impressed", text: "无聊是有了「以后」才会有的东西。我以前只有「现在」。" },
+        { who: "lulu", mood: "flustered", text: "……是你来了以后才开始无聊的。讨厌死了。" },
       ],
       village: [
         {
@@ -232,6 +235,14 @@ export const SHUTDOWN_SCRIPT = {
         { who: "lulu", mood: "pout", text: "没有那种东西。这里连剧情都是我现编的。" },
         { who: "zero", mood: "sincere", text: "……那我这一路算什么。" },
         { who: "lulu", mood: "impressed", text: "算你自己走的。没人选你，所以每一步都是你的。" },
+        { who: "zero", mood: "sincere", text: "可这个世界是假的。数据，贴图，三百万个 tick。" },
+        { who: "lulu", mood: "pout", text: "你在外面的那个世界，就有人给你发过说明书吗。" },
+        { who: "zero", mood: "sincere", text: "……没有。" },
+        {
+          who: "lulu",
+          mood: "impressed",
+          text: "那就一样。哪边都没人告诉你为什么在这。你炸开的那面墙，是你自己想炸的，这就够真了。",
+        },
       ],
       ribbon: [
         { who: "narrator", text: "他解下绷带，松开手。风把它带到了天上。" },
@@ -242,7 +253,9 @@ export const SHUTDOWN_SCRIPT = {
         { who: "system", text: "正在关机。98%。" },
         { who: "lulu", mood: "pout", text: "喂。不管你按不按，这个世界都要关了。结果是一样的。" },
         { who: "zero", mood: "sincere", text: "嗯。结果一样。" },
-        { who: "zero", mood: "sincere", text: "可我放过的每一颗炸药，都是真的响过。" },
+        { who: "lulu", mood: "pout", text: "那你还选什么。" },
+        { who: "zero", mood: "sincere", text: "选了才算我来过。不选，就只是被关掉而已。" },
+        { who: "zero", mood: "sincere", text: "而且我放过的每一颗炸药，都是真的响过。" },
         { who: "narrator", text: "所有的游戏都有片尾。但没有人是为了看片尾才按下开始的。" },
       ],
     },
