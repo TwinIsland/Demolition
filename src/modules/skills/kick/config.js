@@ -10,6 +10,7 @@ const config = {
   name: "滑踢",
   description: "顶住炸药即可踢出，滑行时暂停引信，碰撞即爆",
   icon: "speed",
+  art: new URL("./icon.webp", import.meta.url).href,
   key: "被动",
   price: 35,
   cooldown: 0,

@@ -34,7 +34,7 @@ export function slidingZombieContact(zombies: readonly Zombie[], bomb: Bomb, tim
 }
 export const ZOMBIE_STRIKE = { reach: 0.55, windup: 0.18, recovery: 0.34, interval: 1.3 } as const;
 /** A struck zombie slides `distance` cells over `slide` seconds and cannot act for `stagger` seconds. */
-export const ZOMBIE_KNOCKBACK = { distance: 0.8, slide: 0.18, stagger: 0.4 } as const;
+const ZOMBIE_KNOCKBACK = { distance: 0.8, slide: 0.18, stagger: 0.4 } as const;
 export class ZombieDirector {
   private nextSpawn: number;
   private nextScan = 0;

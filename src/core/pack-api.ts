@@ -1,7 +1,6 @@
 import type { Tile } from "./types";
 import type { MapObstacle, ObstacleSurface } from "./obstacles";
 
-export type { MapObstacle, ObstacleDefinition, ObstacleSurface } from "./obstacles";
 export { defineObstacle } from "./obstacles";
 
 interface Pack {
@@ -47,7 +46,7 @@ export interface BombFinish extends Pack {
 /** @deprecated Use {@link ObstacleSurface}. */
 export type CoverSurface = ObstacleSurface;
 /** @deprecated Use `obstacles: [{ use, weight }]`. `kind` is read as a preset ID. */
-export type MapCover = { surface?: ObstacleSurface; weight: number } & (
+type MapCover = { surface?: ObstacleSurface; weight: number } & (
   { kind: string } | { model: string; height?: number }
 );
 export interface MapDefinition extends Pack {

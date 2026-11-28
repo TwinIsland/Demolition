@@ -5,24 +5,26 @@
 // A match always clears the cells within two steps of its four corner spawns (`generateMap`), so
 // nothing permanent or breakable may be drawn there: buildings stay out of the corners.
 //
-// Open ground:   .  grass     ,  flagstone path     +  cobbled plaza     :  tilled earth
+// Open ground:   .  grass     ,  dirt road     +  cobbled plaza     :  tilled field
 // Destructible:  c  wooden crate     f  plank fence     o  anything from the village pool
-// Permanent:     #  boundary wall    w  low dry-stone wall    L  stone lantern    F  fountain
-//                T  cherry tree    G  gravestone    B  notice board
-//                t  torii post (two posts carry one gate over the cell between them)
-//                D  dojo    M  shop    S  shrine
+// Permanent:     #  boundary wall    w  low stone wall    L  lantern    F  the plaza's well
+//                T  tree    R  rock    G  gravestone    B  notice stone
+//                t  pier of an arch (two piers carry one arch over the cell between them)
+//                K  tavern    M  market (the skill shop)    S  church    N  smithy    Y  windmill
+//                D E  training ground    H J  house    I U  cottage
+//                (two letters: entrance to the south, entrance to the north)
 import { villagePlan } from "../flatland/plan.js";
 
 export const LAYOUT = [
   "###############",
-  "#...c,,,,c....#",
-  "#..Bwwwww.oT..#",
-  "#.c......DDDD.#",
+  "#,..c,,,,c....#",
+  "#,.Bwwwww.oT..#",
+  "#,c,,,,,,DDDD.#",
   "#c...Tt,tDDDD.#",
-  "#.o..c.,...o..#",
+  "#.o..c.,,,,o..#",
   "#..o.L+++LoLoL#",
   "#,,c,,+F+,,o,,#",
-  "#....L+++Lt.SS#",
+  "#..,.L+++Lt.SS#",
   "#.MMM.o,,,,,SS#",
   "#.MMM..,o.t.SS#",
   "#::::f.,.G.GT.#",
@@ -42,7 +44,7 @@ export const SPOTS = {
   /** Where the hero wakes up, and where the guide waits beside him. */
   arrival: { x: 1, z: 1 },
   guide: { x: 2, z: 2 },
-  /** The roofed notice board: "欢迎来到平面国". Permanent, so it doubles as the wall to bomb in vain. */
+  /** The notice stone: "欢迎来到平面国". Permanent, so it doubles as the wall to bomb in vain. */
   notice: { x: 3, z: 2 },
   /** The three crates that close the arrival nook (3.1). */
   firstCrates: [
@@ -57,7 +59,7 @@ export const SPOTS = {
   /** The low wall beside the kick lane: throw over it from the lane into the street (4.2). */
   lowWall: { from: { x: 4, z: 2 }, to: { x: 8, z: 2 } },
   /**
-   * The yard in front of the dojo, closed to the south by a row of stone lanterns: the duel with
+   * The yard in front of the dojo, closed to the south by a row of lanterns: the duel with
    * the sample opponent (3.4). The two stand at the ends of row 5 with one breakable between
    * them; the guide watches from the street.
    */

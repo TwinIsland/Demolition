@@ -10,6 +10,7 @@ const config = {
   name: "战术透视",
   description: "透过掩体显示对手与僵尸的全身夜视剪影，持续 7 秒",
   icon: "radar",
+  art: new URL("./icon.webp", import.meta.url).href,
   sound: new URL("./activate.ogg", import.meta.url).href,
   key: "C",
   price: 25,

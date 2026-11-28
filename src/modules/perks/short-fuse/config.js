@@ -11,6 +11,7 @@ const config = {
   name: "短引信",
   description: "部署的炸药每层提前 15% 引爆，最多 2 层。",
   icon: "bomb",
+  art: new URL("./icon.webp", import.meta.url).href,
   color: "#f2c46b",
   tag: "节奏",
   tier: "gold",

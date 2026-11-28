@@ -20,6 +20,8 @@ export const PerkConfigSchema = v.object({
   targeted: v.optional(flag),
   /** Audio asset played when the perk is triggered, instead of the shared cast cue. */
   useSound: v.optional(text),
+  /** GLB of the missile a `callStrike` from this perk brings down, nose along +Y. */
+  strikeModel: v.optional(text),
 });
 
 const hookEntries = {

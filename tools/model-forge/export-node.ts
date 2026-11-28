@@ -7,7 +7,6 @@ import { ordnance } from "./ordnance";
 import { jungle } from "./jungle";
 import { pool } from "./pool";
 import { office } from "./office";
-import { village } from "./village";
 
 // GLTFExporter reads its binary chunks through FileReader, which Node does not provide.
 class NodeFileReader {
@@ -24,8 +23,8 @@ Object.assign(globalThis, { FileReader: NodeFileReader });
 
 const [id, out] = process.argv.slice(2);
 const [group, name] = (id ?? "").split("/");
-const build = { items, obstacles, ordnance, jungle, pool, office, village }[group]?.[name];
-if (!build || !out) throw new Error("Usage: export-node.ts <items|obstacles|ordnance|jungle|pool|office|village>/<name> <out.glb>");
+const build = { items, obstacles, ordnance, jungle, pool, office }[group]?.[name];
+if (!build || !out) throw new Error("Usage: export-node.ts <items|obstacles|ordnance|jungle|pool|office>/<name> <out.glb>");
 const model = build();
 const buffer = (await new GLTFExporter().parseAsync(model, { binary: true })) as ArrayBuffer;
 await writeFile(out, new Uint8Array(buffer));

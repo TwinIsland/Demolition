@@ -52,18 +52,6 @@ const PREVIEW: Record<string, string> = {
   "leaf-dark": "#2f5a2a",
   "pool-tile": "#eef2f0",
   cardboard: "#a98554",
-  "village-stone": "#8b8d8c",
-  "village-roof": "#4b5157",
-  "village-thatch": "#a08a5c",
-  "village-plaster": "#e9e3d3",
-  "village-cedar": "#5b4334",
-  "village-vermilion": "#c2402a",
-  "village-clay": "#7a4a30",
-  "village-water": "#3f8f9c",
-  "village-flame": "#ffcf8a",
-  "village-writing": "#c4a070",
-  "village-shoji": "#f4e8cc",
-  "sakura-bark": "#6b5a55",
 };
 
 export function seeded(seed: number) {

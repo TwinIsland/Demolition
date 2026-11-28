@@ -12,6 +12,7 @@ const config = {
   name: "极速回路",
   description: "主动技能冷却缩短 20%，多层乘算，最多 2 层。",
   icon: "surge",
+  art: new URL("./icon.webp", import.meta.url).href,
   color: "#86dcff",
   tag: "冷却",
   tier: "diamond",

@@ -33,7 +33,7 @@ export interface Hotspot {
   interactionRadius?: number;
 }
 
-export interface RoomAnimation {
+interface RoomAnimation {
   sprite: string;
   columns: number;
   rows: number;
@@ -79,7 +79,7 @@ export interface RoomScene {
 }
 
 /** Moments of the arcade act that carry lines, in the order they happen. */
-export type ArcadeBeat =
+type ArcadeBeat =
   /** Before the first move. */
   | "start"
   /** Spoken while the first bubble's fuse burns; it is cut short by the blast. */

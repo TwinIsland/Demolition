@@ -9,7 +9,7 @@ import { ITEMS } from "../core/content";
 import type { GameEvent, GameSnapshot, Player, Vec2 } from "../core/types";
 import { ZOMBIE_STRIKE } from "../core/zombies";
 
-export type DamageCause = "zombie" | "blast" | "melee" | "other";
+type DamageCause = "zombie" | "blast" | "melee" | "other";
 export type Cue =
   /** The local player lost health. `source` is in cell coordinates when the attacker can be located. */
   | { type: "damage"; amount: number; cause: DamageCause; source?: Vec2 }

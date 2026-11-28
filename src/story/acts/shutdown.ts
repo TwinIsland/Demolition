@@ -167,7 +167,7 @@ export const SHUTDOWN_SCRIPT = {
  * The bedroom of act 1, on the morning after: the same grid under a new painting, with the
  * curtains open and the door for once the thing to walk to.
  */
-export const MORNING_BEDROOM: HomeRoom = {
+const MORNING_BEDROOM: HomeRoom = {
   background: SHUTDOWN_ART.bedroomMorning,
   foreground: [{ sprite: SHUTDOWN_ART.bedroomDesk, x: 254, y: 68, feetY: 138 }],
   animations: [
@@ -260,7 +260,7 @@ export const MORNING_BEDROOM: HomeRoom = {
  * cabinet with the rice cooker, W window, C calendar, L the hallway back, O the kitchen door,
  * T the tabletop; chairs use solid # cells so the approaches stay aligned with the room art.
  */
-export const DINING_ROOM: HomeRoom = {
+const DINING_ROOM: HomeRoom = {
   background: SHUTDOWN_ART.dining,
   animations: [{ sprite: SHUTDOWN_ART.diningMeal, columns: 2, rows: 2, frames: 4, fps: 4, x: 128, y: 86 }],
   cell: 8,

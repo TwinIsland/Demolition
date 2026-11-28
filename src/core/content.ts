@@ -8,7 +8,7 @@ import type {
   Tier,
 } from "./module-api";
 import { assertValid, ItemDefinitionSchema, PerkDefinitionSchema, SkillDefinitionSchema } from "./schema";
-import type { PerkId, Player, SkillId } from "./types";
+import type { PerkId, Player } from "./types";
 
 export type { PerkDefinition } from "./module-api";
 
@@ -64,7 +64,7 @@ function buildRegistries(definitions: readonly ContentModule[]) {
   const skills = createRegistry<SkillDefinition>();
   const perks = createRegistry<PerkDefinition>();
   const items = createRegistry<ItemDefinition>();
-  const keyBindings = new Map<string, SkillId>();
+  const boundKeys = new Set<string>();
   // Registration order is the iteration order of every registry, and part of the determinism contract.
   const ordered = [...definitions].sort(
     (a, b) => (a.order ?? 100) - (b.order ?? 100) || a.id.localeCompare(b.id, "en"),
@@ -74,8 +74,8 @@ function buildRegistries(definitions: readonly ContentModule[]) {
       case "skill":
         register(skills, definition);
         if (definition.code) {
-          if (keyBindings.has(definition.code)) throw new Error(`Duplicate skill key: ${definition.code}`);
-          keyBindings.set(definition.code, definition.id);
+          if (boundKeys.has(definition.code)) throw new Error(`Duplicate skill key: ${definition.code}`);
+          boundKeys.add(definition.code);
         }
         break;
       case "perk":
@@ -88,10 +88,10 @@ function buildRegistries(definitions: readonly ContentModule[]) {
         break;
     }
   }
-  return { skills, perks, items, keyBindings };
+  return { skills, perks, items };
 }
 
-const { skills, perks, items, keyBindings } = buildRegistries(modules);
+const { skills, perks, items } = buildRegistries(modules);
 
 export const HAS_TICK_HOOKS = modules.some((m) => m.kind !== "item" && m.onTick);
 export const SKILLS = Object.freeze(skills);
@@ -105,8 +105,6 @@ export const EQUIPMENT_SLOTS = ["bomb", ...equipment.map((item) => item.id)];
 
 // --- Queries -----------------------------------------------------------------------------------
 
-/** Looks up the module's default key, independently of local player settings. */
-export const skillForKey = (code: string) => keyBindings.get(code);
 export const perkById = (id: PerkId) => perks[id];
 
 export function eachOwned(p: Player, visit: (hooks: Hooks, stacks: number) => void) {

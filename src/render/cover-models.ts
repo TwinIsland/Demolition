@@ -25,23 +25,43 @@ const SCENERY = {
   "rock-b": undefined,
   "rock-c": undefined,
   "rock-d": undefined,
-  // The village: buildings come cut into one piece per tile (see `part`), the rest are single tiles.
-  "village-farmhouse": undefined,
-  "village-dojo": undefined,
-  "village-shop": undefined,
-  "village-cottage": undefined,
-  "village-shrine": undefined,
-  "village-torii": undefined,
-  "village-lantern": undefined,
-  "village-fountain": undefined,
+  // The village: models of the KayKit packs at the size they stand in the game (tools/model-import/kaykit.mjs).
+  "village-house-a": undefined,
+  "village-house-b": undefined,
+  "village-house-c": undefined,
+  "village-tavern": undefined,
+  "village-market": undefined,
+  "village-archery": undefined,
+  "village-barracks": undefined,
+  "village-church": undefined,
+  "village-blacksmith": undefined,
+  "village-windmill": undefined,
+  "village-tower": undefined,
   "village-well": undefined,
-  "village-notice": undefined,
-  "village-grave": undefined,
-  "village-low-wall": undefined,
+  "village-castle": undefined,
+  "village-crypt": undefined,
   "village-wall": undefined,
-  "village-block": undefined,
   "village-gate": undefined,
-  "village-cherry": undefined,
+  "village-block": undefined,
+  "village-low-wall": undefined,
+  "village-lantern": undefined,
+  "village-notice": undefined,
+  "village-arch": undefined,
+  "village-grave-a": undefined,
+  "village-grave-b": undefined,
+  "village-grave-c": undefined,
+  "village-tree-a": undefined,
+  "village-tree-b": undefined,
+  "village-rock-a": undefined,
+  "village-rock-b": undefined,
+  "village-flag": undefined,
+  "village-hills": undefined,
+  "village-hills-b": undefined,
+  "village-mountain": undefined,
+  "village-mountain-b": undefined,
+  "village-forest": undefined,
+  "village-forest-b": undefined,
+  "village-field": undefined,
 } satisfies Record<string, { footprint: number; height: number } | undefined>;
 export type SceneryId = keyof typeof SCENERY;
 
@@ -67,8 +87,7 @@ export class CoverModels {
       materials.applyPalette(scene);
       const model = new THREE.Group();
       model.add(scene);
-      // Village pieces are authored in place: a wall off the centre of its tile, a building around
-      // the middle of its footprint.
+      // Village pieces are authored in place, around the middle of their footprint.
       if (!fit && id.startsWith("scenery:") && !id.startsWith("scenery:village-")) {
         // Scans come half buried and off centre; stand them on the origin.
         const bounds = new THREE.Box3().setFromObject(scene);

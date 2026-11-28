@@ -38,14 +38,14 @@ export class BuffPanelView implements HudView {
       const perk = perkById(id)!;
       const color = TIERS[perk.tier].color;
       if (!perk.use) {
-        passive += `<span class="buff-icon tier-${perk.tier}" style="--buff-color:${color}" title="${field(perk, "name")} ×${count} · ${field(perk, "description")}">${artIcon("perks", id, perk.icon)}${count > 1 ? `<b>${count}</b>` : ""}</span>`;
+        passive += `<span class="buff-icon tier-${perk.tier}" style="--buff-color:${color}" title="${field(perk, "name")} ×${count} · ${field(perk, "description")}">${artIcon(perk)}${count > 1 ? `<b>${count}</b>` : ""}</span>`;
         continue;
       }
       const selected = id === selectedPerk;
       const disabled =
         !viewer.alive || snapshot.phase !== "playing" || (perk.canUse && !perk.canUse(viewer, snapshot));
       usable.push(`<li><button type="button" class="active-perk tier-${perk.tier}" data-use-perk="${id}" aria-current="${selected}" style="--buff-color:${color}" title="${field(perk, "description")}" ${disabled ? "disabled" : ""}>
-            ${artIcon("perks", id, perk.icon)}${activePerkBadge()}<span class="active-perk-caption"><span>${field(perk, "name")}${count > 1 ? " ×" + count : ""}</span>${selected ? keyHint("usePerk") : ""}</span>
+            ${artIcon(perk)}${activePerkBadge()}<span class="active-perk-caption"><span>${field(perk, "name")}${count > 1 ? " ×" + count : ""}</span>${selected ? keyHint("usePerk") : ""}</span>
           </button></li>`);
     }
     return { passive, usable };
@@ -77,7 +77,7 @@ export class BuffPanelView implements HudView {
       .map(([id, count]) => {
         const gene = MUTATIONS[id];
         return gene
-          ? `<span class="buff-icon" style="--buff-color:${GENE_COLOR}" title="${t("基因改造")} · ${field(gene, "name")} ×${count} · ${field(gene, "description")}">${artIcon("mutations", id, gene.icon)}${count > 1 ? `<b>${count}</b>` : ""}</span>`
+          ? `<span class="buff-icon" style="--buff-color:${GENE_COLOR}" title="${t("基因改造")} · ${field(gene, "name")} ×${count} · ${field(gene, "description")}">${artIcon(gene)}${count > 1 ? `<b>${count}</b>` : ""}</span>`
           : "";
       })
       .join("");

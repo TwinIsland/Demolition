@@ -47,10 +47,10 @@ export const ringOf = (size: number, cell: Vec2) => {
 };
 
 /** Number of playable rings that close before the final square remains. */
-export const closingRings = (size: number) => Math.max(0, (size - 1) / 2 - ZONE.finalRadius - 1);
+const closingRings = (size: number) => Math.max(0, (size - 1) / 2 - ZONE.finalRadius - 1);
 
 /** Ignition time of ring `ring` (1-based). The last ring ignites exactly at `duration`. */
-export function ringClosesAt(size: number, ring: number, duration: number) {
+function ringClosesAt(size: number, ring: number, duration: number) {
   const rings = closingRings(size),
     grace = Math.min(ZONE.grace, duration / 2);
   return rings ? grace + ((duration - grace) * ring) / rings : duration;

@@ -9,7 +9,7 @@ import type { Player } from "../core/types";
 import { field, t } from "../i18n";
 import { icon } from "./icons";
 
-export const CARD_BUFFS_PER_ROW = 8;
+const CARD_BUFFS_PER_ROW = 8;
 const MAX_BUFFS = CARD_BUFFS_PER_ROW * 2;
 const GENE_COLOR = "#83f5c8";
 
@@ -41,16 +41,6 @@ function cardBuffs(player: Player): CardBuff[] {
 }
 
 const stack = (buff: CardBuff) => (buff.count > 1 ? `${buff.label} ×${buff.count}` : buff.label);
-
-/** Values that change this markup; include it in the HUD render signature. */
-export const playerCardSignature = (player: Player) => [
-  player.attack,
-  player.range,
-  player.capacity,
-  player.speed,
-  player.perks,
-  player.mutations,
-];
 
 export function playerCardExtras(player: Player): string {
   const stats =

@@ -6,7 +6,7 @@ import { EN_MESSAGES } from "../locales/en";
 import { CREDITS_MUSIC, STORY_MUSIC, type Sound } from "../audio/sound";
 import type { GameRenderer } from "../render/game-renderer";
 import type { LoadProgress } from "../render/scene-assets";
-import { iconArt } from "../ui/icons";
+import { coreIconArt } from "../ui/icons";
 import { resultArt } from "../ui/match-result";
 import { storyImages } from "../story/assets";
 import { preloadSkinAssets } from "../ui/skin-assets";
@@ -108,7 +108,8 @@ function contentImages(): string[] {
   return [
     ...new Set([
       ...icons,
-      ...iconArt(),
+      ...definitions.flatMap((definition) => (definition.art ? [definition.art] : [])),
+      ...coreIconArt(),
       ...resultArt(),
       ...storyImages(),
       ...MAPS.flatMap((map) => (map.artwork ? [map.artwork] : [])),

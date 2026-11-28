@@ -3,6 +3,7 @@ const config = {
   id: "dimension-collapse",
   name: "维度坍缩",
   icon: "collapse",
+  art: new URL("./icon.webp", import.meta.url).href,
   tier: "mythic",
   tag: "主动强化",
   color: "#dc9cff",

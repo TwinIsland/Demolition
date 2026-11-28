@@ -11,6 +11,7 @@ const config = {
   name: "光学迷彩",
   description: "隐身 6 秒，对手、AI 与僵尸都看不到你；战术透视仍能发现你",
   icon: "cloak",
+  art: new URL("./icon.webp", import.meta.url).href,
   sound: new URL("./activate.ogg", import.meta.url).href,
   endSound: new URL("./deactivate.ogg", import.meta.url).href,
   endSoundRange: 7,

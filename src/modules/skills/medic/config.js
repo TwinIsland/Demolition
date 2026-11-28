@@ -10,6 +10,7 @@ const config = {
   name: "急救针",
   description: "3 秒内恢复 30 点血量，受到伤害会中断治疗",
   icon: "heart",
+  art: new URL("./icon.webp", import.meta.url).href,
   sound: new URL("./activate.ogg", import.meta.url).href,
   key: "F",
   price: 30,

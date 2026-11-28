@@ -859,6 +859,7 @@ export class GameRenderer {
     // These draw straight to the canvas after the post pipeline, from scenes of their own.
     // The killcam lens is one more program; one frame through it now saves a hitch at the kill.
     this.post.warmReplay();
+    this.post.warmDimension();
     this.nightVision.warm(renderer, camera);
     this.offerFire.warm(renderer);
     this.upgradeFx.warm(renderer);

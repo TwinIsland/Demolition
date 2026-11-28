@@ -3,7 +3,7 @@ import { isRecord, jsonCodec, Setting } from "../app/storage";
 /** The only story so far; later stories get their own entry in `StorySave.stories`. */
 export const MAIN_STORY = "ascension";
 
-export type FlagValue = string | number | boolean;
+type FlagValue = string | number | boolean;
 
 /**
  * Story progress. Everything is keyed by string IDs, never by position, so chapters and

@@ -109,7 +109,7 @@ function swing(
       if (s.tiles[z]?.[x] !== 2) {
         if (s.tiles[z]?.[x] === 1) {
           const feature = ctx.map.featureAt?.(x, z, s.size)?.split(":")[0];
-          const wooden = ["cherry", "torii", "farmhouse", "dojo", "shop", "cottage", "shrine", "notice"];
+          const wooden = ["tree", "dojo", "shop", "tavern", "house", "cottage", "smithy", "windmill"];
           emit(
             ctx,
             p,

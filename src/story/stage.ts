@@ -7,7 +7,7 @@ import type { Line } from "./script";
 export type StoryCue = "place" | "blast" | "pickup" | "down" | "power" | "pull";
 
 /** Music the story can ask for, by the part it plays under. */
-export type StoryTrack = "opening" | "duel" | "ascension" | "lesson" | "shutdown" | "home";
+type StoryTrack = "opening" | "duel" | "ascension" | "lesson" | "shutdown" | "home";
 
 /** A lesson names only the HUD elements it needs; true is the full HUD for the final fight. */
 export type StoryHudPart =

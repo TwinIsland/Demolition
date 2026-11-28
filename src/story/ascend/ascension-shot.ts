@@ -3,9 +3,9 @@ import type { DimensionLook, StagedShot } from "../../render/game-renderer";
 import type { StagedView } from "../../render/camera-rig";
 
 /** Seconds from the hit's lead-in to the first-person view. */
-export const ASCENSION_SECONDS = 9;
+const ASCENSION_SECONDS = 9;
 /** Seconds before that in which the overhead world breaks into blocks: the shot's clock starts at minus this. */
-export const ASCENSION_LEAD = 0.8;
+const ASCENSION_LEAD = 0.8;
 /** The front goes on running after the camera has landed, until the horizon stands too. */
 export const ASCENSION_SPREAD = 10.4;
 /** When the saxophone comes in: the world lets go of the page at this moment. */

@@ -89,12 +89,12 @@ Spend your starting coins on up to four skills before you deploy.
 
 <table>
   <tr>
-    <td align="center" width="16%"><img src="src/ui/icon-art/skills/detonator.webp" width="72" alt="" /><br /><b>Remote Detonator</b><br /><sub>Set off all your charges at once</sub></td>
-    <td align="center" width="16%"><img src="src/ui/icon-art/skills/kick.webp" width="72" alt="" /><br /><b>Slide Kick</b><br /><sub>Kick a charge down the lane</sub></td>
-    <td align="center" width="16%"><img src="src/ui/icon-art/skills/medic.webp" width="72" alt="" /><br /><b>Med Injector</b><br /><sub>Heal 30 HP over 3 seconds</sub></td>
-    <td align="center" width="16%"><img src="src/ui/icon-art/skills/scan.webp" width="72" alt="" /><br /><b>Threat Scan</b><br /><sub>See everyone through cover</sub></td>
-    <td align="center" width="16%"><img src="src/ui/icon-art/skills/veil.webp" width="72" alt="" /><br /><b>Blind Fuse</b><br /><sub>Hide your blast paths</sub></td>
-    <td align="center" width="16%"><img src="src/ui/icon-art/skills/cloak.webp" width="72" alt="" /><br /><b>Optical Camo</b><br /><sub>Turn invisible for 6 seconds</sub></td>
+    <td align="center" width="16%"><img src="src/modules/skills/detonator/icon.webp" width="72" alt="" /><br /><b>Remote Detonator</b><br /><sub>Set off all your charges at once</sub></td>
+    <td align="center" width="16%"><img src="src/modules/skills/kick/icon.webp" width="72" alt="" /><br /><b>Slide Kick</b><br /><sub>Kick a charge down the lane</sub></td>
+    <td align="center" width="16%"><img src="src/modules/skills/medic/icon.webp" width="72" alt="" /><br /><b>Med Injector</b><br /><sub>Heal 30 HP over 3 seconds</sub></td>
+    <td align="center" width="16%"><img src="src/modules/skills/scan/icon.webp" width="72" alt="" /><br /><b>Threat Scan</b><br /><sub>See everyone through cover</sub></td>
+    <td align="center" width="16%"><img src="src/modules/skills/veil/icon.webp" width="72" alt="" /><br /><b>Blind Fuse</b><br /><sub>Hide your blast paths</sub></td>
+    <td align="center" width="16%"><img src="src/modules/skills/cloak/icon.webp" width="72" alt="" /><br /><b>Optical Camo</b><br /><sub>Turn invisible for 6 seconds</sub></td>
   </tr>
 </table>
 
@@ -104,30 +104,30 @@ Score is experience. Every level-up adds a fixed boost and deals you three perk 
 
 <table>
   <tr>
-    <td align="center" width="20%"><img src="src/ui/icon-art/perks/missile-strike.webp" width="72" alt="" /><br /><b>Missile Strike</b><br /><sub>Diamond · call a missile onto any tile; it ignores walls</sub></td>
-    <td align="center" width="20%"><img src="src/ui/icon-art/perks/hijack.webp" width="72" alt="" /><br /><b>Hijack</b><br /><sub>Diamond · take over every enemy charge chained to yours</sub></td>
-    <td align="center" width="20%"><img src="src/ui/icon-art/perks/apocalypse.webp" width="72" alt="" /><br /><b>Cataclysm</b><br /><sub>Diamond · rearrange the arena and sweep it with fire</sub></td>
-    <td align="center" width="20%"><img src="src/ui/icon-art/perks/piercing-charge.webp" width="72" alt="" /><br /><b>Piercing Charge</b><br /><sub>Diamond · blasts punch through one obstacle</sub></td>
-    <td align="center" width="20%"><img src="src/ui/icon-art/perks/dimension-collapse.webp" width="72" alt="" /><br /><b>Dimensional Collapse</b><br /><sub>Mythic · lock everyone else in the overhead view</sub></td>
+    <td align="center" width="20%"><img src="src/modules/perks/missile-strike/icon.webp" width="72" alt="" /><br /><b>Missile Strike</b><br /><sub>Diamond · call a missile onto any tile; it ignores walls</sub></td>
+    <td align="center" width="20%"><img src="src/modules/perks/hijack/icon.webp" width="72" alt="" /><br /><b>Hijack</b><br /><sub>Diamond · take over every enemy charge chained to yours</sub></td>
+    <td align="center" width="20%"><img src="src/modules/perks/apocalypse/icon.webp" width="72" alt="" /><br /><b>Cataclysm</b><br /><sub>Diamond · rearrange the arena and sweep it with fire</sub></td>
+    <td align="center" width="20%"><img src="src/modules/perks/piercing-charge/icon.webp" width="72" alt="" /><br /><b>Piercing Charge</b><br /><sub>Diamond · blasts punch through one obstacle</sub></td>
+    <td align="center" width="20%"><img src="src/modules/perks/dimension-collapse/icon.webp" width="72" alt="" /><br /><b>Dimensional Collapse</b><br /><sub>Mythic · lock everyone else in the overhead view</sub></td>
   </tr>
 </table>
 
 <p align="center">
-  <img src="src/ui/icon-art/perks/armor-training.webp" width="44" alt="Conditioning" title="Conditioning" />
-  <img src="src/ui/icon-art/perks/long-wave.webp" width="44" alt="High Explosive" title="High Explosive" />
-  <img src="src/ui/icon-art/perks/light-feet.webp" width="44" alt="Fleet Footed" title="Fleet Footed" />
-  <img src="src/ui/icon-art/perks/bubble-pocket.webp" width="44" alt="Ammo Pouch" title="Ammo Pouch" />
-  <img src="src/ui/icon-art/perks/salvage.webp" width="44" alt="Salvage" title="Salvage" />
-  <img src="src/ui/icon-art/perks/endurance.webp" width="44" alt="Endurance" title="Endurance" />
-  <img src="src/ui/icon-art/perks/contract.webp" width="44" alt="Bounty Contract" title="Bounty Contract" />
-  <img src="src/ui/icon-art/perks/shaped-charge.webp" width="44" alt="Shaped Charge" title="Shaped Charge" />
-  <img src="src/ui/icon-art/perks/repair.webp" width="44" alt="Field Recovery" title="Field Recovery" />
-  <img src="src/ui/icon-art/perks/long-reach.webp" width="44" alt="Extended Reach" title="Extended Reach" />
-  <img src="src/ui/icon-art/perks/afterburn.webp" width="44" alt="Afterburn" title="Afterburn" />
-  <img src="src/ui/icon-art/perks/short-fuse.webp" width="44" alt="Short Fuse" title="Short Fuse" />
-  <img src="src/ui/icon-art/perks/last-stand.webp" width="44" alt="Last Stand" title="Last Stand" />
-  <img src="src/ui/icon-art/perks/siphon.webp" width="44" alt="Siphon Charge" title="Siphon Charge" />
-  <img src="src/ui/icon-art/perks/capacitor.webp" width="44" alt="Rapid Circuit" title="Rapid Circuit" />
+  <img src="src/modules/perks/armor-training/icon.webp" width="44" alt="Conditioning" title="Conditioning" />
+  <img src="src/modules/perks/long-wave/icon.webp" width="44" alt="High Explosive" title="High Explosive" />
+  <img src="src/modules/perks/light-feet/icon.webp" width="44" alt="Fleet Footed" title="Fleet Footed" />
+  <img src="src/modules/perks/bubble-pocket/icon.webp" width="44" alt="Ammo Pouch" title="Ammo Pouch" />
+  <img src="src/modules/perks/salvage/icon.webp" width="44" alt="Salvage" title="Salvage" />
+  <img src="src/modules/perks/endurance/icon.webp" width="44" alt="Endurance" title="Endurance" />
+  <img src="src/modules/perks/contract/icon.webp" width="44" alt="Bounty Contract" title="Bounty Contract" />
+  <img src="src/modules/perks/shaped-charge/icon.webp" width="44" alt="Shaped Charge" title="Shaped Charge" />
+  <img src="src/modules/perks/repair/icon.webp" width="44" alt="Field Recovery" title="Field Recovery" />
+  <img src="src/modules/perks/long-reach/icon.webp" width="44" alt="Extended Reach" title="Extended Reach" />
+  <img src="src/modules/perks/afterburn/icon.webp" width="44" alt="Afterburn" title="Afterburn" />
+  <img src="src/modules/perks/short-fuse/icon.webp" width="44" alt="Short Fuse" title="Short Fuse" />
+  <img src="src/modules/perks/last-stand/icon.webp" width="44" alt="Last Stand" title="Last Stand" />
+  <img src="src/modules/perks/siphon/icon.webp" width="44" alt="Siphon Charge" title="Siphon Charge" />
+  <img src="src/modules/perks/capacitor/icon.webp" width="44" alt="Rapid Circuit" title="Rapid Circuit" />
   <br />
   <sub>Twenty perks in all. Each has a page in the <a href="docs/content/README.md">content reference</a>.</sub>
 </p>
@@ -137,19 +137,19 @@ Score is experience. Every level-up adds a fixed boost and deals you three perk 
 Cover and zombies drop gear. Zombies sometimes also drop a gene mutation that permanently raises one of your stats.
 
 <p align="center">
-  <img src="src/ui/icon-art/equipment/bomb.webp" width="56" alt="Charge" title="Charge" />
-  <img src="src/ui/icon-art/equipment/grenade.webp" width="56" alt="Frag Grenade" title="Frag Grenade" />
-  <img src="src/ui/icon-art/equipment/molotov.webp" width="56" alt="Molotov" title="Molotov" />
-  <img src="src/ui/icon-art/equipment/shield.webp" width="56" alt="Tactical Shield" title="Tactical Shield" />
-  <img src="src/ui/icon-art/equipment/bandage.webp" width="56" alt="Bandage" title="Bandage" />
-  <img src="src/ui/icon-art/equipment/knife.webp" width="56" alt="Knife" title="Knife" />
-  <img src="src/ui/icon-art/equipment/crate.webp" width="56" alt="Field Crate" title="Field Crate" />
+  <img src="src/ui/icon-art/bomb.webp" width="56" alt="Charge" title="Charge" />
+  <img src="src/modules/items/grenade/icon.webp" width="56" alt="Frag Grenade" title="Frag Grenade" />
+  <img src="src/modules/items/molotov/icon.webp" width="56" alt="Molotov" title="Molotov" />
+  <img src="src/modules/items/shield/icon.webp" width="56" alt="Tactical Shield" title="Tactical Shield" />
+  <img src="src/modules/items/bandage/icon.webp" width="56" alt="Bandage" title="Bandage" />
+  <img src="src/modules/items/knife/icon.webp" width="56" alt="Knife" title="Knife" />
+  <img src="src/modules/items/crate/icon.webp" width="56" alt="Field Crate" title="Field Crate" />
   &nbsp;&nbsp;&nbsp;
-  <img src="src/ui/icon-art/mutations/vitality.webp" width="56" alt="Vitality" title="Vitality" />
-  <img src="src/ui/icon-art/mutations/fast-twitch.webp" width="56" alt="Fast Twitch" title="Fast Twitch" />
-  <img src="src/ui/icon-art/mutations/lung-capacity.webp" width="56" alt="Lung Capacity" title="Lung Capacity" />
-  <img src="src/ui/icon-art/mutations/blast-reach.webp" width="56" alt="Blast Reach" title="Blast Reach" />
-  <img src="src/ui/icon-art/mutations/blast-yield.webp" width="56" alt="Blast Yield" title="Blast Yield" />
+  <img src="src/modules/mutations/vitality/icon.webp" width="56" alt="Vitality" title="Vitality" />
+  <img src="src/modules/mutations/fast-twitch/icon.webp" width="56" alt="Fast Twitch" title="Fast Twitch" />
+  <img src="src/modules/mutations/lung-capacity/icon.webp" width="56" alt="Lung Capacity" title="Lung Capacity" />
+  <img src="src/modules/mutations/blast-reach/icon.webp" width="56" alt="Blast Reach" title="Blast Reach" />
+  <img src="src/modules/mutations/blast-yield/icon.webp" width="56" alt="Blast Yield" title="Blast Yield" />
 </p>
 
 ### Operators

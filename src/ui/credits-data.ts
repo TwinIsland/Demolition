@@ -154,14 +154,6 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
       polyHaven("Mossy Sandstone"),
       polyHaven("Decrepit Wallpaper", "Rob Tuytel · Poly Haven"),
       polyHaven("Dirty Carpet", "Rohit Seervi · Poly Haven"),
-      polyHaven("Japanese Stone Wall", "Rico Cilliers, Charlotte Baglioni, Dario Barresi · Poly Haven"),
-      polyHaven("Roof 09", "Rob Tuytel · Poly Haven"),
-      polyHaven("Thatch Roof Angled", "Rob Tuytel, Dimitrios Savva · Poly Haven"),
-      polyHaven("White Plaster 02", "Rob Tuytel · Poly Haven"),
-      polyHaven("Japanese Cedar Planks", "Charlotte Baglioni, Rico Cilliers · Poly Haven"),
-      polyHaven("Stone Pathway", "Amal Kumar · Poly Haven"),
-      polyHaven("Cobblestone Floor 08", "Rob Tuytel · Poly Haven"),
-      polyHaven("Sakura Bark", "Charlotte Baglioni · Poly Haven"),
       { title: "Explosion", use: ["爆炸序列帧", "Blast flipbook"], author: "OpenGameArt", license: CC0 },
       {
         title: "Smoke",
@@ -175,6 +167,18 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
     entries: [
       { title: "Dynamite Stick Bundle", author: "The Base Mesh", license: CC0 },
       { title: "Sci-Fi Essentials Kit", author: "Quaternius", license: CC0 },
+      {
+        title: "KayKit Medieval Hexagon Pack",
+        use: ["平面国的建筑与物件", "Flatland buildings and props"],
+        author: "Kay Lousberg",
+        license: CC0,
+      },
+      {
+        title: "KayKit Halloween Bits",
+        use: ["平面国的墓园、灯柱与拱门", "Flatland graveyard, lanterns and arches"],
+        author: "Kay Lousberg",
+        license: CC0,
+      },
       { title: "Hatsune Miku-VOCALOID", author: "julito · SkinsDB", license: "CC BY-SA 3.0" },
     ],
   },
@@ -220,5 +224,3 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
     ],
   },
 ];
-
-export const FULL_CREDITS_URL = "https://github.com/TwinIsland/Demolition/blob/main/public/assets/CREDITS.md";

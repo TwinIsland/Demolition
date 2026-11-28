@@ -8,7 +8,7 @@ import { NOISE_GLSL } from "./noise.glsl";
  * instance's world position, and every mask is procedural noise in world space, so static
  * batches keep their draw calls.
  */
-export type SurfaceProfile =
+type SurfaceProfile =
   | "structure"
   | "ground"
   | "terrain"
@@ -79,7 +79,7 @@ export function createWeatherUniforms(): WeatherUniforms {
 }
 
 /** Which arena materials get which treatment, by the names the material library assigns. */
-export function profileFor(material: THREE.Material): SurfaceProfile | undefined {
+function profileFor(material: THREE.Material): SurfaceProfile | undefined {
   const name = material.name;
   if (name === "enamel" || name === "wall-cap" || name === "exterior-building") return "structure";
   if (name === "floor") return "ground";
@@ -95,7 +95,7 @@ export function profileFor(material: THREE.Material): SurfaceProfile | undefined
   if (name === "wall-base" || name === "platform") return "metal";
   if (name === "df:jungle-trunk") return "trunk";
   if (name === "df:jungle-canopy") return "canopy";
-  if (name === "df:jungle-crown" || name === "df:scan-rock" || name === "df:sakura-crown") return "matte";
+  if (name === "df:jungle-crown" || name === "df:scan-rock") return "matte";
   if (name === "df:village-path" || name === "df:village-cobble") return "paving";
   if (name.startsWith("df:")) return name === "df:glass" ? undefined : "prop";
   return undefined;

@@ -279,6 +279,21 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   });
   match.look = { yaw: SOUTH, pitch: 0 };
   d.lock(true);
+  // The painted sky and the panel are fetched, decoded and uploaded while the veil is still down:
+  // nothing may hitch at the moment the device goes off.
+  const skyReady = new THREE.TextureLoader()
+    .loadAsync(ASCENSION_ART.sky)
+    .then((texture) => {
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.mapping = THREE.EquirectangularReflectionMapping;
+      keepSky(texture);
+      renderer.renderer.initTexture(texture);
+      return texture;
+    })
+    .catch((error) => void console.error(error));
+  const panel = new Image();
+  panel.src = ASCENSION_ART.panel;
+  await Promise.race([Promise.all([skyReady, panel.decode().catch(() => {})]), stage.wait(4000)]);
   stage.root.classList.remove("veiled");
   if (!(await d.seconds(0.9))) return;
   if (!(await d.talk(fill(LINES.trigger), { live: true }))) return;
@@ -304,13 +319,7 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   renderer.dimension = shot.look;
   stage.host.silence();
   stage.root.classList.add("ascend-bars");
-  const loader = new THREE.TextureLoader();
-  loader.load(ASCENSION_ART.sky, (texture) => {
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.mapping = THREE.EquirectangularReflectionMapping;
-    keepSky(texture);
-    renderer.paintSky(texture, SKY_TURN);
-  });
+  void skyReady.then((texture) => texture && renderer.paintSky(texture, SKY_TURN));
 
   // The world breaks into blocks, the ascension track comes in, and for a moment it is a drawing.
   if (!(await d.until(() => shot.time >= ASCENSION_HIT - 0.05))) return;
@@ -323,7 +332,7 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   if (!(await stage.wait(PANEL_MS))) return;
   flash();
   stage.art();
-  stage.root.querySelector(".story-art")?.classList.remove("ascend-push");
+  stage.root.querySelector(".stage-art")?.classList.remove("ascend-push");
   // From here on the hero sees with his own eyes; the shot keeps the camera until it gets there.
   hero((p) => delete p.tacticalView);
   rolling = true;

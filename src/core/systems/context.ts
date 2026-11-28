@@ -3,7 +3,7 @@ import type { MapDefinition } from "../maps";
 import type { GameSnapshot, PerkId } from "../types";
 import type { ZombieDirector } from "../zombies";
 
-export interface OfferHistory {
+interface OfferHistory {
   previous: PerkId[];
   silverHands: number;
 }

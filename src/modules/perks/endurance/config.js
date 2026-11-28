@@ -12,6 +12,7 @@ const config = {
   name: "耐力储备",
   description: "每层增加 25 点体力上限、体力恢复速度提高 15%，并立即补充 25 点体力，最多三层。",
   icon: "stamina",
+  art: new URL("./icon.webp", import.meta.url).href,
   color: "#bdcad4",
   tag: "机动",
   tier: "silver",

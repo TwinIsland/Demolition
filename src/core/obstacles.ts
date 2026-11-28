@@ -39,7 +39,7 @@ export type MapObstacle = { weight: number } & (
     })
 );
 
-export const DEFAULT_FOOTPRINT = 0.86;
+const DEFAULT_FOOTPRINT = 0.86;
 const registry = new Map<string, ObstacleDefinition>();
 
 export function defineObstacle(definition: ObstacleDefinition) {
@@ -103,19 +103,22 @@ preset("office-desk", "wood", 1.35, ["backrooms", "office"]);
 preset("water-cooler", "soft", 1.52, ["backrooms", "office"], 0.6);
 preset("partition", "soft", 1.63, ["backrooms", "office"]);
 
-// Village
-preset("sake-barrels", "wood", 1.75, ["village"], 0.84);
-preset("hay-bales", "soft", 1.55, ["village"], 0.9);
-preset("wood-fence", "wood", 1.35, ["village-fence"], 0.95);
-preset("handcart", "wood", 1.45, ["village"], 0.92);
-preset("pottery", "soft", 1.3, ["village"], 0.84);
+// Village: models of the KayKit packs, see tools/model-import/kaykit.mjs.
+preset("village-crate", "wood", 1.5, ["village-crate"], 0.64);
+preset("barrels", "wood", 1.25, ["village"], 0.86);
+preset("crate-stack", "wood", 1.75, ["village"], 0.9);
+preset("sacks", "soft", 1.1, ["village"], 0.86);
+preset("wheelbarrow", "wood", 1.15, ["village"], 0.92);
+preset("lumber", "wood", 0.95, ["village"], 0.94);
+preset("training-rack", "wood", 1.5, ["village"], 0.9);
+preset("wood-fence", "wood", 1.2, ["village-fence"], 0.95);
 
 /** IDs accepted by maps written for earlier releases. */
 const LEGACY_IDS: Readonly<Record<string, string>> = { "low-bags": "bags" };
 const FALLBACK: readonly MapObstacle[] = [{ use: "set:storage", weight: 1 }];
 
-export const obstaclePresets = (): readonly ObstacleDefinition[] => [...registry.values()];
-export const obstaclePreset = (id: string) => registry.get(LEGACY_IDS[id] ?? id);
+const obstaclePresets = (): readonly ObstacleDefinition[] => [...registry.values()];
+const obstaclePreset = (id: string) => registry.get(LEGACY_IDS[id] ?? id);
 
 const resolved = (definition: ObstacleDefinition, weight: number): Obstacle => ({
   id: definition.id,
