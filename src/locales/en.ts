@@ -8,6 +8,8 @@ export const EN_MESSAGES: Readonly<Record<string, string>> = {
   主音量: "Master volume",
   音乐: "Music",
   音乐盒: "Music box",
+  切换歌曲: "Next track",
+  播放音乐盒: "Play the jukebox",
   收藏: "Gallery",
   关闭收藏: "Close gallery",
   故事插画: "Story illustrations",

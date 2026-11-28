@@ -3,8 +3,9 @@
 //
 // Open ground:   .  grass     ,  dirt road     +  cobbled plaza     :  tilled field
 // Destructible:  c  wooden crate     f  plank fence     o  anything from the village pool
-// Permanent:     #  boundary wall    w  low stone wall    L  lantern    F  the plaza's well
+// Permanent:     #  boundary wall    w  low stone wall    L  lantern
 //                T  tree    R  rock    G  gravestone    B  notice stone
+//                X  jukebox: whoever stands by it can change the music of the match
 //                t  pier of an arch (two piers carry one arch over the cell between them)
 //                K  tavern    M  market (the skill shop)    S  church    N  smithy    Y  windmill
 //                D E  training ground    H J  house    I U  cottage
@@ -22,7 +23,7 @@ export const LAYOUT = [
   "#c..,MMMo.,o.KKK,.c.#",
   "#oo.,oo.L+++L..o,To.#",
   "#coRLo.T+++++.t.L.R.#",
-  "#co,,o,,++F++,,,,o,,#",
+  "#co,,o,,++X++,,,,o,,#",
   "#.T.L..o+++++.t.LoG.#",
   "#..o,NNoL+++L...,...#",
   "#.YYoNNo.o,.EEEE,SS.#",

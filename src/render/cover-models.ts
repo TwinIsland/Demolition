@@ -38,6 +38,8 @@ const SCENERY = {
   "village-windmill": undefined,
   "village-tower": undefined,
   "village-well": undefined,
+  // A Minecraft jukebox block (tools/model-import/jukebox.py).
+  "village-jukebox": undefined,
   "village-castle": undefined,
   "village-crypt": undefined,
   "village-wall": undefined,

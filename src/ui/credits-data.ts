@@ -180,6 +180,12 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
         author: "Kay Lousberg",
         license: CC0,
       },
+      {
+        title: "Jukebox block textures",
+        use: ["平面国广场的音乐盒", "The jukebox on the Flatland plaza"],
+        author: "Mojang Studios · Minecraft: Java Edition",
+        license: "© Mojang Studios",
+      },
       { title: "Hatsune Miku-VOCALOID", author: "julito · SkinsDB", license: "CC BY-SA 3.0" },
     ],
   },

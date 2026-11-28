@@ -55,6 +55,8 @@ export class KeyboardAgent implements PlayerAgent {
   private perkTarget?: Vec2;
   /** Called instead of queueing when a perk needs a cell picked first. */
   onTargetedPerk?: (id: PerkId) => void;
+  /** Asked before a press of the use key fires: true when something in the world took the click. */
+  onUse?: () => boolean;
   private perkInventory: readonly string[] = [];
   private perkCursor?: PerkId;
   private wheelSteps = 0;
@@ -140,6 +142,8 @@ export class KeyboardAgent implements PlayerAgent {
         if (this.enabled && !this.selectingWheel) {
           const code = "Mouse" + e.button;
           if (!this.boardMode || bindings.action(code) === "build") this.press(code);
+          // The overhead view has no use for the click itself, but the world may.
+          else if (bindings.action(code) === "use") this.onUse?.();
           if (!this.boardMode && e.button === 1 && !bindings.action(code)) this.dragging = true;
           this.pointer = { x: e.clientX, y: e.clientY };
         }
@@ -273,6 +277,7 @@ export class KeyboardAgent implements PlayerAgent {
       this.queueSkill(action.slice("skill:".length));
       return;
     }
+    if (action === "use" && !this.selectingWheel && this.onUse?.()) return;
     this.keys.add(code);
     if (action === "resetTerrain") this.resetTerrain = true;
     if (action === "build" && !this.selectingWheel)

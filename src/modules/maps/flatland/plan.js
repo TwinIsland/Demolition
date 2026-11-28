@@ -24,6 +24,7 @@ const FEATURE = {
   w: "low-wall",
   L: "lantern",
   F: "fountain",
+  X: "jukebox",
   T: "tree",
   R: "rock",
   G: "grave",
@@ -85,7 +86,7 @@ export function villagePlan(layout) {
   function groundAt(x, z) {
     const symbol = symbolAt(x, z);
     if (symbol === ":") return "mud";
-    if (",+F".includes(symbol)) return "stone";
+    if (",+FX".includes(symbol)) return "stone";
     // A lantern at the plaza's edge stands on its cobbles; one by the road stands in the grass.
     if (symbol === "L")
       return [symbolAt(x - 1, z), symbolAt(x + 1, z), symbolAt(x, z - 1), symbolAt(x, z + 1)].includes("+")

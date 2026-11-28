@@ -120,6 +120,8 @@ export function villageWall(models: Models, map: MapDefinition, size: number, x:
       return models.scenery("village-well");
     case "notice":
       return models.scenery("village-notice");
+    case "jukebox":
+      return models.scenery("village-jukebox");
   }
   return models.scenery("village-block");
 }

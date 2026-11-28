@@ -25,6 +25,8 @@ export default defineMap(
     weather: "spring",
     artwork: new URL("./briefing.webp", import.meta.url).href,
     backdrop: new URL("./backdrop.webp", import.meta.url).href,
+    // The last fight of the story; the jukebox on the plaza plays the rest of its soundtrack.
+    bgm: "./assets/story/kenka-no-bannin.mp3",
     obstacles: [
       { use: "set:village", weight: 100 },
       // Only where the plan asks for a crate.

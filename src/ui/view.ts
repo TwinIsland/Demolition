@@ -1,3 +1,4 @@
+import type { JukeboxPrompt } from "../app/jukebox";
 import type { GameSnapshot, PerkId, Player } from "../core/types";
 
 /** Everything a HUD view may read for one refresh. Views never keep a reference to it. */
@@ -8,6 +9,8 @@ export interface HudFrame {
   /** Cell the current throw would land on, when one is being aimed. */
   readonly landing?: { x: number; z: number; valid: boolean };
   readonly selectedPerk?: PerkId;
+  /** Set by the map's jukebox while the player can use it or has just changed the track. */
+  readonly jukebox?: JukeboxPrompt;
 }
 
 /**

@@ -57,6 +57,7 @@ import { shopMarkup, updateShop } from "./shop";
 import { SkillBarView } from "./skill-bar";
 import { StrikePanel } from "./strike-panel";
 import { TopBar } from "./top-bar";
+import { JukeboxPromptView } from "./jukebox-prompt";
 import { SupplyShopView } from "./supply-shop";
 import type { HudFrame, HudView } from "./view";
 import { WalletView } from "./wallet";
@@ -78,6 +79,7 @@ const SHELL = `
         ${BattleEffectsView.markup}
         <aside id="equipment-wheel"></aside>
         <div class="board-bomb-hint">${icon("bomb")}<kbd>空格</kbd><span>原地放置炸药</span></div>
+        <div class="jukebox-prompt" aria-live="polite"></div>
         <aside id="supply-shop" class="supply-shop" aria-label="补给"></aside>
         <div class="bottom-hud"><div id="wallet" class="wallet"></div><div id="player-stats" class="player-stats"></div><div class="loadout"><div class="skill-buttons"></div>
           </div></div>
@@ -156,6 +158,7 @@ export class GameUI {
       this.skills,
       buffs,
       radar,
+      new JukeboxPromptView(query(root, ".jukebox-prompt")),
     ];
     this.mutationNotice = new MutationNotice(this.hud);
     this.feed = new CombatFeed(this.hud);

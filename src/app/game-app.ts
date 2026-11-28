@@ -40,6 +40,7 @@ import { afterPaint, loading, localizeDocument } from "../ui/loading";
 import { battlePresentation } from "./battle-presentation";
 import { EquipmentControl } from "./equipment-control";
 import { GameLoop, Throttle } from "./game-loop";
+import { Jukebox } from "./jukebox";
 import { MatchSetup } from "./match-setup";
 import { ScreenMachine, type Screen } from "./screens";
 import { isZombieRate, loadAppearance, readCustomSkin } from "./settings";
@@ -86,6 +87,11 @@ export class GameApp {
   private helpFromLobby = true;
   /** The match story mode is staging, while there is one. */
   private storyMatch?: StoryMatch;
+  /** The block on a map's plaza that changes the music of the match. */
+  private readonly jukebox = new Jukebox((url) => {
+    this.sound.setMusic(url);
+    this.sound.menu("accept");
+  });
   /** The skill shop a story scene has open, and what to do once the hero deploys from it. */
   private storyShop?: {
     dialog: HTMLElement;
@@ -107,6 +113,17 @@ export class GameApp {
     this.session = createSession(this.setup.initialOptions());
     this.keyboard = new KeyboardAgent(LOCAL_PLAYER_ID, renderer.canvas);
     this.keyboard.onTargetedPerk = (id) => this.beginTargeting(id);
+    this.keyboard.onUse = () => {
+      if (!this.screens.is("playing")) return false;
+      const state = this.session.getSnapshot();
+      return this.jukebox.use(
+        state,
+        this.viewer(state),
+        this.keyboard.yaw,
+        this.keyboard.topDown,
+        performance.now() / 1000,
+      );
+    };
     this.ui = new GameUI(root, this.uiActions());
     this.feedback = new FeedbackHud(root);
     this.equipment = new EquipmentControl({
@@ -654,6 +671,7 @@ export class GameApp {
     this.releaseControls();
     this.sound.reset();
     this.sound.setMusic(this.setup.music);
+    this.jukebox.reset(this.setup.music);
     this.sound.menu("accept");
     loading.show(this.setup.mapName);
     try {
@@ -950,6 +968,9 @@ export class GameApp {
         viewer,
         landing: this.renderer.landingPreview,
         selectedPerk: this.keyboard.selectedPerk,
+        jukebox: this.screens.is("playing")
+          ? this.jukebox.prompt(state, viewer, this.keyboard.yaw, topDown, now)
+          : undefined,
       });
       // Lands in the next frame's sample, which is the frame that waits for it.
       this.renderer.profile("hud", performance.now() - hudStarted);
