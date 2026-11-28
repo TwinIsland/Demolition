@@ -135,8 +135,8 @@ export function playBedroom(stage: Stage, scene: RoomScene): ScenePlayer {
       if (over && !(await talk(lines.slice(0, over)))) return;
       // However fast the lines were read, the camera gets most of its way to the window.
       if (!(await stage.wait(Math.max(0, 8000 - (performance.now() - began)))) || !alive) return;
-      stage.art(art);
-      if (!(await stage.wait(500))) return;
+      // The film leaves only once the picture covers it.
+      if (!(await stage.art(art))) return;
       evening.dispose();
       film = undefined;
       if (!(await talk(lines.slice(over)))) return;
