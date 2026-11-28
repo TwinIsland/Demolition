@@ -130,5 +130,4 @@ function connectedAround(tiles: Tile[][], x: number, z: number, exits: Vec2[]) {
   }
   return !targets.size;
 }
-export const cellKey = (x: number, z: number) => `${Math.round(x)},${Math.round(z)}`;
 export { DIRECTIONS };

@@ -11,6 +11,7 @@ const config = {
   name: "燃烧瓶",
   description: "可高抛越过掩体，落地碎裂并点燃周围地面 4.5 秒，站在火中的任何人都会持续受伤，包括自己。",
   icon: "molotov",
+  art: new URL("./icon.webp", import.meta.url).href,
   color: "#f0843c",
   model: new URL("./model.glb", import.meta.url).href,
   weight: 2.6,

@@ -63,58 +63,14 @@
   justify-content: center;
   margin-top: 21px;
 }
-.modal-actions button,
-.text-btn {
+.modal-actions button {
   background: none;
   color: var(--text-dim);
   font-size: var(--text-md);
   padding: 8px 13px;
 }
-.modal-actions button:hover,
-.text-btn:hover {
+.modal-actions button:hover {
   color: var(--text);
-}
-.text-btn {
-  display: block;
-  margin: 16px auto -8px;
-}
-.result-icon {
-  color: var(--gold-200);
-  display: grid;
-  place-items: center;
-  margin: -4px auto 24px;
-  background: #e9d3a112;
-  width: 70px;
-  height: 70px;
-  border-radius: 23px;
-  border: 1px solid #e7bc7022;
-}
-.result-icon .icon {
-  width: 34px;
-  height: 34px;
-}
-.result-stats {
-  display: flex;
-  justify-content: space-around;
-  border-top: 1px solid var(--line-faint);
-  border-bottom: 1px solid var(--line-faint);
-  padding: 22px 0;
-  margin-bottom: 28px;
-}
-.result-stats b {
-  font-size: 30px;
-  font-weight: 500;
-  color: var(--gold-200);
-  display: block;
-  margin-bottom: 8px;
-}
-.result-stats b small {
-  font-size: 15px;
-  margin-left: 3px;
-}
-.result-stats span {
-  font-size: var(--text-sm);
-  color: var(--text-dim);
 }
 @keyframes arrive {
   from {

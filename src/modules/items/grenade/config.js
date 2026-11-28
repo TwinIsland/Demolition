@@ -11,6 +11,7 @@ const config = {
   name: "破片手榴弹",
   description: "高抛越过墙壁和掩体，落在四格内的空地，落地即爆，威力为炸药的 75%。",
   icon: "grenade",
+  art: new URL("./icon.webp", import.meta.url).href,
   color: "#deb36f",
   model: new URL("./model.glb", import.meta.url).href,
   weight: 2.4,

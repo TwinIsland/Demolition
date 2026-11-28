@@ -11,6 +11,7 @@ const config = {
   name: "战术护盾",
   description: "展开护盾，最多持续 4.5 秒，可抵挡近战和僵尸攻击。挡住一次爆炸后立即破碎。",
   icon: "shield",
+  art: new URL("./icon.webp", import.meta.url).href,
   quickEquipCode: "KeyX",
   sound: "./assets/shield-on.ogg",
   shieldSounds: {

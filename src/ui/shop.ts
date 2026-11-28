@@ -19,7 +19,7 @@ export function shopMarkup(player: Player, { requiredSkills }: StoryShopOptions 
     const required = requiredSkills?.includes(id);
     const locked = requiredSkills && !required;
     return `<button class="shop-card ${owns(player, id) ? "purchased" : ""}" ${required ? 'data-tutorial-required="true"' : ""} data-trade="${id}" data-refund="${owns(player, id)}" ${locked || unaffordable(player, id) ? "disabled" : ""}>
-        ${artIcon("skills", id, skill.icon)}<strong>${field(skill, "name")}</strong>${skillKeyHint(id)}
+        ${artIcon(skill)}<strong>${field(skill, "name")}</strong>${skillKeyHint(id)}
         <small>${field(skill, "description")}</small><b>${tradeLabel(player, id)}</b></button>`;
   }).join("");
   // The full-width space keeps the two counters apart without extra markup.

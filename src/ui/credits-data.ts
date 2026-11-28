@@ -220,5 +220,3 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
     ],
   },
 ];
-
-export const FULL_CREDITS_URL = "https://github.com/TwinIsland/Demolition/blob/main/public/assets/CREDITS.md";

@@ -74,7 +74,7 @@ export function resultKind(snapshot: Readonly<GameSnapshot>, viewer: Player): Re
 const statsOf = (p: Player): MatchStats => p.stats ?? emptyMatchStats();
 
 /** Best first: the winner, then survivors, then by score. */
-export function standings(snapshot: Readonly<GameSnapshot>): Player[] {
+function standings(snapshot: Readonly<GameSnapshot>): Player[] {
   const rank = (p: Player) => (p.id === snapshot.winnerId ? 2 : p.alive ? 1 : 0);
   return [...snapshot.players].sort((a, b) => rank(b) - rank(a) || b.score - a.score);
 }

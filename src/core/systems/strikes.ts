@@ -8,7 +8,7 @@ import { emit } from "./events";
 export const STRIKE_FIRE = 0.9;
 
 /** Seconds before impact at which everyone but the caller gets to see where a missile lands. */
-export const STRIKE_TELEGRAPH = 1.5;
+const STRIKE_TELEGRAPH = 1.5;
 
 /** Seconds of warning `viewerId` gets for a strike: the caller sees it from launch, everyone else late. */
 export const strikeWarning = (strike: Strike, viewerId: string | undefined) => {

@@ -91,7 +91,7 @@ export class StrikePanel implements HudView {
     // Start on the operator's own cell, so the keyboard can steer from somewhere sensible.
     this.cursor = { x: Math.round(viewer.x), z: Math.round(viewer.z) };
     this.root.hidden = false;
-    this.title.innerHTML = `${artIcon("perks", perk.id, perk.icon)}<b>${field(perk, "name")}</b><small>${t("选择落点")}</small>`;
+    this.title.innerHTML = `${artIcon(perk)}<b>${field(perk, "name")}</b><small>${t("选择落点")}</small>`;
     query(this.root, ".strike-keys").innerHTML =
       `<span><kbd>${t("左键")}</kbd>/<kbd>Enter</kbd> ${t("确认发射")}</span><span><kbd>${t("右键")}</kbd>/<kbd>Esc</kbd> ${t("取消")}</span>`;
     const { delay, radius } = perk.stats ?? {};

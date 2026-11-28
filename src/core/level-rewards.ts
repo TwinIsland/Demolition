@@ -4,7 +4,7 @@ import type { Player } from "./types";
 export type LevelGain = "capacity" | "maxHp" | "range" | "attack";
 
 /** Size of each gain, and the ceiling it shares with every other source of that stat. */
-export const LEVEL_GAINS = {
+const LEVEL_GAINS = {
   capacity: { amount: 1, cap: 7 },
   maxHp: { amount: 10, cap: Infinity },
   range: { amount: 1, cap: 5 },
@@ -25,7 +25,7 @@ const LEVEL_TABLE: Readonly<Record<number, readonly LevelGain[]>> = {
 /** Past the table every level still toughens the operator a little. */
 const LATE_LEVEL: readonly LevelGain[] = ["maxHp"];
 
-export const levelGains = (level: number): readonly LevelGain[] =>
+const levelGains = (level: number): readonly LevelGain[] =>
   LEVEL_TABLE[level] ?? (level > 9 ? LATE_LEVEL : []);
 
 /**

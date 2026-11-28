@@ -21,7 +21,7 @@ export const motionLevel = () => level;
 /** 0 disables shake and kicks, 1 plays them at full strength. */
 export const motionScale = () => LEVELS[level];
 
-export function setMotionLevel(value: MotionLevel) {
+function setMotionLevel(value: MotionLevel) {
   level = value;
   try {
     localStorage.setItem(storageKey, value);

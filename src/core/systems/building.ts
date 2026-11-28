@@ -11,7 +11,7 @@ import { emit } from "./events";
 const FOOTPRINT = 0.5 + RULES.playerRadius;
 
 /** The cell one step along the player's facing, snapped to the grid. */
-export function cellAhead(p: Pick<Player, "x" | "z" | "yaw">): Vec2 {
+function cellAhead(p: Pick<Player, "x" | "z" | "yaw">): Vec2 {
   const fx = -Math.sin(p.yaw),
     fz = -Math.cos(p.yaw);
   const x = Math.round(p.x),

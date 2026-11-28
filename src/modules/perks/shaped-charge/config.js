@@ -12,6 +12,7 @@ const config = {
   name: "强化装药",
   description: "每层攻击力 +15，最多 3 层。炸药束与地面预警纹理随威力升级。",
   icon: "target",
+  art: new URL("./icon.webp", import.meta.url).href,
   color: "#f6a36b",
   tag: "伤害强化",
   tier: "gold",

@@ -11,6 +11,7 @@ const config = {
   id: "apocalypse",
   name: "灭世",
   icon: "apocalypse",
+  art: new URL("./icon.webp", import.meta.url).href,
   tier: "diamond",
   tag: "主动强化",
   color: "#84deff",

@@ -1,12 +1,6 @@
 import { MAPS } from "../core/maps";
 import { field, language } from "../i18n";
-import {
-  ASSET_GROUPS,
-  STAFF,
-  type AssetCredit,
-  type Bilingual,
-  type StaffCredit,
-} from "./credits-data";
+import { ASSET_GROUPS, STAFF, type AssetCredit, type Bilingual, type StaffCredit } from "./credits-data";
 import { query } from "./dom";
 import { mountCreditsSpectrum, type SpectrumReader } from "./credits-spectrum";
 
@@ -58,12 +52,18 @@ export function creditsMarkup() {
  * motion the strip is a plain scrollable page instead.
  */
 export function mountCredits(dialog: HTMLElement, readSpectrum: SpectrumReader) {
-  const stopSpectrum = mountCreditsSpectrum(query<HTMLCanvasElement>(dialog, ".credits-spectrum"), readSpectrum);
+  const stopSpectrum = mountCreditsSpectrum(
+    query<HTMLCanvasElement>(dialog, ".credits-spectrum"),
+    readSpectrum,
+  );
   const viewport = query(dialog, ".credits-viewport");
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
     viewport.classList.add("credits-static");
     const revealSpectrum = () => {
-      dialog.classList.toggle("credits-finished", viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 2);
+      dialog.classList.toggle(
+        "credits-finished",
+        viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 2,
+      );
     };
     viewport.addEventListener("scroll", revealSpectrum);
     revealSpectrum();

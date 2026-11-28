@@ -102,8 +102,7 @@ const KEY_NAMES: Record<string, string> = {
   Quote: "引号",
   Backquote: "反引号",
 };
-export const keyName = (code: string) =>
-  KEY_NAMES[code] ? t(KEY_NAMES[code]) : code.replace(/^(Key|Digit)/, "");
+const keyName = (code: string) => (KEY_NAMES[code] ? t(KEY_NAMES[code]) : code.replace(/^(Key|Digit)/, ""));
 
 function allowed(action: BindingId, code: string) {
   if (code === "Escape" && action !== "pause") return t("Esc 用于退出或暂停");

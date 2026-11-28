@@ -11,6 +11,7 @@ const config = {
   name: "悬赏令",
   description: "每层获得的金币 +40%，最多 2 层。",
   icon: "crown",
+  art: new URL("./icon.webp", import.meta.url).href,
   color: "#e9cf7a",
   tag: "经济",
   tier: "silver",

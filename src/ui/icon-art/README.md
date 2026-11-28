@@ -1,16 +1,15 @@
-# Painted icon art
+# Painted core icons
 
-Raster icons that replace the line glyphs of `src/ui/icons.ts`. One file per id, 256 x 256,
-transparent background, `<id>.webp` (or `.png`):
+Raster art for the two glyphs the core owns: `bomb.webp` (the charge, in the equipment wheel and
+manual) and `coin.webp` (everywhere the coin glyph is drawn). 256 x 256, transparent background.
 
-| Folder | Ids | Shown in |
-| --- | --- | --- |
-| `equipment/` | `bomb` and item ids | equipment wheel, supply shop, crate chip, manual |
-| `skills/` | skill ids | skill bar, skill shop, manual |
-| `perks/` | perk ids | perk cards, HUD buff icons, strike panel, manual |
-| `mutations/` | mutation ids | gene notice, HUD buff icons, manual |
-| `glyphs/` | glyph names, e.g. `coin` | everywhere that glyph is drawn |
+Every skill, item, perk and mutation keeps its painted icon in its own module folder as
+`icon.webp` and names it in its config:
 
-- Most slots are 24 to 50 px: keep one bold shape per icon.
-- Picked up at build time; anything without a file keeps its line glyph.
-- Record the source of each image in `public/assets/CREDITS.md`.
+```js
+icon: "cloak", // line glyph for small tinted slots
+art: new URL("./icon.webp", import.meta.url).href,
+```
+
+A module without `art` shows its line glyph. Record the source of each image in
+`public/assets/CREDITS.md`.

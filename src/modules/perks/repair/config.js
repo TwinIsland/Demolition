@@ -11,6 +11,7 @@ const config = {
   name: "战地恢复",
   description: "恢复 40 点血量，并启动或刷新战术护盾。",
   icon: "heart",
+  art: new URL("./icon.webp", import.meta.url).href,
   color: "#ffadd8",
   tag: "生存强化",
   tier: "gold",

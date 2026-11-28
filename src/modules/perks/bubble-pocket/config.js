@@ -11,6 +11,7 @@ const config = {
   name: "弹药携行",
   description: "同时放置炸药的上限增加 1 个。",
   icon: "bomb",
+  art: new URL("./icon.webp", import.meta.url).href,
   color: "#afc9ff",
   tag: "火力强化",
   tier: "silver",

@@ -11,6 +11,7 @@ const config = {
   name: "强化体能",
   description: "最大血量增加 25，并恢复 25 点血量。",
   icon: "heart",
+  art: new URL("./icon.webp", import.meta.url).href,
   color: "#a7db8b",
   tag: "血量强化",
   tier: "silver",

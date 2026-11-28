@@ -59,43 +59,33 @@ const ICON_PATHS: Record<string, string> = {
 const escapeUrl = (url: string) =>
   url.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;");
 
-export type ArtGroup = "equipment" | "skills" | "perks" | "mutations";
-
 /**
- * Painted icons: `icon-art/<group>/<id>.webp` (or .png). Found at build time, so dropping a file
- * in is all it takes; anything without one keeps its line glyph. `glyphs/<name>` replaces a line
- * glyph of that name wherever it is drawn (used for the coin).
+ * Painted art for the glyphs the core owns (`icon-art/bomb`, `icon-art/coin`). Content modules ship
+ * their own picture next to their config and name it in `art`.
  */
-const ART = Object.fromEntries(
+const CORE_ART = Object.fromEntries(
   Object.entries(
-    import.meta.glob<string>("./icon-art/*/*.{webp,png}", {
-      eager: true,
-      query: "?url",
-      import: "default",
-    }),
-  ).map(([path, url]) => [
-    path
-      .split("/")
-      .slice(-2)
-      .join("/")
-      .replace(/\.\w+$/, ""),
-    url,
-  ]),
+    import.meta.glob<string>("./icon-art/*.{webp,png}", { eager: true, query: "?url", import: "default" }),
+  ).map(([path, url]) => [path.replace(/^.*\/|\.\w+$/g, ""), url]),
 );
-/** Every painted icon, for the loading screen. */
-export const iconArt = () => Object.values(ART);
+/** Glyphs that are painted wherever they are drawn; the rest only where `coreArtIcon` asks. */
+const ALWAYS_PAINTED = new Set(["coin"]);
+/** Every painted core icon, for the loading screen. */
+export const coreIconArt = () => Object.values(CORE_ART);
 
 const artImage = (url: string, cls: string) =>
   `<img class="icon icon-art ${cls}" src="${escapeUrl(url)}" alt="" draggable="false"/>`;
 
-/** Icon for a content entry: its painted art when there is one, else the `glyph` line icon. */
-export const artIcon = (group: ArtGroup, id: string, glyph: string, cls = "") =>
-  ART[`${group}/${id}`] ? artImage(ART[`${group}/${id}`], cls) : icon(glyph, cls);
-export const equipmentIcon = (id: string, glyph: string, cls = "") => artIcon("equipment", id, glyph, cls);
+/** Icon for a content entry: its own painted `art` when it ships one, else its line glyph. */
+export const artIcon = (entry: { icon: string; art?: string }, cls = "") =>
+  entry.art ? artImage(entry.art, cls) : icon(entry.icon, cls);
+/** Painted version of a core glyph, for slots large enough to show it. */
+export const coreArtIcon = (name: string, cls = "") =>
+  CORE_ART[name] ? artImage(CORE_ART[name], cls) : icon(name, cls);
 
 export const icon = (name: string, cls = ""): string =>
-  ART[`glyphs/${name}`]
-    ? artImage(ART[`glyphs/${name}`], cls)
+  ALWAYS_PAINTED.has(name) && CORE_ART[name]
+    ? artImage(CORE_ART[name], cls)
     : /^(?:\/|https?:\/\/|data:image\/)/i.test(name)
       ? `<img class="icon ${cls}" src="${escapeUrl(name)}" alt=""/>`
       : `<svg class="icon ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[name] ?? ICON_PATHS.bomb}</svg>`;

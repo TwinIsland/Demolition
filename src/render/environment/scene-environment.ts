@@ -15,7 +15,7 @@ import {
 } from "./sky-look";
 import { SurfaceWeathering, createWeatherUniforms, type DetailLevel } from "./surface-weathering";
 
-export type WeatherKind = "clear" | "rain" | "monsoon" | "indoor" | "office" | "spring";
+type WeatherKind = "clear" | "rain" | "monsoon" | "indoor" | "office" | "spring";
 /** The part of a map definition that decides how its scene looks. */
 export interface MapLook {
   theme: "garden" | "midnight" | "rainforest" | "poolrooms" | "backrooms" | "village";

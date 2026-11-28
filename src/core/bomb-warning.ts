@@ -15,7 +15,7 @@ export function bombGuideColor(players: readonly Player[], ownerId: string, view
   return OPPONENT_COLORS[0];
 }
 /** The last stretch of the fuse, where the beep and the blast-path warning turn urgent. */
-export const FINAL_COUNTDOWN = 0.8;
+const FINAL_COUNTDOWN = 0.8;
 /** 0 until the final countdown starts, then rising to 1 at detonation. Sliding bombs stay at 0. */
 export const finalCountdown = (detonateAt: number, time: number, sliding = false) =>
   sliding ? 0 : Math.max(0, Math.min(1, 1 - (detonateAt - time) / FINAL_COUNTDOWN));

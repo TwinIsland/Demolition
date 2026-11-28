@@ -12,6 +12,7 @@ const config = {
   name: "穿甲装药",
   description: "部署的炸药可炸穿一处可破坏掩体后继续延伸，不可摧毁的墙体仍会挡住爆炸。不可叠加。",
   icon: "target",
+  art: new URL("./icon.webp", import.meta.url).href,
   color: "#9fc4f2",
   tag: "破障",
   tier: "diamond",

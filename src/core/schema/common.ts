@@ -26,7 +26,7 @@ const translatedFields = v.object({
   subtitle: v.optional(text),
 });
 // Unknown locales are ignored so a mod can ship more languages than the game selects.
-const translations = v.object({
+export const translations = v.object({
   en: v.optional(translatedFields),
   zh: v.optional(translatedFields),
 } satisfies Record<Language, unknown>);
@@ -38,6 +38,8 @@ export const baseConfigEntries = {
   name: label,
   description: text,
   icon: label,
+  /** Painted icon shipped in the module's own folder; `icon` stays the line glyph for small tinted slots. */
+  art: v.optional(text),
   /** Optional audio asset for successful item use, skill activation, or perk acquisition. */
   sound: v.optional(text),
   order: v.optional(finite),

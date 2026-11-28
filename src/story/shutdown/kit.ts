@@ -19,7 +19,7 @@ export interface Shot {
   figure(skin: string, scale?: number): Figure;
 }
 
-export interface Figure {
+interface Figure {
   /** Stands on its origin: move and turn this. */
   readonly root: THREE.Group;
   readonly rig: PlayerObject;

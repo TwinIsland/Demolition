@@ -7,6 +7,7 @@ const config = {
     en: { name: "Bandage", description: "Restore 30 HP. Kept in your inventory at full health." },
   },
   icon: "bandage",
+  art: new URL("./icon.webp", import.meta.url).href,
   color: "#badfb8",
   model: new URL("./model.glb", import.meta.url).href,
   order: 9,

@@ -90,13 +90,6 @@ export function linkedBombs(state: Pick<GameSnapshot, "tiles" | "size" | "bombs"
   }
   return linked;
 }
-export function walkable(state: Readonly<GameSnapshot>, x: number, z: number, playerId = ""): boolean {
-  return (
-    state.tiles[z]?.[x] === 0 &&
-    !state.bombs.some((b) => b.x === x && b.z === z && !b.passThrough.includes(playerId))
-  );
-}
-
 /** Shortest four-way distance to any origin. -1 means unreachable. */
 export function laneDistances(state: Readonly<GameSnapshot>, origins: readonly Vec2[]) {
   const size = state.size,

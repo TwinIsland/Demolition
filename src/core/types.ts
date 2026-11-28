@@ -5,14 +5,14 @@ import type { Appearance, BotSlot, ZombieRate } from "./room";
 import type { MatchMode } from "./match-modes";
 import type { ZoneState } from "./zone";
 export type Tile = 0 | 1 | 2;
-export type Phase = "countdown" | "playing" | "finished";
+type Phase = "countdown" | "playing" | "finished";
 /** Content ids. Plain strings because modules are discovered at runtime. */
 export type ItemId = string;
 export type SkillId = string;
 export type PerkId = string;
 export type MutationId = string;
 /** An item that is carried in the inventory. */
-export type Consumable = ItemId;
+type Consumable = ItemId;
 /** What a player can hold: the built-in bomb or a carried item. */
 export type Equipment = "bomb" | Consumable;
 export type ThrowMode = "direct" | "lob";
@@ -193,7 +193,7 @@ export interface Strike extends Vec2 {
   power: number;
 }
 /** A crate a player built during the match. */
-export interface BuiltCrate extends Vec2 {
+interface BuiltCrate extends Vec2 {
   id: number;
   ownerId: string;
   builtAt: number;
@@ -216,7 +216,7 @@ interface EventBase<T extends string> extends Vec2 {
   textEn: string;
 }
 /** A zombie struck by a player, and whether the strike finished it. */
-export interface ZombieHit {
+interface ZombieHit {
   id: number;
   level: Zombie["level"];
   outcome: "hurt" | "killed";
