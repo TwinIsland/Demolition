@@ -171,11 +171,25 @@ Pick a built-in operator or import any Minecraft skin PNG, then choose a finish 
 | **Wild** | Everyone starts overpowered: more health, power and range, faster level-ups, and health that regenerates out of combat. |
 | **Practice** | No clock. Go in alone if you like and learn the maps and skills. |
 
-When it is over, the result screen breaks down the match: placement, medals, and what everyone did with their charges.
+## Story mode
+
+There is also a short story, about twenty minutes long, told in five acts with two endings.
+
+Zero is a shut-in who is sure the ordinary world has no room for him. One night an old bomb game on his CRT pulls him through the screen, into a flat country where everyone lives on a grid and nobody has ever looked up. It starts as an isekai parody and ends somewhere quieter.
 
 <p align="center">
-  <img src="docs/media/result.jpg" alt="Victory result screen" />
+  <img src="docs/media/story.jpg" alt="Scenes from story mode: a dinner under paper lanterns at sunset, a walk home along the power lines, an apartment block at dusk, the manga opening, the 8-bit bedroom, the game on the CRT, the pull into the screen, a status window that will not open, and the village of Flatland" />
 </p>
+
+| Act | | What it plays like |
+| --- | --- | --- |
+| **1** | The Mundane Cage · 凡俗的牢笼 | An 8-bit bedroom to poke around in, after a manga opening. |
+| **2** | Bubble X · 泡泡 X | A 2D duel on a CRT, until the screen reaches back. |
+| **3** | Flatland · 平面国 | A village that only knows two dimensions, and your first real fight. |
+| **4** | Ascension · 升维 | You learn to see in 3D, and what that costs the people who cannot. |
+| **5** | Shutdown · 关机 | The last fight, and a choice: go back, or stay. |
+
+Each act changes how the game looks and plays: manga panels, a top-down pixel room, an arcade board, the full first-person arena, and small low-resolution films in between. Finishing the story unlocks new charge finishes, knives and the Flatland map for versus play. The story is written in Chinese.
 
 ## Controls
 
