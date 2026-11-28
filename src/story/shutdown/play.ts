@@ -395,10 +395,9 @@ export function playShutdown(
           const retries = lines.retries;
           return (await d.talk(retries[attempt % retries.length])) ? "lost" : undefined;
         }
-        // 97%: the bar stops one step short, and the tune the story opened with comes back for
-        // everything that is left to say.
+        // 97%: the bar stops one step short, and the song for everything that is left to say begins.
         sky.percent = 97;
-        stage.host.music("opening");
+        stage.host.music("farewell");
         return (await d.seconds(1.8)) ? "won" : undefined;
       },
     );

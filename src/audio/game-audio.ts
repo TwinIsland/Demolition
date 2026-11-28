@@ -54,6 +54,7 @@ const STORY_GAIN: Record<string, number> = {
   [STORY_MUSIC.duel]: 0.6,
   [STORY_MUSIC.lesson]: 0.6,
   [STORY_MUSIC.shutdown]: 0.6,
+  [STORY_MUSIC.farewell]: 0.6,
   [STORY_MUSIC.home]: 0.6,
 };
 const STRIDE_LENGTH = 0.85;
