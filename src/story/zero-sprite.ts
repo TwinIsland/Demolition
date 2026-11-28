@@ -18,7 +18,7 @@ export const facingOf = (mx: number, my: number, current: Facing): Facing =>
   !mx && !my ? current : Math.abs(mx) > Math.abs(my) ? (mx < 0 ? "left" : "right") : my < 0 ? "up" : "down";
 
 /** How the walk sheet is cut: `idle-<facing>` and `walk-<facing>` animations. */
-export const walkSheet = {
+const walkSheet = {
   sliceX: FRAMES,
   sliceY: FACINGS.length,
   anims: Object.fromEntries(

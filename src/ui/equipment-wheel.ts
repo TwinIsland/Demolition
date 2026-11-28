@@ -2,7 +2,7 @@ import { t, field } from "../i18n";
 import { EQUIPMENT_SLOTS, ITEMS } from "../core/content";
 import { canEquip } from "../core/equipment";
 import type { Equipment } from "../core/types";
-import { equipmentIcon } from "./icons";
+import { artIcon, coreArtIcon } from "./icons";
 import { bindings, equipmentBinding } from "../input/bindings";
 import type { HudFrame, HudView } from "./view";
 
@@ -16,7 +16,7 @@ function sector(start: number, end: number) {
   return `polygon(${points.map(([x, y]) => `${x.toFixed(2)}% ${y.toFixed(2)}%`).join(",")})`;
 }
 const label = (id: Equipment) => (id === "bomb" ? t("炸药") : field(ITEMS[id], "name"));
-const glyph = (id: Equipment) => equipmentIcon(id, id === "bomb" ? "bomb" : ITEMS[id].icon);
+const glyph = (id: Equipment) => (id === "bomb" ? coreArtIcon("bomb") : artIcon(ITEMS[id]));
 
 /** Radial equipment selector: shows counts every refresh and doubles as the hold-and-drag picker. */
 export class EquipmentWheel implements HudView {

@@ -3,7 +3,7 @@ import type { Howl } from "howler";
 type Timer = ReturnType<typeof setTimeout>;
 
 /** Moves one playing sound to `volume` without the snap of a direct set. */
-export function fadeTo(howl: Howl, id: number, volume: number, ms: number) {
+function fadeTo(howl: Howl, id: number, volume: number, ms: number) {
   const from = howl.volume(id) as number;
   // Howler divides by the volume delta when it schedules fade steps.
   if (ms <= 0 || Math.abs(from - volume) < 0.005) howl.volume(volume, id);

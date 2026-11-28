@@ -13,7 +13,7 @@ export function readEntry(key: string): string | undefined {
 }
 
 /** Writes a raw entry and reports whether it was stored. */
-export function writeEntry(key: string, text: string): boolean {
+function writeEntry(key: string, text: string): boolean {
   try {
     localStorage.setItem(key, text);
     return true;

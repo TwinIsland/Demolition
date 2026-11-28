@@ -11,7 +11,7 @@ export interface Cutscene {
 }
 
 /** Rendered small and scaled up without smoothing, so the 3D sits with the pixel art around it. */
-export const FILM = { width: 320, height: 180 };
+const FILM = { width: 320, height: 180 };
 
 export const ramp = (from: number, to: number, t: number) => THREE.MathUtils.smoothstep(t, from, to);
 /** A repeatable 0..1 value for item `i`, stream `n`: the same film every time. */

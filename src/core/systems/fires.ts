@@ -5,7 +5,7 @@ import type { SimContext } from "./context";
 import { emit } from "./events";
 
 /** Ground fire burns whoever stands in it once per tick, far more often than a blast re-hits. */
-export const FIRE = { tick: 0.5 } as const;
+const FIRE = { tick: 0.5 } as const;
 
 export interface FireOptions {
   /** Cells from the centre, measured in a straight line. */

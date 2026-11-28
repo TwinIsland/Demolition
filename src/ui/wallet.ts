@@ -1,8 +1,9 @@
+import { ITEMS } from "../core/content";
 import { t } from "../i18n";
 import { crateStock } from "../core/economy";
 import { keyHint } from "./control-settings";
 import { query, replayAnimation, setText } from "./dom";
-import { equipmentIcon, icon } from "./icons";
+import { artIcon, icon } from "./icons";
 import type { HudFrame, HudView } from "./view";
 
 const COUNT_MS = 420;
@@ -25,7 +26,7 @@ export class WalletView implements HudView {
   private owner = "";
 
   constructor(readonly root: HTMLElement) {
-    root.innerHTML = `<span class="wallet-coin">${icon("coin")}</span><b class="wallet-amount">0</b><span class="wallet-supply wallet-crate">${equipmentIcon("crate", "crate")}<b class="wallet-crate-count"></b>${keyHint("build")}</span><span class="wallet-deltas" aria-hidden="true"></span>`;
+    root.innerHTML = `<span class="wallet-coin">${icon("coin")}</span><b class="wallet-amount">0</b><span class="wallet-supply wallet-crate">${artIcon(ITEMS.crate)}<b class="wallet-crate-count"></b>${keyHint("build")}</span><span class="wallet-deltas" aria-hidden="true"></span>`;
     this.amount = query(root, ".wallet-amount");
     this.deltas = query(root, ".wallet-deltas");
     this.buildHint = query(root, ".wallet-crate");

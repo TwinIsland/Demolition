@@ -51,7 +51,7 @@ export interface StagedShot {
   showSelf?: boolean;
 }
 
-export interface HeldMotion {
+interface HeldMotion {
   moving: boolean;
   /** Distance walked since the arena was built, in cells. Drives the walk cycle. */
   travel: number;

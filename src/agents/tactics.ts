@@ -4,8 +4,6 @@ import type { Bomb, Difficulty, GameSnapshot, Player, Vec2 } from "../core/types
 
 /** Stateless tactical helpers for BotAgent. Everything here reads only the snapshot, so replays stay deterministic. */
 
-export type Intent = "flee" | "loot" | "farm" | "hunt" | "heal" | "build";
-
 /** Per-seat weights on the utility scores. Different seats play visibly different games. */
 export interface Personality {
   hunt: number;
@@ -21,32 +19,10 @@ export const PERSONALITIES: Record<string, Personality> = {
 };
 export const DEFAULT_PERSONALITY: Personality = { hunt: 1, loot: 1, farm: 1, caution: 1, trap: 1 };
 
-/** Response curves in the style of the Infinite Axis Utility System: inputs and outputs are 0..1. */
-export const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
-export const linear = (v: number, from: number, to: number) => clamp01((v - from) / (to - from));
-export const logistic = (v: number, midpoint: number, steepness: number) =>
-  1 / (1 + Math.exp(-steepness * (v - midpoint)));
-
-/** Highest score wins; the current intent gets a bonus so the bot commits instead of dithering. */
-export function chooseIntent(
-  scores: Partial<Record<Intent, number>>,
-  current?: Intent,
-  inertia = 0.12,
-): Intent | undefined {
-  let best: Intent | undefined,
-    bestScore = 0;
-  for (const intent of Object.keys(scores) as Intent[]) {
-    const score = (scores[intent] ?? 0) + (intent === current ? inertia : 0);
-    if (score > bestScore) {
-      best = intent;
-      bestScore = score;
-    }
-  }
-  return best;
-}
+const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 
 /** Influence map: per-cell threat from opponents and zombies, plus a dead-end term. Higher is worse. */
-export function threatField(s: Readonly<GameSnapshot>, self: Player, opponents: readonly Vec2[]) {
+export function threatField(s: Readonly<GameSnapshot>, opponents: readonly Vec2[]) {
   const field = new Float32Array(s.size * s.size);
   for (let z = 0; z < s.size; z++)
     for (let x = 0; x < s.size; x++) {

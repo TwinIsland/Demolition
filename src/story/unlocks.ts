@@ -15,7 +15,7 @@ const cleared = new Setting<"1">({
 });
 
 /** True once the story has been played to its end, now or at any time before. */
-export function storyCleared(): boolean {
+function storyCleared(): boolean {
   if (cleared.load()) return true;
   if (nextAct(loadStory())) return false;
   cleared.save("1");

@@ -4,7 +4,7 @@
  */
 import { preloadSkinHeads } from "./skin-heads";
 
-export const SKIN_ASSETS = [
+const SKIN_ASSETS = [
   "/assets/ui/plate.webp",
   "/assets/ui/painted-steel.webp",
   "/assets/ui/player-card.webp",

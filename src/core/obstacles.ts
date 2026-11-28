@@ -39,7 +39,7 @@ export type MapObstacle = { weight: number } & (
     })
 );
 
-export const DEFAULT_FOOTPRINT = 0.86;
+const DEFAULT_FOOTPRINT = 0.86;
 const registry = new Map<string, ObstacleDefinition>();
 
 export function defineObstacle(definition: ObstacleDefinition) {
@@ -117,8 +117,8 @@ preset("wood-fence", "wood", 1.2, ["village-fence"], 0.95);
 const LEGACY_IDS: Readonly<Record<string, string>> = { "low-bags": "bags" };
 const FALLBACK: readonly MapObstacle[] = [{ use: "set:storage", weight: 1 }];
 
-export const obstaclePresets = (): readonly ObstacleDefinition[] => [...registry.values()];
-export const obstaclePreset = (id: string) => registry.get(LEGACY_IDS[id] ?? id);
+const obstaclePresets = (): readonly ObstacleDefinition[] => [...registry.values()];
+const obstaclePreset = (id: string) => registry.get(LEGACY_IDS[id] ?? id);
 
 const resolved = (definition: ObstacleDefinition, weight: number): Obstacle => ({
   id: definition.id,

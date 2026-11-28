@@ -28,7 +28,6 @@ export const ACTS: readonly Act[] = [
 ];
 
 export const actUnlocked = (act: Act, save: StorySave) => !act.requires || hasCheckpoint(save, act.requires);
-export const actPlayable = (act: Act, save: StorySave) => !!act.scene && actUnlocked(act, save);
 export const actDone = (act: Act, save: StorySave) => hasCheckpoint(save, act.completes);
 
 /** Where "continue" resumes: the first act not finished yet. Undefined once the whole story is done. */

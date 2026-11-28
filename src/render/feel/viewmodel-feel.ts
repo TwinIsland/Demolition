@@ -17,7 +17,7 @@ const DURATION: Record<ActionKind, number> = {
 const REST_ARM = [-1.04, 0.12, -0.09] as const;
 const LOWERED_ARM = -0.25;
 /** Both arms meet in front of the chest: the left forearm is presented, the right hand circles it. */
-export const BANDAGE_POSE = {
+const BANDAGE_POSE = {
   left: [-1.3, 0, -0.62],
   right: [-1.2, 0, 0.42],
   lift: 0.3,

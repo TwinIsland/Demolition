@@ -246,7 +246,7 @@ export class BotAgent implements PlayerAgent {
       const wary = difficulty === "hard" || (difficulty !== "easy" && p.hp < p.maxHp * 0.6);
       const f = new BombForecast(s, wary ? likelyCharges(s, p, enemies, 3) : undefined, undefined, p.id),
         here = cell(p);
-      const threat = threatField(s, p, enemies),
+      const threat = threatField(s, enemies),
         frailty = 1 - p.hp / p.maxHp,
         mood = this.personality;
       // On a large arena the fight can be far outside the route search: follow walking distance.

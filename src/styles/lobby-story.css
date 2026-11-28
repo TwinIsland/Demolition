@@ -549,21 +549,6 @@
   scale: 1.06;
 }
 
-/* ---------- "Leave the story?" over the story screen (ui/story-exit.ts) ---------- */
-.story-exit {
-  --gold-200: #ead9ff;
-  --gold-300: #c9a8f5;
-  --gold-400: #a35bf0;
-  --line: #b79cf04d;
-  z-index: 20;
-}
-.story-exit .menu-row::after {
-  background: linear-gradient(90deg, #a35bf057, #a35bf01a 55%, #a35bf000);
-}
-.story-exit :focus-visible {
-  outline-color: #c9a8f5;
-}
-
 /* ---------- Earned by finishing the story: locked maps, bomb finishes and knives ---------- */
 :is(.menu-tile, [data-map]) > .icon {
   display: none;

@@ -11,6 +11,7 @@ const config = {
   name: "快速移动",
   description: "移动速度永久提高 12%，穿梭战场更从容。",
   icon: "speed",
+  art: new URL("./icon.webp", import.meta.url).href,
   color: "#a6f3d3",
   tag: "机动强化",
   tier: "silver",

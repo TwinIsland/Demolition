@@ -11,6 +11,7 @@ const config = {
   id: "hijack",
   name: "劫持信号",
   icon: "hijack",
+  art: new URL("./icon.webp", import.meta.url).href,
   tier: "diamond",
   tag: "主动强化",
   color: "#84deff",

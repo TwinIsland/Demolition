@@ -101,7 +101,7 @@ const PALETTE: Record<string, Surface> = {
 /** Texture sets that `standard` can use in place of the default concrete. */
 type SurfaceSet =
   "ruin-stone" | "pool-tile" | "pool-mosaic" | "backrooms-wall" | "backrooms-carpet" | "backrooms-ceiling";
-export const PALETTE_PREFIX = "df:";
+const PALETTE_PREFIX = "df:";
 
 /** Downloaded PBR texture sets; color maps use sRGB, data maps stay linear. */
 export class MaterialLibrary {

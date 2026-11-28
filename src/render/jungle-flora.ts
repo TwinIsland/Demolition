@@ -47,7 +47,7 @@ class Builder {
 }
 
 /** Height at which the overhead views cut a tree off, so it hides no more than a wall does. */
-export const TREE_CUT = 2.9;
+const TREE_CUT = 2.9;
 /** Metres of bark texture around a trunk and along it. */
 const BARK_AROUND = 2;
 const BARK_ALONG = 2.4;

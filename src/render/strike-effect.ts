@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { PERKS } from "../core/content";
 import { strikeRevealed, strikeWarning } from "../core/systems/strikes";
 import type { GameSnapshot, Strike, Vec2 } from "../core/types";
 import { TILE_SIZE, world } from "./arena";
@@ -223,20 +224,22 @@ export class StrikeEffect {
   });
 
   constructor(manager: THREE.LoadingManager, materials: MaterialLibrary, smokeMap: THREE.Texture) {
-    new GLTFLoader(manager).load(
-      "./assets/strike/missile.glb",
-      ({ scene }) => {
-        materials.applyPalette(scene);
-        scene.traverse((o) => {
-          if (o instanceof THREE.Mesh) o.castShadow = true;
-        });
-        this.model = scene;
-        for (const flight of this.flights.values())
-          if (!flight.body.children.length) flight.body.add(scene.clone());
-      },
-      undefined,
-      (error) => console.error("Cannot load the missile model", error),
-    );
+    const model = PERKS.find((perk) => perk.strikeModel)?.strikeModel;
+    if (model)
+      new GLTFLoader(manager).load(
+        model,
+        ({ scene }) => {
+          materials.applyPalette(scene);
+          scene.traverse((o) => {
+            if (o instanceof THREE.Mesh) o.castShadow = true;
+          });
+          this.model = scene;
+          for (const flight of this.flights.values())
+            if (!flight.body.children.length) flight.body.add(scene.clone());
+        },
+        undefined,
+        (error) => console.error("Cannot load the missile model", error),
+      );
     this.smoke = new THREE.SpriteMaterial({ map: smokeMap, depthWrite: false, transparent: true });
     // Deterministic spark fan: mostly outward and low, a few thrown high.
     const velocity = new Float32Array(SPARKS * 3),

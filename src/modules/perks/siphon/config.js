@@ -11,6 +11,7 @@ const config = {
   name: "虹吸装药",
   description: "命中敌人时，每层恢复实际伤害的 15%，最多 2 层。",
   icon: "heart",
+  art: new URL("./icon.webp", import.meta.url).href,
   color: "#ffaece",
   tag: "续航",
   tier: "diamond",

@@ -64,7 +64,7 @@ export function dimPanels(models: Models, level: number) {
 }
 
 /** A light panel hangs over every cell whose column and row are both odd. */
-export const hasPanel = (x: number, z: number) => x % 2 !== 0 && z % 2 !== 0;
+const hasPanel = (x: number, z: number) => x % 2 !== 0 && z % 2 !== 0;
 
 export function buildBackrooms(root: THREE.Group, models: Models, state: Readonly<GameSnapshot>) {
   const size = state.size,

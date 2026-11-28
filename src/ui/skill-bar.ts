@@ -13,7 +13,7 @@ export const skillKeyHint = (id: SkillId) =>
 
 const skillButton = (id: SkillId) => {
   const skill = SKILLS[id];
-  return `<button class="skill-button" data-skill="${id}" aria-label="${field(skill, "name")}"><span class="skill-visual">${artIcon("skills", id, skill.icon)}<i class="clock-shade" id="${id}-progress"></i><svg class="clock-ring" viewBox="0 0 40 40" aria-hidden="true"><circle id="${id}-ring" cx="20" cy="20" r="18" pathLength="100"/></svg></span><span><b>${field(skill, "name")}</b><small id="${id}-time">就绪</small></span>${skillKeyHint(id)}</button>`;
+  return `<button class="skill-button" data-skill="${id}" aria-label="${field(skill, "name")}"><span class="skill-visual">${artIcon(skill)}<i class="clock-shade" id="${id}-progress"></i><svg class="clock-ring" viewBox="0 0 40 40" aria-hidden="true"><circle id="${id}-ring" cx="20" cy="20" r="18" pathLength="100"/></svg></span><span><b>${field(skill, "name")}</b><small id="${id}-time">就绪</small></span>${skillKeyHint(id)}</button>`;
 };
 
 interface SkillSlot {

@@ -11,6 +11,7 @@ const config = {
   name: "余燃",
   description: "部署的炸药每层延长 0.2 秒火场时间，最多 3 层。",
   icon: "flame",
+  art: new URL("./icon.webp", import.meta.url).href,
   color: "#e8a656",
   tag: "区域封锁",
   tier: "gold",

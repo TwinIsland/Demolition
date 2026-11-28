@@ -1,7 +1,6 @@
 import type { InferOutput } from "valibot";
 import type {
   BaseConfigSchema,
-  DROP_POOL_IDS,
   ItemConfigSchema,
   PerkConfigSchema,
   SkillConfigSchema,
@@ -19,13 +18,12 @@ export interface StrikeOptions {
 
 /** Declarative config types are inferred from the schemas that validate them at load time. */
 export type Tier = (typeof TIER_IDS)[number];
-export type DropPool = (typeof DROP_POOL_IDS)[number];
 export type BaseConfig = InferOutput<typeof BaseConfigSchema>;
 export type SkillConfig = InferOutput<typeof SkillConfigSchema>;
 export type PerkConfig = InferOutput<typeof PerkConfigSchema>;
 export type ItemConfig = InferOutput<typeof ItemConfigSchema>;
 
-export type ModifiedStat =
+type ModifiedStat =
   | "moveSpeed"
   | "placementRadius"
   | "bombRange"
@@ -44,7 +42,7 @@ export type ModifiedStat =
   | `duration:${string}`
   | "crateScore"
   | "staminaRegen";
-export type Modifier = (value: number, player: Readonly<Player>, stacks: number, time: number) => number;
+type Modifier = (value: number, player: Readonly<Player>, stacks: number, time: number) => number;
 export interface EffectContext {
   stat(key: ModifiedStat, base: number): number;
   /** `scorch` also sweeps the floor with fire when the reset lands, costing every other operator that much health. */
@@ -95,7 +93,7 @@ export interface PerkBehavior extends Hooks {
   ): Vec2 | undefined;
 }
 
-export interface Impact {
+interface Impact {
   projectile: Readonly<ThrownItem>;
   /** `fuse` leaves a live charge on the cell for that many seconds; `powerScale` scales the thrower's attack. */
   explode(range: number, options?: { fuse?: number; powerScale?: number }): void;

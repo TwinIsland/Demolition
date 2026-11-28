@@ -14,7 +14,7 @@ export interface DimensionState {
 }
 
 /** Height of the flat world as a fraction of the real one: enough to keep its layers in order. */
-export const FLAT_HEIGHT = 0.03;
+const FLAT_HEIGHT = 0.03;
 /** World units behind the front over which a thing grows to its full height. */
 const RISE = 7;
 /** Things that end below this height, in world units, are flat already and are left alone. */
@@ -29,7 +29,7 @@ function spring(u: number) {
   return 1 + (c + 1) * v * v * v + c * v * v;
 }
 
-export const heightAt = (state: DimensionState, x: number, z: number) =>
+const heightAt = (state: DimensionState, x: number, z: number) =>
   FLAT_HEIGHT + (1 - FLAT_HEIGHT) * spring((state.front - Math.hypot(x - state.x, z - state.z)) / RISE);
 
 /**

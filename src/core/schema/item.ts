@@ -1,7 +1,18 @@
 import * as v from "valibot";
 import type { ItemBehavior } from "../module-api";
 import type { CoverSurface } from "../pack-api";
-import { baseConfigEntries, finite, flag, hook, nonNegative, positive, text } from "./common";
+import {
+  baseConfigEntries,
+  finite,
+  flag,
+  hook,
+  id,
+  label,
+  nonNegative,
+  positive,
+  text,
+  translations,
+} from "./common";
 
 export const DROP_POOL_IDS = ["supply", "elite"] as const;
 
@@ -50,6 +61,20 @@ export const ItemConfigSchema = v.object({
   pickupScore: v.optional(finite),
   shieldSounds: v.optional(v.object({ broken: text, expired: text })),
   melee: v.optional(melee),
+  /** Cosmetic looks of a melee item, all equal in play. The first is the default; one without `model` uses the item's own. */
+  styles: v.optional(
+    v.array(
+      v.object({
+        translations: v.optional(translations),
+        id,
+        name: label,
+        /** GLB that replaces the item's model: upright, handle down, thin along Z. */
+        model: v.optional(text),
+        /** Emissive tint for the lit parts of the texture. */
+        glow: v.optional(text),
+      }),
+    ),
+  ),
   throwable: v.optional(throwable),
 });
 

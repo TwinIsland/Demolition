@@ -3,7 +3,7 @@ import { DEFAULT_SKIN, SKINS, type Appearance } from "../core/room";
 import * as THREE from "three";
 import { inferModelType, loadSkinToCanvas } from "skinview-utils";
 export type SkinModel = "auto" | "default" | "slim";
-export const validSkinSize = (w: number, h: number) =>
+const validSkinSize = (w: number, h: number) =>
   w >= 64 && w <= 1024 && w % 64 === 0 && (h === w || h === w / 2);
 export interface MinecraftSkin {
   texture: THREE.CanvasTexture;

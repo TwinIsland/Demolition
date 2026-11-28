@@ -11,6 +11,7 @@ const config = {
   name: "背水一战",
   description: "血量低于 35% 时移速 +12%，部署的炸药威力 +25%。不可叠加。",
   icon: "heart",
+  art: new URL("./icon.webp", import.meta.url).href,
   color: "#f07a6b",
   tag: "逆转",
   tier: "gold",

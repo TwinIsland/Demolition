@@ -45,7 +45,7 @@ export class PerkTray {
         const action = OFFER_ACTIONS[i];
         return `<button class="perk-card tier-${perk.tier}" data-perk="${perk.id}" style="--perk-color:${TIERS[perk.tier].color}">
           <span class="perk-card-tools"><span class="perk-key" data-keyhint="${action}">${bindings.label(action)}</span>${perk.use ? activePerkBadge() : ""}</span>
-          <span class="perk-icon">${artIcon("perks", perk.id, perk.icon)}</span><small>${t(TIERS[perk.tier].name)}${perk.use ? "" : " · " + field(perk, "tag")}</small>
+          <span class="perk-icon">${artIcon(perk)}</span><small>${t(TIERS[perk.tier].name)}${perk.use ? "" : " · " + field(perk, "tag")}</small>
           <h3>${field(perk, "name")}</h3><p>${field(perk, "description")}</p><span class="perk-select">${t("选择强化")}</span></button>`;
       })
       .join("")}</div>`;
