@@ -7,6 +7,7 @@ import { playWindow } from "./cutscenes/window";
 import type { Cutscene } from "./cutscenes/kit";
 import { openRoom } from "./room";
 import type { Hotspot, Line, RoomScene } from "./script";
+import { seeFilm } from "./films";
 import type { ScenePlayer, Stage } from "./stage";
 
 /**
@@ -169,6 +170,7 @@ export function playBedroom(stage: Stage, scene: RoomScene): ScenePlayer {
           stage.goal();
           stage.prompt();
           stage.root.classList.add("bedroom-cinematic");
+          seeFilm("computer");
           film = playComputerApproach(stage.overlay());
           film.paused = paused;
           await film.done;
@@ -181,6 +183,7 @@ export function playBedroom(stage: Stage, scene: RoomScene): ScenePlayer {
         if (hotspot.id === "cirno" && !visits.has(hotspot.id)) {
           // The first look at the plush is returned.
           stage.root.classList.add("bedroom-cinematic");
+          seeFilm("stare");
           const stare = (film = playStare(stage.overlay()));
           stare.paused = paused;
           await stare.done;
@@ -205,6 +208,7 @@ export function playBedroom(stage: Stage, scene: RoomScene): ScenePlayer {
     if (scene.opening) {
       // The narrator speaks over the block seen from the street; the picture of him comes after.
       const { art, lines, over = 0 } = scene.opening;
+      seeFilm("window-dusk");
       const evening = (film = playWindow(stage.overlay(), "dusk"));
       evening.paused = paused;
       const began = performance.now();

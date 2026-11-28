@@ -2,6 +2,7 @@ import kaplay from "kaplay";
 import { STORY_ART } from "./assets";
 import { playPullIn, type PullIn } from "./pull-in";
 import { ARCADE_VIEW, type ArcadeScene, type Line } from "./script";
+import { seeFilm } from "./films";
 import type { ScenePlayer, Stage } from "./stage";
 import { FACINGS, type Facing } from "./zero-sprite";
 
@@ -326,6 +327,7 @@ export function playArcade(stage: Stage, scene: ArcadeScene): ScenePlayer {
     stage.root.classList.add("pulling");
     if (!(await say(scene.lines.pulled))) return;
     stage.host.cue("pull");
+    seeFilm("pull-in");
     cutscene = playPullIn(stage.overlay());
     await cutscene.done;
     if (!alive) return;

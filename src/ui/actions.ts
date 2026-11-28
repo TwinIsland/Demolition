@@ -45,6 +45,8 @@ export interface UIActions {
   openHelp(): void;
   openMusicBox(): void;
   openGallery(): void;
+  /** Replays a film of the story from the collection. */
+  playFilm(film: string): void;
   openGraphics(): void;
   changeGraphics(value: GraphicsSettings): void;
   closeGraphics(): void;

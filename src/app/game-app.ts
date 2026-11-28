@@ -5,10 +5,12 @@ import { CREDITS_MUSIC, MENU_MUSIC, Sound, STORY_MUSIC } from "../audio/sound";
 import { nextAct } from "../story/chapters";
 import {
   storyHudShows,
+  type StoryHost,
   type StoryMatch,
   type StoryMatchOptions,
   type StoryShopOptions,
 } from "../story/stage";
+import { isFilm, unlockedFilms } from "../story/films";
 import { loadStory } from "../story/save";
 import { finishLocked, knifeLocked, mapLocked } from "../story/unlocks";
 import { perkById } from "../core/content";
@@ -292,12 +294,31 @@ export class GameApp {
   /** Leaves the story for the menu. Progress is kept from the last checkpoint reached. */
   closeStory() {
     if (!this.screens.is("story")) return;
+    const replayed = !!this.ui.storyFilm;
     this.screens.transition("lobby");
     this.ui.hideOverlay();
     this.closeStoryMatch();
     this.ui.refreshStory();
     this.sound.menu("back");
     this.sound.setMusic(this.lobbyMusic());
+    // A film watched from the collection ends where it was picked.
+    if (replayed) this.ui.showGallery("films");
+  }
+
+  /** What the story asks of the app, for an act and for a film replayed from the collection alike. */
+  private storyHost(): StoryHost {
+    return {
+      typeTick: () => this.sound.typeTick(),
+      menu: (name) => this.sound.menu(name),
+      cue: (name) => this.sound.storyCue(name),
+      silence: () => this.sound.stopMusic(),
+      music: (track, level) => this.sound.setMusic(STORY_MUSIC[track], level),
+      match: {
+        open: (options) => this.openStoryMatch(options),
+        close: () => this.closeStoryMatch(),
+      },
+      finish: () => this.closeStory(),
+    };
   }
 
   closeGraphics() {
@@ -568,24 +589,18 @@ export class GameApp {
       openStory: (act, titled) => {
         if (!this.screens.is("lobby")) return;
         this.screens.transition("story");
-        this.ui.showStory(
-          {
-            typeTick: () => this.sound.typeTick(),
-            menu: (name) => this.sound.menu(name),
-            cue: (name) => this.sound.storyCue(name),
-            silence: () => this.sound.stopMusic(),
-            music: (track, level) => this.sound.setMusic(STORY_MUSIC[track], level),
-            match: {
-              open: (options) => this.openStoryMatch(options),
-              close: () => this.closeStoryMatch(),
-            },
-            finish: () => this.closeStory(),
-          },
-          act ?? nextAct(loadStory())?.id,
-          titled,
-        );
+        this.ui.showStory(this.storyHost(), act ?? nextAct(loadStory())?.id, titled);
         this.sound.menu("accept");
         this.sound.setMusic(STORY_MUSIC.opening);
+      },
+      playFilm: (film) => {
+        // Only from the collection, and only a film this player has seen.
+        if (!this.screens.is("lobby") || this.ui.storyMenuKind !== "gallery") return;
+        if (!isFilm(film) || !unlockedFilms().has(film)) return;
+        this.screens.transition("story");
+        this.sound.menu("accept");
+        // The film sets its own music, or its own silence, as it begins.
+        this.ui.showStory(this.storyHost(), undefined, false, film);
       },
       closeStory: () => this.closeStory(),
       setLanguage: (value) => this.changeLanguage(value),

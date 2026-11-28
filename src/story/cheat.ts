@@ -1,4 +1,5 @@
 import { ACTS, nextAct } from "./chapters";
+import { forgetFilms, grantFilms } from "./films";
 import { forgetIllustrations, grantIllustrations } from "./gallery";
 import { grantCheckpoints, loadStory, wipeStory } from "./save";
 import { forgetEndings, grantEndings } from "./shutdown/unlocks";
@@ -47,11 +48,13 @@ export function toggleStoryCheat(): boolean {
     grantCheckpoints(ACTS.map((act) => act.completes));
     grantEndings();
     grantIllustrations();
+    grantFilms();
     return true;
   }
   wipeStory();
   forgetStoryCleared();
   forgetEndings();
   forgetIllustrations();
+  forgetFilms();
   return false;
 }
