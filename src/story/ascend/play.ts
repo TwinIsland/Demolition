@@ -73,6 +73,11 @@ const LESSON_SKILLS = ["scan", "kick"] as const;
 const ON_SPOT = 0.5;
 /** How long a correction stays on the objective chip, in seconds. */
 const NUDGE_SECONDS = 2.6;
+/** How fast the guide closes the distance once the hero is already standing on the mark. */
+const CATCH_UP_SPEED = 9;
+/** A turn of the hero's head towards what the lesson is about: a base time, and more per radian. */
+const TURN_SECONDS = 0.35,
+  TURN_SECONDS_PER_RADIAN = 0.22;
 
 type Ability = "sprint" | "jump" | "use" | "equip" | "build" | "skill" | "perk";
 
@@ -327,24 +332,60 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
     void say(LINES.revived);
   });
 
-  /** The guide walks ahead over open floor, never far from the hero, and waits at `guide`. */
+  /**
+   * Holds the hero where he stands and brings his eyes round to `target`, eased, the short way.
+   * He is left held: what follows, a conversation or the caller, lets him go.
+   */
+  const turn = async (target: Vec2, pitch = 0) => {
+    d.lock(true);
+    const from = match.look,
+      to = yawTo(d.hero, target),
+      arc = Math.atan2(Math.sin(to - from.yaw), Math.cos(to - from.yaw)),
+      rise = pitch - from.pitch;
+    if (Math.abs(arc) < 0.02 && Math.abs(rise) < 0.02) return true;
+    const length = TURN_SECONDS + TURN_SECONDS_PER_RADIAN * Math.abs(arc);
+    let time = 0;
+    const ease = (_: Readonly<GameSnapshot>, __: number, real: number) => {
+      time = Math.min(length, time + real);
+      const t = time / length,
+        k = t * t * (3 - 2 * t);
+      match.look = { yaw: from.yaw + arc * k, pitch: from.pitch + rise * k };
+    };
+    steps.add(ease);
+    const open = await d.until(() => time >= length);
+    steps.delete(ease);
+    if (open) match.look = { yaw: to, pitch };
+    return open;
+  };
+  /** The pitch that puts a cell on the ground in the middle of the view from where the hero is. */
+  const down = (cell: Vec2) =>
+    -Math.atan2(0.65, Math.max(1, Math.hypot(cell.x - d.hero.x, cell.z - d.hero.z)));
+
+  /**
+   * The guide walks ahead over open floor, never far from the hero, and waits at `guide`. The lit
+   * cell is what counts: a hero who gets there first, by any road, is held on it while she runs
+   * the rest of the way. He is left held.
+   */
   const lead = async (to: Vec2, guide: Vec2) => {
     spot = to;
     goal(GOALS.follow);
     anchor = to;
+    let arrived = false;
     const walk = (async () => {
       for (const cell of route(d.state, cellOf(d.actor(LULU)), guide)) {
-        if (!(await d.until((state) => near(state.players[0], cell, 4.5)))) return false;
-        if (!(await d.walk(LULU, cell, 3.4))) return false;
+        if (!(await d.until((state) => arrived || near(state.players[0], cell, 4.5)))) return false;
+        if (!(await d.walk(LULU, cell, arrived ? CATCH_UP_SPEED : 3.4))) return false;
       }
       return true;
     })();
     if (!(await d.until((state) => state.players[0].alive && near(state.players[0], to, ON_SPOT))))
       return false;
+    arrived = true;
     spot = undefined;
+    d.lock(true);
+    goal();
     if (!(await walk)) return false;
     d.face(LULU, d.hero);
-    goal();
     return true;
   };
 
@@ -556,6 +597,8 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   allowed.add("equip");
   anchor = PLACE.crateFront;
   if (!(await standOn(PLACE.crateFront, GOALS.crateSpot))) return;
+  if (!(await turn(PLACE.crate, -0.2))) return;
+  d.lock(false);
   const knifeStarted = d.state.time;
   allowed.add("use");
   targets = [PLACE.crate];
@@ -588,10 +631,7 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   give("grenade", 3);
   hero((p) => (p.equipped = "grenade"));
   const landing = { x: PLACE.lane.x, z: SPOTS.lowWall.from.z - 1 };
-  match.look = {
-    yaw: yawTo(d.hero, landing),
-    pitch: -Math.atan2(0.65, Math.hypot(landing.x - d.hero.x, landing.z - d.hero.z)),
-  };
+  if (!(await turn(landing, down(landing)))) return;
   if (!(await say(LINES.grenade))) return;
   aimAt(PLACE.grenadeZone);
   goal(GOALS.grenade.replace("{use}", bindings.label("use")));
@@ -609,13 +649,7 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   aimAt();
   give("molotov", 2);
   hero((p) => (p.equipped = "molotov"));
-  {
-    const road = PLACE.fireZone[0];
-    match.look = {
-      yaw: yawTo(d.hero, road),
-      pitch: -Math.atan2(0.65, Math.max(1, Math.hypot(road.x - d.hero.x, road.z - d.hero.z))),
-    };
-  }
+  if (!(await turn(PLACE.fireZone[0], down(PLACE.fireZone[0])))) return;
   if (!(await say(LINES.molotov))) return;
   aimAt(PLACE.fireZone);
   goal(GOALS.molotov.replace("{use}", bindings.label("use")));
@@ -709,8 +743,9 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   if (guided) {
     anchor = PLACE.lane;
     if (!(await standOn(PLACE.lane, GOALS.buildSpot))) return;
+    if (!(await turn(PLACE.buildSite, -0.45))) return;
+    d.lock(false);
     buildSite = PLACE.buildSite;
-    match.look = { yaw: yawTo(d.hero, PLACE.buildSite), pitch: -0.45 };
   }
   allowed.add("build");
   goal(GOALS.build.replace("{build}", bindings.label("build")));
@@ -723,7 +758,7 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
     // Behind the crate means the lane cell: the fire line stops one step short of it.
     if (!(await standOn(PLACE.lane, GOALS.hide))) return;
     goal();
-    d.lock(true);
+    if (!(await turn(PLACE.buildSite, -0.2))) return;
     hero((p, state) => (p.invulnerableUntil = state.time + 4));
     if (free(d.state, PLACE.buildCharge) && !(await detonated(plant(PLACE.buildCharge, 1.6)))) return;
     d.lock(false);
@@ -756,6 +791,7 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   match.hud = ["coins"];
   if (!(await say(LINES.toShop))) return;
   if (!(await lead(PLACE.shop, PLACE.shopGuide))) return;
+  d.lock(false);
   hero((p) => (p.credits = LESSON_SKILLS.reduce((total, id) => total + SKILLS[id].price, 0)));
   goal(GOALS.shop);
   for (;;) {
@@ -799,7 +835,7 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
 
   match.hud = ["crosshair", "equipment", "skills", "health", "progression"];
   d.face(DUMMY, d.hero);
-  match.look = { yaw: yawTo(d.hero, d.actor(DUMMY)), pitch: 0 };
+  if (!(await turn(d.actor(DUMMY)))) return;
   const targetHighlight = new TargetHighlight(match.scene);
   const markTarget = (state: Readonly<GameSnapshot>) =>
     targetHighlight.update(
@@ -868,7 +904,8 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
       }),
     );
   const open = PLACE.risen.filter((cell) => free(d.state, cell));
-  d.lock(true);
+  // He is already held on the mark; his eyes go to the stones before anything comes out of them.
+  if (!(await turn(open[0] ?? PLACE.risen[0]))) return;
   hero((p, state) => {
     p.hp = p.maxHp;
     p.invulnerableUntil = state.time + 3;
