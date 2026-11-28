@@ -29,11 +29,11 @@ export const storyMarkup = () => `
     <div class="story-prompt" hidden><kbd>E</kbd><span></span></div>
     ${dialogueMarkup}
     <div class="story-title" hidden><small></small><h2></h2></div>
-    <div class="story-save" hidden><i></i><span>已保存</span></div>
-    <div class="story-card" hidden><span>未完待续</span><small><kbd>E</kbd> 返回主菜单</small></div>
-    <div class="story-keys" data-for="room"><span><kbd>WASD</kbd> 移动</span><span><kbd>E</kbd> 调查 / 继续</span></div>
-    <div class="story-keys" data-for="staged"><span><kbd>WASD</kbd> 移动</span><span><kbd>空格</kbd> 放炸药</span></div>
-    <div class="story-keys" data-for="arcade"><span><kbd>WASD</kbd> 移动</span><span><kbd>空格</kbd> 放泡泡</span></div>
+    <div class="story-save" hidden><i></i><span>${t("已保存")}</span></div>
+    <div class="story-card" hidden><span>${t("未完待续")}</span><small><kbd>E</kbd> ${t("返回主菜单")}</small></div>
+    <div class="story-keys" data-for="room"><span><kbd>WASD</kbd> ${t("移动")}</span><span><kbd>E</kbd> ${t("调查 / 继续")}</span></div>
+    <div class="story-keys" data-for="staged"><span><kbd>WASD</kbd> ${t("移动")}</span><span><kbd>${t("空格")}</kbd> ${t("放炸药")}</span></div>
+    <div class="story-keys" data-for="arcade"><span><kbd>WASD</kbd> ${t("移动")}</span><span><kbd>${t("空格")}</kbd> ${t("放泡泡")}</span></div>
     <div class="story-pause-hint"><kbd>ESC</kbd><span>${t("暂停")}</span></div>
   </div>`;
 
@@ -130,10 +130,11 @@ export function mountStory(
         timers.add(timer);
       }),
     goal(text) {
-      const changed = !!text && (goal.hidden || goal.textContent !== `目标：${text}`);
+      const shown = text && t("目标：{0}", t(text));
+      const changed = !!shown && (goal.hidden || goal.textContent !== shown);
       goal.hidden = !text;
       if (!changed) return;
-      goal.textContent = `目标：${text}`;
+      goal.textContent = shown;
       // A new objective jumps and flashes with a chime; restart it if the last one is still going.
       goal.classList.remove("changed");
       void goal.offsetWidth;
@@ -142,7 +143,7 @@ export function mountStory(
     },
     prompt(text) {
       prompt.hidden = !text;
-      if (text) prompt.lastElementChild!.textContent = text;
+      if (text) prompt.lastElementChild!.textContent = t(text);
     },
     art(url, { cut = false } = {}) {
       const turn = ++artTurn;
@@ -299,8 +300,8 @@ export function mountStory(
   /** An act picked from the chapter list opens on its name, white on black; played into, it does not. */
   const announce = async () => {
     const [ordinal, name] = act.title.split("\u3000");
-    title.querySelector("small")!.textContent = ordinal;
-    title.querySelector("h2")!.textContent = name ?? "";
+    title.querySelector("small")!.textContent = t(ordinal);
+    title.querySelector("h2")!.textContent = t(name ?? "");
     title.hidden = false;
     if (!(await stage.wait(TITLE_MS))) return;
     open();

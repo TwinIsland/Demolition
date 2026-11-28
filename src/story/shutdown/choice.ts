@@ -5,6 +5,7 @@ import { SHUTDOWN_ART } from "./art";
 import { film, ramp, scatter, type Film } from "./kit";
 import { CURTAIN, curtainMaterial } from "./sky";
 import type { Ending } from "./unlocks";
+import { t } from "../../i18n";
 
 export interface Choice {
   /** The way picked; undefined if the story was closed first. */
@@ -64,9 +65,9 @@ export function playChoice(stage: Stage): Choice {
   const labels = document.createElement("div");
   labels.className = "shutdown-choice";
   labels.innerHTML = `
-    <button type="button" data-ending="home"><span>回去。</span></button>
-    <button type="button" data-ending="stay"><span>留下。</span></button>
-    <small><kbd>A</kbd> <kbd>D</kbd> 选择 &nbsp; <kbd>E</kbd> 决定</small>`;
+    <button type="button" data-ending="home"><span>${t("回去。")}</span></button>
+    <button type="button" data-ending="stay"><span>${t("留下。")}</span></button>
+    <small><kbd>A</kbd> <kbd>D</kbd> ${t("选择")} &nbsp; <kbd>E</kbd> ${t("决定")}</small>`;
   const canvas = stage.overlay();
   canvas.after(labels);
 

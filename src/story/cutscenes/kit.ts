@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { PlayerObject } from "skinview3d";
 import { loadSkinToCanvas } from "skinview-utils";
+import { t } from "../../i18n";
 
 /** A short film played once on a canvas of its own, over the stage. */
 export interface Cutscene {
@@ -122,7 +123,8 @@ export function playFilm(
         },
       };
     },
-    label(text, height, color) {
+    label(source, height, color) {
+      const text = t(source);
       const pixels = document.createElement("canvas");
       const context = pixels.getContext("2d")!;
       const font = '24px "Fusion Pixel 12px", sans-serif';

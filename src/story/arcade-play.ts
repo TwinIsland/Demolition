@@ -4,6 +4,7 @@ import { playPullIn, type PullIn } from "./pull-in";
 import { ARCADE_VIEW, type ArcadeScene, type Line } from "./script";
 import type { ScenePlayer, Stage } from "./stage";
 import { FACINGS, type Facing } from "./zero-sprite";
+import { t } from "../i18n";
 
 const CELL = 16;
 /** Seconds from placing a bubble to its blast, and how long the blast stays deadly. */
@@ -292,7 +293,7 @@ export function playArcade(stage: Stage, scene: ArcadeScene): ScenePlayer {
     bubbles.get(key(...who.spawn))?.passers.add(who);
   };
   const showCrateGoal = () =>
-    stage.goal(`${scene.goals.crates} ${Math.min(broken, scene.crateGoal)}/${scene.crateGoal}`);
+    stage.goal(`${t(scene.goals.crates)} ${Math.min(broken, scene.crateGoal)}/${scene.crateGoal}`);
 
   const afterChant = async () => {
     stage.interrupt();

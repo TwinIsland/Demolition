@@ -4,7 +4,7 @@ import { ITEMS, perkById, SKILLS } from "../../core/content";
 import { MUTATIONS } from "../../core/mutations";
 import { STORY_TUTORIAL_REWARDS } from "../../core/story-rewards";
 import type { GameEvent, GameSnapshot, PlayerInput, Vec2 } from "../../core/types";
-import { field } from "../../i18n";
+import { field, t } from "../../i18n";
 import { bindings, equipmentBinding, skillBinding, type BindingId } from "../../input/bindings";
 import { SPOTS } from "../../modules/maps/flatland-story/layout.js";
 import { world } from "../../render/arena";
@@ -91,7 +91,7 @@ function fill(lines: readonly Line[], extra: Record<string, string> = {}): Line[
     extra[name] ?? bindings.label((name === "shield" ? equipmentBinding(name) : name) as BindingId);
   return lines.map((line) =>
     "text" in line
-      ? { ...line, text: line.text.replace(/\{(\w+)\}/g, (_, name: string) => word(name)) }
+      ? { ...line, text: t(line.text).replace(/\{(\w+)\}/g, (_, name: string) => word(name)) }
       : line,
   );
 }
@@ -143,7 +143,7 @@ export function playAscension(stage: Stage): ScenePlayer {
         cast: [
           {
             id: LULU,
-            name: "露露",
+            name: t("露露"),
             color: "#c8423f",
             skin: "story-lulu",
             ...PLACE.lulu,
@@ -152,7 +152,7 @@ export function playAscension(stage: Stage): ScenePlayer {
           },
           {
             id: DUMMY,
-            name: "训练靶",
+            name: t("训练靶"),
             color: "#9aa0a6",
             skin: "story-zhangsan",
             ...PLACE.dummy,
@@ -545,7 +545,7 @@ async function act(
   match.hud = ["stamina"];
   if (!(await say(LINES.sprint))) return;
   allowed.add("sprint");
-  const sprintGoal = GOALS.sprint.replace("{sprint}", bindings.label("sprint"));
+  const sprintGoal = t(GOALS.sprint).replace("{sprint}", bindings.label("sprint"));
   let sprinted = 0,
     sprintProgress = -1,
     lastSprintPosition = { x: d.hero.x, z: d.hero.z, alive: d.hero.alive };
@@ -621,7 +621,7 @@ async function act(
   targets = [PLACE.crate];
   const knifeGoal = (equipped: boolean) =>
     goal(
-      (equipped ? GOALS.knifeCut : GOALS.knife)
+      t(equipped ? GOALS.knifeCut : GOALS.knife)
         .replace("{gearWheel}", bindings.label("gearWheel"))
         .replace("{use}", bindings.label("use")),
     );
@@ -651,7 +651,7 @@ async function act(
   if (!(await turn(landing, down(landing)))) return;
   if (!(await say(LINES.grenade))) return;
   aimAt(PLACE.grenadeZone);
-  goal(GOALS.grenade.replace("{use}", bindings.label("use")));
+  goal(t(GOALS.grenade).replace("{use}", bindings.label("use")));
   // Beyond the wall means north of it; a grenade that falls short is handed back.
   const wall = SPOTS.lowWall.from.z;
   const refill = (state: Readonly<GameSnapshot>) => {
@@ -669,7 +669,7 @@ async function act(
   if (!(await turn(PLACE.fireZone[0], down(PLACE.fireZone[0])))) return;
   if (!(await say(LINES.molotov))) return;
   aimAt(PLACE.fireZone);
-  goal(GOALS.molotov.replace("{use}", bindings.label("use")));
+  goal(t(GOALS.molotov).replace("{use}", bindings.label("use")));
   if (!(await d.until((state) => state.fires.length > 0))) return;
   aimAt();
   goal();
@@ -690,7 +690,7 @@ async function act(
   readyShield();
   if (!(await say(LINES.shield))) return;
   for (;;) {
-    goal(GOALS.shield.replace("{use}", bindings.label("use")));
+    goal(t(GOALS.shield).replace("{use}", bindings.label("use")));
     if (!(await d.until((state) => state.players[0].shield > 0))) return;
     const raised = d.state.time;
     // Once raised, stage the demonstration without movement or another confirmation click.
@@ -746,7 +746,7 @@ async function act(
   };
   steps.add(holdBandageHealth);
   if (!(await say(LINES.bleeding))) return;
-  goal(GOALS.bandage.replace("{use}", bindings.label("use")));
+  goal(t(GOALS.bandage).replace("{use}", bindings.label("use")));
   if (!(await d.until(bandageUsed))) return;
   steps.delete(holdBandageHealth);
   goal();
@@ -765,7 +765,7 @@ async function act(
     buildSite = PLACE.buildSite;
   }
   allowed.add("build");
-  goal(GOALS.build.replace("{build}", bindings.label("build")));
+  goal(t(GOALS.build).replace("{build}", bindings.label("build")));
   const before = d.state.builtCrates?.length ?? 0;
   if (!(await d.until((state) => (state.builtCrates?.length ?? 0) > before))) return;
   buildSite = undefined;
@@ -890,8 +890,8 @@ async function act(
   const perk = perkById(d.hero.perks.at(-1)!);
   if (
     !(await say(LINES.perk, {
-      name: perk ? field(perk, "name") : "强化",
-      description: perk ? field(perk, "description") : "选择后自动生效。",
+      name: perk ? field(perk, "name") : t("强化"),
+      description: perk ? field(perk, "description") : t("选择后自动生效。"),
     }))
   )
     return;

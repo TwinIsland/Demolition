@@ -1,8 +1,11 @@
 import type { Mood } from "./assets";
 import { SPEAKER_NAMES, type Line, type Speaker } from "./script";
+import { language, t } from "../i18n";
 
 /** Characters revealed per second. */
 const TYPE_SPEED = 34;
+/** English takes about twice the characters to say the same thing. */
+const TYPE_SPEED_EN = 68;
 /** Characters between two ticks of the typing sound. */
 const TICK_EVERY = 3;
 
@@ -123,13 +126,17 @@ export class DialogueBox {
     this.portrait.hidden = !portrait;
     if (portrait) this.portrait.src = portrait;
     this.box.dataset.who = who;
-    this.name.textContent = SPEAKER_NAMES[who];
+    this.name.textContent = t(SPEAKER_NAMES[who]);
     this.choices.hidden = true;
     this.options = [];
-    this.full = text;
+    // Lines are written in Chinese and translated here, where they reach the screen.
+    this.full = t(text);
     this.reveal(0);
     clearInterval(this.timer);
-    this.timer = window.setInterval(() => this.reveal(this.shown + 1), 1000 / TYPE_SPEED);
+    this.timer = window.setInterval(
+      () => this.reveal(this.shown + 1),
+      1000 / (language === "en" ? TYPE_SPEED_EN : TYPE_SPEED),
+    );
     return new Promise<number>((resolve) => (this.proceed = resolve));
   }
 
@@ -144,7 +151,7 @@ export class DialogueBox {
 
   private ask(options: readonly string[]) {
     clearInterval(this.timer);
-    this.options = options;
+    this.options = options.map((option) => t(option));
     this.selected = 0;
     this.box.classList.remove("waiting");
     this.choices.hidden = false;

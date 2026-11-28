@@ -1,4 +1,5 @@
 import type { Stage } from "../stage";
+import { t } from "../../i18n";
 
 /** Characters per second: he says his name faster than the box can take it. */
 const SPEED = 30;
@@ -24,7 +25,7 @@ export function sayTooMuch(stage: Stage, name: string, fits: string, spill: stri
   timer = window.setInterval(() => {
     shown++;
     // Once the row is full the titles are made up on the spot, and they do not stop.
-    const tail = shown <= full.length ? "" : "·真".repeat(Math.floor((shown - full.length) / 2));
+    const tail = shown <= full.length ? "" : t("·真").repeat(Math.floor((shown - full.length) / 2));
     text.textContent = full.slice(0, shown) + tail;
     if (shown % 3 === 1) stage.host.typeTick();
     if (shown === fits.length + 4) box.classList.add("spilling");

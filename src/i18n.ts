@@ -1,4 +1,5 @@
 import { EN_MESSAGES } from "./locales/en";
+import { STORY_EN } from "./story/locales/en";
 
 export type Language = "en" | "zh";
 export type Translations = Partial<
@@ -21,8 +22,16 @@ export function setLanguage(value: Language) {
 export function t(source: string, ...values: (string | number)[]): string {
   return format(language, source, ...values);
 }
+/** The story keeps its lines in a dictionary of its own (story/locales/en.ts). */
+const english = (source: string) =>
+  Object.hasOwn(EN_MESSAGES, source)
+    ? EN_MESSAGES[source]
+    : Object.hasOwn(STORY_EN, source)
+      ? STORY_EN[source]
+      : source;
+
 export function format(locale: Language, source: string, ...values: (string | number)[]) {
-  const message = locale === "en" && Object.hasOwn(EN_MESSAGES, source) ? EN_MESSAGES[source] : source;
+  const message = locale === "en" ? english(source) : source;
   return values.length
     ? message.replace(/\{(\d+)\}/g, (token, i) => String(values[Number(i)] ?? token))
     : message;

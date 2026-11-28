@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import type { Player } from "../../core/types";
 import { world } from "../../render/arena";
+import { t } from "../../i18n";
 
 /** A tutorial target stays legible through scenery, including the shop between it and the hero. */
 export class TargetHighlight {
@@ -45,9 +46,9 @@ export class TargetHighlight {
     ink.textAlign = "center";
     ink.fillStyle = "#fff0b0";
     ink.font = 'bold 36px "Noto Sans SC", sans-serif';
-    ink.fillText("训练靶", 192, 46);
+    ink.fillText(t("训练靶"), 192, 46);
     ink.font = '22px "Noto Sans SC", sans-serif';
-    ink.fillText("击倒它以升级", 192, 81);
+    ink.fillText(t("击倒它以升级"), 192, 81);
     ink.fillStyle = "#ffe387";
     ink.beginPath();
     ink.moveTo(174, 105);

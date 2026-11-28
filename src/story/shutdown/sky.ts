@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { TILE_SIZE } from "../../core/geometry";
 import type { GameSnapshot } from "../../core/types";
 import { zoneWallInset } from "../../core/zone";
+import { t } from "../../i18n";
 
 /** The machine is at 3% when the act opens and at 97% when the last fight is won. */
 const FIRST = 3,
@@ -263,7 +264,7 @@ export class ShutdownSky {
     pen.textBaseline = "middle";
     pen.fillStyle = "#f4fbff";
     pen.font = `150px ${FONT}`;
-    pen.fillText(this.message, 70, 190);
+    pen.fillText(t(this.message), 70, 190);
     pen.textAlign = "right";
     pen.fillStyle = "#7df0ff";
     pen.fillText(`${percent}%`, width - 70, 190);

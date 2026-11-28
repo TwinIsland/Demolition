@@ -1,3 +1,4 @@
+import { language, t } from "../../i18n";
 import { STAFF } from "../../ui/credits-data";
 import type { Stage } from "../stage";
 import { ENDING_SKINS, type Ending } from "./unlocks";
@@ -39,8 +40,10 @@ const MUSIC: readonly [string, string][] = [
 const escape = (text: string) =>
   text.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]!);
 const block = (title: string, rows: readonly (readonly [string, string])[]) => `
-  <section><h3>${title}</h3>${rows
-    .map(([left, right]) => `<p><b>${escape(left)}</b>${right ? `<span>${escape(right)}</span>` : ""}</p>`)
+  <section><h3>${t(title)}</h3>${rows
+    .map(
+      ([left, right]) => `<p><b>${escape(t(left))}</b>${right ? `<span>${escape(t(right))}</span>` : ""}</p>`,
+    )
     .join("")}</section>`;
 
 /**
@@ -62,21 +65,21 @@ export function rollCredits(
     ${backdrop ? `<img alt="" src="${backdrop}" />` : ""}
     <div class="credits-shade"></div>
     <div class="credits-column">
-      <header><small>${ENDINGS[ending].name}</small><h2>${ENDINGS[ending].last}</h2></header>
+      <header><small>${t(ENDINGS[ending].name)}</small><h2>${t(ENDINGS[ending].last)}</h2></header>
       ${block("登场", CAST)}
       ${block("音乐", MUSIC)}
       ${block(
         "制作",
-        STAFF.map(({ role, names }) => [role[0], names.join(" · ")] as const),
+        STAFF.map(({ role, names }) => [role[language === "en" ? 1 : 0], names.join(" · ")] as const),
       )}
-      <section><p class="credits-note">第三方素材的完整名单见主菜单「致谢」。</p></section>
-      <footer>感谢游玩。</footer>
+      <section><p class="credits-note">${t("第三方素材的完整名单见主菜单「致谢」。")}</p></section>
+      <footer>${t("感谢游玩。")}</footer>
     </div>
     <div class="credits-reward" hidden>
-      <small>${firstTime ? "皮肤解锁" : "皮肤已解锁"}</small>
-      <b>「${reward.name}」</b>
-      <span>${ending === "home" ? "她说才不是送给你的。" : "他坚持这套衣服叫「漆黑之翼」。"}</span>
-      <i><kbd>E</kbd> 返回主菜单</i>
+      <small>${t(firstTime ? "皮肤解锁" : "皮肤已解锁")}</small>
+      <b>${t("「{0}」", t(reward.name))}</b>
+      <span>${t(ending === "home" ? "她说才不是送给你的。" : "他坚持这套衣服叫「漆黑之翼」。")}</span>
+      <i><kbd>E</kbd> ${t("返回主菜单")}</i>
     </div>`;
   stage.root.querySelector(".story-dialogue")!.before(layer);
   const column = layer.querySelector<HTMLElement>(".credits-column")!;

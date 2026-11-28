@@ -8,6 +8,7 @@ import type { Cutscene } from "./cutscenes/kit";
 import { openRoom } from "./room";
 import type { Hotspot, Line, RoomScene } from "./script";
 import type { ScenePlayer, Stage } from "./stage";
+import { t } from "../i18n";
 
 /**
  * The errand, in order: `find` the box under the bed; it is `locked`; with the `key` from under
@@ -28,9 +29,9 @@ export function playBedroom(stage: Stage, scene: RoomScene): ScenePlayer {
   const visits = new Map<string, number>();
   const furniture = document.createElement("div");
   furniture.className = "bedroom-furniture";
-  furniture.innerHTML = `<aside class="story-inventory" hidden role="status"><small>物品栏</small>
-    <span data-item="key" hidden><img src="${RPG_ART.key}" alt=""><b>铁盒钥匙 ×1</b></span>
-    <span data-item="computer" hidden><img src="${STORY_ART.computerItem}" alt=""><b>旧电脑 ×1</b></span></aside>`;
+  furniture.innerHTML = `<aside class="story-inventory" hidden role="status"><small>${t("物品栏")}</small>
+    <span data-item="key" hidden><img src="${RPG_ART.key}" alt=""><b>${t("铁盒钥匙")} ×1</b></span>
+    <span data-item="computer" hidden><img src="${STORY_ART.computerItem}" alt=""><b>${t("旧电脑")} ×1</b></span></aside>`;
   stage.root.querySelector(".story-dialogue")!.before(furniture);
   const inventory = furniture.querySelector<HTMLElement>(".story-inventory")!;
   /** What he carries; nothing hides the panel. */

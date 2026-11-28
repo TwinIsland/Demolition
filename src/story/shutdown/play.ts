@@ -16,6 +16,7 @@ import type { Cutscene } from "../cutscenes/kit";
 import { playWindow } from "../cutscenes/window";
 import { walkRoom } from "./home";
 import { sayTooMuch } from "./overflow";
+import { t } from "../../i18n";
 import { playPullOut } from "./pull-out";
 import { playApocalypse } from "./apocalypse";
 import { ArrivalShaft } from "./arrival";
@@ -159,7 +160,7 @@ export function playShutdown(
   const cast = (at: readonly Vec2[], extra: Partial<StoryActor>): StoryActor[] =>
     kings.map(({ id, name, color, skin }, index) => ({
       id,
-      name,
+      name: t(name),
       color,
       skin,
       ...at[index],
@@ -180,7 +181,7 @@ export function playShutdown(
           cast: [
             {
               id: "lulu",
-              name: "露露",
+              name: t("露露"),
               color: "#c8382e",
               skin: "story-lulu",
               ...spots.lulu,
@@ -365,7 +366,7 @@ export function playShutdown(
           stage.host.cue("blast");
           const named = lines.risen.map((line) => ({
             ...line,
-            text: line.text.replace("{name}", last.name),
+            text: t(line.text).replace("{name}", last.name),
           }));
           if (!(await d.talk(named))) return;
           // Its one great spell: the ground shakes, burns from where it stands, and is another ground.
@@ -426,7 +427,7 @@ export function playShutdown(
           cast: [
             {
               id: "lulu",
-              name: "露露",
+              name: t("露露"),
               color: "#c8382e",
               skin: "story-lulu",
               ...place.lulu,
@@ -535,7 +536,7 @@ export function playShutdown(
           cast: [
             {
               id: "zero",
-              name: "零",
+              name: t("零"),
               color: "#7b3fd0",
               skin: HERO_SKIN,
               ...spots.guides[0],
@@ -544,7 +545,7 @@ export function playShutdown(
             },
             {
               id: "lulu",
-              name: "露露",
+              name: t("露露"),
               color: "#c8382e",
               skin: "story-lulu",
               ...spots.guides[1],
@@ -586,7 +587,7 @@ export function playShutdown(
     if (!result) return false;
     if (SHUTDOWN_ART.stay && !(await stage.art(SHUTDOWN_ART.stay))) return false;
     const { fits, spill } = lines.stay.welcome;
-    const gag = enter(sayTooMuch(stage, "零", fits, spill, !!SHUTDOWN_ART.stay));
+    const gag = enter(sayTooMuch(stage, t("零"), t(fits), t(spill), !!SHUTDOWN_ART.stay));
     if (!(await gag.finished)) return false;
     leave(gag);
     if (!(await stage.talk(lines.stay.after))) return false;

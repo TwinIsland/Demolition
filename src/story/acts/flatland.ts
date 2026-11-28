@@ -10,6 +10,7 @@ import { STORY_ART, STORY_SKINS } from "../assets";
 import type { Director } from "../match/director";
 import { playStagedMatch } from "../match/staged-match";
 import type { Line, StagedScene } from "../script";
+import { t } from "../../i18n";
 
 /** Every line of act 3, by the moment it is spoken. */
 const LINES = {
@@ -323,11 +324,11 @@ async function script(d: Director) {
       return crates;
     };
     // Work done by the first charge counts too; never ask for three additional crates.
-    stage.goal(`${GOALS.crates} ${opened(d.state)}/${CRATE_GOAL}`);
+    stage.goal(`${t(GOALS.crates)} ${opened(d.state)}/${CRATE_GOAL}`);
     d.lock(false);
     if (
       !(await d.until((state) => {
-        stage.goal(`${GOALS.crates} ${opened(state)}/${CRATE_GOAL}`);
+        stage.goal(`${t(GOALS.crates)} ${opened(state)}/${CRATE_GOAL}`);
         return opened(state) === CRATE_GOAL;
       }))
     )
