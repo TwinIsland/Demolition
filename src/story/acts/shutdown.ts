@@ -123,7 +123,7 @@ export const SHUTDOWN_SCRIPT = {
       { who: "zero", mood: "sincere", text: "……" },
       { who: "zero", mood: "sincere", text: "我其实，没有什么封印。" },
       { who: "lulu", mood: "impressed", text: "我知道。" },
-      { who: "zero", mood: "sincere", text: "右手是被猫抓的。" },
+      { who: "zero", mood: "sincere", text: "绷带下面，什么也没有。" },
       { who: "lulu", mood: "impressed", text: "我知道。存档里写了。" },
       { who: "narrator", text: "他第一次没有用「吾」。没有人指出这一点。" },
     ],
@@ -198,7 +198,7 @@ const MORNING_BEDROOM: HomeRoom = {
       label: "镜子",
       lines: [
         { who: "zero", mood: "sincere", text: "……" },
-        { who: "narrator", text: "镜子里的人四天没洗头。他决定吃完饭就去洗。" },
+        { who: "narrator", text: "镜子里的人今天没有摆姿势。他看了一会儿，就走开了。" },
       ],
     },
     {
