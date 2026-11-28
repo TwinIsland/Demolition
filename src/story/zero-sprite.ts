@@ -29,7 +29,8 @@ const walkSheet = {
   ),
 };
 
-/** Registers Zero's walk sheet as the sprite "zero". */
+/** Registers Zero's walk sheets as the sprites "zero" and, with the bandage off, "zero-bare". */
 export function loadZeroSprite(k: KAPLAYCtx) {
   k.loadSprite("zero", STORY_ART.zeroWalk, walkSheet);
+  k.loadSprite("zero-bare", STORY_ART.zeroWalkBare, walkSheet);
 }

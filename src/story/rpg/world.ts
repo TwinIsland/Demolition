@@ -44,6 +44,8 @@ export function openWorld(
   map: RpgMap,
   hotspotList: readonly Hotspot[],
   onFacing: (hotspot: Hotspot | undefined) => void,
+  /** Which of Zero's walk sheets the player wears: "zero-bare" once the bandage is gone. */
+  sprite: "zero" | "zero-bare" = "zero",
 ): Room {
   const k = kaplay({
     canvas,
@@ -209,7 +211,7 @@ export function openWorld(
 
   loadZeroSprite(k);
   const zero = k.add([
-    k.sprite("zero", { anim: "idle-down" }),
+    k.sprite(sprite, { anim: "idle-down" }),
     k.pos(map.spawn.x, map.spawn.y),
     k.anchor("bot"),
     k.z(Z.sorted + map.spawn.y),

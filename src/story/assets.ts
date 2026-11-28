@@ -50,6 +50,9 @@ export const STORY_ART = {
   crt: url("crt.png"),
   zeroWalk: url("zero-walk.png"),
   zeroSkin: url("zero-skin.png"),
+  /** Zero once the bandage is off: the same sheets with a bare right forearm. */
+  zeroWalkBare: url("zero-walk-bare.png"),
+  zeroSkinBare: url("zero-skin-bare.png"),
   /** Sprite sheet of the act 2 mini-game; tools/story/make-arcade.py documents its frame order. */
   arcade: url("arcade.png"),
   /** The two players of the mini-game; tools/story/make-chibi.py documents its frame order. */
@@ -82,6 +85,7 @@ export type Mood =
 // The bundler resolves these patterns one folder deep, so the skins folder needs a pattern of its own.
 export const STORY_SKINS = {
   "story-zero": skin("zero.png"),
+  "story-zero-bare": skin("zero-bare.png"),
   "story-lulu": skin("lulu.png"),
   "story-zhangsan": skin("zhang-san.png"),
   "story-bluescreen": skin("blue-screen.png"),

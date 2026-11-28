@@ -23,4 +23,5 @@ export const openRoom = (
   canvas: HTMLCanvasElement,
   scene: Pick<RoomScene, "map" | "hotspots">,
   onFacing: (hotspot: Hotspot | undefined) => void,
-): Room => openWorld(canvas, scene.map, scene.hotspots, onFacing);
+  sprite?: "zero" | "zero-bare",
+): Room => openWorld(canvas, scene.map, scene.hotspots, onFacing, sprite);

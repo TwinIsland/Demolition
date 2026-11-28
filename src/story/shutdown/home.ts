@@ -27,7 +27,7 @@ export function walkRoom(stage: Stage, room: HomeRoom): Walk {
     settle: (left: boolean) => void = () => {};
   const left = new Promise<boolean>((resolve) => (settle = resolve));
   const prompt = () => stage.prompt(play.facing && !play.frozen && !over ? play.facing.label : undefined);
-  const play = openRoom(canvas, room, prompt);
+  const play = openRoom(canvas, room, prompt, "zero-bare");
   const begin = async () => {
     if (room.intro.length && !(await stage.talk(room.intro))) return;
     play.frozen = false;

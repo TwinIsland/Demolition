@@ -69,7 +69,7 @@ export function playPullOut(canvas: HTMLCanvasElement): Film {
     scene.add(ambient, fill, sun, glow);
 
     // He spins around the middle of his body, so the rig sits on the root's origin here.
-    const zero = shot.figure(STORY_SKINS["story-zero"]);
+    const zero = shot.figure(STORY_SKINS["story-zero-bare"]);
     zero.rig.position.y = 0;
 
     const sparkMesh = new THREE.InstancedMesh(

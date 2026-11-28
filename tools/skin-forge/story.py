@@ -33,8 +33,11 @@ def pixels(s, part, side, rows, color, spread=3, y0=0):
                 s.put(part, side, x, y0 + y, color, spread)
 
 
-def zero():
-    """Zero: messy black hair over one eye, open black hoodie, bandaged right forearm."""
+def zero(bandaged=True):
+    """Zero: messy black hair over one eye, open black hoodie, bandaged right forearm.
+
+    `bandaged=False` is the same boy after the goodbye: the wrap is off and the arm is bare.
+    """
     s = Skin(11)
     tone, lip = (238, 214, 200), (190, 140, 132)
     hair, strand = (22, 21, 26), (50, 48, 58)
@@ -89,14 +92,15 @@ def zero():
         s.fill(sleeve, hood, sides=SIDES, rows=(0, 7))
         s.fill(sleeve, hood, sides=("top",))
         s.ring(sleeve, 6, rib)
-    s.fill("rarm", wrap, sides=SIDES, rows=(7, 11), spread=4)
-    for y, offset in ((8, 0), (10, 2)):
-        for side in SIDES:
-            for x in range(4):
-                if (x + offset) % 4 < 2:
-                    s.put("rarm", side, x, y, wrap_line, 3)
-    s.put("rarm", "front", 1, 11, wrap, 3)
-    s.put("rarm", "back", 2, 11, wrap, 3)
+    if bandaged:
+        s.fill("rarm", wrap, sides=SIDES, rows=(7, 11), spread=4)
+        for y, offset in ((8, 0), (10, 2)):
+            for side in SIDES:
+                for x in range(4):
+                    if (x + offset) % 4 < 2:
+                        s.put("rarm", side, x, y, wrap_line, 3)
+        s.put("rarm", "front", 1, 11, wrap, 3)
+        s.put("rarm", "back", 2, 11, wrap, 3)
 
     # Black jeans, worn canvas sneakers with a pale toe cap and sole.
     for leg in ("rleg", "lleg"):
@@ -307,7 +311,7 @@ def antivirus():
     return s
 
 
-CAST = {"zero": zero, "lulu": lulu, "zhang-san": zhang_san, "blue-screen": blue_screen, "popup": popup, "antivirus": antivirus}
+CAST = {"zero": zero, "zero-bare": lambda: zero(False), "lulu": lulu, "zhang-san": zhang_san, "blue-screen": blue_screen, "popup": popup, "antivirus": antivirus}
 
 # Lulu wears a skin Tianyi picked, kept as lulu.png beside the generated ones; `lulu()` above is the
 # earlier drawn version and is no longer written out.

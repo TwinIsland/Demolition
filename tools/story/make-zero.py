@@ -1,9 +1,11 @@
 """Builds Zero's Minecraft skin, the 8-bit walk sheet projected from it, and his dialogue portraits.
 
-    python3 tools/story/make-zero.py [character-sheet.png] [skin.png]
+    python3 tools/story/make-zero.py [character-sheet.png] [skin.png] [suffix]
 
 With a skin given, that skin is used as it is (and copied to the assets) instead of the one
-painted here, so the walk sheet always shows the same character as the 3D model.
+painted here, so the walk sheet always shows the same character as the 3D model. With a suffix,
+the skin and walk sheet are written as zero-skin<suffix>.png and zero-walk<suffix>.png and the
+portraits are left alone: `- src/story/assets/skins/zero-bare.png -bare` makes the unbandaged set.
 
 Outputs go to src/story/assets: zero-skin.png (64 x 64 skin), zero-walk.png (4 facings x 4 frames
 of 16 x 32, rows down / up / left / right) and zero-<mood>.png (40 x 40 portraits cut from the
@@ -26,7 +28,7 @@ BANDAGE, BANDAGE_LINE = (233, 226, 214), (196, 187, 171)
 SHOE, SOLE = (40, 40, 46), (216, 212, 204)
 
 
-def skin() -> Image.Image:
+def skin(bandaged: bool = True) -> Image.Image:
     image = Image.new("RGBA", (64, 64), (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
 
@@ -77,7 +79,7 @@ def skin() -> Image.Image:
         box(x - 4, y + 5, 16, 1, HOODIE_LIGHT)
         box(x + 4, y - 4, 4, 4, SKIN_SHADE)  # hand, seen from below
 
-    arm(44, 20, True)
+    arm(44, 20, bandaged)
     arm(36, 52, False)
 
     def leg(x, y):
@@ -170,8 +172,9 @@ def portraits(sheet_path: str):
 
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
-    texture = Image.open(sys.argv[2]).convert("RGBA") if len(sys.argv) > 2 else skin()
-    texture.save(OUT / "zero-skin.png")
-    walk_sheet(texture).save(OUT / "zero-walk.png")
-    if len(sys.argv) > 1 and sys.argv[1] != "-":
+    suffix = sys.argv[3] if len(sys.argv) > 3 else ""
+    texture = Image.open(sys.argv[2]).convert("RGBA") if len(sys.argv) > 2 else skin(not suffix)
+    texture.save(OUT / f"zero-skin{suffix}.png")
+    walk_sheet(texture).save(OUT / f"zero-walk{suffix}.png")
+    if not suffix and len(sys.argv) > 1 and sys.argv[1] != "-":
         portraits(sys.argv[1])
