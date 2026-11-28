@@ -19,10 +19,10 @@ import { sayTooMuch } from "./overflow";
 import { playPullOut } from "./pull-out";
 import { playApocalypse } from "./apocalypse";
 import { ArrivalShaft } from "./arrival";
-import { playFarewell, type FarewellCut } from "./farewell";
 import type { Film } from "./kit";
 import { ShutdownSky } from "./sky";
 import { playEvening, type Evening } from "../cutscenes/evening";
+import { playFarewell, type Farewell, type FarewellShot } from "../cutscenes/farewell";
 import { reachEnding, type Ending } from "./unlocks";
 
 type Script = typeof SHUTDOWN_SCRIPT;
@@ -406,59 +406,26 @@ export function playShutdown(
   };
 
   /**
-   * What the two of them say once it is won, as a film in the village itself: a match of its own
-   * with nobody left to fight, under the last sky, seen by the story's camera. It stays up, held
-   * still, behind the choice.
+   * What the two of them say once it is won, as a film on a set of its own: the last piece of
+   * the village, afloat under the last sky. It stays up behind the choice.
    */
   const farewell = async (previous: Part) => {
-    stage.root.classList.add("switching");
-    if (!(await stage.wait(FADE_MS))) return undefined;
-    leave(previous);
-    const place = spots.farewell,
-      said = lines.farewell;
-    const { part, result } = await staged(
-      {
-        mapId: MAP,
-        skin: HERO_SKIN,
-        setup: {
-          spawn: place.hero,
-          yaw: NORTH,
-          cast: [
-            {
-              id: "lulu",
-              name: "露露",
-              color: "#c8382e",
-              skin: "story-lulu",
-              ...place.lulu,
-              yaw: NORTH,
-              passive: true,
-            },
-          ],
-        },
-      },
-      async (d, sky) => {
-        for (const cell of place.cleared) d.tile(cell, 0);
-        sky.settle(97, true);
-        const scene = playFarewell(d, place.hero, place.lulu);
-        void d.until(() => (scene.update(performance.now()), false)).then(() => scene.dispose());
-        stage.root.classList.remove("veiled");
-        if (!(await stage.wait(FADE_MS))) return;
-        stage.root.classList.remove("switching");
-        const shown = async (cut: FarewellCut, words: readonly Line[], before = () => {}) =>
-          (await fade(() => (before(), scene.cut(cut)))) && (await stage.wait(1400)) && (await d.talk(words));
-        if (!(await stage.wait(1200)) || !(await d.talk(lines.won))) return;
-        // What he admits is said into the quiet. The song comes in as the camera turns to the sky:
-        // its first minute is soft, and it has grown by the time the choice is on the table.
-        stage.host.music("farewell");
-        if (!(await shown("sky", said.sky)) || !(await shown("village", said.village))) return;
-        if (!(await shown("ribbon", said.ribbon))) return;
-        if (!(await shown("faces", said.end, () => (sky.percent = 98)))) return;
-        held = true;
-        sync();
-        return true;
-      },
-    );
-    return result ? part : undefined;
+    const said = lines.farewell;
+    let scene!: Farewell;
+    const raise = () => {
+      leave(previous);
+      scene = enter(playFarewell(stage.overlay()));
+    };
+    if (!(await fade(raise)) || !(await stage.wait(2200)) || !(await stage.talk(lines.won))) return undefined;
+    const shown = async (cut: FarewellShot, words: readonly Line[], before = () => {}) =>
+      (await fade(() => (before(), scene.cut(cut)))) && (await stage.wait(1800)) && (await stage.talk(words));
+    // What he admits is said into the quiet. The song comes in as the camera turns to the sky:
+    // its first minute is soft, and it has grown by the time the choice is on the table.
+    stage.host.music("farewell");
+    if (!(await shown("sky", said.sky)) || !(await shown("island", said.village))) return undefined;
+    if (!(await shown("ribbon", said.ribbon))) return undefined;
+    if (!(await shown("faces", said.end, () => scene.percent(98)))) return undefined;
+    return scene;
   };
 
   /** The room in the morning, breakfast, and the first ordinary sentence of the year. */
