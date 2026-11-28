@@ -223,6 +223,8 @@ export class GameApp {
     if (this.screens.is("story") || (this.screens.is("lobby") && this.ui.storyMenuKind)) {
       this.ui.closeStoryMenu();
       this.sound.menu("back");
+      // Esc freed the pointer on the way in; a story match under the hero's control wants it back.
+      this.recapturePointer();
       return;
     }
     if (this.screens.is("help") && this.helpFromLobby) {
@@ -235,7 +237,7 @@ export class GameApp {
     this.keyboard.clear();
     // An eliminated player resumes as a spectator, without controls.
     this.keyboard.enabled = this.viewer().alive;
-    if (this.keyboard.enabled) void this.keyboard.lockPointer();
+    if (this.keyboard.enabled) this.keyboard.lockPointer();
   }
 
   /** Escape, or the pause key: steps one level out of the current screen. */
@@ -310,7 +312,7 @@ export class GameApp {
     else this.ui.feed.close();
     this.keyboard.clear();
     this.keyboard.enabled = this.screens.is("playing") && this.viewer().alive;
-    if (this.keyboard.enabled) void this.keyboard.lockPointer();
+    if (this.keyboard.enabled) this.keyboard.lockPointer();
   }
 
   // --- Targeted perks ---
@@ -351,7 +353,7 @@ export class GameApp {
     if (!this.keyboard.enabled) return;
     if (target) this.keyboard.queuePerk(id, target);
     else this.sound.menu("back");
-    void this.keyboard.lockPointer();
+    this.keyboard.lockPointer();
   }
 
   /** Keyboard steering of the tablet cursor, and Enter to fire. */
@@ -392,7 +394,7 @@ export class GameApp {
   /** Re-locks the pointer after the browser released it without pausing (for example a canvas click). */
   recapturePointer() {
     if (this.keyboard.topDown || this.keyboard.selectingWheel || this.storyShop) return;
-    if (this.controllingPlayer && !document.pointerLockElement) void this.keyboard.lockPointer();
+    if (this.controllingPlayer && !document.pointerLockElement) this.keyboard.lockPointer();
   }
 
   // --- UI actions ---
@@ -722,7 +724,7 @@ export class GameApp {
     this.ui.hideOverlay();
     this.keyboard.clear();
     this.keyboard.enabled = true;
-    void this.keyboard.lockPointer();
+    this.keyboard.lockPointer();
   }
 
   private choosePerk(id: PerkId) {
@@ -738,7 +740,7 @@ export class GameApp {
     if (this.storyMatch) return;
     this.ui.hideOverlay();
     this.keyboard.enabled = true;
-    void this.keyboard.lockPointer();
+    this.keyboard.lockPointer();
   }
 
   /** Hands input back to the page: closes transient input UI, clears held keys, frees the pointer. */
@@ -807,7 +809,7 @@ export class GameApp {
         keyboard.enabled = enabled;
         // First person steers with the mouse; the overhead view leaves the pointer free.
         const state = session.getSnapshot();
-        if (enabled && !inTacticalView(viewer(), state.time)) void keyboard.lockPointer();
+        if (enabled && !inTacticalView(viewer(), state.time)) keyboard.lockPointer();
         else if (!enabled && document.pointerLockElement) document.exitPointerLock();
       },
       get hud() {
