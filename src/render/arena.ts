@@ -9,6 +9,7 @@ import { groundAt } from "../core/pack-api";
 import { buildJungle } from "./jungle-scenery";
 import { COLUMN_PITCH, buildPoolHall } from "./pool-hall";
 import { buildBackrooms } from "./backrooms-hall";
+import { ringOf } from "../core/zone";
 import { buildVillage, villageWall } from "./village-scenery";
 export { TILE_SIZE };
 export const world = (value: number, size: number) => (value - (size - 1) / 2) * TILE_SIZE;
@@ -166,7 +167,10 @@ export class Arena {
         if (state.tiles[z][x] === 1) {
           const border = !x || !z || x === size - 1 || z === size - 1;
           const wall = village
-            ? villageWall(models, map, size, x, z)
+            ? // What the closing zone has raised is plain wall, whatever stood there before.
+              !border && ringOf(size, { x, z }) <= (state.zone?.closed ?? 0)
+              ? models.wall("village")
+              : villageWall(models, map, size, x, z)
             : models.wall(
                 map.theme,
                 wallVariant(x, z, border || state.wallOrigins?.[z * size + x] !== undefined),

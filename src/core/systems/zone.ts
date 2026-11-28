@@ -51,6 +51,9 @@ export function stepZone(ctx: SimContext, dt: number) {
   }
 }
 
+/** Landmarks of a village map that stand on several wall cells (see the Flatland plan). */
+const VILLAGE_BUILDINGS = ["dojo", "shop", "shrine", "tavern", "house", "cottage", "smithy", "windmill"];
+
 /**
  * Demolishes what would block the swept ring and its inner escape lane before the boundary moves.
  * No loot or score. Zombies and items block nothing: zombies are carried inward by the wall, and
@@ -70,7 +73,15 @@ function clearRoute(ctx: SimContext, ring: number, notify = false) {
       // so losing an outer wall cannot leave invisible collision cells inside a roofless shell.
       if (s.tiles[z][x] !== 1) continue;
       const [kind, footprint, part] = (ctx.map.featureAt?.(x, z, size) ?? "").split(":");
-      if (!footprint || !part || !["farmhouse", "dojo", "shop", "cottage", "shrine"].includes(kind)) continue;
+      if (kind === "arch") {
+        // An arch stands on two piers, two cells apart along `footprint`; they go together.
+        const step = part === "0" ? 2 : -2,
+          bx = footprint === "x" ? x + step : x,
+          bz = footprint === "z" ? z + step : z;
+        if (ringOf(size, { x: bx, z: bz }) > (s.zone?.closed ?? 0)) demolition.add(bz * size + bx);
+        continue;
+      }
+      if (!footprint || !part || !VILLAGE_BUILDINGS.includes(kind)) continue;
       const [columns, rows] = footprint.split("x").map(Number);
       const [column, row] = part.split(",").map(Number);
       for (let bz = z - row; bz < z - row + rows; bz++)

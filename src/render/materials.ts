@@ -93,24 +93,10 @@ const PALETTE: Record<string, Surface> = {
   "pool-tile": { maps: "pool-tile", color: "#f4f7f5", normal: 0.9 },
   // Backrooms
   cardboard: { maps: "paint", diff: "paint-neutral", color: "#b08d5c", normal: 0.5 },
-  // Village
-  "village-stone": { maps: "village-stone" },
-  "village-roof": { maps: "village-roof" },
-  "village-thatch": { maps: "village-thatch" },
-  "village-plaster": { maps: "village-plaster", color: "#f6f1e6", normal: 0.6 },
-  "village-cedar": { maps: "village-cedar" },
-  "village-vermilion": { maps: "paint", diff: "paint-neutral", color: "#d0432a", normal: 0.5 },
-  "village-clay": { maps: "paint", diff: "paint-neutral", color: "#8a5536", roughness: 0.38, normal: 0.3 },
-  "village-water": { color: "#4a9aa6", roughness: 0.06, metalness: 0.1 },
-  "village-flame": { color: "#ffd9a0", roughness: 0.9, glow: ["#ffb866", 1.6] },
+  // Village: every model of a KayKit pack is coloured from that pack's one swatch sheet.
+  "kaykit-medieval": { diff: "kaykit-medieval", roughness: 0.82 },
+  "kaykit-halloween": { diff: "kaykit-halloween", roughness: 0.82 },
   "village-writing": { diff: "village-writing", roughness: 0.82 },
-  "village-shoji": { diff: "village-shoji", roughness: 0.9, glow: ["#ffdcae", 0.22] },
-  // Paving is laid in world space by the `paving` surface profile, so it runs on across tiles.
-  "village-path": { maps: "village-path" },
-  "village-cobble": { maps: "village-cobble" },
-  "sakura-bark": { maps: "sakura-bark" },
-  // Blossom over the board stays in the overhead views: a cherry is small enough not to hide its neighbours.
-  "sakura-crown": { diff: "sakura-crown", color: "#ffc9dc", roughness: 0.8, cutout: true, tinted: true },
 };
 /** Texture sets that `standard` can use in place of the default concrete. */
 type SurfaceSet =

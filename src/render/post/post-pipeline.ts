@@ -73,6 +73,7 @@ export class PostPipeline {
   private replayPass!: EffectPass;
   private replaying = false;
   private replayWarm = false;
+  private dimensionWarm = false;
   /** The flat world of the story. Like the lens, its pass is in the chain only while it shows. */
   private dimensionLook!: DimensionLookEffect;
   private dimensionPass!: EffectPass;
@@ -130,6 +131,15 @@ export class PostPipeline {
     this.setReplay(1);
     this.render();
     this.setReplay(0);
+  }
+
+  /** Compiles the flat world's pass behind the loading screen, so the story's turn to 3D starts without a hitch. */
+  warmDimension() {
+    if (this.dimensionWarm || this.dimensional) return;
+    this.dimensionWarm = true;
+    this.setDimension({ x: 0, z: 0, front: 0, block: 0.3, cover: 1, glow: 0 });
+    this.render();
+    this.setDimension();
   }
 
   setQuality(quality: PostQuality) {
@@ -198,6 +208,7 @@ export class PostPipeline {
     this.replayGrade = new ReplayGradeEffect(quality.multisampling === 0);
     this.replayPass = new EffectPass(this.camera, this.replayGrade);
     this.replayWarm = false;
+    this.dimensionWarm = false;
     this.dimensionLook = new DimensionLookEffect(this.camera, quality.multisampling === 0);
     this.dimensionPass = new EffectPass(this.camera, this.dimensionLook);
     if (quality.occlusion !== "off") {

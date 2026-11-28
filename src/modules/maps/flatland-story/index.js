@@ -25,9 +25,9 @@ export default defineMap(
     theme: "village",
     weather: "spring",
     obstacles: [
-      { use: "set:village", weight: 70 },
-      { use: "crate", weight: 18 },
-      { use: "logs", weight: 12 },
+      { use: "set:village", weight: 100 },
+      // Only where the plan asks for a crate.
+      { use: "village-crate", weight: 0.001 },
       // Only where the plan asks for a fence.
       { use: "wood-fence", weight: 0.001 },
     ],
