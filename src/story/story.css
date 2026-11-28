@@ -84,6 +84,49 @@
   left: calc(var(--px) * 5);
   color: #e8b45a;
 }
+/* A new objective: the chip jumps out of its corner and its frame blinks twice. */
+.story-goal.changed {
+  transform-origin: left center;
+  animation:
+    story-goal-jump 0.55s cubic-bezier(0.2, 0.9, 0.3, 1),
+    story-goal-flash 0.3s steps(2, jump-none) 3;
+}
+@keyframes story-goal-jump {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  22% {
+    transform: translateY(-35%) scale(1.22);
+  }
+  48% {
+    transform: translateY(0) scale(0.96);
+  }
+  68% {
+    transform: translateY(-10%) scale(1.05);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes story-goal-flash {
+  from {
+    color: #0b0a14;
+    background: #ffe9a8;
+    border-color: #fff;
+    box-shadow: 0 0 calc(var(--px) * 6) #ffd36bcc;
+  }
+  to {
+    color: #e8b45a;
+    background: #0b0a14d9;
+    border-color: #55518f;
+    box-shadow: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .story-goal.changed {
+    animation: story-goal-flash 0.3s steps(2, jump-none) 2;
+  }
+}
 .story-prompt {
   top: max(38px, calc(var(--px) * 5));
   right: calc(var(--px) * 5);

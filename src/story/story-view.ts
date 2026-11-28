@@ -130,8 +130,15 @@ export function mountStory(
         timers.add(timer);
       }),
     goal(text) {
+      const changed = !!text && (goal.hidden || goal.textContent !== `目标：${text}`);
       goal.hidden = !text;
-      if (text && goal.textContent !== `目标：${text}`) goal.textContent = `目标：${text}`;
+      if (!changed) return;
+      goal.textContent = `目标：${text}`;
+      // A new objective jumps and flashes with a chime; restart it if the last one is still going.
+      goal.classList.remove("changed");
+      void goal.offsetWidth;
+      goal.classList.add("changed");
+      host.cue("goal");
     },
     prompt(text) {
       prompt.hidden = !text;

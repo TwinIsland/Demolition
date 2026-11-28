@@ -53,6 +53,7 @@ const CUES = {
   "skill-unpick": ui(0.5),
   "match-victory": ui(0.6, { voices: 1, minInterval: 1 }),
   "match-eliminated": ui(0.62, { voices: 1, minInterval: 1 }),
+  "story-goal": ui(0.5, { voices: 1, minInterval: 0.35 }),
   "type-tick": ui(0.2, { voices: 3, minInterval: 0.03, pitchJitter: 0.05 }),
   "perk-embers": ui(0.6),
   "perk-silver": ui(0.46),

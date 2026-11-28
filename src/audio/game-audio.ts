@@ -36,6 +36,7 @@ const STORY_CUES: Record<StoryCue, string> = {
   down: "body-fall",
   power: "room-shift",
   pull: "missile-incoming",
+  goal: "story-goal",
 };
 /** Story tracks are mastered hotter than the game's own music. */
 const STORY_GAIN: Record<string, number> = {
