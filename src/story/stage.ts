@@ -4,7 +4,22 @@ import type { GameRenderer } from "../render/game-renderer";
 import type { Line } from "./script";
 
 /** Sounds a scene may ask the app for. */
-export type StoryCue = "place" | "blast" | "pickup" | "down" | "power" | "pull" | "goal" | "mark";
+export type StoryCue =
+  | "place"
+  | "blast"
+  | "pickup"
+  | "down"
+  | "power"
+  | "pull"
+  | "goal"
+  | "mark"
+  | "relicFall"
+  | "relicLand"
+  | "relicBounce"
+  | "relicRise"
+  | "relicReveal"
+  | "ascendCharge"
+  | "ascendHit";
 
 /** Music the story can ask for, by the part it plays under. */
 type StoryTrack = "opening" | "duel" | "ascension" | "lesson" | "shutdown" | "home";

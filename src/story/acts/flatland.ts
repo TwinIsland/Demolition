@@ -497,7 +497,13 @@ async function script(d: Director) {
     stage.host.silence();
     if (!(await d.seconds(1.2))) return;
     if (!(await say(LINES.defeat))) return;
-    if (!(await cutscene(playRelicDrop, () => stage.art(STORY_ART.comic3b)))) return;
+    if (
+      !(await cutscene(
+        (canvas) => playRelicDrop(canvas, (name) => stage.host.cue(name)),
+        () => stage.art(STORY_ART.comic3b),
+      ))
+    )
+      return;
     stage.host.music("opening");
     if (!(await say(LINES.relic))) return;
     if (!(await say(LINES.press))) return;
