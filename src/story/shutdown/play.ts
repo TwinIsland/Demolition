@@ -6,6 +6,7 @@ import type { GameSnapshot, StoryActor, Vec2 } from "../../core/types";
 import type { HomeRoom, SHUTDOWN_SCRIPT } from "../acts/shutdown";
 import type { Director } from "../match/director";
 import { playStagedMatch } from "../match/staged-match";
+import { CheatCode } from "../cheat";
 import { hasCheckpoint, loadStory } from "../save";
 import type { Line } from "../script";
 import type { ScenePlayer, Stage, StoryMatchOptions } from "../stage";
@@ -316,16 +317,39 @@ export function playShutdown(
           d.lock(false);
           return alive;
         };
+        // The menu's cheat code, entered here, wins the fight outright: no last words, no second
+        // coming. It is taken at the next moment the fight is running, never in the middle of a line.
+        const code = new CheatCode();
+        let cheated = false;
+        const typed = (event: KeyboardEvent) => {
+          if (event.ctrlKey || event.metaKey || event.altKey) return code.reset();
+          if (!event.repeat && code.press(event.code)) cheated = true;
+        };
+        window.addEventListener("keydown", typed, true);
+        void d.until(() => false).then(() => window.removeEventListener("keydown", typed, true));
         // One goes down, says so, and whoever is left answers; the last one down gets up once.
         let left = up(d.state),
           reborn = false;
         for (;;) {
           const count = left.length;
-          if (!(await d.until((state) => !hero(state).alive || up(state).length < count))) {
+          const running = await d.until(
+            (state) => cheated || !hero(state).alive || up(state).length < count,
+          );
+          if (!running) {
             rest();
             return;
           }
           if (!hero(d.state).alive) break;
+          if (cheated) {
+            match.mutate((state) => {
+              for (const king of state.players.filter((p) => p.team === "kings" && p.alive)) {
+                king.hp = 0;
+                king.alive = false;
+              }
+            });
+            stage.host.cue("power");
+            break;
+          }
           const now = up(d.state);
           const fallen = left.filter((king) => !now.includes(king));
           left = now;
@@ -385,6 +409,7 @@ export function playShutdown(
           stage.goal(goals.last);
           d.lock(false);
         }
+        window.removeEventListener("keydown", typed, true);
         rest();
         match.hud = false;
         match.live = false;
