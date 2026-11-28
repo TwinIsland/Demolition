@@ -42,7 +42,9 @@ import { EquipmentControl } from "./equipment-control";
 import { GameLoop, Throttle } from "./game-loop";
 import { MatchSetup } from "./match-setup";
 import { ScreenMachine, type Screen } from "./screens";
-import { isZombieRate, readCustomSkin } from "./settings";
+import { isZombieRate, loadAppearance, readCustomSkin } from "./settings";
+import { skinLocked } from "../story/shutdown/unlocks";
+import { DEFAULT_SKIN, SKINS } from "../core/room";
 
 const LOCAL_PLAYER_ID = "you";
 /** Seconds between HUD refreshes; the 3D view still renders every frame. */
@@ -525,6 +527,24 @@ export class GameApp {
       closeCredits: () => this.closeCredits(),
       changeLobbyTab: () => {
         if (this.screens.is("lobby")) this.sound.setMusic(this.lobbyMusic());
+      },
+      storyCheat: (unlocked) => {
+        this.sound.cheat(unlocked);
+        // A wipe takes rewards back: what is worn or selected must not stay on a locked choice.
+        Object.assign(this.setup.appearance, loadAppearance());
+        if (skinLocked(SKINS[this.setup.appearance.skin])) {
+          this.setup.appearance.skin = DEFAULT_SKIN.id;
+          void this.renderer.previewSkin(DEFAULT_SKIN.id).catch(console.error);
+        }
+        this.applyAppearance();
+        this.ui.setAppearance(this.setup.appearance, readCustomSkin());
+        if (mapLocked(this.setup.mapId)) {
+          this.setup.mapId = MAPS[0].id;
+          this.session.restart(this.setup.backdropOptions());
+          this.renderer.selectLobbyMap(MAPS[0]);
+          this.ui.setMap(MAPS[0].id);
+        }
+        this.ui.refreshStory();
       },
       openStory: (act, titled) => {
         if (!this.screens.is("lobby")) return;

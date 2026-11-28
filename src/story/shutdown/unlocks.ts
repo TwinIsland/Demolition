@@ -33,3 +33,7 @@ export function reachEnding(ending: Ending) {
   setting.save([...seen, ending]);
   return true;
 }
+
+/** Records both endings at once, or forgets them all. Only the menu's cheat code does this. */
+export const grantEndings = () => setting.save(["home", "stay"]);
+export const forgetEndings = () => setting.clear();

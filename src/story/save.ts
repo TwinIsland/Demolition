@@ -60,3 +60,16 @@ export function resetStory(story = MAIN_STORY) {
   delete save.stories[story];
   setting.save({ stories: save.stories, flags: {} });
 }
+
+/** Marks every given checkpoint as reached in one write, without touching the flags. */
+export function grantCheckpoints(checkpoints: readonly string[], story = MAIN_STORY) {
+  const save = loadStory();
+  const entry = (save.stories[story] ??= { checkpoints: [] });
+  for (const checkpoint of checkpoints)
+    if (!entry.checkpoints.includes(checkpoint)) entry.checkpoints.push(checkpoint);
+  save.playedAt = Date.now();
+  setting.save(save);
+}
+
+/** Forgets every story, flag and timestamp, as if the game had never been played. */
+export const wipeStory = () => setting.clear();

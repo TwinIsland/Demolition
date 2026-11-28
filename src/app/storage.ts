@@ -70,4 +70,15 @@ export class Setting<T> {
   save(value: T): boolean {
     return writeEntry(this.options.key, this.options.codec.encode(value));
   }
+
+  /** Removes the entry in every schema version, so the next load finds nothing saved. */
+  clear() {
+    for (const { key } of [this.options, ...(this.options.legacy ?? [])]) {
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        // Storage is unavailable: there was nothing to remove.
+      }
+    }
+  }
 }

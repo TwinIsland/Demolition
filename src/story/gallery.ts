@@ -73,3 +73,7 @@ export function unlockIllustration(url: string) {
   unlocked.add(art.id);
   setting.save([...unlocked]);
 }
+
+/** Fills the whole collection, or empties it. Only the menu's cheat code does this. */
+export const grantIllustrations = () => setting.save(ILLUSTRATIONS.map((art) => art.id));
+export const forgetIllustrations = () => setting.save([]);

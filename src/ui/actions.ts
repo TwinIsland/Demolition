@@ -62,6 +62,8 @@ export interface UIActions {
    */
   openStory(act?: string, titled?: boolean): void;
   closeStory(): void;
+  /** The story tab's cheat code was entered: everything is unlocked now, or wiped. */
+  storyCheat(unlocked: boolean): void;
   setLanguage(value: Language): void;
   toggleSound(): void;
   /** Feedback for a click that triggers nothing with its own sound. */
