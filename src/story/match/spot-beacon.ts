@@ -11,11 +11,11 @@ const BEAM_HEIGHT = 7;
 export class SpotBeacon {
   private readonly root = new THREE.Group();
   private readonly ring = new THREE.Mesh(
-    new THREE.RingGeometry(TILE_SIZE * 0.3, TILE_SIZE * 0.4, 40),
+    new THREE.RingGeometry(TILE_SIZE * 0.28, TILE_SIZE * 0.42, 40),
     new THREE.MeshBasicMaterial({
-      color: "#ffe387",
+      color: "#ffc400",
       transparent: true,
-      opacity: 0.9,
+      opacity: 1,
       side: THREE.DoubleSide,
       depthTest: false,
       depthWrite: false,
@@ -24,11 +24,25 @@ export class SpotBeacon {
     }),
   );
   private readonly pad = new THREE.Mesh(
-    new THREE.CircleGeometry(TILE_SIZE * 0.3, 40),
+    new THREE.CircleGeometry(TILE_SIZE * 0.28, 40),
     new THREE.MeshBasicMaterial({
-      color: "#ffe387",
+      color: "#ffc400",
       transparent: true,
       opacity: 0.2,
+      side: THREE.DoubleSide,
+      depthTest: false,
+      depthWrite: false,
+      toneMapped: false,
+      fog: false,
+    }),
+  );
+  /** A dark rim around the ring keeps it legible on pale ground. */
+  private readonly rim = new THREE.Mesh(
+    new THREE.RingGeometry(TILE_SIZE * 0.42, TILE_SIZE * 0.46, 40),
+    new THREE.MeshBasicMaterial({
+      color: "#1b1405",
+      transparent: true,
+      opacity: 0.8,
       side: THREE.DoubleSide,
       depthTest: false,
       depthWrite: false,
@@ -55,7 +69,7 @@ export class SpotBeacon {
     this.beam = new THREE.Mesh(
       new THREE.CylinderGeometry(TILE_SIZE * 0.3, TILE_SIZE * 0.3, BEAM_HEIGHT, 24, 1, true),
       new THREE.MeshBasicMaterial({
-        color: "#ffe387",
+        color: "#ffc400",
         map: this.fade,
         transparent: true,
         opacity: 0.4,
@@ -67,13 +81,14 @@ export class SpotBeacon {
         fog: false,
       }),
     );
-    this.ring.rotation.x = this.pad.rotation.x = -Math.PI / 2;
-    this.ring.position.y = this.pad.position.y = 0.12;
+    this.ring.rotation.x = this.pad.rotation.x = this.rim.rotation.x = -Math.PI / 2;
+    this.ring.position.y = this.pad.position.y = this.rim.position.y = 0.12;
     this.beam.position.y = BEAM_HEIGHT / 2 + 0.12;
     this.pad.renderOrder = 20;
     this.ring.renderOrder = 21;
     this.beam.renderOrder = 22;
-    this.root.add(this.pad, this.ring, this.beam);
+    this.rim.renderOrder = 21;
+    this.root.add(this.pad, this.rim, this.ring, this.beam);
     this.root.visible = false;
     parent.add(this.root);
   }
@@ -85,16 +100,17 @@ export class SpotBeacon {
     if (!cell) return;
     this.root.position.set(world(cell.x, size), 0, world(cell.z, size));
     const pulse = 0.5 + 0.5 * Math.sin(time * 4);
-    this.ring.scale.setScalar(1 + 0.12 * pulse);
-    this.pad.material.opacity = 0.14 + 0.12 * pulse;
-    this.beam.material.opacity = 0.28 + 0.16 * pulse;
+    this.ring.scale.setScalar(1 + 0.1 * pulse);
+    this.rim.scale.copy(this.ring.scale);
+    this.pad.material.opacity = 0.35 + 0.25 * pulse;
+    this.beam.material.opacity = 0.55 + 0.3 * pulse;
   }
 
   dispose() {
     if (this.disposed) return;
     this.disposed = true;
     this.root.removeFromParent();
-    for (const mesh of [this.ring, this.pad, this.beam]) {
+    for (const mesh of [this.ring, this.pad, this.rim, this.beam]) {
       mesh.geometry.dispose();
       mesh.material.dispose();
     }
