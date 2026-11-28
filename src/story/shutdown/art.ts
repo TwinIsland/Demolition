@@ -13,8 +13,6 @@ const art = (name: string): string | undefined =>
 
 export const SHUTDOWN_ART = {
   bedroomMorning: art("bedroom-morning")!,
-  bedroomDesk: art("bedroom-desk")!,
-  dining: art("dining")!,
   diningMeal: art("dining-meal")!,
   /** Panel 5: the wall of fire with a progress bar in it. */
   wall: art("comic-5"),

@@ -3,32 +3,6 @@
   inset: 0;
   pointer-events: none;
 }
-.bedroom-computer {
-  position: absolute;
-  left: 79.375%;
-  top: 43.3333%;
-  width: 10%;
-  height: 17.7778%;
-  background-size: 200% 200%;
-  background-position: 0 0;
-  image-rendering: pixelated;
-}
-.bedroom-computer.powered {
-  animation: bedroom-screen 1.2s steps(1) infinite;
-  filter: drop-shadow(0 0 3px #7a9eff8c);
-}
-@keyframes bedroom-screen {
-  0%,
-  100% {
-    background-position: 100% 0;
-  }
-  33% {
-    background-position: 0 100%;
-  }
-  66% {
-    background-position: 100% 100%;
-  }
-}
 .story-inventory {
   position: absolute;
   right: calc(var(--px) * 6);
@@ -43,6 +17,9 @@
   color: #a99bbb;
   font: inherit;
 }
+.story-inventory > span[hidden] {
+  display: none;
+}
 .story-inventory > span {
   display: flex;
   align-items: center;
@@ -51,14 +28,12 @@
 .story-inventory img {
   width: calc(var(--px) * 20);
   height: calc(var(--px) * 20);
+  object-fit: contain;
   image-rendering: pixelated;
 }
 .story-inventory b {
   font: inherit;
   color: #ffe387;
-}
-.bedroom-furniture.paused .bedroom-computer {
-  animation-play-state: paused;
 }
 .story-stage:has(.stage-art:not([hidden])) .bedroom-furniture {
   visibility: hidden;

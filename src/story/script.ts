@@ -1,4 +1,5 @@
 import type { Mood } from "./assets";
+import type { RpgMap } from "./rpg/map";
 import type { ScenePlayer, Stage } from "./stage";
 
 /** Who a line belongs to. `narrator` and `system` have no portrait; `door` is a voice from off screen. */
@@ -14,12 +15,10 @@ export type Line =
    */
   | { choice: readonly string[]; flag?: string };
 
-/** Something in a room that can be examined. */
+/** Something in a room that can be examined: the prop of the room's map that names its `id` opens it. */
 export interface Hotspot {
   id: string;
-  /** Layout symbol of the cells that trigger it. */
-  symbol: string;
-  /** Shown in the prompt while the player faces it. */
+  /** Shown in the prompt while the player is at it. */
   label: string;
   lines: readonly Line[];
   /**
@@ -29,42 +28,18 @@ export interface Hotspot {
   cycle?: readonly { label: string; lines: readonly Line[] }[];
   /** Examining it ends the scene, once its lines are read. */
   ends?: boolean;
-  /** Optional proximity interaction in stage pixels, independent of the hero's facing. */
-  interactionRadius?: number;
-}
-
-interface RoomAnimation {
-  sprite: string;
-  columns: number;
-  rows: number;
-  frames: number;
-  fps: number;
-  opacity?: number;
-  x: number;
-  y: number;
 }
 
 /**
- * A walkable room of the 8-bit chapters: a 320 x 180 painting, and a grid laid over it that says
- * where the player can stand. `layout` is one string per row and one character per cell: "." is
- * floor, "@" the spawn, anything else is solid; a hotspot claims the cells of its symbol.
+ * A walkable room of the 8-bit chapters: a map of ground tiles and props (see rpg/map.ts), and
+ * what there is to say about the things in it.
  */
 export interface RoomScene {
   kind: "room";
   id: string;
-  /** Painting of the whole room. The grid is centred on it. */
-  background: string;
+  map: RpgMap;
   /** Optional room-specific interaction sequence, sharing the same room renderer. */
   play?(stage: Stage): ScenePlayer;
-  /** Furniture masks occlude a walker whose feet are behind their front edge. */
-  foreground?: readonly { sprite: string; x: number; y: number; feetY: number }[];
-  /** Small looping sprite sheets, drawn over the room and paused with its clock. */
-  animations?: readonly RoomAnimation[];
-  /** Pixels per layout cell. */
-  cell: number;
-  layout: readonly string[];
-  /** Symbols the player can walk across: clutter on the floor, examined while standing on or at it. */
-  walkOver?: string;
   /** A full-screen illustration with lines read over it, before the room appears. */
   opening?: { art: string; lines: readonly Line[] };
   /** Played in the room before the player may move. */

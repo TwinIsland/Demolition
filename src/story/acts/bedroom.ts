@@ -1,51 +1,22 @@
 import { STORY_ART } from "../assets";
 import { playBedroom } from "../bedroom-play";
+import { bedroomMap } from "./home-map";
 import type { RoomScene } from "../script";
 
 /**
- * Act 1, "The mundane cage": the bedroom. Teaches walking and examining, and ends when the old
- * computer is found under the bed, placed on the desk, and powered through the floor strip.
+ * Act 1, "The mundane cage": the bedroom and its bathroom. Teaches walking and examining. The old
+ * computer is in a locked box under the bed and the key is under the figurine in the bathroom;
+ * the act ends when the computer is on the desk and powered through the floor strip.
  *
- * The layout is traced over the painting in 8-pixel cells. Solid: # wall, W curtains, P and Q
- * the two posters, M mirror, S bookshelf, B bed, F the plush on it, b the gap under the bed,
- * N desk, D chair and bin, X cardboard box, = door. Walked over: t tissues, s socks, p phone,
- * c crisps, a alarm clock, e power strip.
+ * The rooms are laid out in home-map.ts; a hotspot here is opened by the prop that names its id.
+ * The steps of the errand, and what the bed, the figurine, the desk and the strip say at each of
+ * them, are in bedroom-play.ts.
  */
 export const BEDROOM: RoomScene = {
   kind: "room",
   id: "bedroom",
-  background: STORY_ART.bedroom,
+  map: bedroomMap("night"),
   play: (stage) => playBedroom(stage, BEDROOM),
-  foreground: [{ sprite: STORY_ART.bedroomDesk, x: 254, y: 68, feetY: 138 }],
-  animations: [
-    { sprite: STORY_ART.bedroomDust, columns: 2, rows: 2, frames: 4, fps: 4, x: 88, y: 64, opacity: 0.2 },
-  ],
-  cell: 8,
-  layout: [
-    "########################################",
-    "########################################",
-    "########################################",
-    "########################################",
-    "########################################",
-    "########################################",
-    "#####WWWWWWWWWWW##PPPP#QQQQ#MMM#SSSSS###",
-    "##.BBBBBBB............................##",
-    "##.BBBBFFB......................NNNNNN##",
-    "##.BBBBFFB......................NNNNNN##",
-    "##.BBBBBBB..t.a.................NNNNNN##",
-    "##.BBBBBBB......................NNNNNN##",
-    "##.BBBBBBB...p................DDNNNNNN##",
-    "##.BBBBBBB........s....@......DDNNNNNN##",
-    "##.BBBBBBB....................DDNNNNNN##",
-    "##.BBBBBBB....................DDNNNNNN##",
-    "##.bbbbbbb....................DDNNNNNN##",
-    "##.XXX........c....................ee.##",
-    "##.XXX.....................s..........##",
-    "##.XXX................................##",
-    "###################===##################",
-    "########################################",
-  ],
-  walkOver: "tspcae",
   opening: {
     art: STORY_ART.comic1,
     lines: [
@@ -70,7 +41,6 @@ export const BEDROOM: RoomScene = {
   hotspots: [
     {
       id: "megumin",
-      symbol: "P",
       label: "惠惠的海报",
       lines: [
         { who: "zero", mood: "sincere", text: "吾之师。一日一发，绝不妥协。" },
@@ -79,7 +49,6 @@ export const BEDROOM: RoomScene = {
     },
     {
       id: "aqua",
-      symbol: "Q",
       label: "阿库娅的海报",
       lines: [
         { who: "zero", mood: "smug", text: "没用的女神啊。吾若转生，绝不选你。" },
@@ -90,8 +59,6 @@ export const BEDROOM: RoomScene = {
     },
     {
       id: "cirno",
-      symbol: "F",
-      interactionRadius: 18,
       label: "琪露诺 fumo",
       lines: [
         { who: "zero", mood: "sincere", text: "冰之妖精……吾麾下最强的使魔。" },
@@ -101,7 +68,6 @@ export const BEDROOM: RoomScene = {
     },
     {
       id: "mirror",
-      symbol: "M",
       label: "镜子",
       lines: [
         { who: "zero", mood: "sincere", text: "镜中之人……你也在哭泣吗。" },
@@ -110,8 +76,6 @@ export const BEDROOM: RoomScene = {
     },
     {
       id: "shelf",
-      symbol: "S",
-      interactionRadius: 28,
       label: "书架上的盒子",
       lines: [
         { who: "zero", mood: "smug", text: "安静点，吾的右手。时候还没到。" },
@@ -120,8 +84,6 @@ export const BEDROOM: RoomScene = {
     },
     {
       id: "desk",
-      symbol: "N",
-      interactionRadius: 24,
       label: "书桌",
       lines: [],
       cycle: [
@@ -161,14 +123,11 @@ export const BEDROOM: RoomScene = {
     },
     {
       id: "power-strip",
-      symbol: "e",
-      interactionRadius: 14,
       label: "插线板",
       lines: [{ who: "narrator", text: "桌子下面的插线板。空插口正好能接上那台旧电脑。" }],
     },
     {
       id: "tissues",
-      symbol: "t",
       label: "纸团",
       lines: [
         { who: "zero", mood: "flustered", text: "……这是吾与花粉之邪神交战的痕迹。" },
@@ -177,7 +136,6 @@ export const BEDROOM: RoomScene = {
     },
     {
       id: "socks",
-      symbol: "s",
       label: "袜子",
       lines: [
         { who: "zero", mood: "sincere", text: "失散的左翼与右翼。它们已经很久没有相见了。" },
@@ -186,7 +144,6 @@ export const BEDROOM: RoomScene = {
     },
     {
       id: "crisps",
-      symbol: "c",
       label: "薯片",
       lines: [
         { who: "zero", mood: "smug", text: "供奉给深渊的祭品。" },
@@ -195,7 +152,6 @@ export const BEDROOM: RoomScene = {
     },
     {
       id: "phone",
-      symbol: "p",
       label: "手机",
       lines: [
         { who: "zero", mood: "smug", text: "零条新消息。很好，吾不需要羁绊。" },
@@ -204,7 +160,6 @@ export const BEDROOM: RoomScene = {
     },
     {
       id: "clock",
-      symbol: "a",
       label: "闹钟",
       lines: [
         { who: "zero", mood: "smug", text: "时间……不过是凡人给自己套上的枷锁。" },
@@ -213,7 +168,6 @@ export const BEDROOM: RoomScene = {
     },
     {
       id: "box",
-      symbol: "X",
       label: "纸箱",
       lines: [
         { who: "zero", mood: "sincere", text: "封印之匣。里面沉睡着吾的过去。" },
@@ -222,7 +176,6 @@ export const BEDROOM: RoomScene = {
     },
     {
       id: "window",
-      symbol: "W",
       label: "窗帘",
       lines: [
         { who: "zero", mood: "smug", text: "阳光是凡人的东西。" },
@@ -231,8 +184,6 @@ export const BEDROOM: RoomScene = {
     },
     {
       id: "door",
-      symbol: "=",
-      interactionRadius: 14,
       label: "房门",
       lines: [
         { who: "zero", mood: "flustered", text: "门的另一边是凡俗。吾不会踏出一步。" },
@@ -240,9 +191,55 @@ export const BEDROOM: RoomScene = {
       ],
     },
     {
+      id: "figurine",
+      label: "手办",
+      lines: [
+        { who: "zero", mood: "sincere", text: "吾之至宝。为了不被凡俗的目光玷污，才供奉在这片圣域。" },
+        { who: "narrator", text: "妈妈说放卧室落灰。卫生间其实更潮。" },
+      ],
+    },
+    {
+      id: "sink",
+      label: "洗手台",
+      lines: [
+        { who: "zero", mood: "smug", text: "净化之泉。吾每日在此洗去凡尘。" },
+        { who: "narrator", text: "水龙头在滴水。滴了一个月了。" },
+      ],
+    },
+    {
+      id: "toilet",
+      label: "马桶",
+      lines: [
+        { who: "zero", mood: "sincere", text: "王座。吾曾在此思考世界的终焉。" },
+        { who: "narrator", text: "也在这里刷了三小时手机。腿麻了。" },
+      ],
+    },
+    {
+      id: "bathtub",
+      label: "浴缸",
+      lines: [
+        { who: "zero", mood: "smug", text: "冥河之水。凡人浸入，便会失去斗志。" },
+        { who: "narrator", text: "泡澡确实很舒服。" },
+      ],
+    },
+    {
+      id: "washer",
+      label: "洗衣机",
+      lines: [
+        { who: "zero", mood: "sincere", text: "混沌的漩涡……它吞噬过吾的一只袜子。" },
+        { who: "narrator", text: "没有。两只都在卧室地上。" },
+      ],
+    },
+    {
+      id: "basket",
+      label: "脏衣篮",
+      lines: [
+        { who: "zero", mood: "flustered", text: "这些是……吾褪下的旧铠甲。" },
+        { who: "narrator", text: "三天的量。" },
+      ],
+    },
+    {
       id: "under-bed",
-      symbol: "b",
-      interactionRadius: 14,
       label: "床底",
       lines: [
         { who: "zero", mood: "sincere", text: "这是……父亲大人遗留的魔导器！？" },

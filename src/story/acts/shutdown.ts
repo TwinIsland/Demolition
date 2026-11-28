@@ -1,18 +1,13 @@
 import { SPOTS } from "../../modules/maps/flatland-story/layout.js";
-import type { Hotspot, Line, RoomScene, StagedScene } from "../script";
-import { SHUTDOWN_ART } from "../shutdown/art";
+import type { RpgMap } from "../rpg/map";
+import type { Hotspot, Line, StagedScene } from "../script";
 import { playShutdown } from "../shutdown/play";
-import { BEDROOM } from "./bedroom";
-import { STORY_ART } from "../assets";
+import { bedroomMap, diningMap } from "./home-map";
 
 /** A room of the "go back" ending: walked through once, towards the one thing that leaves it. */
 export interface HomeRoom {
-  background: string;
-  foreground?: RoomScene["foreground"];
-  animations?: RoomScene["animations"];
-  cell: number;
-  layout: readonly string[];
-  walkOver?: string;
+  /** Tiles and props; see home-map.ts. */
+  map: RpgMap;
   /** Spoken on entering. */
   intro: readonly Line[];
   goal: string;
@@ -164,18 +159,11 @@ export const SHUTDOWN_SCRIPT = {
 } as const satisfies Record<string, unknown>;
 
 /**
- * The bedroom of act 1, on the morning after: the same grid under a new painting, with the
- * curtains open and the door for once the thing to walk to.
+ * The bedroom of act 1, on the morning after: the same rooms in daylight, with the curtains open
+ * and the door for once the thing to walk to. Hotspot ids are those of the props in home-map.ts.
  */
 const MORNING_BEDROOM: HomeRoom = {
-  background: SHUTDOWN_ART.bedroomMorning,
-  foreground: [{ sprite: SHUTDOWN_ART.bedroomDesk, x: 254, y: 68, feetY: 138 }],
-  animations: [
-    { sprite: STORY_ART.bedroomDust, columns: 2, rows: 2, frames: 4, fps: 4, x: 88, y: 64, opacity: 0.65 },
-  ],
-  cell: BEDROOM.cell,
-  layout: BEDROOM.layout,
-  walkOver: BEDROOM.walkOver,
+  map: bedroomMap("morning"),
   intro: [
     { who: "door", text: "小明，起来吃早饭。肉给你热过了。" },
     { who: "zero", mood: "sincere", text: "……" },
@@ -184,8 +172,7 @@ const MORNING_BEDROOM: HomeRoom = {
   goal: "去吃早饭",
   hotspots: [
     {
-      id: "curtains",
-      symbol: "W",
+      id: "window",
       label: "窗帘",
       lines: [
         { who: "zero", mood: "sincere", text: "……原来对面那栋楼是黄色的。" },
@@ -194,7 +181,6 @@ const MORNING_BEDROOM: HomeRoom = {
     },
     {
       id: "mirror",
-      symbol: "M",
       label: "镜子",
       lines: [
         { who: "zero", mood: "sincere", text: "……" },
@@ -203,13 +189,11 @@ const MORNING_BEDROOM: HomeRoom = {
     },
     {
       id: "megumin",
-      symbol: "P",
       label: "惠惠的海报",
       lines: [{ who: "zero", mood: "sincere", text: "一日一发。今天的那一发，吾……我已经放过了。" }],
     },
     {
       id: "aqua",
-      symbol: "Q",
       label: "阿库娅的海报",
       lines: [
         { who: "zero", mood: "sincere", text: "引导的人选，其实挺重要的。" },
@@ -217,9 +201,7 @@ const MORNING_BEDROOM: HomeRoom = {
       ],
     },
     {
-      id: "plush",
-      symbol: "F",
-      interactionRadius: 18,
+      id: "cirno",
       label: "琪露诺",
       lines: [
         { who: "cirno", text: "⑨。" },
@@ -228,8 +210,6 @@ const MORNING_BEDROOM: HomeRoom = {
     },
     {
       id: "desk",
-      symbol: "N",
-      interactionRadius: 24,
       label: "书桌",
       lines: [
         { who: "zero", mood: "sincere", text: "三桶泡面。今天不用开第四桶了。" },
@@ -238,16 +218,12 @@ const MORNING_BEDROOM: HomeRoom = {
       ],
     },
     {
-      id: "bed",
-      symbol: "b",
-      interactionRadius: 14,
+      id: "under-bed",
       label: "床底",
       lines: [{ who: "zero", mood: "sincere", text: "魔导……旧电脑的箱子。先放着吧。" }],
     },
     {
       id: "door",
-      symbol: "=",
-      interactionRadius: 14,
       label: "房门",
       lines: [{ who: "narrator", text: "门没有锁。它从来没有锁过。" }],
       ends: true,
@@ -255,45 +231,14 @@ const MORNING_BEDROOM: HomeRoom = {
   ],
 };
 
-/**
- * The dining room, traced over its painting in 8-pixel cells. Solid: # wall, R fridge, K the
- * cabinet with the rice cooker, W window, C calendar, L the hallway back, O the kitchen door,
- * T the tabletop; chairs use solid # cells so the approaches stay aligned with the room art.
- */
+/** The dining room; the hallway and the kitchen door are openings in its side walls. */
 const DINING_ROOM: HomeRoom = {
-  background: SHUTDOWN_ART.dining,
-  animations: [{ sprite: SHUTDOWN_ART.diningMeal, columns: 2, rows: 2, frames: 4, fps: 4, x: 128, y: 86 }],
-  cell: 8,
-  layout: [
-    "########################################",
-    "########################################",
-    "########################################",
-    "########################################",
-    "########################################",
-    "########################################",
-    "#################WWWWWWWWW####CCCC######",
-    "##...RRRRKKKKK........................##",
-    "##...RRRRKKKKK........................##",
-    "##...RRRRKKKKK.....##.................##",
-    "##.................##.................O#",
-    "##.............TTTTTTTTTT.............O#",
-    "##.............TTTTTTTTTT.............O#",
-    "##.............TTTTTTTTTT.............O#",
-    "#L.............TTTTTTTTTT.............O#",
-    "#L.............TTTTTTTTTT.............O#",
-    "#L....@............##.................O#",
-    "#L.................##.................O#",
-    "#L....................................##",
-    "##....................................##",
-    "##....................................##",
-    "########################################",
-  ],
+  map: diningMap(),
   intro: [],
   goal: "走到餐桌旁，按 E 坐下吃饭",
   hotspots: [
     {
       id: "fridge",
-      symbol: "R",
       label: "冰箱",
       lines: [
         { who: "narrator", text: "冰箱贴下面压着一张便签：「肉在第二层。别又只吃泡面。」" },
@@ -302,31 +247,26 @@ const DINING_ROOM: HomeRoom = {
     },
     {
       id: "cooker",
-      symbol: "K",
       label: "电饭煲",
       lines: [{ who: "zero", mood: "sincere", text: "保温灯亮着。亮了一晚上。" }],
     },
     {
       id: "window",
-      symbol: "W",
       label: "窗户",
       lines: [{ who: "zero", mood: "sincere", text: "是天。在「上」面。" }],
     },
     {
       id: "calendar",
-      symbol: "C",
       label: "挂历",
       lines: [{ who: "narrator", text: "公元二零二六年。夏天还剩下一大半。" }],
     },
     {
       id: "hallway",
-      symbol: "L",
       label: "走廊",
       lines: [{ who: "zero", mood: "sincere", text: "房间又不会跑。先吃饭。" }],
     },
     {
       id: "kitchen",
-      symbol: "O",
       label: "厨房",
       lines: [
         { who: "door", text: "坐下吃，别站着。汤马上好。" },
@@ -335,9 +275,7 @@ const DINING_ROOM: HomeRoom = {
     },
     {
       id: "table",
-      symbol: "T",
       label: "坐下吃饭",
-      interactionRadius: 18,
       lines: [{ who: "narrator", text: "一碗饭，一盘红烧肉，一双筷子。对面还摆着一副空碗筷。" }],
       ends: true,
     },

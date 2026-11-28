@@ -7,13 +7,37 @@ const url = (file: string) => new URL(`./assets/${file}`, import.meta.url).href;
 /** The bundler resolves such a pattern one folder deep, so the skins folder has its own. */
 const skin = (file: string) => new URL(`./assets/skins/${file}`, import.meta.url).href;
 
+/** Sprites of the mapped rooms, cut from the painted sheets by tools/story/cut-rpg.py. */
+const rpg = (file: string) => new URL(`./assets/rpg/${file}.png`, import.meta.url).href;
+const RPG_NAMES = [
+  "tiles",
+  ...["bed", "desk", "chair", "bookshelf", "mirror", "box"],
+  ...["curtains-closed", "curtains-open", "door-closed", "door-open", "poster-megumin", "poster-aqua"],
+  ...["tissue", "sock", "phone", "crisps", "clock", "power-strip"],
+  ...["noodles", "tissue-box", "gamepad", "manga", "lamp", "plush"],
+  ...[
+    "toilet",
+    "sink",
+    "bathtub",
+    "washer",
+    "basket",
+    "wall-shelf",
+    "figurine",
+    "key",
+    "lockbox",
+    "lockbox-open",
+  ],
+  ...["fridge", "cabinet", "table", "chair-front", "chair-back", "calendar", "plant", "window"],
+] as const;
+export const RPG_ART = Object.fromEntries(RPG_NAMES.map((name) => [name, rpg(name)])) as Record<
+  (typeof RPG_NAMES)[number],
+  string
+>;
+
 export const STORY_ART = {
   logo: url("logo-purple-8bit.png"),
-  bedroom: url("bedroom.png"),
-  bedroomDesk: url("bedroom-desk.png"),
   computer: url("computer-setup.png"),
   computerItem: url("computer-item.png"),
-  bedroomCrt: url("bedroom-crt.png"),
   bedroomDust: url("bedroom-dust.png"),
   comic1: url("comic-1.webp"),
   comic2: url("comic-2.webp"),
@@ -67,6 +91,7 @@ export const STORY_SKINS = {
 
 export const storyImages = (): string[] => [
   ...Object.values(STORY_ART),
+  ...Object.values(RPG_ART),
   ...Object.values(ZERO_PORTRAITS),
   ...Object.values(LULU_PORTRAITS),
   ...Object.values(ZHANGSAN_PORTRAITS),
