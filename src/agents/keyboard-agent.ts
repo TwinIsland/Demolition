@@ -16,6 +16,10 @@ import type {
   Vec2,
 } from "../core/types";
 
+/** A refused pointer lock is retried this often, to outlast the browser's cooldown after Esc. */
+const LOCK_RETRY_MS = 200;
+const LOCK_ATTEMPTS = 10;
+
 const BOARD_ARROWS: Readonly<Record<string, Action | undefined>> = {
   ArrowUp: "forward",
   ArrowDown: "back",
@@ -67,7 +71,10 @@ export class KeyboardAgent implements PlayerAgent {
   private supply?: ItemId;
   private dragging = false;
   private escapeHeld = false;
-  private pointerLockQueued = false;
+  /** True from a lock request until the browser grants it or control is handed away. */
+  private lockWanted = false;
+  private lockAttempts = 0;
+  private lockRetry?: ReturnType<typeof setTimeout>;
   private pointer = { x: 0, y: 0 };
   private listeners = new AbortController();
   constructor(
@@ -79,6 +86,7 @@ export class KeyboardAgent implements PlayerAgent {
       "keydown",
       (e) => {
         if (e.code === "Escape") this.escapeHeld = true;
+        else this.relockOnGesture();
         if (
           !this.enabled ||
           e.isComposing ||
@@ -111,8 +119,8 @@ export class KeyboardAgent implements PlayerAgent {
         this.keys.delete(e.code);
         if (e.code !== "Escape") return;
         this.escapeHeld = false;
-        if (this.pointerLockQueued && this.enabled) void this.lockPointer();
-        else this.pointerLockQueued = false;
+        if (this.lockWanted && this.enabled) this.tryLock();
+        else this.cancelLock();
       },
       { signal },
     );
@@ -136,6 +144,15 @@ export class KeyboardAgent implements PlayerAgent {
       },
       { signal },
     );
+    window.addEventListener("mousedown", () => this.relockOnGesture(), { capture: true, signal });
+    document.addEventListener(
+      "pointerlockchange",
+      () => {
+        if (document.pointerLockElement === canvas) this.cancelLock();
+      },
+      { signal },
+    );
+    document.addEventListener("pointerlockerror", () => this.retryLockSoon(), { signal });
     canvas.addEventListener(
       "mousedown",
       (e) => {
@@ -320,22 +337,56 @@ export class KeyboardAgent implements PlayerAgent {
     this.activePerk = id;
     this.perkTarget = target;
   }
-  async lockPointer() {
+  /**
+   * Captures the mouse for first-person aiming. Browsers refuse the request outside a user
+   * gesture and for about a second after Esc released the lock, so a refused request is retried
+   * for a while and then again on the next key press or click, until it succeeds or `clear()`.
+   */
+  lockPointer() {
+    this.lockWanted = true;
+    this.lockAttempts = 0;
+    this.tryLock();
+  }
+  private tryLock() {
+    clearTimeout(this.lockRetry);
+    this.lockRetry = undefined;
+    if (!this.lockWanted) return;
+    if (document.pointerLockElement === this.canvas) return this.cancelLock();
     // Escape's browser default releases pointer lock. Reacquire only after that press ends,
     // otherwise resuming a menu immediately produces another unlock and pauses again.
-    if (this.escapeHeld) {
-      this.pointerLockQueued = true;
-      return;
-    }
-    this.pointerLockQueued = false;
+    // The overhead view and the wheel leave the pointer free; a later gesture tries again.
+    if (this.escapeHeld || this.boardMode || this.selectingWheel || !document.hasFocus()) return;
+    this.lockAttempts++;
     try {
-      await this.canvas.requestPointerLock();
+      // Older engines return nothing and report failure through `pointerlockerror` instead.
+      const request = this.canvas.requestPointerLock() as Promise<void> | undefined;
+      request?.catch(() => this.retryLockSoon());
     } catch {
-      /* Drag and arrow-key controls remain available. */
+      this.retryLockSoon();
     }
   }
+  private retryLockSoon() {
+    if (!this.lockWanted || this.lockRetry !== undefined || this.lockAttempts >= LOCK_ATTEMPTS) return;
+    this.lockRetry = setTimeout(() => {
+      this.lockRetry = undefined;
+      if (this.enabled) this.tryLock();
+      else this.cancelLock();
+    }, LOCK_RETRY_MS);
+  }
+  /** A key press or click carries the user activation a refused request was missing. */
+  private relockOnGesture() {
+    if (!this.lockWanted) return;
+    if (!this.enabled) return this.cancelLock();
+    this.lockAttempts = 0;
+    this.tryLock();
+  }
+  private cancelLock() {
+    this.lockWanted = false;
+    clearTimeout(this.lockRetry);
+    this.lockRetry = undefined;
+  }
   clear() {
-    this.pointerLockQueued = false;
+    this.cancelLock();
     this.plantHere = false;
     this.buildRequested = undefined;
     this.resetTerrain = false;
@@ -448,6 +499,7 @@ export class KeyboardAgent implements PlayerAgent {
     return input;
   }
   dispose() {
+    this.cancelLock();
     this.listeners.abort();
   }
 }

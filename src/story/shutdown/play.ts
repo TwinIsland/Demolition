@@ -1,6 +1,7 @@
 import "./shutdown.css";
 import { BotAgent } from "../../agents/bot-agent";
 import { SKILLS } from "../../core/content";
+import { TILE_SIZE } from "../../core/geometry";
 import type { GameSnapshot, StoryActor, Vec2 } from "../../core/types";
 import type { HomeRoom, SHUTDOWN_SCRIPT } from "../acts/shutdown";
 import type { Director } from "../match/director";
@@ -16,7 +17,10 @@ import { playWindow } from "../cutscenes/window";
 import { walkRoom } from "./home";
 import { sayTooMuch } from "./overflow";
 import { playPullOut } from "./pull-out";
+import { playApocalypse } from "./apocalypse";
 import { ArrivalShaft } from "./arrival";
+import { playFarewell, type FarewellCut } from "./farewell";
+import type { Film } from "./kit";
 import { ShutdownSky } from "./sky";
 import { playEvening, type Evening } from "../cutscenes/evening";
 import { reachEnding, type Ending } from "./unlocks";
@@ -42,9 +46,24 @@ const PARKED = 300,
 const FADE_MS = 450;
 /** Easier opponents after this many defeats: the story should end, sooner or later. */
 const MERCY_AFTER = 2;
-const SOUTH = 0,
-  EAST = Math.PI / 2,
-  NORTH = Math.PI;
+// Yaw 0 looks north, along negative Z, and grows turning left (see match/director.ts `yawTo`).
+const NORTH = 0,
+  EAST = -Math.PI / 2,
+  SOUTH = Math.PI;
+/**
+ * Where the hero's eyes go in the opening, in radians above the horizon: the writing round the
+ * sky, the wall of fire under it, and the highest he follows the three on their way down.
+ */
+const GAZE = { sky: 0.5, wall: 0.14, drop: 0.95 };
+/** Share of its usual volume the music plays at under the opening, before the fight brings it up. */
+const UNDER = 0.4;
+/** The last of the three, once it has got up again. */
+const FINAL = { hp: 110, mercyHp: 70, attack: 55, spare: 30 };
+/**
+ * Its spell is the game's own terrain reset: cast `delay` seconds ahead, with a fire sweep that
+ * takes `scorch` from the hero. The id only has to differ from the simulation's own.
+ */
+const QUAKE = { id: -5, delay: 2.4, scorch: 5 };
 /** Whoever comes next wears the game's own default; only their hand is ever seen. */
 const NEWCOMER_SKIN = "sapper";
 /** The newcomer's way down: from how high, and for how long. */
@@ -107,7 +126,11 @@ export function playShutdown(
   /** Runs `scene` on a staged match and resolves with what it returns, or undefined once closed. */
   const staged = <T>(
     options: StoryMatchOptions,
-    scene: (d: Director, sky: ShutdownSky) => Promise<T | undefined>,
+    scene: (
+      d: Director,
+      sky: ShutdownSky,
+      screen: (film: Film) => Promise<boolean>,
+    ) => Promise<T | undefined>,
   ) =>
     new Promise<{ part: Part; result: T | undefined }>((resolve) => {
       const part = enter(
@@ -118,12 +141,31 @@ export function playShutdown(
           d.lock(true);
           // Every part of this act opens looking the way the hero was stood.
           d.match.look = { yaw: options.setup.yaw ?? SOUTH, pitch: 0 };
-          resolve({ part, result: await scene(d, sky) });
+          // A film laid over the match, which stands still under it and has the stage back after.
+          const screen = async (film: Film) => {
+            held = true;
+            enter(film);
+            await film.done;
+            if (disposed) return false;
+            held = false;
+            leave(film);
+            enter(part);
+            return true;
+          };
+          resolve({ part, result: await scene(d, sky, screen) });
         }),
       );
     });
   const cast = (at: readonly Vec2[], extra: Partial<StoryActor>): StoryActor[] =>
-    kings.map((king, index) => ({ ...king, ...at[index], yaw: SOUTH, ...extra }));
+    kings.map(({ id, name, color, skin }, index) => ({
+      id,
+      name,
+      color,
+      skin,
+      ...at[index],
+      yaw: SOUTH,
+      ...extra,
+    }));
 
   /** The voice from the sky, the bar, and the three who drop in: a match where nothing can be hurt. */
   const prologue = async () => {
@@ -158,19 +200,38 @@ export function playShutdown(
                 p.verticalSpeed = 0;
               }
           });
+        /** Eases the hero's eyes to `pitch` over `seconds` of match time; he keeps facing north. */
+        const gaze = (pitch: number, seconds: number) => {
+          const from = d.match.look.pitch,
+            start = d.state.time;
+          return d.until((state) => {
+            const t = Math.min(1, (state.time - start) / seconds);
+            d.match.look = { yaw: NORTH, pitch: from + (pitch - from) * t * t * (3 - 2 * t) };
+            return t === 1;
+          });
+        };
         lift(PARKED);
         // Gravity would bring them down the moment the world runs, so they are held up until their cue.
         void d.until(() => (parked && lift(PARKED), !parked));
         stage.root.classList.remove("veiled");
-        if (!(await d.seconds(0.8)) || !(await d.talk(lines.voice))) return;
+        // The voice comes from above, and so does everything after it: he looks up before it speaks.
+        if (!(await d.seconds(0.8)) || !(await gaze(GAZE.sky, 1.6)) || !(await d.talk(lines.voice))) return;
         sky.show();
+        stage.host.music("shutdown", UNDER);
         if (!(await d.seconds(1.8)) || !(await d.talk(lines.bar.slice(0, 1)))) return;
+        if (!(await gaze(GAZE.wall, 1.4))) return;
         if (!(await over(SHUTDOWN_ART.wall, lines.bar.slice(1, 4))) || !(await d.talk(lines.bar.slice(4))))
           return;
+        if (!(await gaze(GAZE.drop, 0.7))) return;
         parked = false;
         lift(DROP);
-        const landed = (state: Readonly<GameSnapshot>) =>
-          kings.every((king) => state.players.find((p) => p.id === king.id)?.elevation === 0);
+        // His eyes come down with them: the angle to the middle one, two cells ahead, until it lands.
+        const ahead = (spots.hero.z - spots.landing[1].z) * TILE_SIZE;
+        const landed = (state: Readonly<GameSnapshot>) => {
+          const heights = kings.map((king) => state.players.find((p) => p.id === king.id)?.elevation ?? 0);
+          d.match.look = { yaw: NORTH, pitch: Math.min(GAZE.drop, Math.atan2(Math.max(...heights), ahead)) };
+          return heights.every((height) => height === 0);
+        };
         if (!(await d.until(landed))) return;
         stage.host.cue("blast");
         if (!(await d.seconds(0.7))) return;
@@ -197,7 +258,7 @@ export function playShutdown(
           brawl: { zoneDuration: script.zoneDuration },
         },
       },
-      async (d, sky) => {
+      async (d, sky, screen) => {
         const { match } = d;
         const heroId = d.hero.id;
         const hero = (state: Readonly<GameSnapshot>) => state.players.find((p) => p.id === heroId)!;
@@ -243,9 +304,88 @@ export function playShutdown(
           .until((state) => state.items.some((item) => item.source === "field"))
           .then((alive) => hint(alive, goals.supply));
 
-        const decided = await d.until((state) => !hero(state).alive || !standing(state));
-        for (const king of kings) match.setAgent(king.id);
-        if (!decided) return;
+        const up = (state: Readonly<GameSnapshot>) =>
+          kings.filter((king) => state.players.find((p) => p.id === king.id)?.alive);
+        const rest = () => {
+          for (const king of kings) match.setAgent(king.id);
+        };
+        /** Stops the fight for a few lines, and gives it back. */
+        const aside = async (said: readonly Line[]) => {
+          d.lock(true);
+          const alive = await d.talk(said);
+          d.lock(false);
+          return alive;
+        };
+        // One goes down, says so, and whoever is left answers; the last one down gets up once.
+        let left = up(d.state),
+          reborn = false;
+        for (;;) {
+          const count = left.length;
+          if (!(await d.until((state) => !hero(state).alive || up(state).length < count))) {
+            rest();
+            return;
+          }
+          if (!hero(d.state).alive) break;
+          const now = up(d.state);
+          const fallen = left.filter((king) => !now.includes(king));
+          left = now;
+          if (now.length) {
+            const said: Line[] = [];
+            for (const king of fallen) said.push(...king.last);
+            for (const king of now) said.push(king.mourn[now.length > 1 ? 0 : 1]);
+            if (!(await d.seconds(0.6)) || !(await aside(said))) {
+              rest();
+              return;
+            }
+            continue;
+          }
+          if (reborn) break;
+          reborn = true;
+          const last = fallen[fallen.length - 1];
+          rest();
+          d.lock(true);
+          stage.goal();
+          stage.host.silence();
+          if (!(await d.seconds(1.1)) || !(await d.talk(lines.rise))) return;
+          stage.host.cue("power");
+          const rising = screen(playApocalypse(stage.overlay(), last.color));
+          // Under the film: it is whole again and stronger, and the sky is no longer the afternoon's.
+          match.mutate((state) => {
+            const king = state.players.find((p) => p.id === last.id)!;
+            king.maxHp = attempt >= MERCY_AFTER ? FINAL.mercyHp : FINAL.hp;
+            king.attack = FINAL.attack;
+            // The spell's fire must not be what ends the story for a hero on his last legs.
+            const self = hero(state);
+            self.hp = Math.max(self.hp, Math.min(self.maxHp, FINAL.spare));
+          });
+          const body = d.actor(last.id);
+          d.revive(last.id, { x: Math.round(body.x), z: Math.round(body.z) });
+          sky.glory = true;
+          if (!(await rising)) return;
+          stage.host.cue("blast");
+          const named = lines.risen.map((line) => ({
+            ...line,
+            text: line.text.replace("{name}", last.name),
+          }));
+          if (!(await d.talk(named))) return;
+          // Its one great spell: the ground shakes, burns from where it stands, and is another ground.
+          match.mutate((state) => {
+            state.terrainReset = {
+              id: QUAKE.id,
+              ownerId: last.id,
+              at: state.time + QUAKE.delay,
+              scorch: QUAKE.scorch,
+            };
+          });
+          stage.host.music("shutdown");
+          if (!(await d.until((state) => state.terrainReset?.completedAt !== undefined))) return;
+          if (!(await d.seconds(0.9))) return;
+          match.setAgent(last.id, new BotAgent(last.id));
+          left = [last];
+          stage.goal(goals.last);
+          d.lock(false);
+        }
+        rest();
         match.hud = false;
         match.live = false;
         d.lock(true);
@@ -255,17 +395,70 @@ export function playShutdown(
           const retries = lines.retries;
           return (await d.talk(retries[attempt % retries.length])) ? "lost" : undefined;
         }
-        // 97%: the bar stops one step short for as long as the two of them have things to say.
+        // 97%: the bar stops one step short, and it is quiet for the first time since it started.
         sky.percent = 97;
         stage.host.silence();
-        if (!(await d.seconds(1.2))) return;
-        held = true;
-        sync();
-        return (await d.talk(lines.won)) ? "won" : undefined;
+        return (await d.seconds(1.8)) ? "won" : undefined;
       },
     );
     if (result === "lost" && !(await fade(() => leave(part)))) return undefined;
     return result && { part, result };
+  };
+
+  /**
+   * What the two of them say once it is won, as a film in the village itself: a match of its own
+   * with nobody left to fight, under the last sky, seen by the story's camera. It stays up, held
+   * still, behind the choice.
+   */
+  const farewell = async (previous: Part) => {
+    stage.root.classList.add("switching");
+    if (!(await stage.wait(FADE_MS))) return undefined;
+    leave(previous);
+    const place = spots.farewell,
+      said = lines.farewell;
+    const { part, result } = await staged(
+      {
+        mapId: MAP,
+        skin: HERO_SKIN,
+        setup: {
+          spawn: place.hero,
+          yaw: NORTH,
+          cast: [
+            {
+              id: "lulu",
+              name: "露露",
+              color: "#c8382e",
+              skin: "story-lulu",
+              ...place.lulu,
+              yaw: NORTH,
+              passive: true,
+            },
+          ],
+        },
+      },
+      async (d, sky) => {
+        for (const cell of place.cleared) d.tile(cell, 0);
+        sky.settle(97, true);
+        const scene = playFarewell(d, place.hero, place.lulu);
+        void d.until(() => (scene.update(performance.now()), false)).then(() => scene.dispose());
+        stage.root.classList.remove("veiled");
+        if (!(await stage.wait(FADE_MS))) return;
+        stage.root.classList.remove("switching");
+        const shown = async (cut: FarewellCut, words: readonly Line[], before = () => {}) =>
+          (await fade(() => (before(), scene.cut(cut)))) && (await stage.wait(1400)) && (await d.talk(words));
+        if (!(await stage.wait(1200)) || !(await d.talk(lines.won))) return;
+        // What he admits is said into the quiet. The song comes in as the camera turns to the sky:
+        // its first minute is soft, and it has grown by the time the choice is on the table.
+        stage.host.music("farewell");
+        if (!(await shown("sky", said.sky)) || !(await shown("village", said.village))) return;
+        if (!(await shown("ribbon", said.ribbon))) return;
+        if (!(await shown("faces", said.end, () => (sky.percent = 98)))) return;
+        held = true;
+        sync();
+        return true;
+      },
+    );
+    return result ? part : undefined;
   };
 
   /** The room in the morning, breakfast, and the first ordinary sentence of the year. */
@@ -412,7 +605,8 @@ export function playShutdown(
     for (let attempt = 0; !won; attempt++) {
       const round = await fight(attempt, resumed && !attempt ? lines.resume : []);
       if (!round) return;
-      if (round.result === "won") won = round.part;
+      if (round.result === "won") won = await farewell(round.part);
+      if (round.result === "won" && !won) return;
     }
 
     const choice = enter(playChoice(stage));

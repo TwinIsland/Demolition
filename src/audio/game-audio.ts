@@ -54,6 +54,7 @@ const STORY_GAIN: Record<string, number> = {
   [STORY_MUSIC.duel]: 0.6,
   [STORY_MUSIC.lesson]: 0.6,
   [STORY_MUSIC.shutdown]: 0.6,
+  [STORY_MUSIC.farewell]: 0.6,
   [STORY_MUSIC.home]: 0.6,
 };
 const STRIDE_LENGTH = 0.85;
@@ -188,9 +189,9 @@ export class GameAudio {
   }
 
   /** Menu music resumes; credits decode like the menu, while field tracks stream. */
-  setMusic(path: string) {
+  setMusic(path: string, level = 1) {
     if (this.musicPlayer) {
-      this.afterMusicPlayer = () => this.setMusic(path);
+      this.afterMusicPlayer = () => this.setMusic(path, level);
       return;
     }
     const menu = path === MENU_MUSIC;
@@ -201,7 +202,7 @@ export class GameAudio {
         ? STORY_GAIN[path]
         : (MAPS.find((map) => map.bgm === path)?.bgmGain ?? 1);
     this.engine.playMusic(path, {
-      volume: Math.min(1, MUSIC_VOLUME * gain),
+      volume: Math.min(1, MUSIC_VOLUME * gain * level),
       stream: !menu && path !== CREDITS_MUSIC,
       restart: !menu,
     });

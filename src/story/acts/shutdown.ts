@@ -39,6 +39,16 @@ export const SHUTDOWN_SCRIPT = {
       { x: 7, z: 8 },
       { x: 8, z: 8 },
     ],
+    /** The goodbye before the choice: side by side at the south edge of the plaza, facing the gate. */
+    farewell: {
+      hero: { x: 7.4, z: 8.6 },
+      lulu: { x: 6.6, z: 8.6 },
+      /** Cover the camera would otherwise stand in. */
+      cleared: [
+        { x: 6, z: 9 },
+        { x: 8, z: 10 },
+      ],
+    },
     /** The "stay" ending: where the next player comes down, and the two who wait under the gate. */
     newcomer: { x: 7, z: 6 },
     guides: [
@@ -52,13 +62,57 @@ export const SHUTDOWN_SCRIPT = {
       { x: 13, z: 13 },
     ],
   },
+  /**
+   * The three. `last` is what one says as it goes down, and `mourn` what it says when another
+   * does: with one of the others still beside it, and when it is the only one left.
+   */
   kings: [
-    { id: "king-bluescreen", name: "蓝屏", color: "#1f6feb", skin: "story-bluescreen" },
-    { id: "king-popup", name: "弹窗", color: "#f2c230", skin: "story-popup" },
-    { id: "king-antivirus", name: "杀毒", color: "#2fbf71", skin: "story-antivirus" },
+    {
+      id: "king-bluescreen",
+      name: "蓝屏",
+      color: "#1f6feb",
+      skin: "story-bluescreen",
+      last: [
+        { who: "bluescreen", text: "你的电脑遇到问题，需要重新启动。" },
+        { who: "bluescreen", text: "……这一次，遇到问题的是我。" },
+      ],
+      mourn: [
+        { who: "bluescreen", text: "错误信息已收集。同伴，0%。" },
+        { who: "bluescreen", text: "只剩我了。没关系，蓝屏从来都是一个人出现的。" },
+      ],
+    },
+    {
+      id: "king-popup",
+      name: "弹窗",
+      color: "#f2c230",
+      skin: "story-popup",
+      last: [
+        { who: "popup", text: "确定要关闭吗？〔确定〕〔取消〕" },
+        { who: "popup", text: "……三百年了。第一次有人点了确定。" },
+      ],
+      mourn: [
+        { who: "popup", text: "少了一个。没关系，我关一个冒两个。" },
+        { who: "popup", text: "恭喜！您是今天最后一位访客！奖品是我。" },
+      ],
+    },
+    {
+      id: "king-antivirus",
+      name: "杀毒",
+      color: "#2fbf71",
+      skin: "story-antivirus",
+      last: [
+        { who: "antivirus", text: "发现威胁。隔离失败。删除失败。" },
+        { who: "antivirus", text: "……建议操作：信任此程序。" },
+      ],
+      mourn: [
+        { who: "antivirus", text: "同伴已离线。病毒库已更新：你，头号。" },
+        { who: "antivirus", text: "全盘扫描开始。这张地图上只剩一个需要清除的东西。" },
+      ],
+    },
   ],
   goals: {
     fight: "击败四天王（一共三个）",
+    last: "击败最后的天王",
     zone: "火墙在收缩：往中间走",
     supply: "场地补给落下了：看小地图",
   },
@@ -74,12 +128,27 @@ export const SHUTDOWN_SCRIPT = {
       { who: "zero", mood: "flustered", text: "没了是指……" },
       { who: "lulu", text: "就是没了。别站在外面。" },
       { who: "lulu", text: "还有一件事。关机之前，这个世界只让一个人出去。" },
+      { who: "zero", mood: "smug", text: "那简单。这里只有吾一个人。" },
+      { who: "lulu", mood: "pout", text: "……抬头。" },
     ],
     kings: [
       { who: "zero", mood: "smug", text: "四天王……！" },
       { who: "lulu", mood: "pout", text: "是三个。" },
       { who: "zero", mood: "flustered", text: "四天王为什么是三个？" },
       { who: "lulu", text: "一直是三个。这是传统。" },
+      // Who they are and why they are in the way: read back in the world, with the three in view.
+      { who: "lulu", text: "这台机器上关不掉的三个程序。每次关机，都赖到最后。" },
+      {
+        who: "lulu",
+        mood: "pout",
+        text: "蓝屏，碰谁谁死机。弹窗，关一个冒两个。杀毒，看谁都像病毒，尤其是你。",
+      },
+      { who: "zero", mood: "flustered", text: "吾是被选中之人，不是病毒！" },
+      { who: "lulu", text: "在它眼里是一回事。" },
+      { who: "zero", mood: "sincere", text: "……它们为什么拦着吾。" },
+      { who: "lulu", text: "出口只留给最后还站着的那一个。它们不想出去，只是不许别人出去。" },
+      { who: "lulu", mood: "impressed", text: "墓地里那些人，都是在这里输的。" },
+      { who: "zero", mood: "sincere", text: "……" },
       {
         choice: ["「吾一个人就够了。」", "「退后，露露。这是吾的战斗。」", "「……其实有点怕。」"],
         flag: "act5-resolve",
@@ -87,6 +156,22 @@ export const SHUTDOWN_SCRIPT = {
       { who: "lulu", mood: "pout", text: "手都在抖还逞强。" },
       { who: "lulu", text: "听好了。躲开火，捡补给，看小地图，别在自己的炸药旁边咏唱。" },
       { who: "lulu", mood: "flustered", text: "然后……不许输。才不是为了你！是我的教学评分！" },
+    ],
+    /**
+     * The last one is down and does not stay down. `rise` is read over it where it lies, before
+     * the film; `{name}` in `risen` is whichever of the three it turned out to be.
+     */
+    rise: [
+      { who: "lulu", mood: "impressed", text: "……赢了？" },
+      { who: "unknown", text: "……还没完。" },
+      { who: "unknown", text: "关不掉的程序，是不会结束的。" },
+      { who: "system", text: "正在安装更新 1 / 1。请勿关闭电源。" },
+    ],
+    risen: [
+      { who: "system", text: "更新完成。「{name}」已恢复到最新版本。" },
+      { who: "lulu", mood: "flustered", text: "它把血装满了！地图也……连天都被它重写了！" },
+      { who: "zero", mood: "smug", text: "最终形态……！这才配做吾的宿敌！" },
+      { who: "lulu", mood: "pout", text: "配你个头。躲好。它要动整张地图了。" },
     ],
     /** Before the fight, when the act is resumed from its checkpoint. */
     resume: [{ who: "lulu", mood: "pout", text: "还是那三个。还是那圈火。这次看着点小地图。" }],
@@ -127,6 +212,40 @@ export const SHUTDOWN_SCRIPT = {
       { who: "lulu", mood: "impressed", text: "我知道。存档里写了。" },
       { who: "narrator", text: "他第一次没有用「吾」。没有人指出这一点。" },
     ],
+    /**
+     * The goodbye, said after `won` and before the choice, one group to a picture: the sky, the
+     * village coming apart, the bandage let go, and their faces at 98%.
+     */
+    farewell: {
+      sky: [
+        { who: "zero", mood: "sincere", text: "露露。游戏通关以后，里面的人去哪。" },
+        { who: "lulu", mood: "pout", text: "哪也不去。存档停在最后一格，等人回来读。" },
+        { who: "zero", mood: "sincere", text: "要是没人回来呢。" },
+        { who: "lulu", mood: "impressed", text: "那就一直是最后一格。……也不坏。最后一格里，天是亮的。" },
+      ],
+      village: [
+        {
+          who: "zero",
+          mood: "sincere",
+          text: "我以前一直在等。等一个任务，一个预言，一个告诉我「你是被选中的」的声音。",
+        },
+        { who: "lulu", mood: "pout", text: "没有那种东西。这里连剧情都是我现编的。" },
+        { who: "zero", mood: "sincere", text: "……那我这一路算什么。" },
+        { who: "lulu", mood: "impressed", text: "算你自己走的。没人选你，所以每一步都是你的。" },
+      ],
+      ribbon: [
+        { who: "narrator", text: "他解下绷带，松开手。风把它带到了天上。" },
+        { who: "lulu", mood: "impressed", text: "那它封印的到底是什么。" },
+        { who: "zero", mood: "sincere", text: "一个借口吧。有了它，就可以一直不开始。" },
+      ],
+      end: [
+        { who: "system", text: "正在关机。98%。" },
+        { who: "lulu", mood: "pout", text: "喂。不管你按不按，这个世界都要关了。结果是一样的。" },
+        { who: "zero", mood: "sincere", text: "嗯。结果一样。" },
+        { who: "zero", mood: "sincere", text: "可我放过的每一颗炸药，都是真的响过。" },
+        { who: "narrator", text: "所有的游戏都有片尾。但没有人是为了看片尾才按下开始的。" },
+      ],
+    },
     home: {
       parting: [
         { who: "zero", mood: "sincere", text: "我走了。" },

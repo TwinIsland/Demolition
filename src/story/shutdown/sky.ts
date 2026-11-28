@@ -10,6 +10,9 @@ const FIRST = 3,
 const BAND = { radius: 96, height: 30, lift: 50, repeats: 3 };
 const SHEET = { width: 2048, height: 512 };
 const CURTAIN_HEIGHT = 9;
+/** What the system has written round the sky, and what it writes once the last of the three is up again. */
+const NOTICE = "正在关机。请勿关闭电源。",
+  UPDATING = "更新中。请勿关闭电源。";
 const FONT = '"Fusion Pixel 12px", "Noto Sans SC", sans-serif';
 
 const CURTAIN_VERTEX = /* glsl */ `
@@ -76,11 +79,33 @@ const CURTAIN_FRAGMENT = /* glsl */ `
 
 const DOME_FRAGMENT = /* glsl */ `
   uniform float uDim;
+  uniform float uGlory;
+  uniform float uTime;
   varying vec2 vUv;
+  float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+  }
   void main() {
     // Scanlines across the whole sky, the way a tube shows them when it is about to go.
     float line = 0.82 + 0.18 * step(0.5, fract(vUv.y * 240.0));
-    gl_FragColor = vec4(0.01, 0.0, 0.03, uDim * line);
+    vec4 dim = vec4(0.01, 0.0, 0.03, uDim * line);
+
+    // The last sky: night from the top down to a burning horizon, stars, and curtains of light
+    // hung all the way round. vUv.y is 0.5 at the horizon and 1 overhead.
+    float up = clamp((vUv.y - 0.5) * 2.0, 0.0, 1.0), turn = vUv.x * 6.2831853;
+    vec3 night = mix(vec3(0.62, 0.12, 0.42), vec3(0.03, 0.01, 0.12), smoothstep(0.0, 0.55, up));
+    night += vec3(1.0, 0.55, 0.2) * smoothstep(0.16, 0.0, up) * 0.6;
+    vec2 cell = floor(vUv * vec2(520.0, 260.0));
+    float star = step(0.9965, hash(cell)) * (0.6 + 0.4 * sin(uTime * 3.0 + hash(cell + 7.0) * 40.0));
+    night += star * smoothstep(0.1, 0.5, up);
+    float sway = sin(turn * 3.0 + uTime * 0.21 + sin(up * 7.0 + uTime * 0.5) * 1.4);
+    float fold = sin(turn * 7.0 - uTime * 0.33 + sin(up * 11.0 - uTime * 0.7) * 0.9);
+    float veil = smoothstep(0.15, 1.0, sway) * 0.8 + smoothstep(0.4, 1.0, fold) * 0.5;
+    veil *= smoothstep(0.06, 0.3, up) * smoothstep(1.0, 0.45, up);
+    vec3 light = mix(vec3(0.15, 1.0, 0.75), vec3(1.0, 0.3, 0.9), 0.5 + 0.5 * sin(turn * 2.0 + up * 4.0 + uTime * 0.27));
+    light = mix(light, vec3(1.0, 0.85, 0.35), 0.5 + 0.5 * sin(turn * 5.0 - uTime * 0.4)) ;
+    vec4 glory = vec4((night + light * veil * 1.5) * line, 0.96);
+    gl_FragColor = mix(dim, glory, uGlory);
   }`;
 
 /** The wall's material: `uTime` seconds, `uProgress` 0..1, `uSpan` the side's length, `uShow` its opacity. */
@@ -106,6 +131,10 @@ export class ShutdownSky {
   readonly root = new THREE.Group();
   /** Set to hold the reading still, as when the fight is over; undefined follows the zone. */
   percent?: number;
+  /** Set for the last sky of all: night, stars and curtains of light where the afternoon was. */
+  glory = false;
+  private glow = 0;
+  private message = NOTICE;
   private readonly sheet = document.createElement("canvas");
   private readonly text: THREE.CanvasTexture;
   private readonly band: THREE.Mesh<THREE.CylinderGeometry, THREE.MeshBasicMaterial>;
@@ -144,7 +173,7 @@ export class ShutdownSky {
     this.dome = new THREE.Mesh(
       new THREE.SphereGeometry(150, 32, 16),
       new THREE.ShaderMaterial({
-        uniforms: { uDim: { value: 0 } },
+        uniforms: { uDim: { value: 0 }, uGlory: { value: 0 }, uTime: { value: 0 } },
         vertexShader: CURTAIN_VERTEX,
         fragmentShader: DOME_FRAGMENT,
         side: THREE.BackSide,
@@ -169,6 +198,15 @@ export class ShutdownSky {
     this.write(FIRST);
   }
 
+  /** Puts the sky straight into a state it reached earlier, for a scene that opens on it. */
+  settle(percent: number, glory: boolean) {
+    this.percent = percent;
+    this.glory = glory;
+    this.visible = true;
+    this.shown = 1;
+    this.glow = glory ? 1 : 0;
+  }
+
   /** Lets the message and the wall appear; until then the sky is the one act 4 left. */
   show() {
     this.visible = true;
@@ -178,7 +216,14 @@ export class ShutdownSky {
   update(state: Readonly<GameSnapshot>, now: number) {
     const closing = state.storyBrawl ? Math.min(1, state.time / state.duration) : 0;
     const percent = this.percent ?? Math.round(FIRST + (LAST - 1 - FIRST) * closing);
-    if (percent !== this.written) this.write(percent);
+    const message = this.glory ? UPDATING : NOTICE;
+    if (percent !== this.written || message !== this.message) {
+      this.message = message;
+      this.write(percent);
+    }
+    this.glow += ((this.glory ? 1 : 0) - this.glow) * 0.02;
+    this.dome.material.uniforms.uGlory.value = this.glow;
+    this.dome.material.uniforms.uTime.value = now / 1000;
     this.shown += ((this.visible ? 1 : 0) - this.shown) * 0.04;
     this.band.material.opacity = this.shown;
     this.band.rotation.y = now * 0.00002;
@@ -218,7 +263,7 @@ export class ShutdownSky {
     pen.textBaseline = "middle";
     pen.fillStyle = "#f4fbff";
     pen.font = `150px ${FONT}`;
-    pen.fillText("正在关机。请勿关闭电源。", 70, 190);
+    pen.fillText(this.message, 70, 190);
     pen.textAlign = "right";
     pen.fillStyle = "#7df0ff";
     pen.fillText(`${percent}%`, width - 70, 190);
