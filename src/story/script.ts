@@ -41,7 +41,8 @@ export interface RoomScene {
   /** Optional room-specific interaction sequence, sharing the same room renderer. */
   play?(stage: Stage): ScenePlayer;
   /** A full-screen illustration with lines read over it, before the room appears. */
-  opening?: { art: string; lines: readonly Line[] };
+  /** `over` is how many of the lines are read before the picture, over whatever the player shows first. */
+  opening?: { art: string; lines: readonly Line[]; over?: number };
   /** Played in the room before the player may move. */
   intro: readonly Line[];
   /** Objective shown once the intro is over. */

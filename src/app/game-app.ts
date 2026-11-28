@@ -774,6 +774,7 @@ export class GameApp {
       mutate: (change) => session.mutate?.(change),
       setAgent: (id, agent) => session.setAgent?.(id, agent),
       paused: true,
+      rate: 1,
       get control() {
         return control;
       },
@@ -895,16 +896,17 @@ export class GameApp {
     }
     const story = this.screens.is("story") ? this.storyMatch : undefined;
     const storyRuns = !!story && !story.paused;
-    if (this.screens.is("playing") || storyRuns) {
+    const rate = story?.rate ?? 1;
+    if (this.screens.is("playing") || (storyRuns && rate > 0)) {
       const observation = this.session.getSnapshot();
       const input = this.keyboard.decide({ self: this.viewer(observation), state: observation, dt });
       this.session.submit(LOCAL_PLAYER_ID, story?.gate ? story.gate(input) : input);
       const simStarted = performance.now();
-      this.session.advance(dt);
+      this.session.advance(dt * rate);
       this.renderer.profile("sim", performance.now() - simStarted);
       if (!story) this.recorder.capture(this.session.getSnapshot());
     }
-    story?.onFrame?.(this.session.getSnapshot(), storyRuns ? dt : 0);
+    story?.onFrame?.(this.session.getSnapshot(), storyRuns ? dt * rate : 0, storyRuns ? dt : 0);
     const state = this.session.getSnapshot();
     const viewer = this.viewer(state);
     const topDown = viewer.alive && inTacticalView(viewer, state.time);

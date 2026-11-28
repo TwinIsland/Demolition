@@ -49,6 +49,8 @@ export interface StagedShot {
   pose(camera: THREE.PerspectiveCamera, view: StagedView): boolean;
   /** Draw the local player's body, which a first-person frame leaves out. */
   showSelf?: boolean;
+  /** The killcam's lens for this frame: its strength (0..1) and the distance it holds in focus. */
+  lens?: { grade: number; focus: number };
 }
 
 interface HeldMotion {

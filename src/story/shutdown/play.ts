@@ -11,6 +11,8 @@ import type { ScenePlayer, Stage, StoryMatchOptions } from "../stage";
 import { SHUTDOWN_ART } from "./art";
 import { playChoice } from "./choice";
 import { rollCredits } from "./credits";
+import type { Cutscene } from "../cutscenes/kit";
+import { playWindow } from "../cutscenes/window";
 import { walkRoom } from "./home";
 import { sayTooMuch } from "./overflow";
 import { playPullOut } from "./pull-out";
@@ -285,8 +287,21 @@ export function playShutdown(
       };
       if (!(await fade(swap)) || !(await walk!.left)) return false;
     }
-    if (!(await stage.talk(lines.home.table))) return false;
-    return true;
+    const table = lines.home.table;
+    if (!(await stage.talk(table.slice(0, -1)))) return false;
+    // The block from the street once more, as the story opened: the curtains are drawn back, and
+    // the narrator's last line is read while the camera leaves the window for the sky.
+    let morning: Cutscene | undefined;
+    const outside = () => {
+      leave(front);
+      stage.root.dataset.kind = "film";
+      morning = enter(playWindow(stage.overlay(), "morning"));
+    };
+    if (!(await fade(outside)) || !(await stage.wait(3600))) return false;
+    if (!(await stage.talk(table.slice(-1)))) return false;
+    // It ends on the sky, and stays up: the credits roll over it.
+    await morning!.done;
+    return !disposed;
   };
 
   /**

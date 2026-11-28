@@ -19,6 +19,7 @@ export const BEDROOM: RoomScene = {
   play: (stage) => playBedroom(stage, BEDROOM),
   opening: {
     art: STORY_ART.comic1,
+    over: 2,
     lines: [
       { who: "narrator", text: "公元二零二六年。世界平静得令人作呕。" },
       { who: "narrator", text: "至少有一个人是这么认为的。" },

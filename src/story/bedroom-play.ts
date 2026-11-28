@@ -3,6 +3,7 @@ import { COMPUTER_ON } from "./acts/home-map";
 import { RPG_ART, STORY_ART } from "./assets";
 import { playComputerApproach } from "./cutscenes/computer-approach";
 import { playStare } from "./cutscenes/stare";
+import { playWindow } from "./cutscenes/window";
 import type { Cutscene } from "./cutscenes/kit";
 import { openRoom } from "./room";
 import type { Hotspot, Line, RoomScene } from "./script";
@@ -207,8 +208,20 @@ export function playBedroom(stage: Stage, scene: RoomScene): ScenePlayer {
   };
   const begin = async () => {
     if (scene.opening) {
-      stage.art(scene.opening.art);
-      if (!(await talk(scene.opening.lines))) return;
+      // The narrator speaks over the block seen from the street; the picture of him comes after.
+      const { art, lines, over = 0 } = scene.opening;
+      const evening = (film = playWindow(stage.overlay(), "dusk"));
+      evening.paused = paused;
+      const began = performance.now();
+      if (!(await stage.wait(2400))) return;
+      if (over && !(await talk(lines.slice(0, over)))) return;
+      // However fast the lines were read, the camera gets most of its way to the window.
+      if (!(await stage.wait(Math.max(0, 8000 - (performance.now() - began)))) || !alive) return;
+      // The film leaves only once the picture covers it.
+      if (!(await stage.art(art))) return;
+      evening.dispose();
+      film = undefined;
+      if (!(await talk(lines.slice(over)))) return;
       stage.art();
     }
     if (!(await talk(scene.intro)) || !alive) return;
