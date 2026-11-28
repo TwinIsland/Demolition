@@ -18,8 +18,9 @@ import { reachCheckpoint } from "../save";
 import type { Line } from "../script";
 import type { ScenePlayer, Stage } from "../stage";
 import { ASCENSION_HIT, ASCENSION_SPREAD, AscensionShot } from "./ascension-shot";
-import { GraveShot } from "./grave-shot";
 import { JumpShot } from "./jump-shot";
+import type { Cutscene } from "../cutscenes/kit";
+import { playStatusQueue } from "../cutscenes/status-queue";
 import { TargetHighlight } from "./target-highlight";
 
 const HERO = "you";
@@ -123,6 +124,7 @@ function route(state: Readonly<GameSnapshot>, from: Vec2, to: Vec2): Vec2[] {
 
 export function playAscension(stage: Stage): ScenePlayer {
   let sky: THREE.Texture | undefined;
+  let film: Cutscene | undefined;
   const player = playStagedMatch(
     stage,
     {
@@ -156,7 +158,15 @@ export function playAscension(stage: Stage): ScenePlayer {
       },
     },
     (director) =>
-      act(director, (texture) => (sky = texture)).catch((error) => {
+      act(
+        director,
+        (texture) => (sky = texture),
+        (next) => {
+          film = next;
+          if (next) next.paused = player.paused;
+          return next as never;
+        },
+      ).catch((error) => {
         // A scene that throws must not leave the player in front of a frozen picture.
         console.error(error);
         stage.end("act4-done");
@@ -175,11 +185,13 @@ export function playAscension(stage: Stage): ScenePlayer {
     },
     set paused(value) {
       player.paused = value;
+      if (film) film.paused = value;
     },
     move: player.move,
     act: player.act,
     dispose() {
       player.dispose();
+      film?.dispose();
       stage.root.querySelector(".ascend-fx")?.remove();
       stage.root.classList.remove("ascend-bars");
       sky?.dispose();
@@ -187,7 +199,12 @@ export function playAscension(stage: Stage): ScenePlayer {
   };
 }
 
-async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
+async function act(
+  d: Director,
+  keepSky: (texture: THREE.Texture) => void,
+  /** Hands the player a film laid over the match, to pause and close with it; undefined takes it back. */
+  showing: <T extends Cutscene | undefined>(film?: T) => T,
+) {
   const { stage, match } = d;
   const { renderer } = match;
   const size = d.state.size;
@@ -883,23 +900,18 @@ async function act(d: Director, keepSky: (texture: THREE.Texture) => void) {
   stage.art();
   if (!(await stage.wait(700))) return;
   {
-    // Nobody answers her. The camera goes up, and the ground shows who lies in it.
-    const shot = new GraveShot(match.scene, d.state, SPOTS.graves[3], match.look);
+    // Nobody answers her. What answers is a film: everyone who ever called for a status window.
     const hud = match.hud;
-    const roll = (_state: Readonly<GameSnapshot>, _dt: number, real: number) => {
-      shot.time += real;
-      stage.root.classList.toggle("ascend-hush", shot.hush);
-    };
     match.hud = false;
-    steps.add(roll);
-    renderer.stagedShot = shot;
-    stage.root.classList.add("ascend-bars");
-    const open = await d.until(() => shot.done);
-    steps.delete(roll);
-    shot.dispose();
-    if (!open) return;
-    renderer.stagedShot = undefined;
-    stage.root.classList.remove("ascend-bars", "ascend-hush");
+    const film = showing(playStatusQueue(stage.overlay()));
+    await film.done;
+    // It ends in the dark; the graveyard comes back up out of the same dark.
+    stage.root.classList.add("veiled");
+    film.dispose();
+    showing();
+    if (!(await stage.wait(150))) return;
+    stage.root.classList.remove("veiled");
+    if (!(await stage.wait(450))) return;
     match.hud = hud;
   }
   if (!(await d.talk(fill(LINES.risen.slice(5))))) return;

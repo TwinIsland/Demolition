@@ -7,6 +7,7 @@ export const MUSIC_BOX_TRACKS = [
   { title: "Share Friendship", artist: "黒魔", url: STORY_MUSIC.duel },
   { title: "Clumsy Communication", artist: "黒魔", url: STORY_MUSIC.lesson },
   { title: "献花の番人", artist: "黒魔", url: STORY_MUSIC.shutdown },
+  { title: "人间失格 Human Lost", artist: "Chinese Football", url: STORY_MUSIC.farewell },
   { title: "电动少女", artist: "Chinese Football", url: STORY_MUSIC.home },
 ] as const;
 
