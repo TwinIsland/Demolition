@@ -17,7 +17,9 @@ import { playWindow } from "../cutscenes/window";
 import { walkRoom } from "./home";
 import { sayTooMuch } from "./overflow";
 import { playPullOut } from "./pull-out";
+import { playApocalypse } from "./apocalypse";
 import { ArrivalShaft } from "./arrival";
+import type { Film } from "./kit";
 import { ShutdownSky } from "./sky";
 import { playStroll, STROLL } from "./stroll";
 import { reachEnding, type Ending } from "./unlocks";
@@ -54,6 +56,15 @@ const NORTH = 0,
 const GAZE = { sky: 0.5, wall: 0.14, drop: 0.95 };
 /** Share of its usual volume the music plays at under the opening, before the fight brings it up. */
 const UNDER = 0.4;
+/** And after the fight is won, under the last conversation and the choice. */
+const AFTER = 0.3;
+/** The last of the three, once it has got up again. */
+const FINAL = { hp: 110, mercyHp: 70, attack: 55, spare: 30 };
+/**
+ * Its spell is the game's own terrain reset: cast `delay` seconds ahead, with a fire sweep that
+ * takes `scorch` from the hero. The id only has to differ from the simulation's own.
+ */
+const QUAKE = { id: -5, delay: 2.4, scorch: 5 };
 /** Whoever comes next wears the game's own default; only their hand is ever seen. */
 const NEWCOMER_SKIN = "sapper";
 /** The newcomer's way down: from how high, and for how long. */
@@ -116,7 +127,11 @@ export function playShutdown(
   /** Runs `scene` on a staged match and resolves with what it returns, or undefined once closed. */
   const staged = <T>(
     options: StoryMatchOptions,
-    scene: (d: Director, sky: ShutdownSky) => Promise<T | undefined>,
+    scene: (
+      d: Director,
+      sky: ShutdownSky,
+      screen: (film: Film) => Promise<boolean>,
+    ) => Promise<T | undefined>,
   ) =>
     new Promise<{ part: Part; result: T | undefined }>((resolve) => {
       const part = enter(
@@ -127,12 +142,31 @@ export function playShutdown(
           d.lock(true);
           // Every part of this act opens looking the way the hero was stood.
           d.match.look = { yaw: options.setup.yaw ?? SOUTH, pitch: 0 };
-          resolve({ part, result: await scene(d, sky) });
+          // A film laid over the match, which stands still under it and has the stage back after.
+          const screen = async (film: Film) => {
+            held = true;
+            enter(film);
+            await film.done;
+            if (disposed) return false;
+            held = false;
+            leave(film);
+            enter(part);
+            return true;
+          };
+          resolve({ part, result: await scene(d, sky, screen) });
         }),
       );
     });
   const cast = (at: readonly Vec2[], extra: Partial<StoryActor>): StoryActor[] =>
-    kings.map((king, index) => ({ ...king, ...at[index], yaw: SOUTH, ...extra }));
+    kings.map(({ id, name, color, skin }, index) => ({
+      id,
+      name,
+      color,
+      skin,
+      ...at[index],
+      yaw: SOUTH,
+      ...extra,
+    }));
 
   /** The voice from the sky, the bar, and the three who drop in: a match where nothing can be hurt. */
   const prologue = async () => {
@@ -225,7 +259,7 @@ export function playShutdown(
           brawl: { zoneDuration: script.zoneDuration },
         },
       },
-      async (d, sky) => {
+      async (d, sky, screen) => {
         const { match } = d;
         const heroId = d.hero.id;
         const hero = (state: Readonly<GameSnapshot>) => state.players.find((p) => p.id === heroId)!;
@@ -271,9 +305,88 @@ export function playShutdown(
           .until((state) => state.items.some((item) => item.source === "field"))
           .then((alive) => hint(alive, goals.supply));
 
-        const decided = await d.until((state) => !hero(state).alive || !standing(state));
-        for (const king of kings) match.setAgent(king.id);
-        if (!decided) return;
+        const up = (state: Readonly<GameSnapshot>) =>
+          kings.filter((king) => state.players.find((p) => p.id === king.id)?.alive);
+        const rest = () => {
+          for (const king of kings) match.setAgent(king.id);
+        };
+        /** Stops the fight for a few lines, and gives it back. */
+        const aside = async (said: readonly Line[]) => {
+          d.lock(true);
+          const alive = await d.talk(said);
+          d.lock(false);
+          return alive;
+        };
+        // One goes down, says so, and whoever is left answers; the last one down gets up once.
+        let left = up(d.state),
+          reborn = false;
+        for (;;) {
+          const count = left.length;
+          if (!(await d.until((state) => !hero(state).alive || up(state).length < count))) {
+            rest();
+            return;
+          }
+          if (!hero(d.state).alive) break;
+          const now = up(d.state);
+          const fallen = left.filter((king) => !now.includes(king));
+          left = now;
+          if (now.length) {
+            const said: Line[] = [];
+            for (const king of fallen) said.push(...king.last);
+            for (const king of now) said.push(king.mourn[now.length > 1 ? 0 : 1]);
+            if (!(await d.seconds(0.6)) || !(await aside(said))) {
+              rest();
+              return;
+            }
+            continue;
+          }
+          if (reborn) break;
+          reborn = true;
+          const last = fallen[fallen.length - 1];
+          rest();
+          d.lock(true);
+          stage.goal();
+          stage.host.silence();
+          if (!(await d.seconds(1.1)) || !(await d.talk(lines.rise))) return;
+          stage.host.cue("power");
+          const rising = screen(playApocalypse(stage.overlay(), last.color));
+          // Under the film: it is whole again and stronger, and the sky is no longer the afternoon's.
+          match.mutate((state) => {
+            const king = state.players.find((p) => p.id === last.id)!;
+            king.maxHp = attempt >= MERCY_AFTER ? FINAL.mercyHp : FINAL.hp;
+            king.attack = FINAL.attack;
+            // The spell's fire must not be what ends the story for a hero on his last legs.
+            const self = hero(state);
+            self.hp = Math.max(self.hp, Math.min(self.maxHp, FINAL.spare));
+          });
+          const body = d.actor(last.id);
+          d.revive(last.id, { x: Math.round(body.x), z: Math.round(body.z) });
+          sky.glory = true;
+          if (!(await rising)) return;
+          stage.host.cue("blast");
+          const named = lines.risen.map((line) => ({
+            ...line,
+            text: line.text.replace("{name}", last.name),
+          }));
+          if (!(await d.talk(named))) return;
+          // Its one great spell: the ground shakes, burns from where it stands, and is another ground.
+          match.mutate((state) => {
+            state.terrainReset = {
+              id: QUAKE.id,
+              ownerId: last.id,
+              at: state.time + QUAKE.delay,
+              scorch: QUAKE.scorch,
+            };
+          });
+          stage.host.music("shutdown");
+          if (!(await d.until((state) => state.terrainReset?.completedAt !== undefined))) return;
+          if (!(await d.seconds(0.9))) return;
+          match.setAgent(last.id, new BotAgent(last.id));
+          left = [last];
+          stage.goal(goals.last);
+          d.lock(false);
+        }
+        rest();
         match.hud = false;
         match.live = false;
         d.lock(true);
@@ -283,9 +396,10 @@ export function playShutdown(
           const retries = lines.retries;
           return (await d.talk(retries[attempt % retries.length])) ? "lost" : undefined;
         }
-        // 97%: the bar stops one step short for as long as the two of them have things to say.
+        // 97%: the bar stops one step short for as long as the two of them have things to say,
+        // and the music stays, far off, under them.
         sky.percent = 97;
-        stage.host.silence();
+        stage.host.music("shutdown", AFTER);
         if (!(await d.seconds(1.2))) return;
         held = true;
         sync();

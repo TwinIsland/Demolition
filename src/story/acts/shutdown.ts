@@ -52,13 +52,57 @@ export const SHUTDOWN_SCRIPT = {
       { x: 13, z: 13 },
     ],
   },
+  /**
+   * The three. `last` is what one says as it goes down, and `mourn` what it says when another
+   * does: with one of the others still beside it, and when it is the only one left.
+   */
   kings: [
-    { id: "king-bluescreen", name: "蓝屏", color: "#1f6feb", skin: "story-bluescreen" },
-    { id: "king-popup", name: "弹窗", color: "#f2c230", skin: "story-popup" },
-    { id: "king-antivirus", name: "杀毒", color: "#2fbf71", skin: "story-antivirus" },
+    {
+      id: "king-bluescreen",
+      name: "蓝屏",
+      color: "#1f6feb",
+      skin: "story-bluescreen",
+      last: [
+        { who: "bluescreen", text: "你的电脑遇到问题，需要重新启动。" },
+        { who: "bluescreen", text: "……这一次，遇到问题的是我。" },
+      ],
+      mourn: [
+        { who: "bluescreen", text: "错误信息已收集。同伴，0%。" },
+        { who: "bluescreen", text: "只剩我了。没关系，蓝屏从来都是一个人出现的。" },
+      ],
+    },
+    {
+      id: "king-popup",
+      name: "弹窗",
+      color: "#f2c230",
+      skin: "story-popup",
+      last: [
+        { who: "popup", text: "确定要关闭吗？〔确定〕〔取消〕" },
+        { who: "popup", text: "……三百年了。第一次有人点了确定。" },
+      ],
+      mourn: [
+        { who: "popup", text: "少了一个。没关系，我关一个冒两个。" },
+        { who: "popup", text: "恭喜！您是今天最后一位访客！奖品是我。" },
+      ],
+    },
+    {
+      id: "king-antivirus",
+      name: "杀毒",
+      color: "#2fbf71",
+      skin: "story-antivirus",
+      last: [
+        { who: "antivirus", text: "发现威胁。隔离失败。删除失败。" },
+        { who: "antivirus", text: "……建议操作：信任此程序。" },
+      ],
+      mourn: [
+        { who: "antivirus", text: "同伴已离线。病毒库已更新：你，头号。" },
+        { who: "antivirus", text: "全盘扫描开始。这张地图上只剩一个需要清除的东西。" },
+      ],
+    },
   ],
   goals: {
     fight: "击败四天王（一共三个）",
+    last: "击败最后的天王",
     zone: "火墙在收缩：往中间走",
     supply: "场地补给落下了：看小地图",
   },
@@ -102,6 +146,22 @@ export const SHUTDOWN_SCRIPT = {
       { who: "lulu", mood: "pout", text: "手都在抖还逞强。" },
       { who: "lulu", text: "听好了。躲开火，捡补给，看小地图，别在自己的炸药旁边咏唱。" },
       { who: "lulu", mood: "flustered", text: "然后……不许输。才不是为了你！是我的教学评分！" },
+    ],
+    /**
+     * The last one is down and does not stay down. `rise` is read over it where it lies, before
+     * the film; `{name}` in `risen` is whichever of the three it turned out to be.
+     */
+    rise: [
+      { who: "lulu", mood: "impressed", text: "……赢了？" },
+      { who: "unknown", text: "……还没完。" },
+      { who: "unknown", text: "关不掉的程序，是不会结束的。" },
+      { who: "system", text: "正在安装更新 1 / 1。请勿关闭电源。" },
+    ],
+    risen: [
+      { who: "system", text: "更新完成。「{name}」已恢复到最新版本。" },
+      { who: "lulu", mood: "flustered", text: "它把血装满了！地图也……连天都被它重写了！" },
+      { who: "zero", mood: "smug", text: "最终形态……！这才配做吾的宿敌！" },
+      { who: "lulu", mood: "pout", text: "配你个头。躲好。它要动整张地图了。" },
     ],
     /** Before the fight, when the act is resumed from its checkpoint. */
     resume: [{ who: "lulu", mood: "pout", text: "还是那三个。还是那圈火。这次看着点小地图。" }],
