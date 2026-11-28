@@ -24,6 +24,9 @@ export function stepZone(ctx: SimContext, dt: number) {
   const before = s.zone?.closed ?? 0,
     cleared = s.zone?.clearingRing;
   const zone = (s.zone = zoneAt(s.size, s.time, s.duration));
+  // A story's fight is closed in like any other, but the last square never catches fire: how it
+  // ends is the story's to decide.
+  if (s.storyBrawl) zone.final = false;
   for (let ring = before + 1; ring <= zone.closed; ring++) {
     // Catch-up ticks must still clear each route before moving its boundary.
     clearRoute(ctx, ring);

@@ -34,6 +34,8 @@ export class RoundStatusView implements HudView {
       snapshot.mode === "practice"
         ? Math.floor(snapshot.time)
         : Math.max(0, Math.ceil(snapshot.duration - snapshot.time));
+    // A story's fight shows who is left, not a clock: nothing in it ends when one runs out.
+    this.timer.hidden = !!snapshot.story;
     this.resetHint.hidden = !snapshot.canResetTerrain || snapshot.phase !== "playing";
     this.timer.classList.toggle("final", snapshot.mode !== "practice" && seconds === 0);
     setText(this.timer, clock(seconds));
