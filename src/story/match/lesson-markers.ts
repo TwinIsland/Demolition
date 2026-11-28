@@ -7,25 +7,27 @@ export class LessonMarkers {
   private readonly root = new THREE.Group();
   private readonly geometry = new THREE.PlaneGeometry(TILE_SIZE * 0.84, TILE_SIZE * 0.84);
   private readonly edgeGeometry = new THREE.EdgesGeometry(this.geometry);
-  private readonly fill = new THREE.MeshBasicMaterial({
-    color: "#ffe387",
-    transparent: true,
-    opacity: 0.2,
-    depthTest: false,
-    depthWrite: false,
-    toneMapped: false,
-    fog: false,
-  });
-  private readonly edge = new THREE.LineBasicMaterial({
-    color: "#ffe387",
-    depthTest: false,
-    depthWrite: false,
-    toneMapped: false,
-    fog: false,
-  });
+  private readonly fill: THREE.MeshBasicMaterial;
+  private readonly edge: THREE.LineBasicMaterial;
   private disposed = false;
 
-  constructor(parent: THREE.Object3D) {
+  constructor(parent: THREE.Object3D, color = "#ffe387") {
+    this.fill = new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.2,
+      depthTest: false,
+      depthWrite: false,
+      toneMapped: false,
+      fog: false,
+    });
+    this.edge = new THREE.LineBasicMaterial({
+      color,
+      depthTest: false,
+      depthWrite: false,
+      toneMapped: false,
+      fog: false,
+    });
     parent.add(this.root);
   }
 

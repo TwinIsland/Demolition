@@ -29,7 +29,6 @@ Welcome to the wiki for **Demolition Front** (爆破前线), a first-person bomb
 | Page | What it covers |
 | --- | --- |
 | [Developer guide](developer-guide.md) | Setup, project layout, how a match runs, bots, release |
-| [Desktop build](desktop.md) | Windows and macOS apps with Tauri, and the release workflow |
 | [Architecture](architecture.md) | Data flow, sessions, online play design (Chinese) |
 | [Performance](performance.md) | Profiling notes (Chinese) |
 

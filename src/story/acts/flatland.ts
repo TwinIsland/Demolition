@@ -140,10 +140,10 @@ const LINES = {
 } satisfies Record<string, readonly Line[]>;
 
 const GOALS = {
-  wall: "试着炸开告示牌",
+  wall: "在告示牌旁发光的格子上放炸药",
   crates: "炸开箱子",
-  chain: "触发一次连锁爆炸",
-  kick: "踢出一颗炸药",
+  chain: "在两个发光的格子上各放一颗炸药，触发连锁",
+  kick: "在发光的格子上放炸药，再把它踢出去",
   duel: "击败示例对手",
 };
 
@@ -211,13 +211,17 @@ async function script(d: Director) {
   /** Conversations wait their turn: a death may want to speak while the lesson does. */
   let queue: Promise<boolean> = Promise.resolve(true);
   const say = (lines: readonly Line[]) => (queue = queue.then((ok) => ok && d.talk(lines)));
-  const cutscene = async (play: (canvas: HTMLCanvasElement) => Cutscene, reveal?: () => void) => {
+  const cutscene = async (
+    play: (canvas: HTMLCanvasElement) => Cutscene,
+    reveal?: () => void | Promise<boolean>,
+  ) => {
     d.lock(true);
     const canvas = stage.overlay();
     const scene = (film = play(canvas));
     await scene.done;
     if (stopped) return false;
-    reveal?.();
+    // A picture fades in over the film's last frame; the film leaves only once it is covered.
+    if ((await reveal?.()) === false) return false;
     canvas.classList.add("leaving");
     const open = await d.seconds(0.32);
     scene.dispose();
@@ -265,9 +269,10 @@ async function script(d: Director) {
       for (const actor of state.players) if (actor.bot) actor.alive = false;
     });
     if (
-      !(await cutscene(playLanding, () => {
-        stage.art(STORY_ART.comic3);
+      !(await cutscene(playLanding, async () => {
+        const shown = await stage.art(STORY_ART.comic3);
         stage.root.classList.remove("veiled");
+        return shown;
       }))
     )
       return;
@@ -311,6 +316,16 @@ async function script(d: Director) {
 
     // 3.1 Walls hold, crates do not.
     if (!(await say(LINES.walls))) return;
+    // The cells on the nook's side of the notice stone that nobody is standing on.
+    targets = (state) =>
+      [
+        { x: SPOTS.notice.x - 1, z: SPOTS.notice.z },
+        { x: SPOTS.notice.x, z: SPOTS.notice.z - 1 },
+      ].filter(
+        (cell) =>
+          state.tiles[cell.z]?.[cell.x] === 0 &&
+          !state.players.some((p) => p.bot && p.alive && Math.hypot(p.x - cell.x, p.z - cell.z) < 0.6),
+      );
     stage.goal(GOALS.wall);
     d.lock(false);
     if (

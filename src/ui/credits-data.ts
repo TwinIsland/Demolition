@@ -200,7 +200,6 @@ export const ASSET_GROUPS: readonly AssetGroup[] = [
       { title: "Valibot", author: "Fabian Hiller", license: "MIT" },
       { title: "Vite", author: "Evan You & contributors", license: "MIT" },
       { title: "TypeScript", author: "Microsoft", license: "Apache-2.0" },
-      { title: "Tauri", author: "The Tauri Programme", license: "MIT / Apache-2.0" },
     ],
   },
   {

@@ -70,7 +70,11 @@ export const ASCENSION_LINES = {
     { who: "system", text: "获得「刀」。" },
     { who: "zero", mood: "smug", text: "是「漆黑之牙·终焉」。" },
     { who: "system", text: "「刀」。" },
-    { who: "lulu", mood: "pout", text: "那边有个箱子。拿刀，走到它面前，按 [{use}] 砍两下。" },
+    {
+      who: "lulu",
+      mood: "pout",
+      text: "那边有个箱子。先走到箱子前面那个发光的标记上，再拿刀按 [{use}] 砍两下。",
+    },
   ],
   knifed: [
     { who: "zero", mood: "smug", text: "一刀两断。" },
@@ -81,13 +85,13 @@ export const ASCENSION_LINES = {
       text: "教学箱子里是绷带，可以走过去收进装备栏。先收着，等会儿教你包扎。",
     },
   ],
-  toWall: [{ who: "lulu", mood: "pout", text: "跟我来。下一样东西要隔着墙用。" }],
+  toWall: [{ who: "lulu", mood: "pout", text: "跟我来。下一样东西要隔着墙用。站到发光的标记上再说。" }],
   grenade: [
     { who: "system", text: "获得「破片手榴弹」×3。" },
     {
       who: "lulu",
       mood: "pout",
-      text: "矮墙那边你走不过去，但是能扔过去。手榴弹已经拿好了，瞄准墙后的空地，落点标记变绿后按 [{use}]。",
+      text: "矮墙那边你走不过去，但是能扔过去。手榴弹已经拿好了，只能扔进墙后那片亮着绿光的格子：把落点移进去，标记变绿后按 [{use}]。别的地方我不让你扔。",
     },
   ],
   grenadeDone: [
@@ -99,7 +103,7 @@ export const ASCENSION_LINES = {
     {
       who: "lulu",
       mood: "pout",
-      text: "这个落地会烧一片，烧着的地方谁都过不去，包括你。往路上扔一个，把路封住。",
+      text: "这个落地会烧一片，烧着的地方谁都过不去，包括你。已经帮你拿好了，往路上亮着绿光的那两格扔一个，把路封住。",
     },
   ],
   molotovDone: [
@@ -143,10 +147,16 @@ export const ASCENSION_LINES = {
     { who: "zero", mood: "sincere", text: "你刚才说什么？" },
     { who: "lulu", mood: "pout", text: "我说你是笨蛋！只有前半句！" },
   ],
-  build: [{ who: "lulu", mood: "pout", text: "最后一样。看着前面的空地，按 [{build}]，搭一个木箱出来。" }],
+  build: [
+    {
+      who: "lulu",
+      mood: "pout",
+      text: "最后一样。先站回发光的标记上，然后对准亮着绿光的那一格，按 [{build}]，搭一个木箱出来。",
+    },
+  ],
   built: [
     { who: "zero", mood: "smug", text: "凭空造物。这是神的领域。" },
-    { who: "lulu", mood: "pout", text: "是木箱的领域。你只有三个，省着用。站到箱子后面，看好了——" },
+    { who: "lulu", mood: "pout", text: "是木箱的领域。你只有三个，省着用。站到箱子后面的标记上，看好了——" },
   ],
   blocked: [
     { who: "lulu", mood: "pout", text: "火线被箱子挡住了。箱子没了，你还在。" },
@@ -159,7 +169,7 @@ export const ASCENSION_LINES = {
     {
       who: "lulu",
       mood: "pout",
-      text: "前面有商店。金币终于有用了，这次买「战术透视」和「滑踢」。我把那两张卡框出来了，两个都买好再继续。",
+      text: "前面有商店，走到柜台前的标记上。金币终于有用了，这次买「战术透视」和「滑踢」。我把那两张卡框出来了，两个都买好再继续。",
     },
     { who: "zero", mood: "smug", text: "吾刚才说过这个世界被资本腐蚀了。" },
     { who: "lulu", mood: "pout", text: "那你买不买。" },
@@ -257,14 +267,19 @@ export const ASCENSION_GOALS = {
   jumpAgain: "再跳一次",
   knife: "按住 [{gearWheel}] 选中刀，再松开切换",
   knifeCut: "靠近木箱，按 [{use}] 用刀砍开",
-  follow: "跟上露露",
-  grenade: "把手榴弹扔过矮墙",
-  molotov: "用燃烧瓶封住前面的路",
+  follow: "跟着露露，走到发光的标记上",
+  crateSpot: "走到木箱前发光的标记上",
+  grenade: "把手榴弹扔进矮墙后亮着绿光的区域",
+  throwOutside: "只能扔进亮着绿光的区域：把落点移进去，变绿再扔",
+  molotov: "把燃烧瓶扔进路上亮着绿光的区域",
   shield: "按 [{use}] 展开护盾，无需靠近露露",
   shieldHold: "护盾已展开：原地等待爆炸，无需再次点击",
   bandage: "按 [{use}] 使用绷带，恢复到 100/100",
-  build: "搭一个木箱",
-  hide: "站到木箱后面",
+  buildSpot: "走到发光的标记上",
+  build: "对准亮着绿光的格子，按 [{build}] 搭一个木箱",
+  buildOutside: "木箱只能搭在亮着绿光的那一格",
+  buildTooClose: "离得太近了：退回标记上再搭",
+  hide: "站到木箱后面的标记上",
   shop: "购买金框里的战术透视和滑踢",
   cast: "施放技能",
   target: "绕过商店，击倒金色标记的训练靶",

@@ -52,6 +52,14 @@ const CONFIRM = new Set(["KeyE", "Space", "Enter"]);
 const SAVE_NOTE_MS = 2600;
 const SWITCH_MS = 900;
 const TITLE_MS = 2200;
+/**
+ * An illustration's entrance: the scene before it holds, the picture fades in, and it is looked at
+ * for a moment before anyone speaks. The fades themselves are in story.css.
+ */
+const ART_HOLD_MS = 700;
+const ART_IN_MS = 1300;
+const ART_BEAT_MS = 450;
+const ART_OUT_MS = 1000;
 
 /**
  * Plays an act inside `screen` (the element holding `storyMarkup`) and returns the function that
@@ -86,6 +94,17 @@ export function mountStory(
   let alive = true,
     ended = false,
     paused = false;
+  /** Set while an act's scene is being created: its opening picture is there from the first frame. */
+  let opening = false;
+  /** The picture's last change, which a conversation waits out, and a count that outdates old ones. */
+  let artSettled: Promise<boolean> = Promise.resolve(true),
+    artTurn = 0;
+  /** The picture being dissolved out of, under the one coming in. */
+  let ghost: HTMLImageElement | undefined;
+  const dropGhost = () => {
+    ghost?.remove();
+    ghost = undefined;
+  };
 
   const stage: Stage = {
     root,
@@ -96,6 +115,7 @@ export function mountStory(
     async talk(lines, { live = false } = {}) {
       if (!live && running.player) running.player.frozen = true;
       if (!live) prompt.hidden = true;
+      if (!(await artSettled)) return false;
       Object.assign(flags, await dialogue.play(lines));
       if (!live && running.player && alive) running.player.frozen = false;
       return alive;
@@ -117,16 +137,49 @@ export function mountStory(
       prompt.hidden = !text;
       if (text) prompt.lastElementChild!.textContent = text;
     },
-    art(url) {
-      if (url) {
-        unlockIllustration(url);
-        art.classList.remove("leaving");
+    art(url, { cut = false } = {}) {
+      const turn = ++artTurn;
+      if (!url) {
+        if (!art.hidden) {
+          art.classList.remove("entering");
+          art.classList.add("leaving");
+          void stage.wait(ART_OUT_MS).then((ok) => {
+            if (!ok || turn !== artTurn) return;
+            art.hidden = true;
+            art.classList.remove("leaving");
+          });
+        }
+        return (artSettled = Promise.resolve(alive));
+      }
+      unlockIllustration(url);
+      const shown = !art.hidden;
+      dropGhost();
+      art.classList.remove("entering", "leaving");
+      if (cut || opening) {
         art.src = url;
         art.hidden = false;
-      } else if (!art.hidden) {
-        art.classList.add("leaving");
-        art.addEventListener("animationend", () => (art.hidden = true), { once: true });
+        return (artSettled = Promise.resolve(alive));
       }
+      // Over another picture there is nothing to hold on: the old one stays under the new.
+      if (shown) {
+        ghost = art.cloneNode() as HTMLImageElement;
+        art.before(ghost);
+      }
+      const hold = shown ? 0 : ART_HOLD_MS;
+      art.src = url;
+      art.hidden = false;
+      art.style.setProperty("--art-hold", `${hold}ms`);
+      art.style.setProperty("--art-in", `${ART_IN_MS}ms`);
+      // Restart the fade if the last one is still running.
+      void art.offsetWidth;
+      art.classList.add("entering");
+      return (artSettled = stage.wait(hold + ART_IN_MS + ART_BEAT_MS).then((ok) => {
+        if (turn === artTurn) {
+          dropGhost();
+          art.classList.remove("entering");
+        }
+        return ok;
+      }));
     },
     overlay() {
       const canvas = document.createElement("canvas");
@@ -163,19 +216,24 @@ export function mountStory(
     root.dataset.kind = scene.kind;
     delete root.dataset.tutorial;
     root.classList.remove("booting", "blackout", "pulling", "veiled");
+    artTurn++;
+    artSettled = Promise.resolve(true);
+    dropGhost();
     art.hidden = true;
-    art.classList.remove("leaving");
+    art.classList.remove("entering", "leaving");
     const canvas = document.createElement("canvas");
     canvas.className = "story-canvas";
     stage.canvas.replaceWith(canvas);
     // The scene starts out frozen, and its first conversation releases it.
     running.player = undefined;
+    opening = true;
     running.player =
       scene.kind === "room"
         ? (scene.play?.(stage) ?? playRoom(stage, scene))
         : scene.kind === "arcade"
           ? playArcade(stage, scene)
           : scene.play(stage);
+    opening = false;
     running.player.paused = paused;
     steer();
   };

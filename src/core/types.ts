@@ -297,6 +297,8 @@ export interface GameSnapshot {
   storyBrawl?: boolean;
   /** The story's skill shop is open; loadout trades are allowed while its match is paused. */
   storyShop?: boolean;
+  /** A story lesson's target area: while set, thrown items may only land on these cells. */
+  storyThrowZone?: Vec2[];
   /** Purchase whitelist while a guided story shop is open. */
   storyShopSkills?: SkillId[];
   canResetTerrain?: boolean;
