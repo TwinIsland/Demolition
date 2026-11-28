@@ -5,10 +5,6 @@ import { Sky } from "three/addons/objects/Sky.js";
 import { CLEAR_SKY, type SkyLook, type SkyRig } from "./environment/sky-look";
 
 const HIGH_SUN = [-35, 42, 25] as const;
-/** The parts of a look a staged scene may replace. */
-export type StageLight = Partial<
-  Pick<SkyLook, "sun" | "fill" | "fog" | "backgroundIntensity" | "environmentIntensity">
->;
 interface LoadedSky {
   texture: THREE.DataTexture;
   reflection: THREE.WebGLRenderTarget;
@@ -22,9 +18,6 @@ export class OutdoorLighting implements SkyRig {
   private fill = new THREE.HemisphereLight("#c6dcf0", "#645c4b", 0.45);
   private fog = new THREE.FogExp2("#b5bfc1", 0.004);
   private look = CLEAR_SKY;
-  /** The look the weather asked for, and what a story scene has put over it. */
-  private weather = CLEAR_SKY;
-  private staged?: StageLight;
   /** A painted sky shown in place of the look's own image, while a story scene asks for one. */
   private painting?: THREE.Texture;
   private disposed = false;
@@ -59,8 +52,6 @@ export class OutdoorLighting implements SkyRig {
   }
   /** Switch weather. The sky image is loaded on first use and kept for later matches. */
   apply(look: SkyLook) {
-    this.weather = look;
-    if (this.staged) look = { ...look, ...this.staged };
     this.look = look;
     this.sun.color.set(look.sun.color);
     // Keep the distance: the shadow camera's depth range is set for it.
@@ -73,14 +64,6 @@ export class OutdoorLighting implements SkyRig {
     const loaded = this.skies.get(look.sky);
     if (loaded && loaded !== "loading") this.show(loaded);
     else this.preload(look);
-  }
-  /**
-   * A scene's own sun, fill and fog in place of the weather's, for a story shot at another hour.
-   * Undefined gives them back to the weather.
-   */
-  relight(light?: StageLight) {
-    this.staged = light;
-    this.apply(this.weather);
   }
   preload(look: SkyLook) {
     if (this.skies.has(look.sky)) return;
