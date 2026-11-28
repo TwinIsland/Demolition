@@ -246,7 +246,8 @@ export function openWorld(
     walking = false,
     intent: readonly [number, number] = [0, 0],
     facing: Hotspot | undefined,
-    clock = 0;
+    clock = 0,
+    closed = false;
   const room: Room = {
     frozen: true,
     move: (x, y) => (intent = [x, y]),
@@ -269,10 +270,16 @@ export function openWorld(
       }
       if (change.loop) live.loop = change.loop;
     },
-    dispose: () => k.quit(),
+    dispose: () => {
+      closed = true;
+      k.quit();
+    },
   };
 
   k.onUpdate(() => {
+    // Kaplay only quits at the end of its next frame, and by then its camera belongs to whichever
+    // scene opened after this one: a closed room must not move it.
+    if (closed) return;
     clock += k.dt();
     const [mx, my] = room.frozen ? [0, 0] : intent;
     const length = Math.hypot(mx, my);

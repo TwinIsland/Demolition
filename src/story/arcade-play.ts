@@ -473,6 +473,9 @@ export function playArcade(stage: Stage, scene: ArcadeScene): ScenePlayer {
   };
 
   k.onUpdate(() => {
+    // The board never scrolls. Kaplay keeps one camera for the page, so the room that was open
+    // before this scene may have left it somewhere else.
+    k.setCamPos(ARCADE_VIEW.width / 2, ARCADE_VIEW.height / 2);
     const dt = Math.min(k.dt(), 0.1);
     if (!frozen) {
       clock += dt;
